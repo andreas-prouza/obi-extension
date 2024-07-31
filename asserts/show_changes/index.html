@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
+  </head>
+  <body>
+
+    <!--
+    <img src="{{ global_stuff['logo_line_left'] }}" height=100 style=" position: absolute; top:8.5; left:10">
+    <img src="{{ global_stuff['logo_line_middle'] }}" height=100 width="100%" style=" position: absolute; top:8.5; left:50;">
+    <img src="{{ global_stuff['logo'] }}" alt="logo" height=100 style="position: absolute; top:8.5; right:0;">
+-->
+    
+    <h1>Summary</h1>
+    <br/><br/>
+    <div>
+      Created at <b><u>{{ global_stuff['current_date'] }}</u></b>
+    </div>
+
+    <br/>
+    <hr />
+    <br/>
+    
+    <table>
+      <tr><th>New sources</th><th>Changed sources</th><th>Dependend objects</th></tr>
+      <tr>
+        <td>
+          <ul>
+            {% for source in object_list['new_sources'] %}
+            <li><a href='command:vscode.open?{{ source["file"] }}'>{{ source["source"] }}</a></li>
+            {% endfor %}
+          </ul>
+        </td>
+        <td>
+          <ul>
+            {% for source in object_list['changed_sources'] %}
+            <li><a href='command:vscode.open?{{ source["file"] }}'>{{ source["source"] }}</a></li>
+            {% endfor %}
+          </ul>
+        </td>
+        <td>
+          <ul>
+            {% for source in object_list['dependend_sources'] %}
+              <li><a href='command:vscode.open?{{ source["file"] }}'>{{ source["source"] }}</a></li>
+            {% endfor %}
+          </ul>
+        </td>
+      </tr>
+    </table>
+    
+    <vscode-divider role="separator"></vscode-divider>
+    
+    <hr />
+
+    <h2>Details</h2>
+    <vscode-divider role="presentation"></vscode-divider>
+
+    <table>
+      <tr>
+        <th>level</th>
+        <th>object</th>
+        <th>status</th>
+        <th>commands</th>
+      </tr>
+      {% for level, level_list in compile_list %}
+        <tr>
+          <th>{{ level }}. level</th>
+        </tr>
+        {% for obj in level_list %}
+        {% for source, cmds in obj %}
+        <tr>
+          <td></td><td>{{ source }}</td>
+          <td>
+            {% set last_cmd = cmds|last %}
+            <span class="{{ last_cmd.status }}">{{ last_cmd.status }}</span>
+          </td>
+          <td>
+            <details><summary>{{ cmds | length }} commands</summary>
+              <table>
+                <tr>
+                  <th>timestamp</th>
+                  <th>status</th>
+                  <th>command</th>
+                </tr>
+              {% for cmd_entry in cmds %}
+                <tr><td>{{ cmd_entry.timestamp }}</td><td><span class="{{ cmd_entry.status }}">{{ cmd_entry.status }}</span></td><td><details><summary><code>{{ cmd_entry.cmd | truncate(15) }}</code></summary><code>{{ cmd_entry.cmd }}</code></details></td></tr>
+              {% endfor %}
+              </table>
+            </details>
+          </td>
+        </tr>
+        {% endfor %}
+        {% endfor %}
+        </tr>
+      {% endfor %}
+    </table>
+
+    
+    <br/><br/>
+
+    <vscode-button id="howdy" appearance="primary">Button Text</vscode-button>
+
+
+
+    <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ global_stuff['webviewUri'] }}"></script>
+  </body>
+</html>

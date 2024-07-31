@@ -1,26 +1,65 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import { BuildSummary } from './webview/show_changes/BuildSummary';
+import { OBIController } from './webview/controller/OBIController';
+import { SourceListProvider } from './webview/controller/SourceListProvider';
+import { DirTool } from './utilities/DirTool';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+
+
 export function activate(context: vscode.ExtensionContext) {
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "obi" is now active!');
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('obi.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from obi!');
-	});
 
-	context.subscriptions.push(disposable);
+	//const fileUri = vscode.Uri.file('/home/andreas/projekte/opensource/extensions/obi/README.md');
+	//vscode.commands.executeCommand('vscode.open', fileUri);
+	if (vscode.workspace.workspaceFolders == undefined) {
+		vscode.window.showErrorMessage('No workspace');
+		return;
+	}
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.helloWorld', () => {
+			vscode.window.showInformationMessage('Hello World from obi 2!');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.show_changes', () => {
+			vscode.window.showErrorMessage('Load obi.show_changes');
+			// Only available with workspaces
+			if (vscode.workspace.workspaceFolders == undefined) {
+				vscode.window.showErrorMessage('No workspace');
+				return;
+			}
+			BuildSummary.render(context.extensionUri, vscode.workspace.workspaceFolders[0].uri)
+		})
+	);
+
+	const obi_controller_provider = new OBIController(context.extensionUri);
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(OBIController.viewType, obi_controller_provider)
+	);
+
+
+	const files = DirTool.get_dir_list('/home/andreas/projekte/tests/test/test-build-obi/source-list');
+	console.log('Files: ');
+	console.log(files);
+
+	const rootPath =
+		vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+		? vscode.workspace.workspaceFolders[0].uri.fsPath
+		: undefined;
+		
+	new SourceListProvider(rootPath).register(context);
+	/*
+	vscode.window.registerTreeDataProvider(
+		'obi.source-lists',
+		new SourceListProvider(rootPath)
+	);
+	vscode.window.createTreeView('obi.source-lists', {
+		treeDataProvider: new SourceListProvider(rootPath)
+	});
+	*/
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}

@@ -1,0 +1,24 @@
+.new {
+  background-color:#adcbe3;
+  color: black
+}
+
+.success {
+  background-color:#76FF03;
+  color: black
+}
+
+.error {
+  background-color:#f96161;
+  color: black
+}
+
+.failed {
+  background-color:#f96161;
+  color: black
+}
+
+.in_process {
+  background-color:#0099ff;
+  color: black
+}
