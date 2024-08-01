@@ -26,7 +26,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('obi.show_changes', () => {
-			vscode.window.showErrorMessage('Load obi.show_changes');
 			// Only available with workspaces
 			if (vscode.workspace.workspaceFolders == undefined) {
 				vscode.window.showErrorMessage('No workspace');

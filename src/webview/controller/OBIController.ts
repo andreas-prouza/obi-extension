@@ -60,7 +60,6 @@ export class OBIController implements vscode.WebviewViewProvider {
     );
 		webviewView.webview.html = html;
 
-		vscode.window.showInformationMessage('data.value');
 		webviewView.webview.onDidReceiveMessage(data => {
 			vscode.window.showInformationMessage(data.value);
 			switch (data.type) {

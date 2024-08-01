@@ -24,4 +24,13 @@ export class DirTool {
     const stats = fs.statSync(path);
     return stats.isFile()
   }
+
+
+  public static get_json(path: string) {
+    const fs = require("fs"); 
+    
+    let json_string = fs.readFileSync(path);
+    // Converting to JSON 
+    return JSON.parse(json_string);
+  }
 }

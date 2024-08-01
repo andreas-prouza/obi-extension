@@ -26,8 +26,49 @@
       {
         "command": "obi.run_build",
         "title": "Run build"
+      },
+      {
+        "command": "obi.source-lists.update",
+        "title": "Update source list",
+        "icon": {
+          "dark": "asserts/img/dark/refresh.svg",
+          "light": "asserts/img/light/refresh.svg"
+        }
+      },
+      {
+        "command": "obi.source-lists.show-view",
+        "title": "Show source list",
+        "icon": {
+          "dark": "asserts/img/dark/preview.svg",
+          "light": "asserts/img/light/preview.svg"
+        }
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "obi.source-lists.update",
+          "when": "view == obi.source-lists",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "obi.source-lists.update",
+          "when": "view == obi.source-lists && viewItem == source_member",
+          "group": "inline"
+        },
+        {
+          "command": "obi.source-lists.show-view",
+          "when": "view == obi.source-lists && viewItem == source_list",
+          "group": "inline"
+        },
+        {
+          "command": "obi.source-lists.update",
+          "when": "view == obi.source-lists"
+        }
+      ]
+    },
     "viewsContainers": {
       "activitybar": [
         {
