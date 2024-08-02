@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="{{ theme_mode }}">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
+  </head>
+  <body>
+    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
+
+    <!--
+    <img src="{{ global_stuff['logo_line_left'] }}" height=100 style=" position: absolute; top:8.5; left:10">
+    <img src="{{ global_stuff['logo_line_middle'] }}" height=100 width="100%" style=" position: absolute; top:8.5; left:50;">
+    <img src="{{ global_stuff['logo'] }}" alt="logo" height=100 style="position: absolute; top:8.5; right:0;">
+-->
+    
+    <h1>Source list: <code>{{ source_list_file }}</code></h1>
+
+    <hr />
+    <br/>
+
+
+  <!-- /.box-header -->
+  <table id="source_list"
+  class="table w-auto" data-bs-theme="{{ theme_mode }}"
+  data-toggle="table" 
+  data-filter-control="true"
+  data-show-search-clear-button="true" 
+  data-show-columns="true"
+  data-pagination="true" 
+  data-page-list="[5, 10, 20, 50, 100, all]"
+  data-page-size="10"
+  data-pagination-h-align="left"
+  data-pagination-detail-h-align="left"
+  data-buttons-align="left"
+  data-search-align="left">
+      <thead>
+          <tr>
+              <!--- <th>Auswahl</th> -->
+              {% if source_list|length > 0 %}
+                  {% for key, value in source_list[0] %}
+                    {% if key != 'path' %}
+                      <th data-field="{{ key }}" data-sortable="true" data-filter-control={% if key == 'status' %}"select"{% else %}"input"{% endif %}  data-filter-control-container="#filter">{{ key }}</th>
+                    {% endif %}
+                  {% endfor %}
+              {% endif %}
+          </tr>
+      </thead>
+      <tbody>
+        {% for row in source_list %}
+        <tr>
+            {% for key, value in row %}
+              {% if key != 'path' %}
+                <td style="white-space: nowrap;">
+                  {% if key == 'source-member' %}
+                    <a href='command:vscode.open?{{ row["path"] }}'>{{ value }}</a>
+                  {% else %}
+                    {{ value }}
+                  {% endif %}
+                </td>
+              {% endif %}
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+  </table>
+
+    <br/><br/>
+    <br/><br/>
+
+    <vscode-button id="howdy" appearance="primary">Button Text</vscode-button>
+
+    <script src="{{ global_stuff['asserts_uri'] }}/js/jquery.min.js"></script>
+    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table.min.js"></script>
+    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-resizable.min.js"></script>
+    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-filter-control.min.js"></script>
+  
+    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ global_stuff['webviewUri'] }}"></script>
+  </body>
+</html>

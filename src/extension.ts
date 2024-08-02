@@ -10,7 +10,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 	console.log('Congratulations, your extension "obi" is now active!');
 
-
 	//const fileUri = vscode.Uri.file('/home/andreas/projekte/opensource/extensions/obi/README.md');
 	//vscode.commands.executeCommand('vscode.open', fileUri);
 	if (vscode.workspace.workspaceFolders == undefined) {

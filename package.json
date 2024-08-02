@@ -55,12 +55,12 @@
       "view/item/context": [
         {
           "command": "obi.source-lists.update",
-          "when": "view == obi.source-lists && viewItem == source_member",
+          "when": "view == obi.source-lists && viewItem == source-member",
           "group": "inline"
         },
         {
           "command": "obi.source-lists.show-view",
-          "when": "view == obi.source-lists && viewItem == source_list",
+          "when": "view == obi.source-lists && viewItem == source-list",
           "group": "inline"
         },
         {

@@ -3,6 +3,7 @@ import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vsco
 import { getUri } from "../../utilities/getUri";
 import { getNonce } from "../../utilities/getNonce";
 import { DirTool } from '../../utilities/DirTool';
+import path from 'path';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -14,9 +15,9 @@ const nunjucks = require('nunjucks');
 
 
 
-export class BuildSummary {
+export class SourceList {
 
-  public static currentPanel: BuildSummary | undefined;
+  public static currentPanel: SourceList | undefined;
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
 
@@ -43,24 +44,37 @@ export class BuildSummary {
    *
    * @param extensionUri The URI of the directory containing the extension.
    */
-  public static render(extensionUri: Uri, workspaceUri: Uri) {
-    if (BuildSummary.currentPanel) {
+  public static render(extensionUri: Uri, workspaceUri: Uri, source_list_path: string) {
+    if (SourceList.currentPanel) {
       // If the webview panel already exists reveal it
-      BuildSummary.currentPanel._panel.reveal(ViewColumn.One);
+      SourceList.currentPanel._panel.reveal(ViewColumn.One);
       return;
+    }
+
+    const sl = DirTool.get_json(path.join(workspaceUri.fsPath, 'source-list', source_list_path));
+
+    for (let index = 0; index < sl.length; index++) {
+      sl[index]['path'] = DirTool.get_encoded_source_URI(workspaceUri, sl[index]['path']);
     }
 
     // If a webview panel does not already exist create and show a new one
     const panel = this.createNewPanel(extensionUri);
-
+    let theme_mode = 'light';
+    if (vscode.window.activeColorTheme.kind == vscode.ColorThemeKind.Dark)
+      theme_mode = 'dark';
+  
+  
 
     nunjucks.configure(`${__dirname}/../../../asserts`);
-    const html = nunjucks.render('show_changes/index.html', 
+    const html = nunjucks.render('source_list/index.html', 
       {
         global_stuff: this.get_global_stuff(panel.webview, extensionUri),
+        source_list: sl,
+        source_list_file : source_list_path,
+        theme_mode: theme_mode
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
-        object_list: this.get_object_list(workspaceUri),
-        compile_list: this.get_compile_list(workspaceUri)
+        //object_list: this.get_object_list(workspaceUri),
+        //compile_list: this.get_compile_list(workspaceUri)
       }
     );
     panel.webview.html = html;
@@ -79,54 +93,20 @@ export class BuildSummary {
       }
     );
 
-    BuildSummary.currentPanel = new BuildSummary(panel, extensionUri);
+    SourceList.currentPanel = new SourceList(panel, extensionUri);
   
   }
 
 
 
-  private static get_object_list(workspaceUri: Uri) {
 
-    console.log("Read compile list");
-    const fs = require("fs"); 
-    
-    let compile_list = fs.readFileSync(`${workspaceUri.path}/tmp/changed-object-list.json`);
-    // Converting to JSON 
-    compile_list = JSON.parse(compile_list);
-
-    let dependend_sources = fs.readFileSync(`${workspaceUri.path}/tmp/dependend-object-list.json`);
-    // Converting to JSON 
-    dependend_sources = JSON.parse(dependend_sources);
-
-    for (let index = 0; index < compile_list['new-objects'].length; index++) {
-      compile_list['new-objects'][index] = {source: compile_list['new-objects'][index], file: DirTool.get_encoded_source_URI(workspaceUri, compile_list['new-objects'][index])};
-    }
-    for (let index = 0; index < compile_list['changed-sources'].length; index++) {
-      compile_list['changed-sources'][index] = {source: compile_list['changed-sources'][index], file: DirTool.get_encoded_source_URI(workspaceUri, compile_list['changed-sources'][index])};
-    }
-    for (let index = 0; index < dependend_sources.length; index++) {
-      dependend_sources[index] = {source: dependend_sources[index], file: DirTool.get_encoded_source_URI(workspaceUri, dependend_sources[index])};
-    }
-
-    return {
-      new_sources : compile_list['new-objects'], 
-      changed_sources: compile_list['changed-sources'], 
-      dependend_sources: dependend_sources
-    }
-  }
-
-
-
-  private static get_compile_list(workspaceUri: Uri) {
-
-    console.log("Read compile list");
-    const fs = require("fs"); 
-    
-    let compile_list = fs.readFileSync(`${workspaceUri.path}/build-output/compile-list.json`);
-    // Converting to JSON 
-    compile_list = JSON.parse(compile_list);
-
-    return compile_list
+  private static get_encoded_URI(workspaceUri: Uri, file: string) : string {
+    const fileUri = {
+      scheme: 'file',
+      path: `${workspaceUri.path}/src/${file}`,
+      authority: ''
+    };
+    return encodeURIComponent(JSON.stringify(fileUri))
   }
 
 
@@ -139,6 +119,7 @@ export class BuildSummary {
     const logo_line_middle = vscode.Uri.joinPath(extensionUri, 'asserts/show_changes/img', 'logo-line-middle.png');
     const logo_path = vscode.Uri.joinPath(extensionUri, 'asserts/show_changes/img', 'logo.png');
 
+    const asserts_uri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'asserts'));
     const logo_uri = webview.asWebviewUri(logo_path);
     const logo_line_left_uri = webview.asWebviewUri(logo_line_left);
     const logo_line_middle_uri = webview.asWebviewUri(logo_line_middle);
@@ -146,6 +127,7 @@ export class BuildSummary {
     const nonce = getNonce();
 
     return {
+      asserts_uri: asserts_uri,
       styleUri: styleUri,
       logo: logo_uri,
       logo_line_left: logo_line_left_uri,
@@ -159,8 +141,8 @@ export class BuildSummary {
 
   private static createNewPanel(extensionUri : Uri) {
     return window.createWebviewPanel(
-      'show_changes', // Identifies the type of the webview. Used internally
-      'Show changes', // Title of the panel displayed to the user
+      'source_list', // Identifies the type of the webview. Used internally
+      'Source list', // Title of the panel displayed to the user
       // The editor column the panel should be displayed in
       ViewColumn.One,
       // Extra panel configurations
@@ -181,7 +163,7 @@ export class BuildSummary {
    * Cleans up and disposes of webview resources when the webview panel is closed.
    */
   public dispose() {
-    BuildSummary.currentPanel = undefined;
+    SourceList.currentPanel = undefined;
 
     // Dispose of the current webview panel
     this._panel.dispose();
