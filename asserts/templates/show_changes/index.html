@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="{{ global_stuff['theme_mode'] }}">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
+  </head>
+  <body>
+
+    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
+    
+    <h1>Summary</h1>
+    <br/><br/>
+    <div>
+      Created at <b><u>{{ file_changed_date }}</u></b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='command:vscode.open?{{ compile_file }}'>open JSON file</a>
+    </div>
+    <br/>
+    <hr />
+    <br/>
+    
+    <table id="source_list"
+    class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
+    data-toggle="table" 
+    data-filter-control="true"
+    data-show-search-clear-button="true" 
+    data-show-columns="true"
+    data-pagination="true" 
+    data-page-list="[5, 10, 20, 50, 100, all]"
+    data-page-size="10"
+    data-pagination-h-align="left"
+    data-pagination-detail-h-align="left"
+    data-buttons-align="left"
+    data-search-align="left">
+      <tr><th>New sources</th><th>Changed sources</th><th>Dependend objects</th></tr>
+      <tr>
+        <td>
+          <ul>
+            {% for source in object_list['new_sources'] %}
+            <li><a href='command:vscode.open?{{ source["file"] }}'>{{ source["source"] }}</a></li>
+            {% endfor %}
+          </ul>
+        </td>
+        <td>
+          <ul>
+            {% for source in object_list['changed_sources'] %}
+            <li><a href='command:vscode.open?{{ source["file"] }}'>{{ source["source"] }}</a></li>
+            {% endfor %}
+          </ul>
+        </td>
+        <td>
+          <ul>
+            {% for source in object_list['dependend_sources'] %}
+              <li><a href='command:vscode.open?{{ source["file"] }}'>{{ source["source"] }}</a></li>
+            {% endfor %}
+          </ul>
+        </td>
+      </tr>
+    </table>
+    
+    <vscode-divider role="separator"></vscode-divider>
+    
+    <hr />
+
+    <h2>Details</h2>
+    <vscode-divider role="presentation"></vscode-divider>
+
+    <table id="details"
+    class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
+    data-toggle="table" 
+    data-filter-control="true"
+    data-show-search-clear-button="true" 
+    data-show-columns="true"
+    data-pagination="true" 
+    data-page-list="[5, 10, 20, 50, 100, all]"
+    data-page-size="10"
+    data-pagination-h-align="left"
+    data-pagination-detail-h-align="left"
+    data-buttons-align="left"
+    data-search-align="left">
+    <thead>
+      <tr>
+        <th>level</th>
+        <th>object</th>
+        <th>status</th>
+        <th>commands</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for level_item in compile_list %}
+        <tr>
+          <th>{{ level_item['level'] }}. level</th>
+        </tr>
+        {% for source_item in level_item['sources'] %}
+        <tr>
+          <td></td><td>{{ source_item['source'] }}</td>
+          <td>
+            {% set last_cmd = source_item['cmds']|last %}
+            <span class="{{ last_cmd.status }}">{{ last_cmd.status }}</span>
+          </td>
+          <td>
+            <details><summary>{{ source_item['cmds'] | length }} commands</summary>
+              <table>
+                <tr>
+                  <th>timestamp</th>
+                  <th>status</th>
+                  <th>command</th>
+                </tr>
+              {% for cmd_entry in source_item['cmds'] %}
+                <tr>
+                  <td>{{ cmd_entry.timestamp }}</td>
+                  <td><span class="{{ cmd_entry.status }}">{{ cmd_entry.status }}</span></td>
+                  <td><details><summary><code>{{ cmd_entry.cmd | truncate(15) }}</code></summary><code>{{ cmd_entry.cmd }}</code></details></td>
+                  <td>
+                    {% if 'joblog' in cmd_entry and cmd_entry['joblog']|length %}
+                      <vscode-button onclick="document.getElementById('source').value ='{{ source_item['source'] }}'; document.getElementById('level').value ='{{ level_item['level'] }}'; document.getElementById('cmd_index').value ='{{ loop.index0 }}'" class="joblog" appearance="primary">Joblog</vscode-button>
+                    {% endif %}
+                    {% if 'stdout' in cmd_entry and cmd_entry['stdout']|length %}
+                      <vscode-button onclick="document.getElementById('source').value ='{{ source_item['source'] }}'; document.getElementById('level').value ='{{ level_item['level'] }}'; document.getElementById('cmd_index').value ='{{ loop.index0 }}'" class="stdout" appearance="primary">Spool file</vscode-button>
+                    {% endif %}
+                    {% if 'stderr' in cmd_entry and cmd_entry['stderr']|length %}
+                      <vscode-button onclick="document.getElementById('source').value ='{{ source_item['source'] }}'; document.getElementById('level').value ='{{ level_item['level'] }}'; document.getElementById('cmd_index').value ='{{ loop.index0 }}'" class="stderr" appearance="primary">Error</vscode-button>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+              </table>
+            </details>
+          </td>
+        </tr>
+        {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+    </table>
+
+    
+    <br/><br/>
+
+    <input type="hidden" id="level"\>
+    <input type="hidden" id="source"\>
+    <input type="hidden" id="cmd_index"\>
+
+    <vscode-button id="howdy" appearance="primary">Button Text</vscode-button>
+
+
+    <script src="{{ global_stuff['asserts_uri'] }}/js/jquery.min.js"></script>
+    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table.min.js"></script>
+    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-resizable.min.js"></script>
+    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-filter-control.min.js"></script>
+  
+    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
+
+  </body>
+</html>

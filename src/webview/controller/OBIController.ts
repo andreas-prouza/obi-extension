@@ -2,6 +2,9 @@ import * as vscode from 'vscode';
 import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
 import { getUri } from "../../utilities/getUri";
 import { getNonce } from "../../utilities/getNonce";
+import { DirTool } from '../../utilities/DirTool';
+import { OBITools } from '../../utilities/OBITools';
+import { Constants } from '../../Constants';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -48,14 +51,18 @@ export class OBIController implements vscode.WebviewViewProvider {
     }
     
     const workspaceFolder = vscode.workspace.workspaceFolders[0].uri;
+    
+    const html_template = 'controller/index.html';
 
-    nunjucks.configure(`${__dirname}/../../../asserts`);
-    const html = nunjucks.render('controller/index.html', 
+    let theme_mode = 'light';
+    if (vscode.window.activeColorTheme.kind == vscode.ColorThemeKind.Dark)
+      theme_mode = 'dark';
+
+    nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
+    const html = nunjucks.render(html_template, 
       {
-        global_stuff: OBIController.get_global_stuff(webviewView.webview, this._extensionUri),
-        //filex: encodeURIComponent(JSON.stringify(fileUri)),
-        object_list: OBIController.get_object_list(workspaceFolder),
-        compile_list: OBIController.get_compile_list(workspaceFolder)
+        global_stuff: OBITools.get_global_stuff(webviewView.webview, this._extensionUri),
+        theme_mode: theme_mode
       }
     );
 		webviewView.webview.html = html;
@@ -89,13 +96,13 @@ export class OBIController implements vscode.WebviewViewProvider {
     dependend_sources = JSON.parse(dependend_sources);
 
     for (let index = 0; index < compile_list['new-objects'].length; index++) {
-      compile_list['new-objects'][index] = {source: compile_list['new-objects'][index], file: this.get_encoded_URI(workspaceUri, compile_list['new-objects'][index])};
+      compile_list['new-objects'][index] = {source: compile_list['new-objects'][index], file: DirTool.get_encoded_source_URI(workspaceUri, compile_list['new-objects'][index])};
     }
     for (let index = 0; index < compile_list['changed-sources'].length; index++) {
-      compile_list['changed-sources'][index] = {source: compile_list['changed-sources'][index], file: this.get_encoded_URI(workspaceUri, compile_list['changed-sources'][index])};
+      compile_list['changed-sources'][index] = {source: compile_list['changed-sources'][index], file: DirTool.get_encoded_source_URI(workspaceUri, compile_list['changed-sources'][index])};
     }
     for (let index = 0; index < dependend_sources.length; index++) {
-      dependend_sources[index] = {source: dependend_sources[index], file: OBIController.get_encoded_URI(workspaceUri, dependend_sources[index])};
+      dependend_sources[index] = {source: dependend_sources[index], file: DirTool.get_encoded_source_URI(workspaceUri, dependend_sources[index])};
     }
 
     return {
@@ -119,42 +126,6 @@ export class OBIController implements vscode.WebviewViewProvider {
     return compile_list
   }
 
-
-  private static get_encoded_URI(workspaceUri: Uri, file: string) : string {
-    const fileUri = {
-      scheme: 'file',
-      path: `${workspaceUri.path}/src/${file}`,
-      authority: ''
-    };
-    return encodeURIComponent(JSON.stringify(fileUri))
-  }
-
-
-
-  private static get_global_stuff(webview : Webview, extensionUri: Uri) {
-
-    const styleUri = getUri(webview, extensionUri, ["asserts/css", "style.css"]);
-    const logo_src_path = vscode.Uri.joinPath(extensionUri, 'asserts/show_changes/img', 'obi-logo.png');
-    const logo_line_left = vscode.Uri.joinPath(extensionUri, 'asserts/show_changes/img', 'logo-line-left.png');
-    const logo_line_middle = vscode.Uri.joinPath(extensionUri, 'asserts/show_changes/img', 'logo-line-middle.png');
-    const logo_path = vscode.Uri.joinPath(extensionUri, 'asserts/show_changes/img', 'logo.png');
-
-    const logo_uri = webview.asWebviewUri(logo_path);
-    const logo_line_left_uri = webview.asWebviewUri(logo_line_left);
-    const logo_line_middle_uri = webview.asWebviewUri(logo_line_middle);
-    const webviewUri = getUri(webview, extensionUri, ["out", "webview.js"]); // VSCode styling
-    const nonce = getNonce();
-
-    return {
-      styleUri: styleUri,
-      logo: logo_uri,
-      logo_line_left: logo_line_left_uri,
-      logo_line_middle: logo_line_middle_uri,
-      webviewUri: webviewUri,
-      nonce: nonce,
-      current_date: new Date().toLocaleString()
-    }
-  }
 
 
 }

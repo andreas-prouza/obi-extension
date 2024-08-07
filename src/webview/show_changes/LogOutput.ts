@@ -3,9 +3,9 @@ import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vsco
 import { getUri } from "../../utilities/getUri";
 import { getNonce } from "../../utilities/getNonce";
 import { DirTool } from '../../utilities/DirTool';
-import path from 'path';
 import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
+import path from 'path';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -16,10 +16,9 @@ const nunjucks = require('nunjucks');
 
 
 
+export class LogOutput {
 
-export class SourceList {
-
-  public static currentPanel: SourceList | undefined;
+  public static currentPanel: LogOutput | undefined;
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
 
@@ -30,7 +29,7 @@ export class SourceList {
    * @param panel A reference to the webview panel
    * @param extensionUri The URI of the directory containing the extension
    */
-  private constructor(panel: WebviewPanel, extensionUri: Uri) {
+  private constructor(panel: WebviewPanel) {
     this._panel = panel;
 
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
@@ -46,80 +45,91 @@ export class SourceList {
    *
    * @param extensionUri The URI of the directory containing the extension.
    */
-  public static render(extensionUri: Uri, workspaceUri: Uri, source_list_path: string) {
-    if (SourceList.currentPanel) {
+  public static render(workspaceUri: Uri, log_type: string, level: number, source: string, cmd_index: number) {
+    if (LogOutput.currentPanel) {
       // If the webview panel already exists reveal it
-      SourceList.currentPanel._panel.reveal(ViewColumn.One);
-      return;
+      LogOutput.currentPanel.dispose();
+      //LogOutput.currentPanel._panel.reveal(ViewColumn.One);
+      //return;
     }
 
-    const sl = DirTool.get_json(path.join(workspaceUri.fsPath, Constants.SOURCE_LIST_FOLDER_NAME, source_list_path));
-
-    for (let index = 0; index < sl.length; index++) {
-      sl[index]['path'] = DirTool.get_encoded_source_URI(workspaceUri, sl[index]['path']);
-    }
+    const config = OBITools.get_obi_app_config();
 
     // If a webview panel does not already exist create and show a new one
-    const panel = this.createNewPanel(extensionUri);
+    const panel = this.createNewPanel(log_type);
+
+    const log_content = LogOutput.get_log_content(workspaceUri, log_type, level, source, cmd_index);
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-    const html = nunjucks.render('source_list/index.html', 
+    const html = nunjucks.render('show_changes/show_log.html', 
       {
-        global_stuff: OBITools.get_global_stuff(panel.webview, extensionUri),
-        source_list: sl,
-        source_list_file : source_list_path
-        //filex: encodeURIComponent(JSON.stringify(fileUri)),
-        //object_list: this.get_object_list(workspaceUri),
-        //compile_list: this.get_compile_list(workspaceUri)
+        log_type: log_type,
+        source: source,
+        content: log_content
       }
     );
     panel.webview.html = html;
-    //panel.webview.html = index_html.html;
 
-    panel.webview.onDidReceiveMessage(
-      (message: any) => {
-        const command = message.command;
-        const text = message.text;
-
-        switch (command) {
-          case "hello":
-            vscode.window.showInformationMessage(text);
-            return;
-        }
-      }
-    );
-
-    SourceList.currentPanel = new SourceList(panel, extensionUri);
+    LogOutput.currentPanel = new LogOutput(panel);
   
   }
 
 
 
-  private static createNewPanel(extensionUri : Uri) {
+  private static createNewPanel(log_type: string) {
     return window.createWebviewPanel(
-      'source_list', // Identifies the type of the webview. Used internally
-      'Source list', // Title of the panel displayed to the user
+      'show_log', // Identifies the type of the webview. Used internally
+      log_type, // Title of the panel displayed to the user
       // The editor column the panel should be displayed in
       ViewColumn.One,
       // Extra panel configurations
       {
-        // Enable JavaScript in the webview
-        enableScripts: true,
-        enableCommandUris: true,
-        // Restrict the webview to only load resources from the `out` directory
-        localResourceRoots: [
-          vscode.Uri.joinPath(extensionUri, "out"),
-          vscode.Uri.joinPath(extensionUri, "asserts")
-        ],
       }
     );
   }
+
+
+
+
+
+  private static get_log_content(workspaceUri: Uri, log_type: string, level: number, source: string, cmd_index: number): string {
+
+    console.log("Read compile list");
+    const fs = require("fs"); 
+    
+    const config = OBITools.get_obi_app_config();
+    let compile_list = fs.readFileSync(path.join(workspaceUri.fsPath, config['general']['compile-list']));
+    // Converting to JSON 
+    compile_list = JSON.parse(compile_list);
+
+    for (const level_item of compile_list) {
+
+      const i_level = level_item['level'];
+      const i_sources = level_item['sources'];
+
+      if (level != i_level)
+        continue;
+
+      for (let i_source of i_sources) {
+
+        if (i_source['source'] != source)
+          continue;
+
+        return i_source['cmds'][cmd_index][log_type];
+
+      }
+      
+    }
+
+    return ''
+  }
+  
 
   /**
    * Cleans up and disposes of webview resources when the webview panel is closed.
    */
   public dispose() {
-    SourceList.currentPanel = undefined;
+    LogOutput.currentPanel = undefined;
 
     // Dispose of the current webview panel
     this._panel.dispose();

@@ -83,12 +83,19 @@
         {
           "type": "webview",
           "id": "obi.controller",
-          "name": "OBI"
+          "name": "OBI",
+          "when": "obi.contains_obi_project == true"
         },
         {
           "type": "tree",
           "id": "obi.source-lists",
-          "name": "Source lists"
+          "name": "Source lists",
+          "when": "obi.contains_obi_project == true"
+        },
+        {
+          "id": "obi-welcome",
+          "name": "Welcome",
+          "when": "obi.contains_obi_project == false"
         }
       ]
     },
@@ -123,7 +130,8 @@
     "esbuild": "^0.16.17",
     "eslint": "^8.57.0",
     "nunjucks": "^3.2.4",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "toml": "latest"
   },
   "theia": {
     "target": "browser"

@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { DirTool } from '../../utilities/DirTool';
 import { SourceList } from '../source_list/SourceList';
+import { Constants } from '../../Constants';
 
 
 
@@ -38,19 +39,19 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       );
     } 
     
-    const source_list_path = path.join(this.workspaceRoot, 'source-list');
-    if (!DirTool.pathExists(source_list_path)) {
-      vscode.window.showInformationMessage('Workspace has no folder "source-list"');
+    const source_list_path = path.join(this.workspaceRoot, Constants.SOURCE_LIST_FOLDER_NAME);
+    if (!DirTool.dir_exists(source_list_path)) {
+      vscode.window.showInformationMessage(`Workspace has no folder "${Constants.SOURCE_LIST_FOLDER_NAME}"`);
       return Promise.resolve([]);
     }
 
     let child = [];
 
-    const source_list = DirTool.get_dir_list(source_list_path);
+    const source_list = DirTool.list_dir(source_list_path);
     for (let index = 0; index < source_list.length; index++) {
       const element = source_list[index];
 
-      if (!DirTool.is_file(path.join(this.workspaceRoot, 'source-list', element)))
+      if (!DirTool.is_file(path.join(this.workspaceRoot, Constants.SOURCE_LIST_FOLDER_NAME, element)))
         continue;
 
       child.push(new SourceListItem(
@@ -58,7 +59,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
         '',
         vscode.TreeItemCollapsibleState.Collapsed,
         element,
-        'source-list'
+        Constants.SOURCE_LIST_FOLDER_NAME
       ))
     }
 
@@ -69,7 +70,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
   get_child_elements(element: SourceListItem): any {
 
-    const sl = DirTool.get_json(path.join(this.workspaceRoot, 'source-list', element.source_list));
+    const sl = DirTool.get_json(path.join(this.workspaceRoot, Constants.SOURCE_LIST_FOLDER_NAME, element.source_list));
     let content_list: {}[] = [];
     let item: SourceListItem;
     let level: string = 'source-list';
@@ -242,7 +243,7 @@ class SourceListItem extends vscode.TreeItem {
 
     if (file_path) {
       member_path = path.join(ws, 'src', file_path);
-      if (!DirTool.pathExists(member_path))
+      if (!DirTool.file_exists(member_path))
         icon = 'error.svg';
     }
 

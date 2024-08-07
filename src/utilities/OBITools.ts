@@ -1,0 +1,71 @@
+import * as vscode from 'vscode';
+import { DirTool } from './DirTool';
+import path from 'path';
+import { getUri } from './getUri';
+import { getNonce } from './getNonce';
+import { Constants } from '../Constants';
+
+
+
+export class OBITools {
+
+  public static contains_obi_project(): boolean {
+
+    if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length == 0) {
+      return false;
+    }
+
+    const ws = vscode.workspace.workspaceFolders[0].uri.fsPath;
+
+    if (!DirTool.file_exists(path.join(ws, Constants.OBI_CONFIG_FILE)))
+      return false;
+
+    if (!DirTool.file_exists(path.join(ws, 'etc', 'global.cfg')))
+      return false;
+
+    if (!DirTool.dir_exists(path.join(ws, 'scripts')))
+      return false;
+
+    return true;
+  }
+
+
+
+
+  public static get_global_stuff(webview : vscode.Webview, extensionUri: vscode.Uri) {
+
+    const styleUri = getUri(webview, extensionUri, ["asserts/css", "style.css"]);
+
+    const asserts_uri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'asserts'));
+    const webviewUri = getUri(webview, extensionUri, ["out", "webview.js"]); // VSCode styling
+    const nonce = getNonce();
+    
+    let theme_mode = 'light';
+    if (vscode.window.activeColorTheme.kind == vscode.ColorThemeKind.Dark)
+      theme_mode = 'dark';
+
+    return {
+      asserts_uri: asserts_uri,
+      styleUri: styleUri,
+      webviewUri: webviewUri,
+      nonce: nonce,
+      current_date: new Date().toLocaleString(),
+      theme_mode: theme_mode
+    }
+  }
+
+
+  public static get_obi_app_config() {
+
+    const ws_uri =
+      vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+      ? vscode.workspace.workspaceFolders[0].uri
+      : undefined;
+
+    if (ws_uri)
+      return DirTool.get_toml(path.join(ws_uri.fsPath, Constants.OBI_CONFIG_FILE));
+  
+    return {}
+  }
+
+}

@@ -3,6 +3,10 @@ import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vsco
 import { getUri } from "../../utilities/getUri";
 import { getNonce } from "../../utilities/getNonce";
 import { DirTool } from '../../utilities/DirTool';
+import { Constants } from '../../Constants';
+import { OBITools } from '../../utilities/OBITools';
+import path from 'path';
+import { LogOutput } from './LogOutput';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -12,6 +16,14 @@ https://www.11ty.dev/docs/languages/nunjucks/
 const nunjucks = require('nunjucks');
 
 
+interface Compile_list {
+  level: string,
+  source_list: [
+    {
+      source: string,
+    }
+  ]
+}
 
 
 export class BuildSummary {
@@ -43,24 +55,35 @@ export class BuildSummary {
    *
    * @param extensionUri The URI of the directory containing the extension.
    */
-  public static render(extensionUri: Uri, workspaceUri: Uri) {
+  public static render(extensionUri: Uri, workspaceUri: Uri|undefined) {
     if (BuildSummary.currentPanel) {
       // If the webview panel already exists reveal it
-      BuildSummary.currentPanel._panel.reveal(ViewColumn.One);
-      return;
+      BuildSummary.currentPanel.dispose();
+      //BuildSummary.currentPanel._panel.reveal(ViewColumn.One);
+      //return;
     }
+
+    if (!workspaceUri){
+      vscode.window.showErrorMessage("No workspace opened");
+      return
+    }
+
+    const config = OBITools.get_obi_app_config();
 
     // If a webview panel does not already exist create and show a new one
     const panel = this.createNewPanel(extensionUri);
 
 
-    nunjucks.configure(`${__dirname}/../../../asserts`);
+    nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
     const html = nunjucks.render('show_changes/index.html', 
       {
-        global_stuff: this.get_global_stuff(panel.webview, extensionUri),
+        global_stuff: OBITools.get_global_stuff(panel.webview, extensionUri),
+        main_java_script: getUri(panel.webview, extensionUri, ["out", "show_changes.js"]),
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         object_list: this.get_object_list(workspaceUri),
-        compile_list: this.get_compile_list(workspaceUri)
+        compile_list: this.get_compile_list(workspaceUri),
+        compile_file: DirTool.get_encoded_file_URI(workspaceUri, config['general']['compile-list']),
+        file_changed_date: DirTool.get_file_changed_date(`${workspaceUri.path}/tmp/changed-object-list.json`).toLocaleString()
       }
     );
     panel.webview.html = html;
@@ -69,11 +92,15 @@ export class BuildSummary {
     panel.webview.onDidReceiveMessage(
       (message: any) => {
         const command = message.command;
-        const text = message.text;
+        //const text = message.text;
 
         switch (command) {
           case "hello":
-            vscode.window.showInformationMessage(text);
+            vscode.window.showInformationMessage(message.text);
+            return;
+          case "show_log":
+            LogOutput.render(workspaceUri, message.type, message.level, message.source, message.cmd_index);
+            vscode.window.showInformationMessage(`message type: ${message.type}, ${message.level}, ${message.cmd_index}, ${message.source}`);
             return;
         }
       }
@@ -122,39 +149,30 @@ export class BuildSummary {
     console.log("Read compile list");
     const fs = require("fs"); 
     
-    let compile_list = fs.readFileSync(`${workspaceUri.path}/build-output/compile-list.json`);
+    const config = OBITools.get_obi_app_config();
+    let compile_list = fs.readFileSync(path.join(workspaceUri.fsPath, config['general']['compile-list']));
     // Converting to JSON 
     compile_list = JSON.parse(compile_list);
+
+    for (const level_item of compile_list) {
+
+      const level = level_item['level'];
+      const sources = level_item['sources'];
+
+      for (let source of sources) {
+
+        for (let cmd of source['cmds']) {
+          console.log(`Cmd-status: ${cmd['status']}`);
+          //cmd['status'] = 'xxx';
+        }
+
+      }
+      
+    }
 
     return compile_list
   }
 
-
-
-  private static get_global_stuff(webview : Webview, extensionUri: Uri) {
-
-    const styleUri = getUri(webview, extensionUri, ["asserts/css", "style.css"]);
-    const logo_src_path = vscode.Uri.joinPath(extensionUri, 'asserts/show_changes/img', 'obi-logo.png');
-    const logo_line_left = vscode.Uri.joinPath(extensionUri, 'asserts/show_changes/img', 'logo-line-left.png');
-    const logo_line_middle = vscode.Uri.joinPath(extensionUri, 'asserts/show_changes/img', 'logo-line-middle.png');
-    const logo_path = vscode.Uri.joinPath(extensionUri, 'asserts/show_changes/img', 'logo.png');
-
-    const logo_uri = webview.asWebviewUri(logo_path);
-    const logo_line_left_uri = webview.asWebviewUri(logo_line_left);
-    const logo_line_middle_uri = webview.asWebviewUri(logo_line_middle);
-    const webviewUri = getUri(webview, extensionUri, ["out", "webview.js"]); // VSCode styling
-    const nonce = getNonce();
-
-    return {
-      styleUri: styleUri,
-      logo: logo_uri,
-      logo_line_left: logo_line_left_uri,
-      logo_line_middle: logo_line_middle_uri,
-      webviewUri: webviewUri,
-      nonce: nonce,
-      current_date: new Date().toLocaleString()
-    }
-  }
 
 
   private static createNewPanel(extensionUri : Uri) {

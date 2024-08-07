@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
+  </head>
+  <body>
+    <br/>
+    <vscode-button id="howdy" appearance="primary">Configuration</vscode-button>
+    <br/>
+    <vscode-button id="show_changes" appearance="primary">Show changes</vscode-button>
+    <br/>
+    <vscode-button id="run_build" appearance="primary">Run build</vscode-button>
+    
+    <br/>
+    <a href='command:obi.run_build'><img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/debug-start.svg">Run build</a>
+    <br/>
+    <a href='command:obi.show_changes'><img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/telescope.svg">Show changes</a>
+    <br/>
+    <a href='command:obi.open_build_summary'><img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/file.svg">Open build summary</a>
+    
+    <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ global_stuff['webviewUri'] }}"></script>
+    
+  </body>
+</html>
