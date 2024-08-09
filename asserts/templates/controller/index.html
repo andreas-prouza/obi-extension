@@ -24,7 +24,7 @@
           <vscode-button id="show_changes">
             Show changes
             <span slot="start" class="codicon codicon-add"><img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/telescope.svg"></span>
-          </vscode-button>      
+          </vscode-button>
         </td>
         <td>
           <vscode-progress-ring id="show_changes_ring" style="visibility: hidden;"></vscode-progress-ring>
@@ -37,7 +37,9 @@
 
     <br/>
     <a id="open_build_summary" href='command:obi.open_build_summary' style="visibility: hidden;">
-      <img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/file.svg">Open build summary</a> 
+      <img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/file.svg">Open build summary
+    </a> 
+    <br/>
     <label id="build_summary_timestamp"  style="visibility: hidden;"> 
       ({{ build_summary_timestamp }})
     </label>

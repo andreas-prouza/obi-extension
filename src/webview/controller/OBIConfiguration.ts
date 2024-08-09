@@ -62,7 +62,7 @@ export class OBIConfiguration {
     const html = nunjucks.render('controller/configuration.html', 
       {
         global_stuff: OBITools.get_global_stuff(panel.webview, extensionUri),
-        main_java_script: getUri(panel.webview, extensionUri, ["out", "webview.js"]),
+        main_java_script: getUri(panel.webview, extensionUri, ["out", "config.js"]),
         icons: {debug_start: '$(preview)'},
         all_config: config,
         config_file: DirTool.get_encoded_file_URI(workspaceUri, Constants.OBI_CONFIG_FILE)
@@ -77,11 +77,12 @@ export class OBIConfiguration {
     panel.webview.onDidReceiveMessage(
       (message: any) => {
         const command = message.command;
-        const text = message.text;
 
         switch (command) {
-          case "hello":
-            vscode.window.showInformationMessage(text);
+          case "save":
+            vscode.window.showInformationMessage('Save Data');
+            console.log(message.data.global);
+            console.log(message.data.app);
             return;
         }
       }

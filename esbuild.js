@@ -38,8 +38,16 @@ const controllerViewConfig = {
   ...baseConfig,
   target: "es2020",
   format: "esm",
-  entryPoints: ["./src/webview/controller/main.ts"],
+  entryPoints: ["./src/webview/controller/javascript/controller.ts"],
   outfile: "./out/controller.js",
+};
+
+const configViewConfig = {
+  ...baseConfig,
+  target: "es2020",
+  format: "esm",
+  entryPoints: ["./src/webview/controller/javascript/config.ts"],
+  outfile: "./out/config.js",
 };
 
 
@@ -49,6 +57,7 @@ const controllerViewConfig = {
     await build(webviewConfig);
     await build(buildSummaryViewConfig);
     await build(controllerViewConfig);
+    await build(configViewConfig);
     console.log("build complete");
   } catch (err) {
     process.stderr.write(err.stderr);
