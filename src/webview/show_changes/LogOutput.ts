@@ -53,8 +53,6 @@ export class LogOutput {
       //return;
     }
 
-    const config = OBITools.get_obi_app_config();
-
     // If a webview panel does not already exist create and show a new one
     const panel = this.createNewPanel(log_type);
 
@@ -94,11 +92,10 @@ export class LogOutput {
 
   private static get_log_content(workspaceUri: Uri, log_type: string, level: number, source: string, cmd_index: number): string {
 
-    console.log("Read compile list");
     const fs = require("fs"); 
     
     const config = OBITools.get_obi_app_config();
-    let compile_list = fs.readFileSync(path.join(workspaceUri.fsPath, config['general']['compile-list']));
+    let compile_list = fs.readFileSync(path.join(workspaceUri.fsPath, config['app_config']['general']['compile-list']));
     // Converting to JSON 
     compile_list = JSON.parse(compile_list);
 

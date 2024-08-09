@@ -14,7 +14,7 @@
     <h1>Summary</h1>
     <br/><br/>
     <div>
-      Created at <b><u>{{ file_changed_date }}</u></b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='command:vscode.open?{{ compile_file }}'>open JSON file</a>
+      Created at <b><u>{{ compile_list['timestamp'] }}</u></b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='command:vscode.open?{{ compile_file }}'>open JSON file</a>
     </div>
     <br/>
     <hr />
@@ -88,7 +88,7 @@
       </tr>
     </thead>
     <tbody>
-      {% for level_item in compile_list %}
+      {% for level_item in compile_list['compiles'] %}
         <tr>
           <th>{{ level_item['level'] }}. level</th>
         </tr>

@@ -48,7 +48,6 @@ export class DirTool {
 
 
   public static get_json(path: string) {
-    console.log(`Load json '${path}'`)
     const fs = require("fs"); 
     
     let json_string = fs.readFileSync(path);
@@ -81,7 +80,7 @@ export class DirTool {
 
     const fileUri = {
       scheme: 'file',
-      path: `${workspaceUri.path}/${config['general']['source-dir']}/${file}`,
+      path: `${workspaceUri.path}/${config['app_config']['general']['source-dir']}/${file}`,
       authority: ''
     };
     return encodeURIComponent(JSON.stringify(fileUri))
@@ -94,7 +93,7 @@ export class DirTool {
 
     const fileUri = {
       scheme: 'file',
-      path: `${workspaceUri.path}/${config['general']['build-output-dir']}/${file}`,
+      path: `${workspaceUri.path}/${config['app_config']['general']['build-output-dir']}/${file}`,
       authority: ''
     };
     return encodeURIComponent(JSON.stringify(fileUri))

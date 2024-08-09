@@ -6,21 +6,44 @@
     <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
   </head>
   <body>
-    <br/>
-    <vscode-button id="howdy" appearance="primary">Configuration</vscode-button>
-    <br/>
-    <vscode-button id="show_changes" appearance="primary">Show changes</vscode-button>
-    <br/>
-    <vscode-button id="run_build" appearance="primary">Run build</vscode-button>
     
+    <table>
+      <tr>
+        <td>
+          <vscode-button id="run_build">
+            Run build
+            <span slot="start" class="codicon codicon-add"><img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/debug-start.svg"></span>
+          </vscode-button>
+        </td>
+        <td>
+          <vscode-progress-ring id="run_build_ring" style="visibility: hidden;"></vscode-progress-ring>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <vscode-button id="show_changes">
+            Show changes
+            <span slot="start" class="codicon codicon-add"><img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/telescope.svg"></span>
+          </vscode-button>      
+        </td>
+        <td>
+          <vscode-progress-ring id="show_changes_ring" style="visibility: hidden;"></vscode-progress-ring>
+        </td>
+      </tr>
+    </table>
+
+    <!--a href='command:obi.show_changes'><img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/telescope.svg">Show changes</a-->
     <br/>
-    <a href='command:obi.run_build'><img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/debug-start.svg">Run build</a>
+
     <br/>
-    <a href='command:obi.show_changes'><img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/telescope.svg">Show changes</a>
-    <br/>
-    <a href='command:obi.open_build_summary'><img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/file.svg">Open build summary</a>
-    
-    <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ global_stuff['webviewUri'] }}"></script>
+    <a id="open_build_summary" href='command:obi.open_build_summary' style="visibility: hidden;">
+      <img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/file.svg">Open build summary</a> 
+    <label id="build_summary_timestamp"  style="visibility: hidden;"> 
+      ({{ build_summary_timestamp }})
+    </label>
+
+
+    <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
     
   </body>
 </html>

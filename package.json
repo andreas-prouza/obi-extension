@@ -30,18 +30,17 @@
       {
         "command": "obi.source-lists.update",
         "title": "Update source list",
-        "icon": {
-          "dark": "asserts/img/dark/refresh.svg",
-          "light": "asserts/img/light/refresh.svg"
-        }
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "obi.controller.config",
+        "title": "Configuration",
+        "icon": "$(settings-gear)"
       },
       {
         "command": "obi.source-lists.show-view",
         "title": "Show source list",
-        "icon": {
-          "dark": "asserts/img/dark/preview.svg",
-          "light": "asserts/img/light/preview.svg"
-        }
+        "icon": "$(preview)"
       }
     ],
     "menus": {
@@ -49,6 +48,11 @@
         {
           "command": "obi.source-lists.update",
           "when": "view == obi.source-lists",
+          "group": "navigation"
+        },
+        {
+          "command": "obi.controller.config",
+          "when": "view == obi.controller",
           "group": "navigation"
         }
       ],

@@ -34,12 +34,21 @@ const buildSummaryViewConfig = {
   outfile: "./out/show_changes.js",
 };
 
+const controllerViewConfig = {
+  ...baseConfig,
+  target: "es2020",
+  format: "esm",
+  entryPoints: ["./src/webview/controller/main.ts"],
+  outfile: "./out/controller.js",
+};
+
 
 (async () => {
   try {
     await build(extensionConfig);
     await build(webviewConfig);
     await build(buildSummaryViewConfig);
+    await build(controllerViewConfig);
     console.log("build complete");
   } catch (err) {
     process.stderr.write(err.stderr);

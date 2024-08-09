@@ -55,17 +55,45 @@ export class OBITools {
   }
 
 
-  public static get_obi_app_config() {
+  public static get_obi_app_config(): {} {
 
     const ws_uri =
       vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
       ? vscode.workspace.workspaceFolders[0].uri
       : undefined;
 
-    if (ws_uri)
-      return DirTool.get_toml(path.join(ws_uri.fsPath, Constants.OBI_CONFIG_FILE));
+    if (ws_uri) {
+      
+      const global_config = DirTool.get_toml(path.join(ws_uri.fsPath, Constants.OBI_GLOBAL_CONFIG));
+      const app_config = DirTool.get_toml(path.join(ws_uri.fsPath, Constants.OBI_CONFIG_FILE));
+      return {
+        app_config: app_config,
+        global_config: global_config
+      }
+    }
   
     return {}
   }
+
+
+
+
+  public static get_compile_list(workspaceUri: vscode.Uri): {}|undefined {
+
+    const config = OBITools.get_obi_app_config();
+    const file_path: string = path.join(workspaceUri.fsPath, config['app_config']['general']['compile-list']);
+    
+    if (!DirTool.file_exists(file_path))
+      return undefined;
+
+    const fs = require("fs"); 
+    let compile_list = fs.readFileSync(file_path);
+    // Converting to JSON 
+    compile_list = JSON.parse(compile_list);
+
+    return compile_list
+  }
+
+
 
 }

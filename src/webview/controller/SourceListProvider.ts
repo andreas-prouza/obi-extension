@@ -29,7 +29,6 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
   getChildren(element?: SourceListItem): Thenable<SourceListItem[]> {
     if (!this.workspaceRoot) {
-      vscode.window.showInformationMessage('No dependency in empty workspace');
       return Promise.resolve([]);
     }
 
@@ -41,7 +40,6 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     
     const source_list_path = path.join(this.workspaceRoot, Constants.SOURCE_LIST_FOLDER_NAME);
     if (!DirTool.dir_exists(source_list_path)) {
-      vscode.window.showInformationMessage(`Workspace has no folder "${Constants.SOURCE_LIST_FOLDER_NAME}"`);
       return Promise.resolve([]);
     }
 
@@ -141,7 +139,6 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     });
 
     vscode.commands.registerCommand('obi.source-lists.show-view', async (item: SourceListItem)  => {
-        vscode.window.showInformationMessage(`show-view: ${item.label}`);
         if (!vscode.workspace.workspaceFolders)
           return;
         SourceList.render(context.extensionUri, vscode.workspace.workspaceFolders[0].uri, item.label)
@@ -248,8 +245,8 @@ class SourceListItem extends vscode.TreeItem {
     }
 
     this.iconPath = {
-      light: path.join(__filename, '..', '..', '..', '..', 'asserts', 'img', 'light', icon),
-      dark: path.join(__filename, '..', '..', '..', '..', 'asserts', 'img', 'dark', icon)
+      light: path.join(__filename, '..', '..', 'asserts', 'img', 'light', icon),
+      dark: path.join(__filename, '..', '..', 'asserts', 'img', 'dark', icon)
     };
     
     if (list_level != 'source-member')

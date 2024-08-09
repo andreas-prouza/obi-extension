@@ -68,7 +68,6 @@ export class Welcome implements vscode.WebviewViewProvider {
 		webviewView.webview.html = html;
 
 		webviewView.webview.onDidReceiveMessage(data => {
-			vscode.window.showInformationMessage(data.value);
 			switch (data.type) {
 				case 'colorSelected':
 					{

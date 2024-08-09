@@ -8,7 +8,8 @@ import { Welcome } from './webview/Welcome';
 import { OBITools } from './utilities/OBITools';
 import { Constants } from './Constants';
 import path from 'path';
-
+import * as fs from 'fs';
+import { OBIConfiguration } from './webview/controller/OBIConfiguration';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -65,6 +66,15 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider(Welcome.viewType, obi_welcome_provider)
 	);
 
+	if (rootPath) {
+		const config = OBITools.get_obi_app_config()['app_config'];
+		const compile_list_file_path: string = path.join(rootPath, config['general']['compile-list']);
+		// if compile-script changed, refresh the view
+		fs.watchFile(compile_list_file_path, {interval: 1000}, function (event, filename) {
+			OBIController.update_build_summary_timestamp();
+		});
+	}
+
 
 	new SourceListProvider(rootPath).register(context);
 	/*
@@ -76,5 +86,13 @@ export function activate(context: vscode.ExtensionContext) {
 		treeDataProvider: new SourceListProvider(rootPath)
 	});
 	*/
+	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.controller.config', ()  => {
+			if (!vscode.workspace.workspaceFolders)
+				return;
+			OBIConfiguration.render(context.extensionUri, vscode.workspace.workspaceFolders[0].uri)
+		})
+	)
+
 }
 

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
+  </head>
+  <body>
+    
+
+    <h1>Configuration</h1>
+
+    <br/>
+    <br/>
+    <a href='command:vscode.open?{{ config_file }}'>open config file</a>
+    
+    <br/>
+    <br/>
+
+    {% set app_config = all_config['app_config'] %}
+    {% set global_config = all_config['global_config'] %}
+    <vscode-text-field placeholder="IBM i host (or IP)" value="{{ global_config['REMOTE_HOST'] }}">Remote host</vscode-text-field>
+    <br/>
+    <br/>
+    <vscode-text-field size="80" value="{{ app_config['general']['local-base-dir'] }}">Local path</vscode-text-field>
+    <br/>
+    <br/>
+    <vscode-text-field size="80" value="{{ app_config['general']['remote-base-dir'] }}">Remote ifs path</vscode-text-field>
+    <br/>
+    <br/>
+    <vscode-text-field placeholder="src" value="{{ app_config['general']['source-dir'] }}">Source directory</vscode-text-field>
+    
+    <br/>
+    <br/>
+    <hr />
+    <br/>
+    
+    <vscode-checkbox checked>Use OBI local</vscode-checkbox>
+    <br/>
+    <br/>
+    <vscode-text-field size="80" placeholder="~/project/obi"  value="{{ global_config['OBI_DIR'] }}">Local OBI path</vscode-text-field>
+    <br/>
+    <br/>
+    <vscode-text-field size="80" placeholder="~/project/obi"  value="{{ global_config['REMOTE_OBI_DIR'] }}">Remote OBI path</vscode-text-field>
+
+    <br/>
+    <br/>
+    <hr />
+    <br/>
+
+    <h1>Compile settings</h1>
+    <h2>General</h2>
+    {% set general_settings=app_config['global']['settings']['general'] %}
+    <vscode-text-field placeholder="*CURRENT" value="{{ general_settings['TGTRLS'] }}">TGTRLS</vscode-text-field>
+    <vscode-text-field placeholder="*ALL" value="{{ general_settings['DBGVIEW'] }}">DBGVIEW</vscode-text-field>
+    <vscode-text-field placeholder="*JOB" value="{{ general_settings['TGTCCSID'] }}">TGTCCSID</vscode-text-field>
+    <vscode-text-field placeholder="*SNGLVL" value="{{ general_settings['STGMDL'] }}">STGMDL</vscode-text-field>
+    <br/>
+    <br/>
+    <vscode-text-field size="50" placeholder="$(TARGET_LIB), QGPL" value="{{ general_settings['LIBL'] | join(', ') }}">LIBL</vscode-text-field>
+    <br/>
+    <br/>
+    <vscode-text-field size="80" placeholder="$HOME/project-dir/src/prouzalib $HOME/project-dir/src/prouzalib2" value="{{ general_settings['INCDIR_RPGLE'] }}">INCDIR</vscode-text-field>
+    <br/>
+    <br/>
+    <vscode-text-field size="50" placeholder="prouzalib=prouzat1, prouzalib2=prouzat2" value="{% for k, v in general_settings['TARGET_LIB_MAPPING'] %}{% if loop.index0 > 0 %}, {% endif %}{{ k }}={{ v }}{% endfor %}">TARGET_LIB_MAPPING</vscode-text-field>
+    <br/>
+
+    <!--a href='command:obi.show_changes'><img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/telescope.svg">Show changes</a-->
+    <br/>
+
+    <br/>
+    <a id="open_build_summary" href='command:obi.open_build_summary' style="visibility: hidden;">
+      <img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/file.svg">Open build summary</a> 
+    <label id="build_summary_timestamp"  style="visibility: hidden;"> 
+      ({{ build_summary_timestamp }})
+    </label>
+
+
+    <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
+    
+  </body>
+</html>

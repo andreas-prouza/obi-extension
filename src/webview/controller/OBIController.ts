@@ -5,6 +5,9 @@ import { getNonce } from "../../utilities/getNonce";
 import { DirTool } from '../../utilities/DirTool';
 import { OBITools } from '../../utilities/OBITools';
 import { Constants } from '../../Constants';
+import path from 'path';
+import { OBICommands } from '../../obi/OBICommands';
+import { BuildSummary } from '../show_changes/BuildSummary';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -20,20 +23,56 @@ export class OBIController implements vscode.WebviewViewProvider {
 
 
 	public static readonly viewType = 'obi.controller';
+  public static view_object: OBIController;
+  public static current_run_type: string | undefined;
 
 	private _view?: vscode.WebviewView;
+	private _context?: vscode.WebviewViewResolveContext;
+	private _token?: vscode.CancellationToken;
   private readonly _extensionUri: vscode.Uri
 
 	constructor(extensionUri: vscode.Uri) {
     this._extensionUri = extensionUri;
-   }
+    OBIController.view_object = this;
+  }
+
+
+  public static run_finished() {
+    OBIController.view_object._view?.webview.postMessage({command: 'run_finished'});
+    //webviewView.webview.postMessage();
+  }
+  
+  
+  public static update_build_summary_timestamp() {
+
+    const rootPath =
+      vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+      ? vscode.workspace.workspaceFolders[0].uri
+      : undefined;
+
+    if (!rootPath)
+      return;
+
+    const compile_list = OBITools.get_compile_list(rootPath);
+     
+    OBIController.view_object._view?.webview.postMessage(
+      {
+        command: 'update_build_summary_timestamp',
+        build_summary_timestamp: compile_list ? compile_list['timestamp'] : undefined,
+        build_counts: compile_list ? compile_list['compiles'].length : undefined
+      });
+  }
+
+
 
 	public resolveWebviewView(
 		webviewView: vscode.WebviewView,
 		context: vscode.WebviewViewResolveContext,
-		_token: vscode.CancellationToken,
+		token: vscode.CancellationToken,
 	) {
 		this._view = webviewView;
+    this._context = context;
+    this._token = token;
 
 		webviewView.webview.options = {
 			// Allow scripts in the webview
@@ -58,74 +97,49 @@ export class OBIController implements vscode.WebviewViewProvider {
     if (vscode.window.activeColorTheme.kind == vscode.ColorThemeKind.Dark)
       theme_mode = 'dark';
 
+    const compile_list = OBITools.get_compile_list(workspaceFolder);
+
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
     const html = nunjucks.render(html_template, 
       {
         global_stuff: OBITools.get_global_stuff(webviewView.webview, this._extensionUri),
-        theme_mode: theme_mode
+        main_java_script: getUri(webviewView.webview, this._extensionUri, ["out", "controller.js"]),
+        theme_mode: theme_mode,
+        build_summary_timestamp: compile_list ? compile_list['timestamp'] : undefined,
+        builds_exist: compile_list ? compile_list['compiles'].length : undefined
       }
     );
 		webviewView.webview.html = html;
 
+    OBIController.update_build_summary_timestamp();
+
+    // Listener
 		webviewView.webview.onDidReceiveMessage(data => {
-			vscode.window.showInformationMessage(data.value);
-			switch (data.type) {
-				case 'colorSelected':
-					{
-						vscode.window.activeTextEditor?.insertSnippet(new vscode.SnippetString(`#${data.value}`));
-						break;
-					}
+
+			switch (data.command) {
+				case 'test':
+					vscode.window.showInformationMessage('Message from controller');
+					break;
+
+        case 'refresh':
+          this.resolveWebviewView(webviewView, context, token);
+          break;
+
+        case 'run_build': // command:obi.run_build
+          OBIController.current_run_type = data.command;
+          vscode.commands.executeCommand('obi.run_build');
+          break;
+
+        case 'show_changes': // command:obi.show_changes
+          OBIController.current_run_type = data.command;
+          vscode.commands.executeCommand('obi.show_changes');
+          webviewView.webview.postMessage({command: 'test'});
+
+          break;
 			}
 		});
+
 	}
-
-
-
-
-  public static get_object_list(workspaceUri: Uri) {
-
-    console.log("Read compile list");
-    const fs = require("fs"); 
-    
-    let compile_list = fs.readFileSync(`${workspaceUri.path}/tmp/changed-object-list.json`);
-    // Converting to JSON 
-    compile_list = JSON.parse(compile_list);
-
-    let dependend_sources = fs.readFileSync(`${workspaceUri.path}/tmp/dependend-object-list.json`);
-    // Converting to JSON 
-    dependend_sources = JSON.parse(dependend_sources);
-
-    for (let index = 0; index < compile_list['new-objects'].length; index++) {
-      compile_list['new-objects'][index] = {source: compile_list['new-objects'][index], file: DirTool.get_encoded_source_URI(workspaceUri, compile_list['new-objects'][index])};
-    }
-    for (let index = 0; index < compile_list['changed-sources'].length; index++) {
-      compile_list['changed-sources'][index] = {source: compile_list['changed-sources'][index], file: DirTool.get_encoded_source_URI(workspaceUri, compile_list['changed-sources'][index])};
-    }
-    for (let index = 0; index < dependend_sources.length; index++) {
-      dependend_sources[index] = {source: dependend_sources[index], file: DirTool.get_encoded_source_URI(workspaceUri, dependend_sources[index])};
-    }
-
-    return {
-      new_sources : compile_list['new-objects'], 
-      changed_sources: compile_list['changed-sources'], 
-      dependend_sources: dependend_sources
-    }
-  }
-
-
-
-  private static get_compile_list(workspaceUri: Uri) {
-
-    console.log("Read compile list");
-    const fs = require("fs"); 
-    
-    let compile_list = fs.readFileSync(`${workspaceUri.path}/build-output/compile-list.json`);
-    // Converting to JSON 
-    compile_list = JSON.parse(compile_list);
-
-    return compile_list
-  }
-
 
 
 }

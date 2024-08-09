@@ -3,10 +3,9 @@ import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vsco
 import { getUri } from "../../utilities/getUri";
 import { getNonce } from "../../utilities/getNonce";
 import { DirTool } from '../../utilities/DirTool';
+import path from 'path';
 import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
-import path from 'path';
-import { LogOutput } from './LogOutput';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -16,19 +15,11 @@ https://www.11ty.dev/docs/languages/nunjucks/
 const nunjucks = require('nunjucks');
 
 
-interface Compile_list {
-  level: string,
-  source_list: [
-    {
-      source: string,
-    }
-  ]
-}
 
 
-export class BuildSummary {
+export class OBIConfiguration {
 
-  public static currentPanel: BuildSummary | undefined;
+  public static currentPanel: OBIConfiguration | undefined;
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
 
@@ -55,34 +46,29 @@ export class BuildSummary {
    *
    * @param extensionUri The URI of the directory containing the extension.
    */
-  public static render(extensionUri: Uri, workspaceUri: Uri|undefined) {
-    if (BuildSummary.currentPanel) {
+  public static render(extensionUri: Uri, workspaceUri: Uri) {
+
+    if (OBIConfiguration.currentPanel) {
       // If the webview panel already exists reveal it
-      BuildSummary.currentPanel.dispose();
-      //BuildSummary.currentPanel._panel.reveal(ViewColumn.One);
-      //return;
+      OBIConfiguration.currentPanel._panel.reveal(ViewColumn.One);
+      return;
     }
-
-    if (!workspaceUri){
-      vscode.window.showErrorMessage("No workspace opened");
-      return
-    }
-
-    const config = OBITools.get_obi_app_config();
 
     // If a webview panel does not already exist create and show a new one
     const panel = this.createNewPanel(extensionUri);
-
+    const config = OBITools.get_obi_app_config();
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-    const html = nunjucks.render('show_changes/index.html', 
+    const html = nunjucks.render('controller/configuration.html', 
       {
         global_stuff: OBITools.get_global_stuff(panel.webview, extensionUri),
-        main_java_script: getUri(panel.webview, extensionUri, ["out", "show_changes.js"]),
+        main_java_script: getUri(panel.webview, extensionUri, ["out", "webview.js"]),
+        icons: {debug_start: '$(preview)'},
+        all_config: config,
+        config_file: DirTool.get_encoded_file_URI(workspaceUri, Constants.OBI_CONFIG_FILE)
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
-        object_list: this.get_object_list(workspaceUri),
-        compile_list: OBITools.get_compile_list(workspaceUri),
-        compile_file: DirTool.get_encoded_file_URI(workspaceUri, config['app_config']['general']['compile-list'])
+        //object_list: this.get_object_list(workspaceUri),
+        //compile_list: this.get_compile_list(workspaceUri)
       }
     );
     panel.webview.html = html;
@@ -91,61 +77,26 @@ export class BuildSummary {
     panel.webview.onDidReceiveMessage(
       (message: any) => {
         const command = message.command;
-        //const text = message.text;
+        const text = message.text;
 
         switch (command) {
           case "hello":
-            vscode.window.showInformationMessage(message.text);
-            return;
-          case "show_log":
-            LogOutput.render(workspaceUri, message.type, message.level, message.source, message.cmd_index);
+            vscode.window.showInformationMessage(text);
             return;
         }
       }
     );
 
-    BuildSummary.currentPanel = new BuildSummary(panel, extensionUri);
+    OBIConfiguration.currentPanel = new OBIConfiguration(panel, extensionUri);
   
   }
 
 
 
-  private static get_object_list(workspaceUri: Uri) {
-
-    const fs = require("fs"); 
-    
-    let compile_list = fs.readFileSync(`${workspaceUri.path}/tmp/changed-object-list.json`);
-    // Converting to JSON 
-    compile_list = JSON.parse(compile_list);
-
-    let dependend_sources = fs.readFileSync(`${workspaceUri.path}/tmp/dependend-object-list.json`);
-    // Converting to JSON 
-    dependend_sources = JSON.parse(dependend_sources);
-
-    for (let index = 0; index < compile_list['new-objects'].length; index++) {
-      compile_list['new-objects'][index] = {source: compile_list['new-objects'][index], file: DirTool.get_encoded_source_URI(workspaceUri, compile_list['new-objects'][index])};
-    }
-    for (let index = 0; index < compile_list['changed-sources'].length; index++) {
-      compile_list['changed-sources'][index] = {source: compile_list['changed-sources'][index], file: DirTool.get_encoded_source_URI(workspaceUri, compile_list['changed-sources'][index])};
-    }
-    for (let index = 0; index < dependend_sources.length; index++) {
-      dependend_sources[index] = {source: dependend_sources[index], file: DirTool.get_encoded_source_URI(workspaceUri, dependend_sources[index])};
-    }
-
-    return {
-      new_sources : compile_list['new-objects'], 
-      changed_sources: compile_list['changed-sources'], 
-      dependend_sources: dependend_sources
-    }
-  }
-
-
-
-
   private static createNewPanel(extensionUri : Uri) {
     return window.createWebviewPanel(
-      'show_changes', // Identifies the type of the webview. Used internally
-      'Show changes', // Title of the panel displayed to the user
+      'source_list', // Identifies the type of the webview. Used internally
+      'Source list', // Title of the panel displayed to the user
       // The editor column the panel should be displayed in
       ViewColumn.One,
       // Extra panel configurations
@@ -166,7 +117,7 @@ export class BuildSummary {
    * Cleans up and disposes of webview resources when the webview panel is closed.
    */
   public dispose() {
-    BuildSummary.currentPanel = undefined;
+    OBIConfiguration.currentPanel = undefined;
 
     // Dispose of the current webview panel
     this._panel.dispose();
