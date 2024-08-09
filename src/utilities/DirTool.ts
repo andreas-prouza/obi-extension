@@ -87,6 +87,7 @@ export class DirTool {
   }
 
 
+
   public static get_encoded_build_output_URI(workspaceUri: Uri, file: string) : string {
 
     const config = OBITools.get_obi_app_config();
@@ -100,6 +101,7 @@ export class DirTool {
   }
 
 
+
   public static get_toml(file: string): any|undefined {
 
     const fs = require('fs');
@@ -111,6 +113,38 @@ export class DirTool {
       // Parse the TOML data into a javascript object
       const result = toml.parse(data);
       return result;
+    }
+    catch (e: any) {
+      console.error(`Error in toml file: ${file}`);
+      console.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
+    }
+    return undefined;
+  }
+
+
+
+  public static get_key_value_file(file: string): {}|undefined {
+
+    const fs = require('fs');
+    let key_values = {};
+    try{
+      // Read the TOML file into a string
+      const data = fs.readFileSync(file, 'utf8');
+
+      const content_list:[] = data.toString().split('\n');
+
+      for (var i=0; i < content_list.length; i++) {
+        
+        const line = content_list[i].split('#');
+
+        if (line[0].length == 0)
+          continue;
+
+        const k_v: [] = line[0].split('=');
+        key_values[k_v[0]] = k_v[1];
+      }
+
+      return key_values;
     }
     catch (e: any) {
       console.error(`Error in toml file: ${file}`);

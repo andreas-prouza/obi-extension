@@ -47,24 +47,24 @@
       "view/title": [
         {
           "command": "obi.source-lists.update",
-          "when": "view == obi.source-lists",
+          "when": "obi.contains_obi_project == true && view == obi.source-lists",
           "group": "navigation"
         },
         {
           "command": "obi.controller.config",
-          "when": "view == obi.controller",
+          "when": "obi.contains_obi_project == true && view == obi.controller",
           "group": "navigation"
         }
       ],
       "view/item/context": [
         {
           "command": "obi.source-lists.update",
-          "when": "view == obi.source-lists && viewItem == source-member",
+          "when": "obi.contains_obi_project == true && view == obi.source-lists && viewItem == source-member",
           "group": "inline"
         },
         {
           "command": "obi.source-lists.show-view",
-          "when": "view == obi.source-lists && viewItem == source-list",
+          "when": "obi.contains_obi_project == true && view == obi.source-lists && viewItem == source-list",
           "group": "inline"
         },
         {

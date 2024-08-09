@@ -64,7 +64,7 @@ export class OBITools {
 
     if (ws_uri) {
       
-      const global_config = DirTool.get_toml(path.join(ws_uri.fsPath, Constants.OBI_GLOBAL_CONFIG));
+      const global_config = DirTool.get_key_value_file(path.join(ws_uri.fsPath, Constants.OBI_GLOBAL_CONFIG));
       const app_config = DirTool.get_toml(path.join(ws_uri.fsPath, Constants.OBI_CONFIG_FILE));
       return {
         app_config: app_config,
@@ -90,6 +90,12 @@ export class OBITools {
     let compile_list = fs.readFileSync(file_path);
     // Converting to JSON 
     compile_list = JSON.parse(compile_list);
+
+    if (typeof compile_list !='object' || compile_list==null || (compile_list instanceof Array) || (compile_list instanceof Date))
+      return undefined;
+
+    if (!compile_list['compiles'] || !compile_list['timestamp'])
+      return undefined;
 
     return compile_list
   }
