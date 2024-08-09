@@ -40,7 +40,16 @@ function save_config() {
 
   const app_elements = document.getElementsByClassName("save_app");
   for (let i = 0; i < app_elements.length; i++) {
-    app_config[app_elements[i].id] = app_elements[i].value;
+    const el2: [] = app_elements[i].value.split('.');
+    let item: string = `{${el2[0]}`;
+    let tmp: {} = {};
+    for (let i = 1; i < el2.length; i++) {
+      item = `${item} : { ${el2[i]}`;
+    }
+    for (let i = 1; i < el2.length; i++) {
+      item = `${item} }`;
+    }
+    //app_config[app_elements[i].id] = app_elements[i].value;
   }
 
   vscode.postMessage({
