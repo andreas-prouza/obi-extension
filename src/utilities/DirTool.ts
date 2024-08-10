@@ -105,7 +105,7 @@ export class DirTool {
   public static get_toml(file: string): any|undefined {
 
     const fs = require('fs');
-    const toml = require('toml');
+    const toml = require('smol-toml');
     try{
       // Read the TOML file into a string
       const data = fs.readFileSync(file, 'utf8');
@@ -119,6 +119,25 @@ export class DirTool {
       console.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
     }
     return undefined;
+  }
+
+
+  public static write_toml(file: string, data: {}): any|undefined {
+
+    const fs = require('fs');
+    const toml = require('smol-toml');
+    try{
+      
+      // Read the TOML file into a string
+      const text = toml.stringify(data);
+
+      fs.writeFileSync(file, text, 'utf8');
+    }
+    catch (e: any) {
+      console.error(`Error in toml file: ${file}`);
+      console.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
+    }
+    return;
   }
 
 

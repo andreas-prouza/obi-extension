@@ -83,6 +83,8 @@ export class OBIConfiguration {
             vscode.window.showInformationMessage('Save Data');
             console.log(message.data.global);
             console.log(message.data.app);
+
+            DirTool.write_toml(path.join(workspaceUri.fsPath, `${Constants.OBI_CONFIG_FILE}_new.toml`), message.data.app);
             return;
         }
       }

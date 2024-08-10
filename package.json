@@ -135,7 +135,8 @@
     "eslint": "^8.57.0",
     "nunjucks": "^3.2.4",
     "typescript": "^5.4.5",
-    "toml": "latest"
+    "deepmerge": "latest",
+    "smol-toml": "latest"
   },
   "theia": {
     "target": "browser"

@@ -6,6 +6,8 @@ import {
   Button
 } from "@vscode/webview-ui-toolkit";
 
+const deepmerge = require('deepmerge');
+
 // In order to use all the Webview UI Toolkit web components they
 // must be registered with the browser (i.e. webview) using the
 // syntax below.
@@ -39,18 +41,37 @@ function save_config() {
   }
 
   const app_elements = document.getElementsByClassName("save_app");
+  let json_string: string = '';
+
   for (let i = 0; i < app_elements.length; i++) {
-    const el2: [] = app_elements[i].value.split('.');
-    let item: string = `{${el2[0]}`;
-    let tmp: {} = {};
-    for (let i = 1; i < el2.length; i++) {
-      item = `${item} : { ${el2[i]}`;
+    
+    let item = {};
+    const el2: [] = app_elements[i].id.split('|');
+
+    json_string = '';
+
+    console.log('##########################');
+    console.log(app_elements[i].id);
+    console.log(el2.toString());
+    
+    for (let i=0; i < el2.length; i++) {
+      if (i > 0)
+        json_string = `${json_string} :`;
+      json_string = `${json_string} { "${el2[i]}"`;
     }
-    for (let i = 1; i < el2.length; i++) {
-      item = `${item} }`;
+    json_string = `${json_string} : "${app_elements[i].value.replace('$HOME', '\\\"$HOME\\\"')}"`;
+
+    // finally close the element
+    for (let i = 0; i < el2.length; i++) {
+      json_string = `${json_string} }`;
     }
+    console.log(json_string);
+    item = JSON.parse(json_string);
+    app_config = deepmerge(app_config, item);
     //app_config[app_elements[i].id] = app_elements[i].value;
   }
+
+  console.log(app_config);
 
   vscode.postMessage({
     command: "save",
