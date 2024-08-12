@@ -6,6 +6,7 @@ import { DirTool } from '../../utilities/DirTool';
 import path from 'path';
 import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
+import { AppConfig } from './AppConfig';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -56,8 +57,8 @@ export class OBIConfiguration {
 
     // If a webview panel does not already exist create and show a new one
     const panel = this.createNewPanel(extensionUri);
-    const project_config = OBITools.get_project_app_config(workspaceUri);
-    const user_config = OBITools.get_user_app_config(workspaceUri);
+    const project_config = AppConfig.get_project_app_config(workspaceUri);
+    const user_config = AppConfig.get_user_app_config(workspaceUri);
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
     const html = nunjucks.render('controller/configuration.html', 

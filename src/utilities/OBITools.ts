@@ -6,6 +6,7 @@ import { getNonce } from './getNonce';
 import { Constants } from '../Constants';
 
 import { deepmerge } from "deepmerge-ts";
+import { AppConfig } from '../webview/controller/AppConfig';
 
 
 
@@ -57,16 +58,6 @@ export class OBITools {
   }
 
 
-  public static get_project_app_config(workspace: vscode.Uri): {} {
-    return DirTool.get_toml(path.join(workspace.fsPath, Constants.OBI_CONFIG_FILE));
-  }
-
-
-  public static get_user_app_config(workspace: vscode.Uri): {} {
-    return DirTool.get_toml(path.join(workspace.fsPath, Constants.OBI_USER_CONFIG_FILE));
-  }
-
-
 
   public static get_obi_app_config(): {} {
 
@@ -79,8 +70,8 @@ export class OBITools {
       
       const global_config = DirTool.get_key_value_file(path.join(ws_uri.fsPath, Constants.OBI_GLOBAL_CONFIG));
       
-      let project_app_config = OBITools.get_project_app_config(ws_uri);
-      const user_app_config = OBITools.get_user_app_config(ws_uri);
+      let project_app_config = AppConfig.get_project_app_config(ws_uri);
+      const user_app_config = AppConfig.get_user_app_config(ws_uri);
 
       if (user_app_config['general'])
         project_app_config['general'] = OBITools.override_dict(user_app_config['general'], project_app_config['general']);

@@ -130,14 +130,16 @@
     "@typescript-eslint/eslint-plugin": "^7.14.1",
     "@typescript-eslint/parser": "^7.11.0",
     "@vscode/test-cli": "^0.0.9",
-    "@vscode/test-electron": "^2.4.0",
+    "@vscode/test-electron": "^2.4.1",
+    "deepmerge": "latest",
+    "deepmerge-ts": "latest",
     "esbuild": "^0.16.17",
     "eslint": "^8.57.0",
     "nunjucks": "^3.2.4",
-    "typescript": "^5.4.5",
-    "deepmerge": "latest",
-    "deepmerge-ts": "latest",
-    "smol-toml": "latest"
+    "smol-toml": "latest",
+    "ts-interface-builder": "^0.3.3",
+    "ts-interface-checker": "^1.0.2",
+    "typescript": "^5.4.5"
   },
   "theia": {
     "target": "browser"
