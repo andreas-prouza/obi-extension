@@ -136,6 +136,7 @@
     "nunjucks": "^3.2.4",
     "typescript": "^5.4.5",
     "deepmerge": "latest",
+    "deepmerge-ts": "latest",
     "smol-toml": "latest"
   },
   "theia": {

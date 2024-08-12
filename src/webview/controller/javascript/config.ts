@@ -23,24 +23,30 @@ function main() {
   // to the element (i.e. the `as Button` syntax)
 
   const save_button = document.getElementById("save_config") as Button;
-  save_button?.addEventListener("click", save_config);
+  save_button?.addEventListener("click", save_configs);
 
   window.addEventListener('message', receive_message);
 
 }
 
 
-function save_config() {
+function save_configs() {
+  save_config('project');
+  save_config('user');
+}
+
+
+function save_config(class_prefix:string) {
 
   let global_config:{} = {};
   let app_config:{} = {};
 
-  const global_elements = document.getElementsByClassName("save_global");
+  const global_elements = document.getElementsByClassName(`${class_prefix}_save_global`);
   for (let i = 0; i < global_elements.length; i++) {
     global_config[global_elements[i].id] = global_elements[i].value;
   }
 
-  const app_elements = document.getElementsByClassName("save_app");
+  const app_elements = document.getElementsByClassName(`${class_prefix}_save_app`);
   let json_string: string = '';
 
   for (let i = 0; i < app_elements.length; i++) {
@@ -74,7 +80,7 @@ function save_config() {
   console.log(app_config);
 
   vscode.postMessage({
-    command: "save",
+    command: `${class_prefix}_save`,
     data: {
       global: global_config,
       app: app_config

@@ -1,0 +1,218 @@
+
+{% set app_global=app_config['global'] %}
+{% set app_general=app_config['general'] %}
+{% set general_settings=app_config['global']['settings']['general'] %}
+
+<vscode-panels activeid="tab-1" aria-label="Default">
+
+  <vscode-panel-tab id="tab-1"><h3>Configuration</h3></vscode-panel-tab>
+  <vscode-panel-tab id="tab-2"><h3>Compile settings</h3></vscode-panel-tab>
+  <vscode-panel-tab id="tab-3"><h3>System settings</h3></vscode-panel-tab>
+  <vscode-panel-tab id="tab-4"><h3>Constants</h3></vscode-panel-tab>
+
+  <vscode-panel-view id="view-1">
+    <section>
+
+      <vscode-text-field class="{{ class_prefix }}_save_global" id="REMOTE_HOST" placeholder="IBM i host (or IP)"
+        value="{{ global_config['REMOTE_HOST'] }}">Remote host</vscode-text-field>
+      <br />
+      <br />
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|local-base-dir" size="80"
+        value="{{ app_config['general']['local-base-dir'] | replace('" $HOME"', '$HOME' ) }}">Local
+        path</vscode-text-field>
+      <br />
+      <br />
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|remote-base-dir" size="80"
+        value="{{ app_config['general']['remote-base-dir'] | replace('" $HOME"', '$HOME' ) }}">Remote ifs
+        path</vscode-text-field>
+      <br />
+      <br />
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|source-dir" placeholder="src"
+        value="{{ app_config['general']['source-dir'] | replace('" $HOME"', '$HOME' ) }}">Source
+        directory</vscode-text-field>
+
+      <br />
+      <br />
+      <hr />
+      <br />
+
+      <vscode-checkbox checked>Use OBI local</vscode-checkbox>
+      <br />
+      <br />
+      <vscode-text-field class="{{ class_prefix }}_save_global" id="OBI_DIR" size="80" placeholder="~/project/obi"
+        value="{{ global_config['OBI_DIR'] | replace('" $HOME"', '$HOME' ) }}">Local OBI path</vscode-text-field>
+      <br />
+      <br />
+      <vscode-text-field class="{{ class_prefix }}_save_global" id="REMOTE_OBI_DIR" size="80" placeholder="~/project/obi"
+        value="{{ global_config['REMOTE_OBI_DIR'] | replace('" $HOME"', '$HOME' ) }}">Remote OBI
+        path</vscode-text-field>
+    </section>
+  </vscode-panel-view>
+
+
+  <vscode-panel-view id="view-2">
+    <section>
+
+      <h2>General</h2>
+
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|general|TGTRLS" placeholder="*CURRENT"
+        value="{{ general_settings['TGTRLS'] }}">TGTRLS</vscode-text-field>
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|general|DBGVIEW" placeholder="*ALL"
+        value="{{ general_settings['DBGVIEW'] }}">DBGVIEW</vscode-text-field>
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|general|TGTCCSID" placeholder="*JOB"
+        value="{{ general_settings['TGTCCSID'] }}">TGTCCSID</vscode-text-field>
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|general|STGMDL" placeholder="*SNGLVL"
+        value="{{ general_settings['STGMDL'] }}">STGMDL</vscode-text-field>
+      <br />
+      <br />
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|general|LIBL" size="50"
+        placeholder="$(TARGET_LIB), QGPL" value="{{ general_settings['LIBL'] | join(', ') }}">LIBL</vscode-text-field>
+      <br />
+      <br />
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|general|INCDIR_RPGLE" size="80"
+        placeholder="$HOME/project-dir/src/prouzalib $HOME/project-dir/src/prouzalib2"
+        value="{{ general_settings['INCDIR_RPGLE'] | replace('" $HOME"', '$HOME' ) }}">INCDIR</vscode-text-field>
+      <br />
+      <br />
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|general|TARGET_LIB_MAPPING" size="50"
+        placeholder="prouzalib=prouzat1, prouzalib2=prouzat2"
+        value="{% for k, v in general_settings['TARGET_LIB_MAPPING'] %}{% if loop.index0 > 0 %}, {% endif %}{{ k }}={{ v }}{% endfor %}">TARGET_LIB_MAPPING</vscode-text-field>
+      <br />
+      
+      <br />
+      <hr />
+      <br />
+      
+      <h2>Language</h2>
+      {% set app_language = app_global['settings']['language'] %}
+
+      {% for key, value in app_language %}
+        <h3>{{ key }}</h3>
+        {% for k2, v2 in value %}
+          <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|language|{{ key }}|{{ k2 }}" placeholder="utf-8"
+            value="{{ v2 }}">{{ k2 }}
+          </vscode-text-field>
+          <br/>
+          <br/>
+        {% endfor %}
+      {% endfor %}
+      <br />
+      <hr />
+      <br />
+      
+      <h2>General commands</h2>
+      {% set cmds = app_global['cmds'] %}
+
+      {% for key, value in cmds %}
+        <vscode-text-field size="50" class="{{ class_prefix }}_save_app" id="global|cmds|{{ key }}"
+          value="{{ value }}">{{ key }}
+        </vscode-text-field>
+        <br/>
+        <br/>
+      {% endfor %}
+
+      <br />
+      <hr />
+      <br />
+      
+      
+      <h2>Compile commands</h2>
+      {% set compile_cmds = app_global['compile-cmds'] %}
+
+      {% for key, value in compile_cmds %}
+        <vscode-text-area cols="50" rows="4" resize="both" class="{{ class_prefix }}_save_app" id="global|compile-cmds|{{ key }}"
+          value="{{ value }}">{{ key }}
+        </vscode-text-area>
+        <br/>
+        <br/>
+      {% endfor %}
+
+      <br />
+      <hr />
+      <br />
+      
+      <h2>Compile steps</h2>
+      {% set compile_steps = app_global['steps'] %}
+
+      {% for key, value in compile_steps %}
+        <vscode-text-area cols="40" rows="4" resize="both" class="{{ class_prefix }}_save_app" id="global|steps|{{ key }}"
+          value="{{ value | join(',\n') }}">{{ key }}
+        </vscode-text-area>
+        <br/>
+        <br/>
+      {% endfor %}
+
+    </section>
+  </vscode-panel-view>
+
+
+  <vscode-panel-view id="view-system-3">
+    <section>
+      
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|supported-object-types" placeholder="pgm, file, srvpgm"
+        value="{{ app_general['supported-object-types'] }}">Supported object types
+      </vscode-text-field>
+
+      <br/>
+      <br/>
+
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|file-system-encoding" placeholder="utf-8"
+        value="{{ app_general['file-system-encoding'] }}">File system encoding
+      </vscode-text-field>
+
+      <br/>
+      <br/>
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|console-output-encoding" placeholder="utf-8"
+        value="{{ app_general['console-output-encoding'] }}">Console output encoding
+      </vscode-text-field>
+    
+    </section>
+
+  </vscode-panel-view>
+    
+
+
+  <vscode-panel-view id="view-file-constants-4">
+
+    <section>
+
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|compiled-object-list" placeholder="utf-8"
+        value="{{ app_general['compiled-object-list'] }}">Compiled object list
+      </vscode-text-field>
+            
+      <br/>
+      <br/>
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|dependency-list" placeholder="utf-8"
+        value="{{ app_general['dependency-list'] }}">Dependency list
+      </vscode-text-field>
+            
+      <br/>
+      <br/>
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|deployment-object-list" placeholder="utf-8"
+        value="{{ app_general['deployment-object-list'] }}">Deployment object list
+      </vscode-text-field>
+            
+      <br/>
+      <br/>
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|build-output-dir" placeholder="utf-8"
+        value="{{ app_general['build-output-dir'] }}">Build output dir
+      </vscode-text-field>
+    
+      <br/>
+      <br/>
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|compile-list" placeholder="utf-8"
+        value="{{ app_general['compile-list'] }}">Compile list
+      </vscode-text-field>
+    
+      <br/>
+      <br/>
+      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|compiled-object-list-md" placeholder="utf-8"
+        value="{{ app_general['compiled-object-list-md'] }}">Compiled object list md
+      </vscode-text-field>
+    
+
+    </section>
+
+  </vscode-panel-view>
+
+</vscode-panels>

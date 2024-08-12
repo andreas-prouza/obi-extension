@@ -56,7 +56,8 @@ export class OBIConfiguration {
 
     // If a webview panel does not already exist create and show a new one
     const panel = this.createNewPanel(extensionUri);
-    const config = OBITools.get_obi_app_config();
+    const project_config = OBITools.get_project_app_config(workspaceUri);
+    const user_config = OBITools.get_user_app_config(workspaceUri);
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
     const html = nunjucks.render('controller/configuration.html', 
@@ -64,7 +65,8 @@ export class OBIConfiguration {
         global_stuff: OBITools.get_global_stuff(panel.webview, extensionUri),
         main_java_script: getUri(panel.webview, extensionUri, ["out", "config.js"]),
         icons: {debug_start: '$(preview)'},
-        all_config: config,
+        user_config: user_config,
+        project_config: project_config,
         config_file: DirTool.get_encoded_file_URI(workspaceUri, Constants.OBI_CONFIG_FILE)
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         //object_list: this.get_object_list(workspaceUri),

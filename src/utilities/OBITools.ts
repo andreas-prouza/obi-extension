@@ -5,6 +5,8 @@ import { getUri } from './getUri';
 import { getNonce } from './getNonce';
 import { Constants } from '../Constants';
 
+import { deepmerge } from "deepmerge-ts";
+
 
 
 export class OBITools {
@@ -55,26 +57,50 @@ export class OBITools {
   }
 
 
+  public static get_project_app_config(workspace: vscode.Uri): {} {
+    return DirTool.get_toml(path.join(workspace.fsPath, Constants.OBI_CONFIG_FILE));
+  }
+
+
+  public static get_user_app_config(workspace: vscode.Uri): {} {
+    return DirTool.get_toml(path.join(workspace.fsPath, Constants.OBI_USER_CONFIG_FILE));
+  }
+
+
+
   public static get_obi_app_config(): {} {
 
     const ws_uri =
-      vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-      ? vscode.workspace.workspaceFolders[0].uri
-      : undefined;
+    vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+    ? vscode.workspace.workspaceFolders[0].uri
+    : undefined;
 
     if (ws_uri) {
       
       const global_config = DirTool.get_key_value_file(path.join(ws_uri.fsPath, Constants.OBI_GLOBAL_CONFIG));
-      const app_config = DirTool.get_toml(path.join(ws_uri.fsPath, Constants.OBI_CONFIG_FILE));
+      
+      let project_app_config = OBITools.get_project_app_config(ws_uri);
+      const user_app_config = OBITools.get_user_app_config(ws_uri);
+
+      if (user_app_config['general'])
+        project_app_config['general'] = OBITools.override_dict(user_app_config['general'], project_app_config['general']);
+
+      if (user_app_config['global'] && user_app_config['global']['settings'] && user_app_config['global']['settings']['general'])
+        project_app_config['global']['settings']['general'] = OBITools.override_dict(user_app_config['global']['settings']['general'], project_app_config['global']['settings']['general']);
+
       return {
-        app_config: app_config,
+        app_config: project_app_config,
         global_config: global_config
       }
     }
-  
-    return {}
+
+    return {};
   }
 
+
+  public static override_dict(from_dict:{}, to_dict:{}): {} {
+    return {...to_dict, ...from_dict};
+  }
 
 
 
