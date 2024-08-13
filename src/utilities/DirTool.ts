@@ -104,6 +104,11 @@ export class DirTool {
 
   public static get_toml(file: string): any|undefined {
 
+    if (!DirTool.file_exists(file)) {
+      console.warn(`File does not exist: ${file}`);
+      return undefined
+    }
+
     const fs = require('fs');
     const toml = require('smol-toml');
     try{
