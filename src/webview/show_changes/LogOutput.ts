@@ -6,6 +6,7 @@ import { DirTool } from '../../utilities/DirTool';
 import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
 import path from 'path';
+import { AppConfig } from '../controller/AppConfig';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -94,7 +95,7 @@ export class LogOutput {
 
     const fs = require("fs"); 
     
-    const config = OBITools.get_obi_app_config();
+    const config = AppConfig.get_app_confg();
     let compile_list = fs.readFileSync(path.join(workspaceUri.fsPath, config['app_config']['general']['compile-list']));
     // Converting to JSON 
     compile_list = JSON.parse(compile_list);

@@ -7,6 +7,7 @@ import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
 import path from 'path';
 import { LogOutput } from './LogOutput';
+import { AppConfig } from '../controller/AppConfig';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -68,7 +69,7 @@ export class BuildSummary {
       return
     }
 
-    const config = OBITools.get_obi_app_config();
+    const config = AppConfig.get_app_confg();
 
     // If a webview panel does not already exist create and show a new one
     const panel = this.createNewPanel(extensionUri);

@@ -68,7 +68,7 @@ export class OBIConfiguration {
         icons: {debug_start: '$(preview)'},
         user_config: user_config,
         project_config: project_config,
-        config_file: DirTool.get_encoded_file_URI(workspaceUri, Constants.OBI_CONFIG_FILE)
+        config_file: DirTool.get_encoded_file_URI(workspaceUri, Constants.OBI_APP_CONFIG_FILE)
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         //object_list: this.get_object_list(workspaceUri),
         //compile_list: this.get_compile_list(workspaceUri)
@@ -87,7 +87,7 @@ export class OBIConfiguration {
             console.log(message.data.global);
             console.log(message.data.app);
 
-            DirTool.write_toml(path.join(workspaceUri.fsPath, `${Constants.OBI_CONFIG_FILE}_new.toml`), message.data.app);
+            DirTool.write_toml(path.join(workspaceUri.fsPath, `${Constants.OBI_APP_CONFIG_FILE}_new.toml`), message.data.app);
             return;
         }
       }

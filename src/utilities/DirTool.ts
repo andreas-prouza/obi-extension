@@ -1,6 +1,7 @@
 import { ExecException } from "child_process";
 import { Uri } from "vscode";
 import { OBITools } from "./OBITools";
+import { AppConfig } from "../webview/controller/AppConfig";
 
 export class DirTool {
 
@@ -76,7 +77,7 @@ export class DirTool {
 
   public static get_encoded_source_URI(workspaceUri: Uri, file: string) : string {
 
-    const config = OBITools.get_obi_app_config();
+    const config = AppConfig.get_app_confg();
 
     const fileUri = {
       scheme: 'file',
@@ -90,7 +91,7 @@ export class DirTool {
 
   public static get_encoded_build_output_URI(workspaceUri: Uri, file: string) : string {
 
-    const config = OBITools.get_obi_app_config();
+    const config = AppConfig.get_app_confg();
 
     const fileUri = {
       scheme: 'file',
@@ -150,21 +151,24 @@ export class DirTool {
   public static get_key_value_file(file: string): {}|undefined {
 
     const fs = require('fs');
-    let key_values = {};
+    let key_values: {}= {};
     try{
       // Read the TOML file into a string
       const data = fs.readFileSync(file, 'utf8');
 
-      const content_list:[] = data.toString().split('\n');
+      const content_list: string[] = data.toString().split('\n');
 
       for (var i=0; i < content_list.length; i++) {
         
-        const line = content_list[i].split('#');
-
+        const line = content_list[i].trim().split('#');
         if (line[0].length == 0)
           continue;
 
-        const k_v: [] = line[0].split('=');
+        const line2 = content_list[i].trim().split('source ');
+        if (line2[0].length == 0)
+          continue;
+
+        const k_v: string[] = line[0].trim().split('=');
         key_values[k_v[0]] = k_v[1];
       }
 

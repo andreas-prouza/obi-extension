@@ -137,8 +137,6 @@
     "eslint": "^8.57.0",
     "nunjucks": "^3.2.4",
     "smol-toml": "latest",
-    "ts-interface-builder": "^0.3.3",
-    "ts-interface-checker": "^1.0.2",
     "typescript": "^5.4.5"
   },
   "theia": {

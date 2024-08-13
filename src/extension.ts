@@ -10,6 +10,7 @@ import { Constants } from './Constants';
 import path from 'path';
 import * as fs from 'fs';
 import { OBIConfiguration } from './webview/controller/OBIConfiguration';
+import { AppConfig } from './webview/controller/AppConfig';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -67,7 +68,7 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	if (rootPath) {
-		const config = OBITools.get_obi_app_config()['app_config'];
+		const config = AppConfig.get_app_confg()['app_config'];
 		const compile_list_file_path: string = path.join(rootPath, config['general']['compile-list']);
 		// if compile-script changed, refresh the view
 		fs.watchFile(compile_list_file_path, {interval: 1000}, function (event, filename) {

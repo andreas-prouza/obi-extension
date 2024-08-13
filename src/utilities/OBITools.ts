@@ -20,7 +20,7 @@ export class OBITools {
 
     const ws = vscode.workspace.workspaceFolders[0].uri.fsPath;
 
-    if (!DirTool.file_exists(path.join(ws, Constants.OBI_CONFIG_FILE)))
+    if (!DirTool.file_exists(path.join(ws, Constants.OBI_APP_CONFIG_FILE)))
       return false;
 
     if (!DirTool.file_exists(path.join(ws, 'etc', 'global.cfg')))
@@ -59,45 +59,22 @@ export class OBITools {
 
 
 
-  public static get_obi_app_config(): {} {
-
-    const ws_uri =
-    vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-    ? vscode.workspace.workspaceFolders[0].uri
-    : undefined;
-
-    if (ws_uri) {
-      
-      const global_config = DirTool.get_key_value_file(path.join(ws_uri.fsPath, Constants.OBI_GLOBAL_CONFIG));
-      
-      let project_app_config = AppConfig.get_project_app_config(ws_uri);
-      const user_app_config = AppConfig.get_user_app_config(ws_uri);
-
-      if (user_app_config['general'])
-        project_app_config['general'] = OBITools.override_dict(user_app_config['general'], project_app_config['general']);
-
-      if (user_app_config['global'] && user_app_config['global']['settings'] && user_app_config['global']['settings']['general'])
-        project_app_config['global']['settings']['general'] = OBITools.override_dict(user_app_config['global']['settings']['general'], project_app_config['global']['settings']['general']);
-
-      return {
-        app_config: project_app_config,
-        global_config: global_config
-      }
-    }
-
-    return {};
-  }
-
 
   public static override_dict(from_dict:{}, to_dict:{}): {} {
-    return {...to_dict, ...from_dict};
+    for (const [k, v] of Object.entries(from_dict)) {
+      if (typeof v==='object' && v!==null && !(v instanceof Array) && !(v instanceof Date))
+        return this.override_dict(from_dict[k], to_dict[k]);
+      to_dict[k] = v;
+    }
+    //return {...to_dict, ...from_dict};
+    return to_dict;
   }
 
 
 
   public static get_compile_list(workspaceUri: vscode.Uri): {}|undefined {
 
-    const config = OBITools.get_obi_app_config();
+    const config = AppConfig.get_app_confg();
     const file_path: string = path.join(workspaceUri.fsPath, config['app_config']['general']['compile-list']);
     
     if (!DirTool.file_exists(file_path))
