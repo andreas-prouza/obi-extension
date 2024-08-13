@@ -148,7 +148,23 @@ export class DirTool {
 
 
 
-  public static get_key_value_file(file: string): {}|undefined {
+  public static write_file(file: string, content: string): void {
+
+    const fs = require('fs');
+    try{
+      
+      fs.writeFileSync(file, content, 'utf8');
+    }
+    catch (e: any) {
+      console.error(`Error in toml file: ${file}`);
+      console.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
+    }
+    return;
+  }
+
+
+
+  public static get_key_value_file(file: string): string[]|undefined {
 
     const fs = require('fs');
     let key_values: {}= {};
@@ -156,29 +172,41 @@ export class DirTool {
       // Read the TOML file into a string
       const data = fs.readFileSync(file, 'utf8');
 
-      const content_list: string[] = data.toString().split('\n');
-
-      for (var i=0; i < content_list.length; i++) {
-        
-        const line = content_list[i].trim().split('#');
-        if (line[0].length == 0)
-          continue;
-
-        const line2 = content_list[i].trim().split('source ');
-        if (line2[0].length == 0)
-          continue;
-
-        const k_v: string[] = line[0].trim().split('=');
-        key_values[k_v[0]] = k_v[1];
-      }
-
-      return key_values;
+      return data.toString().split('\n');
     }
     catch (e: any) {
       console.error(`Error in toml file: ${file}`);
       console.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
     }
     return undefined;
+  }
+
+
+
+  public static get_shell_config(file: string): {}|undefined {
+
+    const content_list: string[]|undefined = DirTool.get_key_value_file(file);
+    if (!content_list)
+      return undefined;
+
+    let key_values: {} = {};
+
+    for (var i=0; i < content_list.length; i++) {
+      
+      const line = content_list[i].trim().split('#');
+      if (line[0].length == 0)
+        continue;
+
+      const line2 = content_list[i].trim().split('source ');
+      if (line2[0].length == 0)
+        continue;
+
+      const k_v: string[] = line[0].trim().split('=');
+      key_values[k_v[0]] = k_v[1];
+    }
+
+    return key_values;
+
   }
 
 }

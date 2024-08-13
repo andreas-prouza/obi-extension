@@ -87,6 +87,9 @@ export class OBIConfiguration {
 
   private static onReceiveMessage(message: any): void {
 
+    const is_user = true;
+    const is_project = false;
+
     const workspaceUri =
     vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
     ? vscode.workspace.workspaceFolders[0].uri
@@ -99,23 +102,63 @@ export class OBIConfiguration {
 
     switch (command) {
       case "user_save":
-        OBIConfiguration.save_config(path.join(workspaceUri.fsPath, `${Constants.OBI_APP_CONFIG_USER_FILE}_new_${command}.toml`), message.data);
+        OBIConfiguration.save_config(is_user, workspaceUri, message.data);
         break;
       case "project_save":
-        OBIConfiguration.save_config(path.join(workspaceUri.fsPath, `${Constants.OBI_APP_CONFIG_FILE}_new_${command}.toml`), message.data);
+        OBIConfiguration.save_config(is_project, workspaceUri, message.data);
         break;
     }
     return;
   }
 
 
-  private static save_config(file: string, data: {}) {
+  private static save_config(isUser: boolean, workspaceUri: Uri, data: {}) {
 
-    vscode.window.showInformationMessage('Save Data');
-    console.log(data.global);
-    console.log(data.app);
+    vscode.window.showInformationMessage('Configuration saved');
 
-    DirTool.write_toml(file, data.app);
+    // App config
+    let toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_FILE);
+    if (isUser)
+      toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_USER_FILE);
+    
+    DirTool.write_toml(toml_file, data.app);
+    
+    let shell_config_file = path.join(workspaceUri.fsPath, Constants.OBI_GLOBAL_CONFIG);
+    if (isUser)
+      shell_config_file = path.join(workspaceUri.fsPath, Constants.OBI_GLOBAL_USER_CONFIG);
+
+    // Shell config
+    const shell_config: string[]|undefined = DirTool.get_key_value_file(shell_config_file);
+    if (!shell_config)
+      return;
+
+    // Replace existing config with new values
+    for (let [k, v] of Object.entries(data.global)) {
+
+      let found = false;
+
+      for (let i=0; i < shell_config.length; i++) {
+
+        if (shell_config[i].split('=')[0] == k) {
+
+          // if empty --> remove from list
+          if (v.length == 0) {
+            shell_config.splice(i, 1);
+            break;
+          }
+
+          shell_config[i] = `${k}=${v}`;
+          found = true;
+          break;
+        }
+      }
+
+      // if not found --> add new entry to list
+      if (!found && v.length > 0)
+        shell_config.push(`${k}=${v}`);
+    }
+
+    DirTool.write_file(shell_config_file, shell_config.join('\n'));
 }
   
 

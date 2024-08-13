@@ -33,7 +33,7 @@ export class AppConfig {
 
     const app_config = DirTool.get_toml(path.join(workspace.fsPath, Constants.OBI_APP_CONFIG_FILE));
 
-    const global_config = DirTool.get_key_value_file(path.join(workspace.fsPath, Constants.OBI_GLOBAL_CONFIG)) || {};
+    const global_config = DirTool.get_shell_config(path.join(workspace.fsPath, Constants.OBI_GLOBAL_CONFIG)) || {};
 
     return {
       app_config: app_config,
@@ -53,7 +53,7 @@ export class AppConfig {
     const app_config = OBITools.override_dict(user_app_config, project_app_config['app_config']);
     //im app_config gibt es unterschiedliche array strukturen als im Project array!!!!
 
-    const global_user_config: {} = DirTool.get_key_value_file(path.join(workspace.fsPath, Constants.OBI_GLOBAL_USER_CONFIG)) || {};
+    const global_user_config: {} = DirTool.get_shell_config(path.join(workspace.fsPath, Constants.OBI_GLOBAL_USER_CONFIG)) || {};
     const global_config: {} = OBITools.override_dict(global_user_config, project_app_config['global_config']);
 
     return {

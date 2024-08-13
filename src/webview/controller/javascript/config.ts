@@ -56,32 +56,48 @@ function save_config(class_prefix:string) {
 
     json_string = '';
 
-    console.log('##########################');
-    console.log(app_elements[i].id);
-    console.log(el2.toString());
-    console.log(app_elements[i].value);
-    
     for (let i=0; i < el2.length; i++) {
       if (i > 0)
         json_string = `${json_string} :`;
       json_string = `${json_string} { "${el2[i]}"`;
     }
 
-    console.log(app_elements[i].className);
-    console.log(app_elements[i].classList);
     const elem_value = app_elements[i].value.replaceAll('\\', '\\\\').replaceAll('"', '\\\"');
+
+    // Standard element
     let json_value = `"${elem_value.replaceAll('\n', '\\n')}"`;
 
+    // Array
     if (app_elements[i].classList.contains('type_array')) {
       json_value = '[';
       const list_values = elem_value.split('\n');
 
       for (let i=0; i < list_values.length; i++) {
+        
+        if (list_values[i].length == 0)
+          continue;
+
         if (i > 0)
           json_value = `${json_value}, `;
         json_value = `${json_value} "${list_values[i]}"`;
       }
       json_value = `${json_value} ]`;
+    }
+
+    // Dictionary
+    if (app_elements[i].classList.contains('type_dict')) {
+      json_value = '{';
+      const list_values = elem_value.split('\n');
+
+      for (let i=0; i < list_values.length; i++) {
+        if (list_values[i].length == 0)
+          continue;
+
+        if (i > 0)
+          json_value = `${json_value}, `;
+        json_value = `${json_value} "${list_values[i].split('=')[0].trim()}": "${list_values[i].split('=')[1].trim()}"`;
+      }
+      json_value = `${json_value} }`;
     }
 
     json_string = `${json_string} : ${json_value}`;
@@ -90,7 +106,7 @@ function save_config(class_prefix:string) {
     for (let i = 0; i < el2.length; i++) {
       json_string = `${json_string} }`;
     }
-    console.log(json_string);
+
     item = JSON.parse(json_string);
     app_config = deepmerge(app_config, item);
     //app_config[app_elements[i].id] = app_elements[i].value;

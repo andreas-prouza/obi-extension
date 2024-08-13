@@ -74,9 +74,9 @@
         value="{{ general_settings['INCDIR_RPGLE'] | replace('" $HOME"', '$HOME' ) }}">INCDIR</vscode-text-field>
       <br />
       <br />
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|general|TARGET_LIB_MAPPING" size="50"
+      <vscode-text-area class="{{ class_prefix }}_save_app type_dict" id="global|settings|general|TARGET_LIB_MAPPING" size="50"
         placeholder="prouzalib=prouzat1, prouzalib2=prouzat2"
-        value="{% for k, v in general_settings['TARGET_LIB_MAPPING'] %}{% if loop.index0 > 0 %}, {% endif %}{{ k }}={{ v }}{% endfor %}">TARGET_LIB_MAPPING</vscode-text-field>
+        value="{% for k, v in general_settings['TARGET_LIB_MAPPING'] %}{% if loop.index0 > 0 %}{{ '\n' }}{% endif %}{{ k }}={{ v }}{% endfor %}">TARGET_LIB_MAPPING</vscode-text-area>
       <br />
       
       <br />
