@@ -17,7 +17,7 @@
         value="{{ global_config['REMOTE_HOST'] }}">Remote host</vscode-text-field>
       <br />
       <br />
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|local-base-dir" size="80"
+      <vscode-text-field class="{{ class_prefix }}_save_app type_text" id="general|local-base-dir" size="80"
         value="{{ app_config['general']['local-base-dir'] | replace('" $HOME"', '$HOME' ) }}">Local
         path</vscode-text-field>
       <br />
@@ -65,8 +65,8 @@
         value="{{ general_settings['STGMDL'] }}">STGMDL</vscode-text-field>
       <br />
       <br />
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|general|LIBL" size="50"
-        placeholder="$(TARGET_LIB), QGPL" value="{{ general_settings['LIBL'] | join(', ') }}">LIBL</vscode-text-field>
+      <vscode-text-field class="{{ class_prefix }}_save_app type_array" id="global|settings|general|LIBL" size="50"
+        placeholder="$(TARGET_LIB), QGPL" value="{{ general_settings['LIBL'] | join('\n') }}">LIBL</vscode-text-field>
       <br />
       <br />
       <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|general|INCDIR_RPGLE" size="80"
@@ -135,8 +135,8 @@
       {% set compile_steps = app_global['steps'] %}
 
       {% for key, value in compile_steps %}
-        <vscode-text-area cols="40" rows="4" resize="both" class="{{ class_prefix }}_save_app" id="global|steps|{{ key }}"
-          value="{{ value | join(',\n') }}">{{ key }}
+        <vscode-text-area cols="40" rows="4" resize="both" class="{{ class_prefix }}_save_app type_array" id="global|steps|{{ key }}"
+          value="{{ value | join('\n') }}">{{ key }}
         </vscode-text-area>
         <br/>
         <br/>

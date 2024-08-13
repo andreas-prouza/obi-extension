@@ -77,27 +77,47 @@ export class OBIConfiguration {
     panel.webview.html = html;
     //panel.webview.html = index_html.html;
 
-    panel.webview.onDidReceiveMessage(
-      (message: any) => {
-        const command = message.command;
-
-        switch (command) {
-          case "save":
-            vscode.window.showInformationMessage('Save Data');
-            console.log(message.data.global);
-            console.log(message.data.app);
-
-            DirTool.write_toml(path.join(workspaceUri.fsPath, `${Constants.OBI_APP_CONFIG_FILE}_new.toml`), message.data.app);
-            return;
-        }
-      }
-    );
+    panel.webview.onDidReceiveMessage(this.onReceiveMessage);
 
     OBIConfiguration.currentPanel = new OBIConfiguration(panel, extensionUri);
   
   }
 
 
+
+  private static onReceiveMessage(message: any): void {
+
+    const workspaceUri =
+    vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+    ? vscode.workspace.workspaceFolders[0].uri
+    : undefined;
+
+    if (!workspaceUri)
+      return;
+
+    const command = message.command;
+
+    switch (command) {
+      case "user_save":
+        OBIConfiguration.save_config(path.join(workspaceUri.fsPath, `${Constants.OBI_APP_CONFIG_USER_FILE}_new_${command}.toml`), message.data);
+        break;
+      case "project_save":
+        OBIConfiguration.save_config(path.join(workspaceUri.fsPath, `${Constants.OBI_APP_CONFIG_FILE}_new_${command}.toml`), message.data);
+        break;
+    }
+    return;
+  }
+
+
+  private static save_config(file: string, data: {}) {
+
+    vscode.window.showInformationMessage('Save Data');
+    console.log(data.global);
+    console.log(data.app);
+
+    DirTool.write_toml(file, data.app);
+}
+  
 
   private static createNewPanel(extensionUri : Uri) {
     return window.createWebviewPanel(

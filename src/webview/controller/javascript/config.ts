@@ -59,13 +59,32 @@ function save_config(class_prefix:string) {
     console.log('##########################');
     console.log(app_elements[i].id);
     console.log(el2.toString());
+    console.log(app_elements[i].value);
     
     for (let i=0; i < el2.length; i++) {
       if (i > 0)
         json_string = `${json_string} :`;
       json_string = `${json_string} { "${el2[i]}"`;
     }
-    json_string = `${json_string} : "${app_elements[i].value.replace('$HOME', '\\\"$HOME\\\"')}"`;
+
+    console.log(app_elements[i].className);
+    console.log(app_elements[i].classList);
+    const elem_value = app_elements[i].value.replaceAll('\\', '\\\\').replaceAll('"', '\\\"');
+    let json_value = `"${elem_value.replaceAll('\n', '\\n')}"`;
+
+    if (app_elements[i].classList.contains('type_array')) {
+      json_value = '[';
+      const list_values = elem_value.split('\n');
+
+      for (let i=0; i < list_values.length; i++) {
+        if (i > 0)
+          json_value = `${json_value}, `;
+        json_value = `${json_value} "${list_values[i]}"`;
+      }
+      json_value = `${json_value} ]`;
+    }
+
+    json_string = `${json_string} : ${json_value}`;
 
     // finally close the element
     for (let i = 0; i < el2.length; i++) {

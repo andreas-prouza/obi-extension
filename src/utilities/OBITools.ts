@@ -5,7 +5,6 @@ import { getUri } from './getUri';
 import { getNonce } from './getNonce';
 import { Constants } from '../Constants';
 
-import { deepmerge } from "deepmerge-ts";
 import { AppConfig } from '../webview/controller/AppConfig';
 
 
@@ -61,9 +60,9 @@ export class OBITools {
 
 
   public static override_dict(from_dict:{}, to_dict:{}): {} {
-    for (const [k, v] of Object.entries(from_dict)) {
+    for (let [k, v] of Object.entries(from_dict)) {
       if (typeof v==='object' && v!==null && !(v instanceof Array) && !(v instanceof Date))
-        return this.override_dict(from_dict[k], to_dict[k]);
+        v = OBITools.override_dict(from_dict[k], to_dict[k]);
       to_dict[k] = v;
     }
     //return {...to_dict, ...from_dict};
@@ -73,7 +72,7 @@ export class OBITools {
 
 
   public static get_compile_list(workspaceUri: vscode.Uri): {}|undefined {
-
+    this
     const config = AppConfig.get_app_confg();
     const file_path: string = path.join(workspaceUri.fsPath, config['app_config']['general']['compile-list']);
     

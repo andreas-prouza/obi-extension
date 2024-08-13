@@ -120,9 +120,9 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@theia/core": "latest",
-    "@theia/plugin-ext-vscode": "latest",
-    "@theia/vsx-registry": "latest",
+    "@theia/core": "^1.46.1",
+    "@theia/plugin-ext-vscode": "^1.46.1",
+    "@theia/vsx-registry": "^1.46.1",
     "@types/mocha": "^10.0.7",
     "@types/node": "20.x",
     "@types/vscode": "^1.91.0",
@@ -132,7 +132,6 @@
     "@vscode/test-cli": "^0.0.9",
     "@vscode/test-electron": "^2.4.1",
     "deepmerge": "latest",
-    "deepmerge-ts": "latest",
     "esbuild": "^0.16.17",
     "eslint": "^8.57.0",
     "nunjucks": "^3.2.4",

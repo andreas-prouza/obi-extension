@@ -65,10 +65,12 @@ export class AppConfig {
 
 
   private static empty(object: {}): void {
-    Object.keys(object).forEach(function (k){
-        if (object[k] && typeof object[k] === 'object') {
+    Object.keys(object).forEach(function (k:string){
+        if (object[k] && typeof object[k] === 'object' && !(object[k] instanceof Array)) {
             return AppConfig.empty(object[k]);
         }
+        if (object[k] instanceof Array)
+          object[k] = [];
         if (typeof object[k] === 'string')
           object[k] = '';
     });
