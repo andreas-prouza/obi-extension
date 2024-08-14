@@ -142,7 +142,7 @@
     "smol-toml": "latest",
     "typescript": "^5.4.5",
     "hasha": "latest",
-    "glob": "latest"
+		"node-ssh": "latest"
   },
   "theia": {
     "target": "browser"

@@ -15,6 +15,13 @@
 
       <vscode-text-field class="{{ class_prefix }}_save_global" id="REMOTE_HOST" placeholder="IBM i host (or IP)"
         value="{{ global_config['REMOTE_HOST'] }}">Remote host</vscode-text-field>
+
+      <br />
+      <br />
+
+      <vscode-text-field class="{{ class_prefix }}_save_global type_file" id="SSH_KEY" placeholder="~/.ssh/ibmi_rsa"
+        value="{{ global_config['SSH_KEY'] }}">SSH Key</vscode-text-field>
+
       <br />
       <br />
       <vscode-text-field class="{{ class_prefix }}_save_app type_text" id="general|local-base-dir" size="80"
