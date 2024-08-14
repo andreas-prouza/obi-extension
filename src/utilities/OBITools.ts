@@ -63,6 +63,12 @@ export class OBITools {
     for (let [k, v] of Object.entries(from_dict)) {
       if (typeof v==='object' && v!==null && !(v instanceof Array) && !(v instanceof Date))
         v = OBITools.override_dict(from_dict[k], to_dict[k]);
+
+      if ((typeof v == 'string') && v.length == 0)
+        continue;
+      if (v instanceof Array && v.length == 0)
+        continue;
+
       to_dict[k] = v;
     }
     //return {...to_dict, ...from_dict};
@@ -94,5 +100,42 @@ export class OBITools {
   }
 
 
+  public static get_source_hash_list_file(workspace:string): {}[] | undefined {
 
+    const config = AppConfig.get_app_confg();
+    const file:string = path.join(workspace, config['app_config']['general']['compiled-object-list'])
+
+    return DirTool.get_toml(file)
+
+  }
+
+
+  public static retrieve_source_hashes(workspaceUri: string, callback: Function) {
+
+    const config = AppConfig.get_app_confg();
+    const source_dir = path.join(workspaceUri, config['app_config']['general']['source-dir']);
+
+    const dirs = DirTool.get_all_files_in_dir(
+      source_dir,
+      '.',
+      config['app_config']['general']['supported-object-types']
+    );
+
+    let checksum_calls = [];
+    for (const dir of dirs) {
+      checksum_calls.push(DirTool.checksumFile(source_dir, dir));
+    }
+
+    console.log('Hash 1');
+    Promise.all(checksum_calls)
+    .then((results) => {
+      for (const el of results) {
+        //console.log(el);
+      }
+      console.log(`Finished for ${results.length} files`);
+      callback(results);
+    });
+
+    console.log('Hash 3');
+  }
 }

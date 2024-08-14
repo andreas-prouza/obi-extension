@@ -1,9 +1,27 @@
-import { ExecException } from "child_process";
+'use strict';
+
 import { Uri } from "vscode";
-import { OBITools } from "./OBITools";
 import { AppConfig } from "../webview/controller/AppConfig";
+import path from "path";
+
 
 export class DirTool {
+
+
+  public static *get_all_files_in_dir(rootdir:string, dir: string, file_extensions: string[]): Generator<string> {
+    const fs = require('fs');
+    const files = fs.readdirSync(path.join(rootdir, dir), { withFileTypes: true });
+
+    for (const file of files) {
+      if (file.isDirectory()) {
+        yield* DirTool.get_all_files_in_dir(rootdir, path.join(dir, file.name), file_extensions);
+      } else {
+        if (file_extensions.includes(file.name.split('.').pop()))
+          yield path.join(dir, file.name);
+      }
+    }
+  }
+
 
   public static list_dir(dir: string): string[] {
     const fs = require('fs');
@@ -209,4 +227,41 @@ export class DirTool {
 
   }
 
+
+/*
+  public static async get_hash_file(file:string): Promise<string> {
+ 
+    const hasha = require('hasha');
+
+    // Get the MD5 hash of an image
+    const fileHash = await hasha.fromFile(file, {algorithm: 'md5'});
+    
+    return fileHash;
+  }
+
+
+      var fs = require('fs')
+    var crypto = require('crypto')
+    return new Promise((resolve, reject) => {
+      const hash = crypto.createHash('sha256');
+      const stream = fs.createReadStream(path);
+      stream.on('error', err => reject(err));
+      stream.on('data', chunk => hash.update(chunk));
+      stream.on('end', () => resolve(hash.digest('hex')));
+    });
+    */
+
+  public static checksumFile(root: string, file_path: string) {
+    var fs = require('fs')
+    var crypto = require('crypto')
+    return new Promise((resolve, reject) => {
+      const hash = crypto.createHash('sha256');
+      const stream = fs.createReadStream(path.join(root, file_path));
+      stream.on('error', err => reject(err));
+      stream.on('data', chunk => hash.update(chunk));
+      stream.on('end', () => {
+        resolve({[file_path] : hash.digest('hex')})
+      });
+    });
+  }
 }

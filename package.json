@@ -28,6 +28,10 @@
         "title": "Run build"
       },
       {
+        "command": "obi.run_build_native",
+        "title": "Run build native"
+      },
+      {
         "command": "obi.source-lists.update",
         "title": "Update source list",
         "icon": "$(refresh)"
@@ -136,7 +140,9 @@
     "eslint": "^8.57.0",
     "nunjucks": "^3.2.4",
     "smol-toml": "latest",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "hasha": "latest",
+    "glob": "latest"
   },
   "theia": {
     "target": "browser"
