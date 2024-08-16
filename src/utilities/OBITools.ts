@@ -6,6 +6,7 @@ import { getNonce } from './getNonce';
 import { Constants } from '../Constants';
 
 import { AppConfig } from '../webview/controller/AppConfig';
+import { SSH_Tasks } from './SSH_Tasks';
 
 
 
@@ -137,5 +138,25 @@ export class OBITools {
     });
 
     console.log('Hash 3');
+  }
+
+
+
+  public static get_remote_compiled_object_list(){
+
+    const rootPath: string|undefined =
+      vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+      ? vscode.workspace.workspaceFolders[0].uri.fsPath
+      : undefined;
+
+    if (!rootPath)
+      return;
+
+    const config = AppConfig.get_app_confg();
+
+    const local_file: string = path.join(rootPath, config['app_config']['general']['compiled-object-list']);
+    const remote_file: string = path.join(config['app_config']['general']['remote-base-dir'], config['app_config']['general']['compiled-object-list']);
+    
+    SSH_Tasks.getRemoteFile(local_file, remote_file);
   }
 }

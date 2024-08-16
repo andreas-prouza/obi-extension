@@ -37,6 +37,11 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "obi.get-remote-compiled-object-list",
+        "title": "Get remote compiled object list",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "obi.controller.config",
         "title": "Configuration",
         "icon": "$(settings-gear)"
@@ -124,9 +129,9 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@theia/core": "^1.46.1",
-    "@theia/plugin-ext-vscode": "^1.46.1",
-    "@theia/vsx-registry": "^1.46.1",
+    "@theia/core": "latest",
+    "@theia/plugin-ext-vscode": "latest",
+    "@theia/vsx-registry": "latest",
     "@types/mocha": "^10.0.7",
     "@types/node": "20.x",
     "@types/vscode": "^1.91.0",

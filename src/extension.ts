@@ -2,15 +2,14 @@ import * as vscode from 'vscode';
 import { BuildSummary } from './webview/show_changes/BuildSummary';
 import { OBIController } from './webview/controller/OBIController';
 import { SourceListProvider } from './webview/controller/SourceListProvider';
-import { DirTool } from './utilities/DirTool';
 import { OBICommands } from './obi/OBICommands';
 import { Welcome } from './webview/Welcome';
 import { OBITools } from './utilities/OBITools';
-import { Constants } from './Constants';
 import path from 'path';
 import * as fs from 'fs';
 import { OBIConfiguration } from './webview/controller/OBIConfiguration';
 import { AppConfig } from './webview/controller/AppConfig';
+import { SSH_Tasks } from './utilities/SSH_Tasks';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -29,6 +28,8 @@ export function activate(context: vscode.ExtensionContext) {
 	//vscode.commands.executeCommand('vscode.open', fileUri);
 
 	vscode.commands.executeCommand('setContext', 'obi.contains_obi_project', OBITools.contains_obi_project());
+
+	//SSH_Tasks.connect();
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('obi.helloWorld', () => {
@@ -83,6 +84,7 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 					console.log(`After source hashes ... Run build ${results.length}`);
 					console.log(`Changed sources ${changed_sources.length}`);
+					//SSH_Tasks.executeCommand();
 				});
 		})
 	);
