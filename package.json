@@ -143,11 +143,10 @@
     "deepmerge": "latest",
     "esbuild": "^0.16.17",
     "eslint": "^8.57.0",
-    "nunjucks": "^3.2.4",
-    "smol-toml": "latest",
-    "typescript": "^5.4.5",
     "hasha": "latest",
-		"node-ssh": "latest"
+    "node-ssh": "latest",
+    "nunjucks": "^3.2.4",
+    "smol-toml": "latest"
   },
   "theia": {
     "target": "browser"

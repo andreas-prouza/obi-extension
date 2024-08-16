@@ -9,7 +9,6 @@ import path from 'path';
 import * as fs from 'fs';
 import { OBIConfiguration } from './webview/controller/OBIConfiguration';
 import { AppConfig } from './webview/controller/AppConfig';
-import { SSH_Tasks } from './utilities/SSH_Tasks';
 
 
 export function activate(context: vscode.ExtensionContext) {

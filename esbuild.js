@@ -2,6 +2,7 @@
 
 const { build } = require("esbuild");
 
+
 const baseConfig = {
   bundle: true,
   minify: process.env.NODE_ENV === "production",
@@ -15,7 +16,7 @@ const extensionConfig = {
   format: "cjs",
   entryPoints: ["./src/extension.ts"],
   outfile: "./out/extension.js",
-  external: ["vscode"],
+  external: ["vscode", "cpu-features", "ssh2"],
 };
 
 const webviewConfig = {

@@ -1,17 +1,17 @@
 import * as vscode from 'vscode';
-//import * as nodeSSH from 'node-ssh';
+import {NodeSSH} from 'node-ssh';
 
 
 
 export class SSH_Tasks {
 
-  private static ssh = new nodeSSH.NodeSSH();
+  private static ssh = new NodeSSH();
 
 
   public static connect(callback?: Function): void {
 
     const host = 'academy';
-/*
+
     if (SSH_Tasks.ssh.isConnected())
       return;
 
@@ -24,24 +24,24 @@ export class SSH_Tasks {
       if (callback)
         callback();
     });
-*/
+
   }
 
 
 
   public static executeCommand(): void {
-    /*
+
     if (SSH_Tasks.ssh.isConnected())
       SSH_Tasks.ssh.execCommand('pwd; ls -la', {cwd: '.' }).then((result)=>{
         console.log('STDOUT: ' + result.stdout);
         console.log('STDERR: ' + result.stderr);
       });
-      */
+
   }
 
 
   public static getRemoteFile(local: string, remote: string, again?: boolean): void {
-/*
+
     if (!SSH_Tasks.ssh.isConnected()){
       if (again) {
         vscode.window.showErrorMessage("Still no connection available");
@@ -54,7 +54,7 @@ export class SSH_Tasks {
 
     SSH_Tasks.ssh.getFile(local, remote).then((result)=>{
     });
-    */
+
   }
   
 
