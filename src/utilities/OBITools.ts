@@ -9,11 +9,15 @@ import { AppConfig } from '../webview/controller/AppConfig';
 import { SSH_Tasks } from './SSH_Tasks';
 import * as source from '../obi/Source';
 import { Workspace } from './Workspace';
+import * as fs from 'fs';
 
 
 
 export class OBITools {
 
+  public static ext_context?: vscode.ExtensionContext;
+
+  
   public static contains_obi_project(): boolean {
 
     if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length == 0) {
@@ -25,7 +29,7 @@ export class OBITools {
     if (!DirTool.file_exists(path.join(ws, Constants.OBI_APP_CONFIG_FILE)))
       return false;
 
-    if (!DirTool.file_exists(path.join(ws, 'etc', 'global.cfg')))
+    if (!DirTool.file_exists(path.join(ws, Constants.OBI_GLOBAL_CONFIG)))
       return false;
 
     if (!DirTool.dir_exists(path.join(ws, 'scripts')))
@@ -36,13 +40,34 @@ export class OBITools {
 
 
 
+  public static initialize_folder(): void {
+    
+    if (! vscode.workspace.workspaceFolders || !OBITools.ext_context) {
+      vscode.window.showErrorMessage('No workspace is opened!');
+      return;
+    }
+
+    const ws = Workspace.get_workspace();
+    const ext_ws = path.join(OBITools.ext_context.asAbsolutePath('.'), 'obi-media');
+
+    const x = DirTool.dir_exists(path.join(ws, 'etc'));
+    
+    if (!DirTool.dir_exists(path.join(ws, 'etc'))){
+      fs.mkdirSync(path.join(ws, 'etc'));
+    }
+
+    fs.copyFileSync(path.join(ext_ws, 'etc', 'app-config.toml'), path.join(ws, 'etc', 'app-config.toml'));
+    fs.copyFileSync(path.join(ext_ws, 'etc', 'global.cfg'), path.join(ws, 'etc', 'global.cfg'));
+
+  }
+
+
 
   public static get_global_stuff(webview : vscode.Webview, extensionUri: vscode.Uri) {
 
     const styleUri = getUri(webview, extensionUri, ["asserts/css", "style.css"]);
 
     const asserts_uri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'asserts'));
-    const webviewUri = getUri(webview, extensionUri, ["out", "webview.js"]); // VSCode styling
     const nonce = getNonce();
     
     let theme_mode = 'light';
@@ -52,7 +77,6 @@ export class OBITools {
     return {
       asserts_uri: asserts_uri,
       styleUri: styleUri,
-      webviewUri: webviewUri,
       nonce: nonce,
       current_date: new Date().toLocaleString(),
       theme_mode: theme_mode

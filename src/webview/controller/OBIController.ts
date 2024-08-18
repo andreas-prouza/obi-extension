@@ -8,6 +8,9 @@ import { Constants } from '../../Constants';
 import path from 'path';
 import { OBICommands } from '../../obi/OBICommands';
 import { BuildSummary } from '../show_changes/BuildSummary';
+import * as fs from 'fs';
+import { AppConfig } from './AppConfig';
+import { Workspace } from '../../utilities/Workspace';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -30,11 +33,31 @@ export class OBIController implements vscode.WebviewViewProvider {
 	private _context?: vscode.WebviewViewResolveContext;
 	private _token?: vscode.CancellationToken;
   private readonly _extensionUri: vscode.Uri
+  private static is_config_watcher_set: boolean = false;
+
 
 	constructor(extensionUri: vscode.Uri) {
     this._extensionUri = extensionUri;
     OBIController.view_object = this;
+
+    OBIController.set_build_watcher();
   }
+
+
+
+  public static set_build_watcher() {
+
+    if (OBIController.is_config_watcher_set || !OBITools.contains_obi_project())
+      return;
+
+    const config = AppConfig.get_app_confg()['app_config'];
+    const compile_list_file_path: string = path.join(Workspace.get_workspace(), config['general']['compile-list']);
+    // if compile-script changed, refresh the view
+    fs.watchFile(compile_list_file_path, {interval: 1000}, function (event, filename) {
+      OBIController.update_build_summary_timestamp();
+    });
+  }
+
 
 
   public static run_finished() {
@@ -93,10 +116,6 @@ export class OBIController implements vscode.WebviewViewProvider {
     
     const html_template = 'controller/index.html';
 
-    let theme_mode = 'light';
-    if (vscode.window.activeColorTheme.kind == vscode.ColorThemeKind.Dark)
-      theme_mode = 'dark';
-
     const compile_list = OBITools.get_compile_list(workspaceFolder);
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
@@ -104,7 +123,6 @@ export class OBIController implements vscode.WebviewViewProvider {
       {
         global_stuff: OBITools.get_global_stuff(webviewView.webview, this._extensionUri),
         main_java_script: getUri(webviewView.webview, this._extensionUri, ["out", "controller.js"]),
-        theme_mode: theme_mode,
         build_summary_timestamp: compile_list ? compile_list['timestamp'] : undefined,
         builds_exist: compile_list ? compile_list['compiles'].length : undefined
       }

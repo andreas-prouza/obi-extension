@@ -3,12 +3,11 @@ import { BuildSummary } from './webview/show_changes/BuildSummary';
 import { OBIController } from './webview/controller/OBIController';
 import { SourceListProvider } from './webview/controller/SourceListProvider';
 import { OBICommands } from './obi/OBICommands';
-import { Welcome } from './webview/Welcome';
+import { Welcome } from './webview/controller/Welcome';
 import { OBITools } from './utilities/OBITools';
-import path from 'path';
-import * as fs from 'fs';
 import { OBIConfiguration } from './webview/controller/OBIConfiguration';
-import { AppConfig } from './webview/controller/AppConfig';
+import path from 'path';
+import { DirTool } from './utilities/DirTool';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -23,10 +22,23 @@ export function activate(context: vscode.ExtensionContext) {
 	? vscode.workspace.workspaceFolders[0].uri
 	: undefined;
 
+	OBITools.ext_context = context;
+
+	console.log(`Exists root/obi-media/etc/app-config.toml: ${DirTool.file_exists(path.join(context.asAbsolutePath('.'), 'obi-media', 'etc', 'app-config.toml'))}`);
+	console.log(`${path.join(context.asAbsolutePath('.'), 'obi-media', 'etc', 'app-config.toml')}`);
+
 	//const fileUri = vscode.Uri.file('/home/andreas/projekte/opensource/extensions/obi/README.md');
 	//vscode.commands.executeCommand('vscode.open', fileUri);
 
-	vscode.commands.executeCommand('setContext', 'obi.contains_obi_project', OBITools.contains_obi_project());
+	const contains_obi_project = OBITools.contains_obi_project();
+	vscode.commands.executeCommand('setContext', 'obi.contains_obi_project', contains_obi_project);
+
+
+	const obi_welcome_provider = new Welcome(context.extensionUri);
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(Welcome.viewType, obi_welcome_provider)
+	);
+
 
 	//SSH_Tasks.connect();
 
@@ -74,20 +86,6 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(OBIController.viewType, obi_controller_provider)
 	);
-
-	const obi_welcome_provider = new Welcome(context.extensionUri);
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(Welcome.viewType, obi_welcome_provider)
-	);
-
-	if (rootPath) {
-		const config = AppConfig.get_app_confg()['app_config'];
-		const compile_list_file_path: string = path.join(rootPath, config['general']['compile-list']);
-		// if compile-script changed, refresh the view
-		fs.watchFile(compile_list_file_path, {interval: 1000}, function (event, filename) {
-			OBIController.update_build_summary_timestamp();
-		});
-	}
 
 
 	new SourceListProvider(rootPath).register(context);

@@ -21,40 +21,48 @@
       },
       {
         "command": "obi.show_changes",
-        "title": "Show changes"
+        "title": "Show changes",
+        "when": "obi.contains_obi_project == true"
       },
       {
         "command": "obi.run_build",
-        "title": "Run build"
+        "title": "Run build",
+        "when": "obi.contains_obi_project == true"
       },
       {
         "command": "obi.run_build_native",
-        "title": "Run build native"
+        "title": "Run build native",
+        "when": "obi.contains_obi_project == true"
       },
       {
         "command": "obi.source-lists.update",
         "title": "Update source list",
-        "icon": "$(refresh)"
+        "icon": "$(refresh)",
+        "when": "obi.contains_obi_project == true"
       },
       {
         "command": "obi.get-remote-compiled-object-list",
         "title": "Get remote compiled object list",
-        "icon": "$(refresh)"
+        "icon": "$(refresh)",
+        "when": "obi.contains_obi_project == true"
       },
       {
         "command": "obi.controller.config",
         "title": "Configuration",
-        "icon": "$(settings-gear)"
+        "icon": "$(settings-gear)",
+        "when": "obi.contains_obi_project == true"
       },
       {
         "command": "obi.transfer-all",
         "title": "Transfer all",
-        "icon": "$(settings-gear)"
+        "icon": "$(settings-gear)",
+        "when": "obi.contains_obi_project == true"
       },
       {
         "command": "obi.source-lists.show-view",
         "title": "Show source list",
-        "icon": "$(preview)"
+        "icon": "$(preview)",
+        "when": "obi.contains_obi_project == true"
       }
     ],
     "menus": {
@@ -83,7 +91,7 @@
         },
         {
           "command": "obi.source-lists.update",
-          "when": "view == obi.source-lists"
+          "when": "view == obi.source-lists && obi.contains_obi_project == true"
         }
       ]
     },
@@ -111,18 +119,13 @@
           "when": "obi.contains_obi_project == true"
         },
         {
+          "type": "webview",
           "id": "obi-welcome",
           "name": "Welcome",
           "when": "obi.contains_obi_project == false"
         }
       ]
-    },
-    "viewsWelcome": [
-      {
-        "view": "obi-welcome",
-        "contents": "Show \n[Hello](command:vscode.catstart)"
-      }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

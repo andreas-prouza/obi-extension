@@ -12,7 +12,7 @@
         <td>
           <vscode-button id="run_build">
             Run build
-            <span slot="start" class="codicon codicon-add"><img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/debug-start.svg"></span>
+            <span slot="start" class="codicon codicon-add"><img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/debug-start.svg"></span>
           </vscode-button>
         </td>
         <td>
@@ -23,7 +23,7 @@
         <td>
           <vscode-button id="show_changes">
             Show changes
-            <span slot="start" class="codicon codicon-add"><img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/telescope.svg"></span>
+            <span slot="start" class="codicon codicon-add"><img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/telescope.svg"></span>
           </vscode-button>
         </td>
         <td>
@@ -32,12 +32,11 @@
       </tr>
     </table>
 
-    <!--a href='command:obi.show_changes'><img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/telescope.svg">Show changes</a-->
     <br/>
 
     <br/>
     <a id="open_build_summary" href='command:obi.open_build_summary' style="visibility: hidden;">
-      <img src="{{ global_stuff['asserts_uri'] }}/img/{{ theme_mode }}/file.svg">Open build summary
+      <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/file.svg">Open build summary
     </a> 
     <br/>
     <label id="build_summary_timestamp"  style="visibility: hidden;"> 

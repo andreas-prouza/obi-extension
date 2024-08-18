@@ -66,6 +66,7 @@ export class SourceList {
     const html = nunjucks.render('source_list/index.html', 
       {
         global_stuff: OBITools.get_global_stuff(panel.webview, extensionUri),
+        main_java_script: getUri(panel.webview, extensionUri, ["out", "webview.js"]),
         source_list: sl,
         source_list_file : source_list_path
         //filex: encodeURIComponent(JSON.stringify(fileUri)),

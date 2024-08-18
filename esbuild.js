@@ -43,6 +43,14 @@ const controllerViewConfig = {
   outfile: "./out/controller.js",
 };
 
+const welcomeViewConfig = {
+  ...baseConfig,
+  target: "es2020",
+  format: "esm",
+  entryPoints: ["./src/webview/controller/javascript/welcome.ts"],
+  outfile: "./out/welcome.js",
+};
+
 const configViewConfig = {
   ...baseConfig,
   target: "es2020",
@@ -58,6 +66,7 @@ const configViewConfig = {
     await build(webviewConfig);
     await build(buildSummaryViewConfig);
     await build(controllerViewConfig);
+    await build(welcomeViewConfig);
     await build(configViewConfig);
     console.log("build complete");
   } catch (err) {
