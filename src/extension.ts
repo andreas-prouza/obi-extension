@@ -52,39 +52,7 @@ export function activate(context: vscode.ExtensionContext) {
 	
 	context.subscriptions.push(
 		vscode.commands.registerCommand('obi.run_build_native', () => {
-			if (ws_uri)
-				OBITools.retrieve_source_hashes(ws_uri.fsPath, (results:[])=>{
-					
-					// Get all sources which are new or have changed
-					const last_source_hashes = OBITools.get_source_hash_list_file(ws_uri.fsPath);
-					
-					if (!last_source_hashes)
-						return;
-
-					let changed_sources = [];
-
-					for (const result_item of results) {
-
-						const item = Object.entries(result_item)[0];
-						const k_source = item[0];
-						const v_hash = item[1];
-						let source_changed = true;
-
-						if (k_source in last_source_hashes) {
-
-							if (last_source_hashes[k_source]['hash'] == v_hash) {
-								source_changed = false;
-								continue;
-							}
-						}
-						
-						if (source_changed)
-							changed_sources.push(result_item);
-					}
-					console.log(`After source hashes ... Run build ${results.length}`);
-					console.log(`Changed sources ${changed_sources.length}`);
-					//SSH_Tasks.executeCommand();
-				});
+			OBICommands.run_build_native(context);
 		})
 	);
 
@@ -92,6 +60,13 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('obi.open_build_summary', () => {
 			// Only available with workspaces
 			BuildSummary.render(context.extensionUri, ws_uri);
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.transfer-all', () => {
+			// Only available with workspaces
+			OBITools.transfer_all();
 		})
 	);
 

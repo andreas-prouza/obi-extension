@@ -47,6 +47,11 @@
         "icon": "$(settings-gear)"
       },
       {
+        "command": "obi.transfer-all",
+        "title": "Transfer all",
+        "icon": "$(settings-gear)"
+      },
+      {
         "command": "obi.source-lists.show-view",
         "title": "Show source list",
         "icon": "$(preview)"

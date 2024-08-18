@@ -7,6 +7,8 @@ import { Constants } from '../Constants';
 
 import { AppConfig } from '../webview/controller/AppConfig';
 import { SSH_Tasks } from './SSH_Tasks';
+import * as source from '../obi/Source';
+import { Workspace } from './Workspace';
 
 
 
@@ -78,8 +80,9 @@ export class OBITools {
 
 
 
+
   public static get_compile_list(workspaceUri: vscode.Uri): {}|undefined {
-    this
+    
     const config = AppConfig.get_app_confg();
     const file_path: string = path.join(workspaceUri.fsPath, config['app_config']['general']['compile-list']);
     
@@ -101,7 +104,8 @@ export class OBITools {
   }
 
 
-  public static get_source_hash_list_file(workspace:string): {}[] | undefined {
+
+  public static get_source_hash_list(workspace:string): source.Source | undefined {
 
     const config = AppConfig.get_app_confg();
     const file:string = path.join(workspace, config['app_config']['general']['compiled-object-list'])
@@ -109,6 +113,7 @@ export class OBITools {
     return DirTool.get_toml(file)
 
   }
+
 
 
   public static retrieve_source_hashes(workspaceUri: string, callback: Function) {
@@ -127,36 +132,36 @@ export class OBITools {
       checksum_calls.push(DirTool.checksumFile(source_dir, dir));
     }
 
-    console.log('Hash 1');
     Promise.all(checksum_calls)
     .then((results) => {
-      for (const el of results) {
-        //console.log(el);
-      }
       console.log(`Finished for ${results.length} files`);
       callback(results);
     });
 
-    console.log('Hash 3');
   }
 
 
 
   public static get_remote_compiled_object_list(){
 
-    const rootPath: string|undefined =
-      vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-      ? vscode.workspace.workspaceFolders[0].uri.fsPath
-      : undefined;
-
-    if (!rootPath)
-      return;
-
     const config = AppConfig.get_app_confg();
 
-    const local_file: string = path.join(rootPath, config['app_config']['general']['compiled-object-list']);
+    const local_file: string = path.join(Workspace.get_workspace(), config['app_config']['general']['compiled-object-list']);
     const remote_file: string = path.join(config['app_config']['general']['remote-base-dir'], config['app_config']['general']['compiled-object-list']);
     
     SSH_Tasks.getRemoteFile(local_file, remote_file);
   }
+
+
+
+  public static async transfer_all(){
+
+    const config = AppConfig.get_app_confg();
+
+    const local_dir: string = Workspace.get_workspace();
+    const remote_dir: string = path.join(config['app_config']['general']['remote-base-dir']);
+    
+    SSH_Tasks.transfer_dir(local_dir, remote_dir);
+  }
+
 }

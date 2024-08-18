@@ -260,7 +260,7 @@ export class DirTool {
       stream.on('error', err => reject(err));
       stream.on('data', chunk => hash.update(chunk));
       stream.on('end', () => {
-        resolve({[file_path] : hash.digest('hex')})
+        resolve({[file_path] : {hash: hash.digest('hex')}});
       });
     });
   }
