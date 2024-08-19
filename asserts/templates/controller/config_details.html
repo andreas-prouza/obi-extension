@@ -43,7 +43,8 @@
       <hr />
       <br />
 
-      <vscode-checkbox checked>Use OBI local</vscode-checkbox>
+      <vscode-checkbox class="{{ class_prefix }}_save_global type_checkbox" id="USE_PYTHON" 
+        {% if global_config['USE_PYTHON'] == 'true' %}checked{% endif %}>Use OBI local</vscode-checkbox>
       <br />
       <br />
       <vscode-text-field class="{{ class_prefix }}_save_global" id="OBI_DIR" size="80" placeholder="~/project/obi"

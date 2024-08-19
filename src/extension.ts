@@ -24,15 +24,14 @@ export function activate(context: vscode.ExtensionContext) {
 
 	OBITools.ext_context = context;
 
-	console.log(`Exists root/obi-media/etc/app-config.toml: ${DirTool.file_exists(path.join(context.asAbsolutePath('.'), 'obi-media', 'etc', 'app-config.toml'))}`);
-	console.log(`${path.join(context.asAbsolutePath('.'), 'obi-media', 'etc', 'app-config.toml')}`);
-
 	//const fileUri = vscode.Uri.file('/home/andreas/projekte/opensource/extensions/obi/README.md');
 	//vscode.commands.executeCommand('vscode.open', fileUri);
 
-	const contains_obi_project = OBITools.contains_obi_project();
+	console.log(`OBITools.is_native(): ${OBITools.is_native()}`);
+	const contains_obi_project: boolean = OBITools.contains_obi_project();
+	const run_native: boolean = OBITools.is_native();
 	vscode.commands.executeCommand('setContext', 'obi.contains_obi_project', contains_obi_project);
-
+	vscode.commands.executeCommand('setContext', 'obi.run_native', run_native);
 
 	const obi_welcome_provider = new Welcome(context.extensionUri);
 	context.subscriptions.push(
@@ -59,12 +58,6 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('obi.run_build', () => {
 			// Only available with workspaces
 			OBICommands.run_build(context);
-		})
-	);
-	
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.run_build_native', () => {
-			OBICommands.run_build_native(context);
 		})
 	);
 

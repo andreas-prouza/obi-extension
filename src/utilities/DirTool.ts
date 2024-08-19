@@ -8,7 +8,11 @@ import path from "path";
 export class DirTool {
 
 
-  public static *get_all_files_in_dir(rootdir:string, dir: string, file_extensions: string[]): Generator<string> {
+  public static *get_all_files_in_dir(rootdir:string, dir: string, file_extensions: string[]): Generator<string> | undefined {
+    
+    if (!DirTool.dir_exists(path.join(rootdir, dir)))
+      return undefined;
+    
     const fs = require('fs');
     const files = fs.readdirSync(path.join(rootdir, dir), { withFileTypes: true });
 
@@ -186,6 +190,9 @@ export class DirTool {
 
     const fs = require('fs');
     let key_values: {}= {};
+    if (!DirTool.file_exists(file))
+      return undefined;
+    
     try{
       // Read the TOML file into a string
       const data = fs.readFileSync(file, 'utf8');

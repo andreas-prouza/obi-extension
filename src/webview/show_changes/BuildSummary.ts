@@ -111,15 +111,20 @@ export class BuildSummary {
 
 
 
-  private static get_object_list(workspaceUri: Uri) {
+  private static get_object_list(workspaceUri: Uri): {}|undefined {
 
-    const fs = require("fs"); 
-    
-    let compile_list = fs.readFileSync(`${workspaceUri.path}/tmp/changed-object-list.json`);
+    const changed_object_list = `${workspaceUri.path}/tmp/changed-object-list.json`;
+    const dependend_object_list = `${workspaceUri.path}/tmp/dependend-object-list.json`;
+
+    if (!DirTool.file_exists(changed_object_list) || !DirTool.file_exists(dependend_object_list))
+      return undefined;
+      
+    const fs = require("fs");
+    let compile_list = fs.readFileSync(changed_object_list);
     // Converting to JSON 
     compile_list = JSON.parse(compile_list);
 
-    let dependend_sources = fs.readFileSync(`${workspaceUri.path}/tmp/dependend-object-list.json`);
+    let dependend_sources = fs.readFileSync(dependend_object_list);
     // Converting to JSON 
     dependend_sources = JSON.parse(dependend_sources);
 

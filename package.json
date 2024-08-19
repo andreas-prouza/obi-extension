@@ -22,17 +22,12 @@
       {
         "command": "obi.show_changes",
         "title": "Show changes",
-        "when": "obi.contains_obi_project == true"
+        "when": "obi.contains_obi_project"
       },
       {
         "command": "obi.run_build",
         "title": "Run build",
-        "when": "obi.contains_obi_project == true"
-      },
-      {
-        "command": "obi.run_build_native",
-        "title": "Run build native",
-        "when": "obi.contains_obi_project == true"
+        "when": "obi.contains_obi_project"
       },
       {
         "command": "obi.source-lists.update",

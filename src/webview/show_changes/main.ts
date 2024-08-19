@@ -43,9 +43,9 @@ function main() {
 
 //--function handleHowdyClick() {
 function show_log(log_type: string) {
-  let level: string = document.getElementById('level').value;
-  let source: string = document.getElementById('source').value;
-  let cmd_index: number = document.getElementById('cmd_index').value;
+  const level: string = (document.getElementById('level') as HTMLInputElement).value;
+  const source: string = (document.getElementById('source') as HTMLInputElement).value;
+  const cmd_index: number = Number((document.getElementById('cmd_index') as HTMLInputElement).value);
 
   vscode.postMessage({
     command: "show_log",
@@ -58,9 +58,10 @@ function show_log(log_type: string) {
 
 
 function handleHowdyClick() {
-  let level: string = document.getElementById('level').value;
-  let source: string = document.getElementById('source').value;
-  let cmd_index: number = document.getElementById('cmd_index').value;
+
+  const level: string = (document.getElementById('level') as HTMLInputElement).value;
+  const source: string = (document.getElementById('source') as HTMLInputElement).value;
+  const cmd_index: number = Number((document.getElementById('cmd_index') as HTMLInputElement).value);
 
   vscode.postMessage({
     command: "hello",

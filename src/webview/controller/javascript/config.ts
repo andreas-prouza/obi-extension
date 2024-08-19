@@ -41,7 +41,16 @@ function save_config(class_prefix:string) {
 
   const global_elements = document.getElementsByClassName(`${class_prefix}_save_global`);
   for (let i = 0; i < global_elements.length; i++) {
-    global_config[global_elements[i].id] = global_elements[i].value;
+    let value = global_elements[i].value;
+        // Checkbox element
+    if (global_elements[i].classList.contains('type_checkbox')) {
+      console.log(global_elements[i]);
+      value = 'false';
+      if (global_elements[i].checked)
+        value = 'true';
+    }
+    
+    global_config[global_elements[i].id] = value;
   }
 
   const app_elements = document.getElementsByClassName(`${class_prefix}_save_app`);
@@ -64,6 +73,14 @@ function save_config(class_prefix:string) {
 
     // Standard element
     let json_value = `"${elem_value.replaceAll('\n', '\\n')}"`;
+    
+    // Checkbox element
+    if (app_elements[i].classList.contains('type_checkbox')) {
+      console.log(app_elements[i]);
+      json_value = '"false"';
+      if (app_elements[i].checked)
+        json_value = '"true"';
+    }
 
     // Array
     if (app_elements[i].classList.contains('type_array')) {

@@ -17,6 +17,17 @@ export class OBITools {
 
   public static ext_context?: vscode.ExtensionContext;
 
+
+  public static is_native(): boolean {
+
+    const config = AppConfig.get_app_confg();
+    const use_local_obi: boolean = !(config['global_config']['USE_PYTHON'].toLowerCase() === 'true');
+
+    return use_local_obi;
+  }
+
+
+
   
   public static contains_obi_project(): boolean {
 
@@ -32,8 +43,6 @@ export class OBITools {
     if (!DirTool.file_exists(path.join(ws, Constants.OBI_GLOBAL_CONFIG)))
       return false;
 
-    if (!DirTool.dir_exists(path.join(ws, 'scripts')))
-      return false;
 
     return true;
   }
@@ -140,7 +149,7 @@ export class OBITools {
 
 
 
-  public static retrieve_source_hashes(workspaceUri: string, callback: Function) {
+  public static retrieve_source_hashes(workspaceUri: string): [] {
 
     const config = AppConfig.get_app_confg();
     const source_dir = path.join(workspaceUri, config['app_config']['general']['source-dir']);
@@ -152,16 +161,18 @@ export class OBITools {
     );
 
     let checksum_calls = [];
-    for (const dir of dirs) {
-      checksum_calls.push(DirTool.checksumFile(source_dir, dir));
-    }
+    if (dirs)
+      for (const dir of dirs) {
+        checksum_calls.push(DirTool.checksumFile(source_dir, dir));
+      }
 
     Promise.all(checksum_calls)
     .then((results) => {
       console.log(`Finished for ${results.length} files`);
-      callback(results);
+      return results;
     });
 
+    return [];
   }
 
 

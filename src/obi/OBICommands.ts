@@ -28,30 +28,34 @@ export class OBICommands {
     const remote_obi_dir: string = path.join(config['global_config']['REMOTE_OBI_DIR'].replaceAll('"', ''));
     const remote_obi: string = path.join(remote_obi_dir, config['global_config']['REMOTE_OBI_PYTHON_PATH']);
 
-    OBITools.retrieve_source_hashes(ws_uri.fsPath, (results: []) => {
+    let changed_sources: source.Source[] = OBICommands.get_changed_sources();
 
-      let changed_sources: source.Source[] = OBICommands.get_changed_sources(results);
+    console.log(`Changed sources ${changed_sources.length}`);
 
-      console.log(`After source hashes ... Run build ${results.length}`);
-      console.log(`Changed sources ${changed_sources.length}`);
+    if (changed_sources.length == 0) {
+      vscode.window.showWarningMessage("No changed sources to build");
+      return;
+    }
 
-      if (changed_sources.length == 0) {
-        vscode.window.showWarningMessage("No changed sources to build");
-        return;
-      }
+    SSH_Tasks.transferSources(changed_sources).then(()=> {
+      console.log('Files transfered');
 
-      SSH_Tasks.transferSources(changed_sources).then(()=> {
-        console.log('Files transfered');
-
-        const ssh_cmd: string = `source .profile; cd "${remote_base_dir}"; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p ${remote_base_dir} || true`;
-        SSH_Tasks.executeCommand(ssh_cmd);
-      });
+      const ssh_cmd: string = `source .profile; cd "${remote_base_dir}"; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p ${remote_base_dir} || true`;
+      SSH_Tasks.executeCommand(ssh_cmd);
     });
-
   }
 
 
-  public static get_changed_sources(results: source.Source[]): source.Source[] {
+  public static get_changed_sources(): source.Source[] { // results: source.Source[]
+
+    const current_hash_list: [] = OBITools.retrieve_source_hashes(Workspace.get_workspace());
+    const changed_sources: source.Source[] = OBICommands.compare_source_change(current_hash_list);
+
+    return changed_sources;
+  }
+
+
+  public static compare_source_change(results: source.Source[]): source.Source[] {
 
     // Get all sources which are new or have changed
     const last_source_hashes: source.Source | undefined = OBITools.get_source_hash_list(Workspace.get_workspace());
@@ -80,10 +84,9 @@ export class OBICommands {
       if (source_changed)
         changed_sources.push(source_item);
     });
-
+    
     return changed_sources;
   }
-
 
 
 
@@ -93,6 +96,9 @@ export class OBICommands {
       vscode.window.showErrorMessage('OBI process is already running');
       return;
     }
+
+    if (OBITools.is_native())
+      return OBICommands.run_build_native(context);
 
     OBICommands.status = OBIStatus.IN_PROCESS;
 
@@ -116,6 +122,15 @@ export class OBICommands {
 
 
 
+  public static show_changes_native(context: vscode.ExtensionContext): void {
+
+    OBICommands.get_changed_sources()
+
+
+    return;
+  }
+
+
   public static show_changes(context: vscode.ExtensionContext): void {
 
     if (OBICommands.status != OBIStatus.READY) {
@@ -129,12 +144,16 @@ export class OBICommands {
     }
 
     OBICommands.status = OBIStatus.IN_PROCESS;
+    const ws = Workspace.get_workspace();
+    let buff: Buffer;
 
-    const ws = vscode.workspace.workspaceFolders[0].uri.fsPath;
+    if (OBITools.is_native())
+      OBICommands.show_changes_native(context);
+    else
+      buff = execSync(`cd ${ws}; scripts/cleanup.sh   &&   scripts/create_build_script.sh`);
 
-    const buff = execSync(`cd ${ws}; scripts/cleanup.sh   &&   scripts/create_build_script.sh`);
 
-    BuildSummary.render(context.extensionUri, vscode.workspace.workspaceFolders[0].uri)
+    BuildSummary.render(context.extensionUri, Workspace.get_workspace_uri());
 
     OBICommands.status = OBIStatus.READY;
     OBIController.run_finished();

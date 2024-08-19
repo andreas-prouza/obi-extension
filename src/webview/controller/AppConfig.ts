@@ -3,6 +3,7 @@ import { OBITools } from '../../utilities/OBITools';
 import { DirTool } from '../../utilities/DirTool';
 import path from 'path';
 import { Constants } from '../../Constants';
+import { Workspace } from '../../utilities/Workspace';
 
 
 export const APP_CONFIG_TEMPLATE: {} = {
@@ -77,19 +78,10 @@ export class AppConfig {
   }
 
 
-  public static get_app_confg() {
+  public static get_app_confg(): {} {
     
-    const ws_uri =
-    vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-    ? vscode.workspace.workspaceFolders[0].uri
-    : undefined;
+    const ws_uri = Workspace.get_workspace_uri();
 
-    if (!ws_uri)
-      return {
-        app_config: {},
-        global_config: {}
-      }
-            
     const project_app_config: {} = AppConfig.get_project_app_config(ws_uri);
     const user_app_config: {} = AppConfig.get_user_app_config(ws_uri);
 
