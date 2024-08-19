@@ -27,18 +27,20 @@ export function activate(context: vscode.ExtensionContext) {
 	//const fileUri = vscode.Uri.file('/home/andreas/projekte/opensource/extensions/obi/README.md');
 	//vscode.commands.executeCommand('vscode.open', fileUri);
 
-	console.log(`OBITools.is_native(): ${OBITools.is_native()}`);
 	const contains_obi_project: boolean = OBITools.contains_obi_project();
-	const run_native: boolean = OBITools.is_native();
 	vscode.commands.executeCommand('setContext', 'obi.contains_obi_project', contains_obi_project);
-	vscode.commands.executeCommand('setContext', 'obi.run_native', run_native);
-
+	
 	const obi_welcome_provider = new Welcome(context.extensionUri);
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(Welcome.viewType, obi_welcome_provider)
 	);
 
-
+	if (!contains_obi_project)
+		return;
+	
+	const run_native: boolean = OBITools.is_native();
+	vscode.commands.executeCommand('setContext', 'obi.run_native', run_native);
+	
 	//SSH_Tasks.connect();
 
 	context.subscriptions.push(

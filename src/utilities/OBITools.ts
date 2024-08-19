@@ -149,7 +149,86 @@ export class OBITools {
 
 
 
-  public static retrieve_source_hashes(workspaceUri: string): [] {
+  public static async get_changed_sources(): source.ChangedSources { // results: source.Source[]
+
+    const current_hash_list: [] = await OBITools.retrieve_source_hashes(Workspace.get_workspace());
+    const changed_sources: source.ChangedSources = OBITools.compare_source_change(current_hash_list);
+
+    return changed_sources;
+  }
+
+
+
+  public static get_dependend_sources(changed_sources: source.ChangedSources): string[] {
+
+    let dependend_sources: string[] = [];
+    const config = AppConfig.get_app_confg();
+
+    const all_sources: string[] = Object.assign([], changed_sources['changed-sources'], changed_sources['new-objects']);
+
+    const dependency_list: {} = DirTool.get_toml(path.join(Workspace.get_workspace(), config['app_config']['general']['dependency-list']));
+    for (const [k, v] of Object.entries(dependency_list)) {
+      for (let i=0; i<all_sources.length; i++) {
+        if (all_sources[i] in v) {
+          dependend_sources.push(k);
+          break;
+        }
+      }
+    }
+
+    return dependend_sources;
+  }
+
+
+
+
+  public static compare_source_change(results: source.Source[]): source.ChangedSources {
+
+    // Get all sources which are new or have changed
+    const last_source_hashes: source.Source | undefined = OBITools.get_source_hash_list(Workspace.get_workspace());
+    let changed_sources: source.Source[] = [];
+    let new_sources: source.Source[] = [];
+
+    if (!last_source_hashes)
+      return {
+        "new-objects": [],
+        "changed-sources": []
+      };
+    
+    // check for changed sources
+    results.map((source_item: source.Source) => {
+
+      const source_name: string = Object.keys(source_item)[0];
+
+      const k_source: string = source_name;
+      const v_hash: string = source_item[source_name]['hash'];
+      let source_changed = true;
+
+      if (!(k_source in last_source_hashes)) {
+        new_sources.push(source_item);
+        return;
+      }
+
+      if (k_source in last_source_hashes) {
+
+        if (last_source_hashes[k_source]['hash'] == v_hash) {
+          source_changed = false;
+          return;
+        }
+      }
+
+      if (source_changed)
+        changed_sources.push(source_item);
+    });
+    
+    return {
+      "new-objects": new_sources,
+      "changed-sources": changed_sources
+    };
+  }
+
+
+  public static retrieve_source_hashes(workspaceUri: string) {
 
     const config = AppConfig.get_app_confg();
     const source_dir = path.join(workspaceUri, config['app_config']['general']['source-dir']);
@@ -166,13 +245,11 @@ export class OBITools {
         checksum_calls.push(DirTool.checksumFile(source_dir, dir));
       }
 
-    Promise.all(checksum_calls)
+    return Promise.all(checksum_calls)
     .then((results) => {
       console.log(`Finished for ${results.length} files`);
       return results;
     });
-
-    return [];
   }
 
 

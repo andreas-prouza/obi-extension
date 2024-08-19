@@ -9,3 +9,7 @@ export interface Source {
   [source: string]: SourceItem
 }
 
+export interface ChangedSources {
+  "new-objects": Source[],
+  "changed-sources": Source[]
+}

@@ -12,6 +12,8 @@ import * as source from '../obi/Source';
 import { SSH_Tasks } from '../utilities/SSH_Tasks';
 import { AppConfig } from '../webview/controller/AppConfig';
 import path from 'path';
+import { DirTool } from '../utilities/DirTool';
+import { Constants } from '../Constants';
 
 
 export class OBICommands {
@@ -46,47 +48,6 @@ export class OBICommands {
   }
 
 
-  public static get_changed_sources(): source.Source[] { // results: source.Source[]
-
-    const current_hash_list: [] = OBITools.retrieve_source_hashes(Workspace.get_workspace());
-    const changed_sources: source.Source[] = OBICommands.compare_source_change(current_hash_list);
-
-    return changed_sources;
-  }
-
-
-  public static compare_source_change(results: source.Source[]): source.Source[] {
-
-    // Get all sources which are new or have changed
-    const last_source_hashes: source.Source | undefined = OBITools.get_source_hash_list(Workspace.get_workspace());
-    let changed_sources: source.Source[] = [];
-
-    if (!last_source_hashes)
-      return changed_sources;
-    
-    // check for changed sources
-    results.map((source_item: source.Source) => {
-
-      const source_name: string = Object.keys(source_item)[0];
-
-      const k_source: string = source_name;
-      const v_hash: string = source_item[source_name]['hash'];
-      let source_changed = true;
-
-      if (k_source in last_source_hashes) {
-
-        if (last_source_hashes[k_source]['hash'] == v_hash) {
-          source_changed = false;
-          return;
-        }
-      }
-
-      if (source_changed)
-        changed_sources.push(source_item);
-    });
-    
-    return changed_sources;
-  }
 
 
 
@@ -122,10 +83,13 @@ export class OBICommands {
 
 
 
-  public static show_changes_native(context: vscode.ExtensionContext): void {
+  public static async show_changes_native(context: vscode.ExtensionContext) {
 
-    OBICommands.get_changed_sources()
+    const changed_sources: source.ChangedSources = await OBITools.get_changed_sources();
+    const dependend_sources: string[] = await OBITools.get_dependend_sources(changed_sources);
 
+    DirTool.write_file(path.join(Workspace.get_workspace(), Constants.CHANGED_OBJECT_LIST), JSON.stringify(changed_sources));
+    DirTool.write_file(path.join(Workspace.get_workspace(), Constants.DEPENDEND_OBJECT_LIST), JSON.stringify(dependend_sources));
 
     return;
   }
