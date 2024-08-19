@@ -138,7 +138,7 @@ export class OBITools {
 
 
 
-  public static get_source_hash_list(workspace:string): source.Source | undefined {
+  public static get_source_hash_list(workspace:string): source.ISource | undefined {
 
     const config = AppConfig.get_app_confg();
     const file:string = path.join(workspace, config['app_config']['general']['compiled-object-list'])
@@ -149,17 +149,18 @@ export class OBITools {
 
 
 
-  public static async get_changed_sources(): source.ChangedSources { // results: source.Source[]
+  public static async get_changed_sources(): Promise<source.ISourceList> { // results: source.Source[]
 
-    const current_hash_list: [] = await OBITools.retrieve_source_hashes(Workspace.get_workspace());
-    const changed_sources: source.ChangedSources = OBITools.compare_source_change(current_hash_list);
+    const current_hash_list = await OBITools.retrieve_current_source_hashes(Workspace.get_workspace());
+
+    const changed_sources: source.ISourceList = await OBITools.compare_source_change(current_hash_list);
 
     return changed_sources;
   }
 
 
 
-  public static get_dependend_sources(changed_sources: source.ChangedSources): string[] {
+  public static get_dependend_sources(changed_sources: source.ISourceList): string[] {
 
     let dependend_sources: string[] = [];
     const config = AppConfig.get_app_confg();
@@ -169,7 +170,7 @@ export class OBITools {
     const dependency_list: {} = DirTool.get_toml(path.join(Workspace.get_workspace(), config['app_config']['general']['dependency-list']));
     for (const [k, v] of Object.entries(dependency_list)) {
       for (let i=0; i<all_sources.length; i++) {
-        if (all_sources[i] in v) {
+        if (v.includes(all_sources[i])) {
           dependend_sources.push(k);
           break;
         }
@@ -181,13 +182,29 @@ export class OBITools {
 
 
 
+  public static async generate_source_change_lists(): Promise<source.ISourceList> {
+    const ws = Workspace.get_workspace();
 
-  public static compare_source_change(results: source.Source[]): source.ChangedSources {
+    DirTool.clean_dir(path.join(ws, 'tmp'));
+    DirTool.clean_dir(path.join(ws, 'build-output'));
+
+    const changed_sources: source.ISourceList = await OBITools.get_changed_sources();
+    const dependend_sources: string[] = await OBITools.get_dependend_sources(changed_sources);
+
+    DirTool.clean_dir(path.join(Workspace.get_workspace(), 'tmp'));
+    DirTool.write_file(path.join(Workspace.get_workspace(), Constants.CHANGED_OBJECT_LIST), JSON.stringify(changed_sources));
+    DirTool.write_file(path.join(Workspace.get_workspace(), Constants.DEPENDEND_OBJECT_LIST), JSON.stringify(dependend_sources));
+
+    return changed_sources;
+  }
+
+
+  public static compare_source_change(results: source.ISource[]): source.ISourceList {
 
     // Get all sources which are new or have changed
-    const last_source_hashes: source.Source | undefined = OBITools.get_source_hash_list(Workspace.get_workspace());
-    let changed_sources: source.Source[] = [];
-    let new_sources: source.Source[] = [];
+    const last_source_hashes: source.ISource | undefined = OBITools.get_source_hash_list(Workspace.get_workspace());
+    let changed_sources: string[] = [];
+    let new_sources: string[] = [];
 
     if (!last_source_hashes)
       return {
@@ -196,7 +213,7 @@ export class OBITools {
       };
     
     // check for changed sources
-    results.map((source_item: source.Source) => {
+    results.map((source_item: source.ISource) => {
 
       const source_name: string = Object.keys(source_item)[0];
 
@@ -205,7 +222,7 @@ export class OBITools {
       let source_changed = true;
 
       if (!(k_source in last_source_hashes)) {
-        new_sources.push(source_item);
+        new_sources.push(k_source);
         return;
       }
 
@@ -218,7 +235,7 @@ export class OBITools {
       }
 
       if (source_changed)
-        changed_sources.push(source_item);
+        changed_sources.push(k_source);
     });
     
     return {
@@ -228,28 +245,28 @@ export class OBITools {
   }
 
 
-  public static retrieve_source_hashes(workspaceUri: string) {
+  public static async retrieve_current_source_hashes(workspaceUri: string): Promise<source.ISource[]> {
 
     const config = AppConfig.get_app_confg();
     const source_dir = path.join(workspaceUri, config['app_config']['general']['source-dir']);
 
-    const dirs = DirTool.get_all_files_in_dir(
+    const sources = DirTool.get_all_files_in_dir(
       source_dir,
       '.',
       config['app_config']['general']['supported-object-types']
     );
 
     let checksum_calls = [];
-    if (dirs)
-      for (const dir of dirs) {
-        checksum_calls.push(DirTool.checksumFile(source_dir, dir));
+    if (sources)
+      
+      for (const source of sources) {
+        checksum_calls.push(DirTool.checksumFile(source_dir, source));
       }
 
-    return Promise.all(checksum_calls)
-    .then((results) => {
-      console.log(`Finished for ${results.length} files`);
-      return results;
-    });
+    const all_promises = Promise.all(checksum_calls);
+    const hash_values: source.ISource[] = await all_promises;
+
+    return hash_values;
   }
 
 
@@ -266,14 +283,14 @@ export class OBITools {
 
 
 
-  public static async transfer_all(){
+  public static async transfer_all() {
 
     const config = AppConfig.get_app_confg();
 
     const local_dir: string = Workspace.get_workspace();
     const remote_dir: string = path.join(config['app_config']['general']['remote-base-dir']);
     
-    SSH_Tasks.transfer_dir(local_dir, remote_dir);
+    await SSH_Tasks.transfer_dir(local_dir, remote_dir);
   }
 
 }

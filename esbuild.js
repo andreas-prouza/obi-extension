@@ -31,7 +31,7 @@ const buildSummaryViewConfig = {
   ...baseConfig,
   target: "es2020",
   format: "esm",
-  entryPoints: ["./src/webview/show_changes/main.ts"],
+  entryPoints: ["./src/webview/show_changes/javascript/show_changes.ts"],
   outfile: "./out/show_changes.js",
 };
 

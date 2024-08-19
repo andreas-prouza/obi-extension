@@ -19,8 +19,6 @@ function main() {
   // To get improved type annotations/IntelliSense the associated class for
   // a given toolkit component can be imported and used to type cast a reference
   // to the element (i.e. the `as Button` syntax)
-  const howdyButton = document.getElementById("howdy") as Button;
-  howdyButton?.addEventListener("click", handleHowdyClick);
 
   const joblogButton = document.getElementsByClassName("joblog");
 
@@ -41,6 +39,8 @@ function main() {
 
 }
 
+
+
 //--function handleHowdyClick() {
 function show_log(log_type: string) {
   const level: string = (document.getElementById('level') as HTMLInputElement).value;
@@ -53,18 +53,5 @@ function show_log(log_type: string) {
     level: level,
     cmd_index: cmd_index,
     source: source
-  });
-}
-
-
-function handleHowdyClick() {
-
-  const level: string = (document.getElementById('level') as HTMLInputElement).value;
-  const source: string = (document.getElementById('source') as HTMLInputElement).value;
-  const cmd_index: number = Number((document.getElementById('cmd_index') as HTMLInputElement).value);
-
-  vscode.postMessage({
-    command: "hello",
-    text: `Build Summary! ${level} - ${cmd_index} - ${source} 🤠`,
   });
 }

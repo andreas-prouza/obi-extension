@@ -1,15 +1,20 @@
 
-export interface SourceItem {
+export interface ISourceItem {
   hash: string,
   created: Date
 }
 
 
-export interface Source {
-  [source: string]: SourceItem
+export interface ISource {
+  [source: string]: ISourceItem
 }
 
-export interface ChangedSources {
-  "new-objects": Source[],
-  "changed-sources": Source[]
+export interface IChangedSources {
+  "new-objects": ISource[],
+  "changed-sources": ISource[]
+}
+
+export interface ISourceList {
+  "new-objects": string[],
+  "changed-sources": string[]
 }

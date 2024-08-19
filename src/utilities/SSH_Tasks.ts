@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import {NodeSSH} from 'node-ssh';
-import { Source, SourceItem } from '../obi/Source';
 import { Workspace } from './Workspace';
 import path from 'path';
 import { AppConfig } from '../webview/controller/AppConfig';
+import { fail } from 'assert';
 
 
 
@@ -18,23 +18,21 @@ export class SSH_Tasks {
   private static ssh = new NodeSSH();
 
 
-  public static connect(callback?: Function): void {
+  public static async connect(callback?: Function) {
 
     const host = 'academy';
 
     if (SSH_Tasks.ssh.isConnected())
       return;
 
-    SSH_Tasks.ssh.connect({
+    await SSH_Tasks.ssh.connect({
       host: host,
       username: 'prouzat1',
       privateKeyPath: '/home/andreas/.ssh/academy_user_rsa'
-    }).then(()=> {
-      vscode.window.showInformationMessage(`Connected to ${host}`);
-      if (callback)
-        callback();
     });
-
+    vscode.window.showInformationMessage(`Connected to ${host}`);
+    if (callback)
+        callback();
   }
 
 
@@ -47,7 +45,7 @@ export class SSH_Tasks {
         return;
       }
       const func = ()=> {SSH_Tasks.executeCommand(cmd, true)};
-      SSH_Tasks.connect(func);
+      await SSH_Tasks.connect(func);
       return;
     }
 
@@ -67,7 +65,7 @@ export class SSH_Tasks {
         return;
       }
       const func = ()=> {SSH_Tasks.getRemoteFile(local, remote, true)};
-      SSH_Tasks.connect(func);
+      await SSH_Tasks.connect(func);
       return;
     }
 
@@ -76,7 +74,71 @@ export class SSH_Tasks {
 
 
 
-  public static async transferSources(source_list: Source[], again?: boolean) {
+  public static async getRemoteDir(local: string, remote: string, again?: boolean) {
+
+    if (!SSH_Tasks.ssh.isConnected()){
+      if (again) {
+        vscode.window.showErrorMessage("Still no connection available");
+        return;
+      }
+      const func = ()=> {SSH_Tasks.getRemoteDir(local, remote, true)};
+      await SSH_Tasks.connect(func);
+      return;
+    }
+
+    let failed: string[]=[];
+    let successful: string[]=[];
+
+    await SSH_Tasks.ssh.getDirectory(local, remote, 
+      { recursive: true, 
+        concurrency: 5,
+        validate: function(itemPath) {
+          const baseName = path.basename(itemPath)
+          return baseName !== '.git' && // Don't send git directory
+                 baseName !== '.vscode' &&
+                 baseName !== '.theia' &&
+                 baseName !== '.project' &&
+                 baseName !== '.gitignore'
+        },
+        tick: function(localPath, remotePath, error) { // Remember transfer status
+          if (error) {
+            //failed.push(localPath)
+            console.log(error);
+          } else {
+            //successful.push(localPath)
+          }
+        }
+      });
+
+      console.log(failed);
+      console.log(successful);
+  }
+
+
+
+  public static async check_remote_file(file: string, again?: boolean): Promise<boolean> {
+
+    if (!SSH_Tasks.ssh.isConnected()){
+      if (again) {
+        vscode.window.showErrorMessage("Still no connection available");
+        return false;
+      }
+      await SSH_Tasks.connect();
+      return SSH_Tasks.check_remote_file(file, true);
+    }
+
+    const cmd = `ls ${file}`;
+    const result = await SSH_Tasks.ssh.execCommand(cmd);
+    console.log('Code: ' + result.code);
+    console.log('STDOUT: ' + result.stdout);
+    console.log('STDERR: ' + result.stderr);
+
+    return result.code == 0;
+  }
+
+
+
+  public static async transferSources(source_list: string[], again?: boolean) {
 
     if (!SSH_Tasks.ssh.isConnected()){
       if (again) {
@@ -84,7 +146,7 @@ export class SSH_Tasks {
         return;
       }
       const func = ()=> {SSH_Tasks.transferSources(source_list, true)};
-      SSH_Tasks.connect(func);
+      await SSH_Tasks.connect(func);
       return;
     }
 
@@ -95,8 +157,7 @@ export class SSH_Tasks {
     const local_source_dir: string = path.join(Workspace.get_workspace(), config['app_config']['general']['local-base-dir'], source_dir);
     const remote_source_dir: string = path.join(config['app_config']['general']['remote-base-dir'], source_dir);
 
-    source_list.map((el: Source) => {
-      const source: string = Object.keys(el)[0];
+    source_list.map((source: string) => {
 
       transfer_list.push({
         local: path.join(local_source_dir, source),
@@ -117,17 +178,22 @@ export class SSH_Tasks {
 
   public static async transfer_dir(local_dir: string, remote_dir: string, again?: boolean) {
 
+    // With Compression!!!!
+    // https://stackoverflow.com/questions/15641243/need-to-zip-an-entire-directory-using-node-js
+
     if (!SSH_Tasks.ssh.isConnected()){
       if (again) {
         vscode.window.showErrorMessage("Still no connection available");
         return;
       }
       const func = ()=> {SSH_Tasks.transfer_dir(local_dir, remote_dir, true)};
-      SSH_Tasks.connect(func);
+      await SSH_Tasks.connect(func);
       return;
     }
 
-    vscode.window.withProgress({
+    let final_message: string = "";
+
+    await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
       title: `Transfer project`,
     }, 
@@ -151,26 +217,25 @@ export class SSH_Tasks {
 
       var endTime = performance.now();
 
-      progress.report({
-        message: `Finished transfer in ${(endTime - startTime)/1000} seconds.`
-      });
-      await new Promise(f => setTimeout(f, 2000));
-
+      final_message = `Finished transfer in ${(endTime - startTime)/1000} seconds.`
     });
 
-    
+    vscode.window.showInformationMessage(final_message);
+
   }
   
 
   private static async ssh_put_dir(local_dir: string, remote_dir: string, failed: string[], successful: string[]) {
 
-    return SSH_Tasks.ssh.putDirectory(local_dir, remote_dir, {
+    return await SSH_Tasks.ssh.putDirectory(local_dir, remote_dir, {
       recursive: true,
       concurrency: 5,
       validate: function(itemPath) {
         const baseName = path.basename(itemPath)
         return baseName !== '.git' && // Don't send git directory
                baseName !== '.vscode' &&
+               baseName !== '.theia' &&
+               baseName !== '.project' &&
                baseName !== '.gitignore'
       },
       tick: function(localPath, remotePath, error) { // Remember transfer status
@@ -181,7 +246,6 @@ export class SSH_Tasks {
         }
       }
       })
-
   }
 
 }

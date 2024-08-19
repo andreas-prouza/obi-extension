@@ -12,11 +12,13 @@
     <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
     
     <h1>Summary</h1>
+    {% if compile_list %}
     <br/><br/>
     <div>
       Created at <b><u>{{ compile_list['timestamp'] }}</u></b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='command:vscode.open?{{ compile_file }}'>open JSON file</a>
     </div>
     <br/>
+    {% endif %}
     <hr />
     <br/>
     
@@ -58,7 +60,9 @@
         </td>
       </tr>
     </table>
-    
+
+    {% if compile_list %}
+
     <vscode-divider role="separator"></vscode-divider>
     
     <hr />
@@ -135,14 +139,13 @@
     </tbody>
     </table>
 
+    {% endif %}
     
     <br/><br/>
 
     <input type="hidden" id="level"\>
     <input type="hidden" id="source"\>
     <input type="hidden" id="cmd_index"\>
-
-    <vscode-button id="howdy" appearance="primary">Button Text</vscode-button>
 
 
     <script src="{{ global_stuff['asserts_uri'] }}/js/jquery.min.js"></script>

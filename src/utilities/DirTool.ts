@@ -3,6 +3,8 @@
 import { Uri } from "vscode";
 import { AppConfig } from "../webview/controller/AppConfig";
 import path from "path";
+import * as source from "../obi/Source";
+import * as fs from 'fs';
 
 
 export class DirTool {
@@ -28,8 +30,6 @@ export class DirTool {
 
 
   public static list_dir(dir: string): string[] {
-    const fs = require('fs');
-
     const files = fs.readdirSync(dir);
 
     return files;
@@ -37,7 +37,6 @@ export class DirTool {
 
 
   public static file_exists(path: string): boolean {
-    const fs = require('fs');
     
     if (!fs.existsSync(path))
       return false;
@@ -51,7 +50,6 @@ export class DirTool {
 
 
   public static dir_exists(path: string): boolean {
-    const fs = require('fs');
     
     if (!fs.existsSync(path))
       return false;
@@ -64,7 +62,6 @@ export class DirTool {
 
 
   public static is_file(path: string): boolean {
-    const fs = require('fs');
     const stats = fs.statSync(path);
     return stats.isFile()
   }
@@ -80,7 +77,6 @@ export class DirTool {
 
   
   public static get_file_changed_date(file: string) {
-    const fs = require('fs')
     const { mtime, ctime } = fs.statSync(file);
     return mtime;
   }
@@ -132,7 +128,6 @@ export class DirTool {
       return undefined
     }
 
-    const fs = require('fs');
     const toml = require('smol-toml');
     try{
       // Read the TOML file into a string
@@ -152,7 +147,6 @@ export class DirTool {
 
   public static write_toml(file: string, data: {}): any|undefined {
 
-    const fs = require('fs');
     const toml = require('smol-toml');
     try{
       
@@ -172,7 +166,6 @@ export class DirTool {
 
   public static write_file(file: string, content: string): void {
 
-    const fs = require('fs');
     try{
       
       fs.writeFileSync(file, content, 'utf8');
@@ -188,7 +181,6 @@ export class DirTool {
 
   public static get_key_value_file(file: string): string[]|undefined {
 
-    const fs = require('fs');
     let key_values: {}= {};
     if (!DirTool.file_exists(file))
       return undefined;
@@ -206,6 +198,13 @@ export class DirTool {
     return undefined;
   }
 
+
+
+  public static clean_dir(file: string): void {
+
+    fs.rmSync(file, { recursive: true, force: true });
+    fs.mkdirSync(file);
+  }
 
 
   public static get_shell_config(file: string): {}|undefined {
@@ -259,7 +258,6 @@ export class DirTool {
     */
 
   public static checksumFile(root: string, file_path: string) {
-    var fs = require('fs')
     var crypto = require('crypto')
     return new Promise((resolve, reject) => {
       const hash = crypto.createHash('sha256');
@@ -267,7 +265,7 @@ export class DirTool {
       stream.on('error', err => reject(err));
       stream.on('data', chunk => hash.update(chunk));
       stream.on('end', () => {
-        resolve({[file_path] : {hash: hash.digest('hex')}});
+        resolve({[file_path] : {hash: String(hash.digest('hex'))}});
       });
     });
   }
