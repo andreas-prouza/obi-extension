@@ -8,6 +8,7 @@ import { OBITools } from './utilities/OBITools';
 import { OBIConfiguration } from './webview/controller/OBIConfiguration';
 import path from 'path';
 import { DirTool } from './utilities/DirTool';
+import { SSH_Tasks } from './utilities/SSH_Tasks';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -22,6 +23,8 @@ export function activate(context: vscode.ExtensionContext) {
 	? vscode.workspace.workspaceFolders[0].uri
 	: undefined;
 
+
+	SSH_Tasks.context = context;
 	OBITools.ext_context = context;
 
 	//const fileUri = vscode.Uri.file('/home/andreas/projekte/opensource/extensions/obi/README.md');
@@ -95,9 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
 	*/
 	context.subscriptions.push(
 		vscode.commands.registerCommand('obi.controller.config', ()  => {
-			if (!vscode.workspace.workspaceFolders)
-				return;
-			OBIConfiguration.render(context.extensionUri, vscode.workspace.workspaceFolders[0].uri)
+			OBIConfiguration.render(context, context.extensionUri)
 		})
 	)
 

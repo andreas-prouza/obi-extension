@@ -16,19 +16,47 @@ interface FileTransfer {
 export class SSH_Tasks {
 
   private static ssh = new NodeSSH();
+  public static context: vscode.ExtensionContext;
 
 
   public static async connect(callback?: Function) {
 
-    const host = 'academy';
+    const config = AppConfig.get_app_confg();
+    let host = config['global_config']['REMOTE_HOST'];
+    let user = config['global_config']['SSH_USER'];
+    const ssh_key = config['global_config']['SSH_KEY'];
+
+
+    if (!host || host.length == 0) {
+      host = await vscode.window.showInputBox({ title: `Enter an IBM i hostname/IP`, placeHolder: "my-ibm-i" });
+      if (! host)
+        throw new Error('Canceled by user. No host provided');
+    }
+
+    if (!user || user.length == 0) {
+      user = await vscode.window.showInputBox({ title: `Enter your user for ${host}`, placeHolder: "usrprf" });
+      if (! user)
+        throw new Error('Canceled by user. No user provided');
+    }
+
+    let pwd: string | undefined = await SSH_Tasks.context.secrets.get(`obi|${host}|${user}`);
+    if (! pwd && (!ssh_key || ssh_key.length == 0)) {
+      pwd = await vscode.window.showInputBox({ title: `Enter your password for ${user}@${host}`, placeHolder: "password", password: true });
+      if (! pwd)
+        throw new Error('Canceled by user. No password provided');
+    }
 
     if (SSH_Tasks.ssh.isConnected())
       return;
 
     await SSH_Tasks.ssh.connect({
       host: host,
-      username: 'prouzat1',
-      privateKeyPath: '/home/andreas/.ssh/academy_user_rsa'
+      username: user,
+      password: pwd,
+      privateKeyPath: ssh_key
+    }).catch((reason) => {
+      vscode.window.showErrorMessage(reason.message);
+      throw reason;
     });
     vscode.window.showInformationMessage(`Connected to ${host}`);
     if (callback)
@@ -127,7 +155,7 @@ export class SSH_Tasks {
       return SSH_Tasks.check_remote_file(file, true);
     }
 
-    const cmd = `ls ${file}`;
+    const cmd = `ls ${file.replaceAll('"$HOME"', '~')}`;
     const result = await SSH_Tasks.ssh.execCommand(cmd);
     console.log('Code: ' + result.code);
     console.log('STDOUT: ' + result.stdout);
@@ -208,12 +236,11 @@ export class SSH_Tasks {
       let successful: string[] = [];
 
       // SSH transfer
-      await SSH_Tasks.ssh_put_dir(local_dir, remote_dir, failed, successful).then(function(status) {
-        if (status)
-          vscode.window.showInformationMessage(`${successful.length} files were successfully transfered to ${remote_dir}`);
-        else
-          vscode.window.showErrorMessage(`${successful.length} of ${failed.length} failed transfered to ${remote_dir}`);
-      });
+      const status = await SSH_Tasks.ssh_put_dir(local_dir, remote_dir, failed, successful);
+      if (status)
+        vscode.window.showInformationMessage(`${successful.length} files were successfully transfered to ${remote_dir}`);
+      else
+        throw new Error(`${successful.length} of ${failed.length} failed transfered to ${remote_dir}`);
 
       var endTime = performance.now();
 
@@ -227,7 +254,10 @@ export class SSH_Tasks {
 
   private static async ssh_put_dir(local_dir: string, remote_dir: string, failed: string[], successful: string[]) {
 
-    return await SSH_Tasks.ssh.putDirectory(local_dir, remote_dir, {
+    const x = remote_dir.replaceAll('\'"$HOME"\'', '~');!!! das alles wird escaped
+    vscode.window.showInformationMessage(x);
+
+    return await SSH_Tasks.ssh.putDirectory(local_dir, remote_dir.replaceAll('\'"$HOME"\'', '~'), {
       recursive: true,
       concurrency: 5,
       validate: function(itemPath) {
@@ -245,7 +275,7 @@ export class SSH_Tasks {
           successful.push(localPath)
         }
       }
-      })
+      });
   }
 
 }

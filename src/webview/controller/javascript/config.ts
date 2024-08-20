@@ -31,6 +31,14 @@ function main() {
 function save_configs() {
   save_config('project');
   save_config('user');
+
+  const ssh_password = document.getElementById("SSH_PASSWORD") as HTMLInputElement;
+  if (ssh_password.value.length > 0)
+    vscode.postMessage({
+      command: `save_ssh_password`,
+      password: ssh_password.value
+    });
+
 }
 
 

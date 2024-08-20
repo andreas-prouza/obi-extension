@@ -7,6 +7,7 @@ import path from 'path';
 import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
 import { AppConfig } from './AppConfig';
+import { Workspace } from '../../utilities/Workspace';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -23,6 +24,7 @@ export class OBIConfiguration {
   public static currentPanel: OBIConfiguration | undefined;
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
+  private static _context: vscode.ExtensionContext;
 
 
   /**
@@ -47,7 +49,10 @@ export class OBIConfiguration {
    *
    * @param extensionUri The URI of the directory containing the extension.
    */
-  public static render(extensionUri: Uri, workspaceUri: Uri) {
+  public static async render(context: vscode.ExtensionContext, extensionUri: Uri) {
+
+    OBIConfiguration._context = context;
+    const workspaceUri = Workspace.get_workspace_uri();
 
     if (OBIConfiguration.currentPanel) {
       // If the webview panel already exists reveal it
@@ -60,6 +65,12 @@ export class OBIConfiguration {
     const project_config = AppConfig.get_project_app_config(workspaceUri);
     const user_config = AppConfig.get_user_app_config(workspaceUri);
 
+    const config = AppConfig.get_app_confg();
+    const host = config['global_config']['REMOTE_HOST'];
+    const user = config['global_config']['SSH_USER'];
+
+    const pwd = await context.secrets.get(`obi|${host}|${user}`);
+
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
     const html = nunjucks.render('controller/configuration.html', 
       {
@@ -68,6 +79,7 @@ export class OBIConfiguration {
         icons: {debug_start: '$(preview)'},
         user_config: user_config,
         project_config: project_config,
+        SSH_PASSWORD: pwd,
         config_file: DirTool.get_encoded_file_URI(workspaceUri, Constants.OBI_APP_CONFIG_FILE)
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         //object_list: this.get_object_list(workspaceUri),
@@ -106,6 +118,14 @@ export class OBIConfiguration {
         break;
       case "project_save":
         OBIConfiguration.save_config(is_project, workspaceUri, message.data);
+        break;
+      case "save_ssh_password":
+        const config = AppConfig.get_app_confg();
+        const host = config['global_config']['REMOTE_HOST'];
+        const user = config['global_config']['SSH_USER'];
+        OBIConfiguration._context.secrets.delete(`obi|${host}|${user}`);
+        if (message.password.length > 0)
+          OBIConfiguration._context.secrets.store(`obi|${host}|${user}`, message.password);
         break;
     }
     return;
@@ -164,8 +184,8 @@ export class OBIConfiguration {
 
   private static createNewPanel(extensionUri : Uri) {
     return window.createWebviewPanel(
-      'source_list', // Identifies the type of the webview. Used internally
-      'Source list', // Title of the panel displayed to the user
+      'obi_config', // Identifies the type of the webview. Used internally
+      'OBI config', // Title of the panel displayed to the user
       // The editor column the panel should be displayed in
       ViewColumn.One,
       // Extra panel configurations

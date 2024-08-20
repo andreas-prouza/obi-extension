@@ -290,6 +290,7 @@ export class OBITools {
     const local_dir: string = Workspace.get_workspace();
     const remote_dir: string = path.join(config['app_config']['general']['remote-base-dir']);
     
+    console.log(`Transer local dir ${local_dir} to ${remote_dir}`);
     await SSH_Tasks.transfer_dir(local_dir, remote_dir);
   }
 

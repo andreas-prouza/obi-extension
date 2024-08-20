@@ -33,28 +33,30 @@ export class OBICommands {
     const changed_sources: source.ISourceList = await OBITools.generate_source_change_lists();
     const source_list: string[] = Object.assign([], changed_sources['changed-sources'], changed_sources['new-objects']);
 
-    const check: boolean = await SSH_Tasks.check_remote_file(path.join(config['app_config']['general']['remote-base-dir'], Constants.OBI_APP_CONFIG_FILE));
+    const check: boolean = await SSH_Tasks.check_remote_file(path.join(remote_base_dir, Constants.OBI_APP_CONFIG_FILE));
     if (!check) {
-      const answer = await vscode.window.showErrorMessage("Missing OBI project on remote system. Do you want to transfer all?\nThis can take several minutes.", ...['Yes', 'No']);
+      const answer = await vscode.window.showErrorMessage(`Missing OBI project on remote system. Do you want to transfer all?\nThis can take several minutes.\nRemote folder: ${remote_base_dir}`, { modal: true }, ...['Yes', 'No']);
       switch (answer) {
         case 'No':
-          return;
+          throw new Error('Missing OBI project. Declined by user');
+        case undefined:
+          throw new Error('Missing OBI project. Canceled by user');
         case 'Yes':
           await OBITools.transfer_all();
       }
     }
 
-    await SSH_Tasks.transferSources(source_list);
+    const result = await SSH_Tasks.transferSources(source_list);
 
      if (source_list.length == 0) {
       vscode.window.showWarningMessage("No changed sources to build");
       return;
     }
 
-    let ssh_cmd: string = `source .profile; cd "${remote_base_dir}"; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a create -p ${remote_base_dir} || true`;
+    let ssh_cmd: string = `source .profile; cd '${remote_base_dir}'; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a create -p ${remote_base_dir} || true`;
     await SSH_Tasks.executeCommand(ssh_cmd);
 
-    ssh_cmd = `source .profile; cd "${remote_base_dir}"; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p ${remote_base_dir} || true`;
+    ssh_cmd = `source .profile; cd '${remote_base_dir}'; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p ${remote_base_dir} || true`;
     await SSH_Tasks.executeCommand(ssh_cmd);
 
     await Promise.all([
@@ -79,17 +81,21 @@ export class OBICommands {
     const ws_uri = Workspace.get_workspace_uri();
     let buff;
 
-    if (OBITools.is_native())
-      await OBICommands.run_build_native();
-    else
-      buff = execSync(`cd ${ws_uri.fsPath}; scripts/cleanup.sh   &&   scripts/run_build.sh`);
+    try {
+      if (OBITools.is_native())
+        await OBICommands.run_build_native();
+      else
+        buff = execSync(`cd ${ws_uri.fsPath}; scripts/cleanup.sh   &&   scripts/run_build.sh`);
 
-    BuildSummary.render(context.extensionUri, ws_uri)
+      BuildSummary.render(context.extensionUri, ws_uri)
+      OBIController.update_build_summary_timestamp();
+    }
+    catch(e) {
+      vscode.window.showErrorMessage(e.message);
+    }
 
     OBICommands.status = OBIStatus.READY;
     OBIController.run_finished();
-    OBIController.update_build_summary_timestamp();
-
     return;
   }
 

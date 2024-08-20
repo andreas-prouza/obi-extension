@@ -21,9 +21,34 @@
 
       <vscode-text-field class="{{ class_prefix }}_save_global type_file" id="SSH_KEY" placeholder="~/.ssh/ibmi_rsa"
         value="{{ global_config['SSH_KEY'] }}">SSH Key</vscode-text-field>
+      <br />
+      <br />
+
+      {% if class_prefix != 'user' %}
+      <vscode-text-field class="" readonly="true"
+        value="">User (is only available in user config)</vscode-text-field>
+
+      <br />
+      <br />      
+      <vscode-text-field class="" readonly="true"
+        value="">Password (is only available in user config)</vscode-text-field>
 
       <br />
       <br />
+      {% endif %}
+      {% if class_prefix == 'user' %}
+      <vscode-text-field class="{{ class_prefix }}_save_global" id="SSH_USER"
+        value="{{ global_config['SSH_USER'] }}">User</vscode-text-field>
+
+      <br />
+      <br />
+      <vscode-text-field class="" id="SSH_PASSWORD" type="password"
+        value="{{ SSH_PASSWORD }}">Password</vscode-text-field>
+
+      <br />
+      <br />
+      {% endif %}
+
       <vscode-text-field class="{{ class_prefix }}_save_app type_text" id="general|local-base-dir" size="80"
         value="{{ app_config['general']['local-base-dir'] | replace('" $HOME"', '$HOME' ) }}">Local
         path</vscode-text-field>
