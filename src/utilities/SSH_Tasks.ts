@@ -4,6 +4,7 @@ import { Workspace } from './Workspace';
 import path from 'path';
 import { AppConfig } from '../webview/controller/AppConfig';
 import { fail } from 'assert';
+import { Constants } from '../Constants';
 
 
 
@@ -22,9 +23,9 @@ export class SSH_Tasks {
   public static async connect(callback?: Function) {
 
     const config = AppConfig.get_app_confg();
-    let host = config['global_config']['REMOTE_HOST'];
-    let user = config['global_config']['SSH_USER'];
-    const ssh_key = config['global_config']['SSH_KEY'];
+    let host = config.connection.remote_host;
+    let user = config.connection.ssh_user;
+    const ssh_key = config.connection.ssh_key;
 
 
     if (!host || host.length == 0) {
@@ -78,11 +79,16 @@ export class SSH_Tasks {
     }
 
     console.log(cmd);
-    SSH_Tasks.ssh.execCommand(cmd).then((result)=>{
-      console.log('STDOUT: ' + result.stdout);
-      console.log('STDERR: ' + result.stderr);
-    }); // {cwd: '.' }
+    const result = await SSH_Tasks.ssh.execCommand(cmd)
+    
+    console.log('STDOUT: ' + result.stdout);
+    console.log('STDERR: ' + result.stderr);
+
+    if (result.code != 0)
+      throw Error(result.stderr);
+
   }
+
 
 
   public static async getRemoteFile(local: string, remote: string, again?: boolean) {
@@ -119,7 +125,7 @@ export class SSH_Tasks {
 
     await SSH_Tasks.ssh.getDirectory(local, remote, 
       { recursive: true, 
-        concurrency: 5,
+        concurrency: AppConfig.get_app_confg().connection.ssh_concurrency,
         validate: function(itemPath) {
           const baseName = path.basename(itemPath)
           return baseName !== '.git' && // Don't send git directory
@@ -144,7 +150,7 @@ export class SSH_Tasks {
 
 
 
-  public static async check_remote_file(file: string, again?: boolean): Promise<boolean> {
+  public static async check_remote_path(file: string, again?: boolean): Promise<boolean> {
 
     if (!SSH_Tasks.ssh.isConnected()){
       if (again) {
@@ -152,10 +158,11 @@ export class SSH_Tasks {
         return false;
       }
       await SSH_Tasks.connect();
-      return SSH_Tasks.check_remote_file(file, true);
+      return SSH_Tasks.check_remote_path(file, true);
     }
 
-    const cmd = `ls ${file.replaceAll('"$HOME"', '~')}`;
+    const cmd = `ls "${file}"`;
+    console.log(`Command: ${cmd}`);
     const result = await SSH_Tasks.ssh.execCommand(cmd);
     console.log('Code: ' + result.code);
     console.log('STDOUT: ' + result.stdout);
@@ -177,13 +184,29 @@ export class SSH_Tasks {
       await SSH_Tasks.connect(func);
       return;
     }
-
-    let transfer_list: FileTransfer[] = [];
-
+    
     const config = AppConfig.get_app_confg();
-    const source_dir: string = config['app_config']['general']['source-dir'];
-    const local_source_dir: string = path.join(Workspace.get_workspace(), config['app_config']['general']['local-base-dir'], source_dir);
-    const remote_source_dir: string = path.join(config['app_config']['general']['remote-base-dir'], source_dir);
+    if (!config.general.remote_base_dir)
+      throw Error(`Config attribute 'config.general.remote_base_dir' missing`);
+    
+    const source_dir: string = config.general.source_dir;
+    const local_source_dir: string = path.join(Workspace.get_workspace(), config.general.local_base_dir, source_dir);
+    const remote_source_dir: string = path.join(config.general.remote_base_dir, source_dir);
+    
+    let transfer_list: FileTransfer[] = [
+      {
+        local: path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_FILE),
+        remote: path.join(config.general.remote_base_dir, Constants.OBI_APP_CONFIG_FILE),
+      },
+      {
+        local: path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_USER_FILE),
+        remote: path.join(config.general.remote_base_dir, Constants.OBI_APP_CONFIG_USER_FILE),
+      },
+      {
+        local: path.join(Workspace.get_workspace(), 'etc', 'constants.py'),
+        remote: path.join(config.general.remote_base_dir, 'etc', 'constants.py'),
+      }
+    ];
 
     source_list.map((source: string) => {
 
@@ -193,7 +216,10 @@ export class SSH_Tasks {
       })
     });
 
-    await SSH_Tasks.ssh.putFiles(transfer_list);
+    console.log('Transfer files:');
+    console.log(transfer_list);
+
+    await SSH_Tasks.ssh.putFiles(transfer_list, {concurrency: config.connection.ssh_concurrency });
 
     if (transfer_list.length > 1)
       vscode.window.showInformationMessage(`${transfer_list.length} sources transfered`);
@@ -254,12 +280,9 @@ export class SSH_Tasks {
 
   private static async ssh_put_dir(local_dir: string, remote_dir: string, failed: string[], successful: string[]) {
 
-    const x = remote_dir.replaceAll('\'"$HOME"\'', '~');!!! das alles wird escaped
-    vscode.window.showInformationMessage(x);
-
-    return await SSH_Tasks.ssh.putDirectory(local_dir, remote_dir.replaceAll('\'"$HOME"\'', '~'), {
+    return await SSH_Tasks.ssh.putDirectory(local_dir, remote_dir, {
       recursive: true,
-      concurrency: 5,
+      concurrency: AppConfig.get_app_confg().connection.ssh_concurrency,
       validate: function(itemPath) {
         const baseName = path.basename(itemPath)
         return baseName !== '.git' && // Don't send git directory

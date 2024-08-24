@@ -22,71 +22,71 @@
       {
         "command": "obi.show_changes",
         "title": "Show changes",
-        "when": "obi.contains_obi_project"
+        "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.run_build",
         "title": "Run build",
-        "when": "obi.contains_obi_project"
+        "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.source-lists.update",
         "title": "Update source list",
         "icon": "$(refresh)",
-        "when": "obi.contains_obi_project == true"
+        "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.get-remote-compiled-object-list",
         "title": "Get remote compiled object list",
         "icon": "$(refresh)",
-        "when": "obi.contains_obi_project == true"
+        "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.controller.config",
         "title": "Configuration",
         "icon": "$(settings-gear)",
-        "when": "obi.contains_obi_project == true"
+        "when": "obi.contains_obi_project"
       },
       {
         "command": "obi.transfer-all",
         "title": "Transfer all",
         "icon": "$(settings-gear)",
-        "when": "obi.contains_obi_project == true"
+        "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.source-lists.show-view",
         "title": "Show source list",
         "icon": "$(preview)",
-        "when": "obi.contains_obi_project == true"
+        "when": "obi.contains_obi_project && obi.valid-config"
       }
     ],
     "menus": {
       "view/title": [
         {
           "command": "obi.source-lists.update",
-          "when": "obi.contains_obi_project == true && view == obi.source-lists",
+          "when": "obi.contains_obi_project && obi.valid-config && view == obi.source-lists",
           "group": "navigation"
         },
         {
           "command": "obi.controller.config",
-          "when": "obi.contains_obi_project == true && view == obi.controller",
+          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
           "group": "navigation"
         }
       ],
       "view/item/context": [
         {
           "command": "obi.source-lists.update",
-          "when": "obi.contains_obi_project == true && view == obi.source-lists && viewItem == source-member",
+          "when": "obi.contains_obi_project && view == obi.source-lists && viewItem == source-member",
           "group": "inline"
         },
         {
           "command": "obi.source-lists.show-view",
-          "when": "obi.contains_obi_project == true && view == obi.source-lists && viewItem == source-list",
+          "when": "obi.contains_obi_project && view == obi.source-lists && viewItem == source-list",
           "group": "inline"
         },
         {
           "command": "obi.source-lists.update",
-          "when": "view == obi.source-lists && obi.contains_obi_project == true"
+          "when": "view == obi.source-lists && obi.contains_obi_project"
         }
       ]
     },
@@ -105,19 +105,25 @@
           "type": "webview",
           "id": "obi.controller",
           "name": "OBI",
-          "when": "obi.contains_obi_project == true"
+          "when": "obi.contains_obi_project && obi.valid-config"
         },
         {
           "type": "tree",
           "id": "obi.source-lists",
           "name": "Source lists",
-          "when": "obi.contains_obi_project == true"
+          "when": "obi.contains_obi_project && obi.valid-config"
         },
         {
           "type": "webview",
           "id": "obi-welcome",
           "name": "Welcome",
           "when": "obi.contains_obi_project == false"
+        },
+        {
+          "type": "webview",
+          "id": "obi-config-invalid",
+          "name": "Invalid config",
+          "when": "obi.contains_obi_project && !obi.valid-config"
         }
       ]
     }

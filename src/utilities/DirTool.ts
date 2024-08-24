@@ -99,7 +99,7 @@ export class DirTool {
 
     const fileUri = {
       scheme: 'file',
-      path: `${workspaceUri.path}/${config['app_config']['general']['source-dir']}/${file}`,
+      path: `${workspaceUri.path}/${config.general.source_dir}/${file}`,
       authority: ''
     };
     return encodeURIComponent(JSON.stringify(fileUri))
@@ -113,7 +113,7 @@ export class DirTool {
 
     const fileUri = {
       scheme: 'file',
-      path: `${workspaceUri.path}/${config['app_config']['general']['build-output-dir']}/${file}`,
+      path: `${workspaceUri.path}/${config.general.build_output_dir}/${file}`,
       authority: ''
     };
     return encodeURIComponent(JSON.stringify(fileUri))

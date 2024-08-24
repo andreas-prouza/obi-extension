@@ -13,14 +13,20 @@
   <vscode-panel-view id="view-1">
     <section>
 
-      <vscode-text-field class="{{ class_prefix }}_save_global" id="REMOTE_HOST" placeholder="IBM i host (or IP)"
-        value="{{ global_config['REMOTE_HOST'] }}">Remote host</vscode-text-field>
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-1" id="{{ class_prefix }}|connection|remote-host" placeholder="IBM i host (or IP)"
+        value="{{ app_config['connection']['remote-host'] }}">Remote host</vscode-text-field>
 
       <br />
       <br />
 
-      <vscode-text-field class="{{ class_prefix }}_save_global type_file" id="SSH_KEY" placeholder="~/.ssh/ibmi_rsa"
-        value="{{ global_config['SSH_KEY'] }}">SSH Key</vscode-text-field>
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-1" regex_validator="^\d*$" id="{{ class_prefix }}|connection|ssh-concurrency" placeholder="5"
+        value="{{ app_config['connection']['ssh-concurrency'] }}">SSH Concurrency <label style="visibility: hidden;" id="hint_{{ class_prefix }}|connection|ssh-concurrency">&nbsp;&nbsp;&nbsp;⚠️ Only numbers</label></vscode-text-field>
+
+      <br />
+      <br />
+
+      <vscode-text-field class="{{ class_prefix }}_save_app type_file" panel="tab-1" id="{{ class_prefix }}|connection|ssh-key" placeholder="~/.ssh/ibmi_rsa"
+        value="{{ app_config['connection']['ssh-key'] }}">🔑 SSH Key</vscode-text-field>
       <br />
       <br />
 
@@ -31,54 +37,63 @@
       <br />
       <br />      
       <vscode-text-field class="" readonly="true"
-        value="">Password (is only available in user config)</vscode-text-field>
+        value="">🔑 Password (is only available in user config)</vscode-text-field>
 
       <br />
       <br />
       {% endif %}
       {% if class_prefix == 'user' %}
-      <vscode-text-field class="{{ class_prefix }}_save_global" id="SSH_USER"
-        value="{{ global_config['SSH_USER'] }}">User</vscode-text-field>
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-1" id="{{ class_prefix }}|connection|ssh-user"
+        value="{{ app_config['connection']['ssh-user'] }}">User</vscode-text-field>
 
       <br />
       <br />
-      <vscode-text-field class="" id="SSH_PASSWORD" type="password"
-        value="{{ SSH_PASSWORD }}">Password</vscode-text-field>
+      <vscode-text-field class="" panel="tab-1" id="{{ class_prefix }}|SSH_PASSWORD" type="password"
+        value="{{ SSH_PASSWORD }}">🔑 Password</vscode-text-field>
 
       <br />
       <br />
       {% endif %}
 
-      <vscode-text-field class="{{ class_prefix }}_save_app type_text" id="general|local-base-dir" size="80"
-        value="{{ app_config['general']['local-base-dir'] | replace('" $HOME"', '$HOME' ) }}">Local
-        path</vscode-text-field>
+      <br />
+      <hr />
+      <br />
+      💡 Tilde (~) and env vars (e.g. $HOME) are not supported for paths.
       <br />
       <br />
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|remote-base-dir" size="80"
-        value="{{ app_config['general']['remote-base-dir'] | replace('" $HOME"', '$HOME' ) }}">Remote ifs
-        path</vscode-text-field>
+
+      <vscode-text-field class="{{ class_prefix }}_save_app type_text {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-1" id="{{ class_prefix }}|general|local-base-dir" size="80"
+        value="{{ app_config['general']['local-base-dir'] | replace('"$HOME"', '$HOME' ) }}">Local path</vscode-text-field>
       <br />
       <br />
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|source-dir" placeholder="src"
-        value="{{ app_config['general']['source-dir'] | replace('" $HOME"', '$HOME' ) }}">Source
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-1" id="{{ class_prefix }}|general|remote-base-dir" size="80"
+        value="{{ app_config['general']['remote-base-dir'] | replace('"$HOME"', '$HOME' ) }}">Remote ifs path</vscode-text-field>
+      <br />
+      <br />
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-1" id="{{ class_prefix }}|general|source-dir" placeholder="src"
+        value="{{ app_config['general']['source-dir'] | replace('"$HOME"', '$HOME' ) }}">Source
         directory</vscode-text-field>
 
+      <br />
       <br />
       <br />
       <hr />
       <br />
 
-      <vscode-checkbox class="{{ class_prefix }}_save_global type_checkbox" id="USE_PYTHON" 
-        {% if global_config['USE_PYTHON'] == 'true' %}checked{% endif %}>Use OBI local</vscode-checkbox>
+      💡 Tilde (~) and env vars (e.g. $HOME) are not supported for paths.
       <br />
       <br />
-      <vscode-text-field class="{{ class_prefix }}_save_global" id="OBI_DIR" size="80" placeholder="~/project/obi"
-        value="{{ global_config['OBI_DIR'] | replace('" $HOME"', '$HOME' ) }}">Local OBI path</vscode-text-field>
+
+      <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox" panel="tab-1" id="{{ class_prefix }}|general|use-remote-obi" 
+        {% if app_config['general']['use-remote-obi'] == 'true' %}checked{% endif %}>Use remote OBI (show changes)</vscode-checkbox>
       <br />
       <br />
-      <vscode-text-field class="{{ class_prefix }}_save_global" id="REMOTE_OBI_DIR" size="80" placeholder="~/project/obi"
-        value="{{ global_config['REMOTE_OBI_DIR'] | replace('" $HOME"', '$HOME' ) }}">Remote OBI
-        path</vscode-text-field>
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-1" id="{{ class_prefix }}|general|local-obi-dir" size="80" placeholder="~/project/obi"
+        value="{{ app_config['general']['local-obi-dir'] | replace('"$HOME"', '$HOME' ) }}">Local OBI path</vscode-text-field>
+      <br />
+      <br />
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-1" id="{{ class_prefix }}|general|remote-obi-dir" size="80" placeholder="~/project/obi"
+        value="{{ app_config['general']['remote-obi-dir'] | replace('"$HOME"', '$HOME' ) }}">Remote OBI path</vscode-text-field>
     </section>
   </vscode-panel-view>
 
@@ -88,26 +103,37 @@
 
       <h2>General</h2>
 
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|general|TGTRLS" placeholder="*CURRENT"
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|TGTRLS" placeholder="*CURRENT"
         value="{{ general_settings['TGTRLS'] }}">TGTRLS</vscode-text-field>
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|general|DBGVIEW" placeholder="*ALL"
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|DBGVIEW" placeholder="*ALL"
         value="{{ general_settings['DBGVIEW'] }}">DBGVIEW</vscode-text-field>
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|general|TGTCCSID" placeholder="*JOB"
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|TGTCCSID" placeholder="*JOB"
         value="{{ general_settings['TGTCCSID'] }}">TGTCCSID</vscode-text-field>
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|general|STGMDL" placeholder="*SNGLVL"
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|STGMDL" placeholder="*SNGLVL"
         value="{{ general_settings['STGMDL'] }}">STGMDL</vscode-text-field>
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|ACTGRP" placeholder="*SNGLVL"
+        value="{{ general_settings['ACTGRP'] }}">ACTGRP</vscode-text-field>
       <br />
       <br />
-      <vscode-text-field class="{{ class_prefix }}_save_app type_array" id="global|settings|general|LIBL" size="50"
+      <vscode-text-field class="{{ class_prefix }}_save_app type_array {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-2" id="{{ class_prefix }}|global|settings|general|LIBL" size="50"
         placeholder="$(TARGET_LIB), QGPL" value="{{ general_settings['LIBL'] | join('\n') }}">LIBL</vscode-text-field>
       <br />
       <br />
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|general|INCDIR_RPGLE" size="80"
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|INCLUDE_BNDDIR" size="50"
+        placeholder="PROUZADIR" value="{{ general_settings['INCLUDE_BNDDIR'] }}">INCLUDE_BNDDIR</vscode-text-field>
+      <br />
+      <br />
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|INCDIR_RPGLE" size="80"
         placeholder="$HOME/project-dir/src/prouzalib $HOME/project-dir/src/prouzalib2"
-        value="{{ general_settings['INCDIR_RPGLE'] | replace('" $HOME"', '$HOME' ) }}">INCDIR</vscode-text-field>
+        value="{{ general_settings['INCDIR_RPGLE'] | replace('"$HOME"', '$HOME' ) }}">INCDIR RPGLE</vscode-text-field>
       <br />
       <br />
-      <vscode-text-area class="{{ class_prefix }}_save_app type_dict" id="global|settings|general|TARGET_LIB_MAPPING" size="50"
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|INCDIR_SQLRPGLE" size="80"
+        placeholder="$HOME/project-dir/src/prouzalib $HOME/project-dir/src/prouzalib2"
+        value="{{ general_settings['INCDIR_SQLRPGLE'] | replace('"$HOME"', '$HOME' ) }}">INCDIR SQLRPGLE</vscode-text-field>
+      <br />
+      <br />
+      <vscode-text-area class="{{ class_prefix }}_save_app type_dict" panel="tab-2" id="{{ class_prefix }}|global|settings|general|TARGET_LIB_MAPPING" size="50"
         placeholder="prouzalib=prouzat1, prouzalib2=prouzat2"
         value="{% for k, v in general_settings['TARGET_LIB_MAPPING'] %}{% if loop.index0 > 0 %}{{ '\n' }}{% endif %}{{ k }}={{ v }}{% endfor %}">TARGET_LIB_MAPPING</vscode-text-area>
       <br />
@@ -122,7 +148,7 @@
       {% for key, value in app_language %}
         <h3>{{ key }}</h3>
         {% for k2, v2 in value %}
-          <vscode-text-field class="{{ class_prefix }}_save_app" id="global|settings|language|{{ key }}|{{ k2 }}" placeholder="utf-8"
+          <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|language|{{ key }}|{{ k2 }}" placeholder="utf-8"
             value="{{ v2 }}">{{ k2 }}
           </vscode-text-field>
           <br/>
@@ -137,7 +163,7 @@
       {% set cmds = app_global['cmds'] %}
 
       {% for key, value in cmds %}
-        <vscode-text-field size="50" class="{{ class_prefix }}_save_app" id="global|cmds|{{ key }}"
+        <vscode-text-field size="50" class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|cmds|{{ key }}"
           value="{{ value }}">{{ key }}
         </vscode-text-field>
         <br/>
@@ -153,7 +179,7 @@
       {% set compile_cmds = app_global['compile-cmds'] %}
 
       {% for key, value in compile_cmds %}
-        <vscode-text-area cols="50" rows="4" resize="both" class="{{ class_prefix }}_save_app" id="global|compile-cmds|{{ key }}"
+        <vscode-text-area cols="50" rows="4" resize="both" class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|compile-cmds|{{ key }}"
           value="{{ value }}">{{ key }}
         </vscode-text-area>
         <br/>
@@ -168,7 +194,7 @@
       {% set compile_steps = app_global['steps'] %}
 
       {% for key, value in compile_steps %}
-        <vscode-text-area cols="40" rows="4" resize="both" class="{{ class_prefix }}_save_app type_array" id="global|steps|{{ key }}"
+        <vscode-text-area cols="40" rows="4" resize="both" class="{{ class_prefix }}_save_app type_array" panel="tab-2" id="{{ class_prefix }}|global|steps|{{ key }}"
           value="{{ value | join('\n') }}">{{ key }}
         </vscode-text-area>
         <br/>
@@ -182,20 +208,20 @@
   <vscode-panel-view id="view-system-3">
     <section>
       
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|supported-object-types" placeholder="pgm, file, srvpgm"
-        value="{{ app_general['supported-object-types'] }}">Supported object types
-      </vscode-text-field>
+      <vscode-text-area class="{{ class_prefix }}_save_app type_array {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-3" id="{{ class_prefix }}|general|supported-object-types" placeholder="pgm file srvpgm"
+        value="{{ app_general['supported-object-types'] | join('\n') }}">Supported object types
+      </vscode-text-area>
 
       <br/>
       <br/>
 
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|file-system-encoding" placeholder="utf-8"
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-3" id="{{ class_prefix }}|general|file-system-encoding" placeholder="utf-8"
         value="{{ app_general['file-system-encoding'] }}">File system encoding
       </vscode-text-field>
 
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|console-output-encoding" placeholder="utf-8"
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-3" id="{{ class_prefix }}|general|console-output-encoding" placeholder="utf-8"
         value="{{ app_general['console-output-encoding'] }}">Console output encoding
       </vscode-text-field>
     
@@ -209,37 +235,37 @@
 
     <section>
 
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|compiled-object-list" placeholder="utf-8"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compiled-object-list" placeholder="utf-8"
         value="{{ app_general['compiled-object-list'] }}">Compiled object list
       </vscode-text-field>
             
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|dependency-list" placeholder="utf-8"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|dependency-list" placeholder="utf-8"
         value="{{ app_general['dependency-list'] }}">Dependency list
       </vscode-text-field>
             
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|deployment-object-list" placeholder="utf-8"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|deployment-object-list" placeholder="utf-8"
         value="{{ app_general['deployment-object-list'] }}">Deployment object list
       </vscode-text-field>
             
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|build-output-dir" placeholder="utf-8"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|build-output-dir" placeholder="utf-8"
         value="{{ app_general['build-output-dir'] }}">Build output dir
       </vscode-text-field>
     
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|compile-list" placeholder="utf-8"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compile-list" placeholder="utf-8"
         value="{{ app_general['compile-list'] }}">Compile list
       </vscode-text-field>
     
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app" id="general|compiled-object-list-md" placeholder="utf-8"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compiled-object-list-md" placeholder="utf-8"
         value="{{ app_general['compiled-object-list-md'] }}">Compiled object list md
       </vscode-text-field>
     

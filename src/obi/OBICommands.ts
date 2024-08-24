@@ -26,14 +26,20 @@ export class OBICommands {
 
     const ws = Workspace.get_workspace();
     const config = AppConfig.get_app_confg();
-    const remote_base_dir: string = path.join(config['app_config']['general']['remote-base-dir']);
-    const remote_obi_dir: string = path.join(config['global_config']['REMOTE_OBI_DIR'].replaceAll('"', ''));
-    const remote_obi: string = path.join(remote_obi_dir, config['global_config']['REMOTE_OBI_PYTHON_PATH']);
+    const remote_base_dir: string|undefined = config.general.remote_base_dir;
+    const remote_obi_dir: string|undefined = config.general.remote_obi_dir;
+    
+    if (!remote_base_dir || !remote_obi_dir)
+      throw Error(`Missing 'remote_base_dir' or 'remote_obi_dir'`);
+
+    const remote_obi: string = path.join(remote_obi_dir, Constants.REMOTE_OBI_PYTHON_PATH);
 
     const changed_sources: source.ISourceList = await OBITools.generate_source_change_lists();
-    const source_list: string[] = Object.assign([], changed_sources['changed-sources'], changed_sources['new-objects']);
+    const dependend_sources: string[] = await OBITools.get_dependend_sources(changed_sources);
+    const source_list: string[] = Object.assign([], changed_sources['changed-sources'], changed_sources['new-objects'], dependend_sources);
 
-    const check: boolean = await SSH_Tasks.check_remote_file(path.join(remote_base_dir, Constants.OBI_APP_CONFIG_FILE));
+    let check: boolean = await OBITools.check_remote();
+
     if (!check) {
       const answer = await vscode.window.showErrorMessage(`Missing OBI project on remote system. Do you want to transfer all?\nThis can take several minutes.\nRemote folder: ${remote_base_dir}`, { modal: true }, ...['Yes', 'No']);
       switch (answer) {
@@ -60,8 +66,8 @@ export class OBICommands {
     await SSH_Tasks.executeCommand(ssh_cmd);
 
     await Promise.all([
-      SSH_Tasks.getRemoteDir(path.join(ws, Constants.BUILD_OUTPUT_DIR), path.join(config['app_config']['general']['remote-base-dir'], Constants.BUILD_OUTPUT_DIR)),
-      SSH_Tasks.getRemoteDir(path.join(ws, 'tmp'), path.join(config['app_config']['general']['remote-base-dir'], 'tmp'))
+      SSH_Tasks.getRemoteDir(path.join(ws, Constants.BUILD_OUTPUT_DIR), path.join(remote_base_dir, Constants.BUILD_OUTPUT_DIR)),
+      SSH_Tasks.getRemoteDir(path.join(ws, 'tmp'), path.join(remote_base_dir, 'tmp'))
     ]);
   }
 

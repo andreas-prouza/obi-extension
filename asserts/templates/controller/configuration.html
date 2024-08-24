@@ -5,28 +5,34 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
+  <link rel="stylesheet" href="{{ config_css }}">
 </head>
 
 <body>
 
-  <a href='command:vscode.open?{{ config_file }}'>Open project config file</a>
-
-  <br />
-  <br />
-
+  <br/>
+  <div id="still_missing"><b>⚠️ There are still missing values ...</b></div>
+  <br/>
 
   <vscode-panels activeid="project_cfg" aria-label="Default">
 
-    <vscode-panel-tab id="project_cfg"><h3>Project configuration</h3></vscode-panel-tab>
-    <vscode-panel-tab id="user_cfg"><h3>User configuration</h3></vscode-panel-tab>
+    <vscode-panel-tab id="project_cfg"><h2>Project configuration</h2></vscode-panel-tab>
+    <vscode-panel-tab id="user_cfg"><h2>User configuration</h2></vscode-panel-tab>
 
-
+    
     <vscode-panel-view id="project_cfg-view">
+      
       <section>
+      
+        📝 <a href='command:vscode.open?{{ project_config_file }}'>Open project config file</a>
+        <br/>
+        <br/>
+
         
         {% set class_prefix = 'project' %}
-        {% set app_config = project_config['app_config'] %}
-        {% set global_config = project_config['global_config'] %}
+
+        {% set app_config = project_config %}
+
         {% include "controller/config_details.html" %}
       
       </section>
@@ -34,12 +40,16 @@
 
 
     <vscode-panel-view id="user_cfg-view">
+
       <section>
+        
+        📝 <a href='command:vscode.open?{{ user_config_file }}'>Open user config file</a>
+        <br/>
+        <br/>
 
         {% set class_prefix = 'user' %}
 
-        {% set app_config = user_config['app_config'] %}
-        {% set global_config = user_config['global_config'] %}
+        {% set app_config = user_config %}
 
         {% include "controller/config_details.html" %}
 

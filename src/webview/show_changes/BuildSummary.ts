@@ -64,7 +64,7 @@ export class BuildSummary {
       //return;
     }
 
-    if (!workspaceUri){
+  if (!workspaceUri){
       vscode.window.showErrorMessage("No workspace opened");
       return
     }
@@ -83,7 +83,7 @@ export class BuildSummary {
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         object_list: this.get_object_list(workspaceUri),
         compile_list: OBITools.get_compile_list(workspaceUri),
-        compile_file: DirTool.get_encoded_file_URI(workspaceUri, config['app_config']['general']['compile-list'])
+        compile_file: DirTool.get_encoded_file_URI(workspaceUri, config.general.compile_list)
       }
     );
     panel.webview.html = html;
@@ -164,6 +164,7 @@ export class BuildSummary {
           vscode.Uri.joinPath(extensionUri, "out"),
           vscode.Uri.joinPath(extensionUri, "asserts")
         ],
+        retainContextWhenHidden: true
       }
     );
   }

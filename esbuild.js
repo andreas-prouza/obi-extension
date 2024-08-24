@@ -59,6 +59,14 @@ const configViewConfig = {
   outfile: "./out/config.js",
 };
 
+const configInvalidViewConfig = {
+  ...baseConfig,
+  target: "es2020",
+  format: "esm",
+  entryPoints: ["./src/webview/controller/javascript/config_invalid.ts"],
+  outfile: "./out/config_invalid.js",
+};
+
 
 (async () => {
   try {
@@ -68,6 +76,7 @@ const configViewConfig = {
     await build(controllerViewConfig);
     await build(welcomeViewConfig);
     await build(configViewConfig);
+    await build(configInvalidViewConfig);
     console.log("build complete");
   } catch (err) {
     process.stderr.write(err.stderr);

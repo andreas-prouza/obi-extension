@@ -1,0 +1,14 @@
+.missing_value {
+  border-color: #be1100;
+  border-style: solid;
+  border-width: medium;
+}
+
+vscode-panel-tab.missing_value {
+  padding: 15px;
+}
+
+vscode-text-field.missing_value {
+  padding: 5px;
+}
+

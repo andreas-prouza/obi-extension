@@ -13,6 +13,8 @@ provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
 
+let loaded: boolean = false;
+
 window.addEventListener("load", main);
 
 function main() {
@@ -20,6 +22,10 @@ function main() {
   // a given toolkit component can be imported and used to type cast a reference
   // to the element (i.e. the `as Button` syntax)
 
+  if (loaded)
+    return;
+  loaded = true;
+  
   const joblogButton = document.getElementsByClassName("joblog");
 
   for (let i = 0; i < joblogButton.length; i++) {

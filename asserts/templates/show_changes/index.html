@@ -100,7 +100,12 @@
         <tr>
           <td></td><td>{{ source_item['source'] }}</td>
           <td>
-            {% set last_cmd = source_item['cmds']|last %}
+            {% set last_cmd = source_item['cmds'][0] %}
+            {% for cmd_entry in source_item['cmds'] %}
+              {% if cmd_entry.status != 'new' %}
+                {% set last_cmd = cmd_entry %}
+              {% endif %}
+            {% endfor %}
             <span class="{{ last_cmd.status }}">{{ last_cmd.status }}</span>
           </td>
           <td>

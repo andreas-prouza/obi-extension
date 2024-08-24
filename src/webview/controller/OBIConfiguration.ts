@@ -66,8 +66,8 @@ export class OBIConfiguration {
     const user_config = AppConfig.get_user_app_config(workspaceUri);
 
     const config = AppConfig.get_app_confg();
-    const host = config['global_config']['REMOTE_HOST'];
-    const user = config['global_config']['SSH_USER'];
+    const host = config.connection.remote_host;
+    const user = config.connection.ssh_user;
 
     const pwd = await context.secrets.get(`obi|${host}|${user}`);
 
@@ -75,12 +75,14 @@ export class OBIConfiguration {
     const html = nunjucks.render('controller/configuration.html', 
       {
         global_stuff: OBITools.get_global_stuff(panel.webview, extensionUri),
+        config_css: getUri(panel.webview, extensionUri, ["asserts/css", "config.css"]),
         main_java_script: getUri(panel.webview, extensionUri, ["out", "config.js"]),
         icons: {debug_start: '$(preview)'},
         user_config: user_config,
         project_config: project_config,
         SSH_PASSWORD: pwd,
-        config_file: DirTool.get_encoded_file_URI(workspaceUri, Constants.OBI_APP_CONFIG_FILE)
+        project_config_file: DirTool.get_encoded_file_URI(workspaceUri, Constants.OBI_APP_CONFIG_FILE),
+        user_config_file: DirTool.get_encoded_file_URI(workspaceUri, Constants.OBI_APP_CONFIG_USER_FILE)
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         //object_list: this.get_object_list(workspaceUri),
         //compile_list: this.get_compile_list(workspaceUri)
@@ -121,8 +123,8 @@ export class OBIConfiguration {
         break;
       case "save_ssh_password":
         const config = AppConfig.get_app_confg();
-        const host = config['global_config']['REMOTE_HOST'];
-        const user = config['global_config']['SSH_USER'];
+        const host = config['connection']['remote-host'];
+        const user = config['connection']['ssh-user'];
         OBIConfiguration._context.secrets.delete(`obi|${host}|${user}`);
         if (message.password.length > 0)
           OBIConfiguration._context.secrets.store(`obi|${host}|${user}`, message.password);
@@ -130,6 +132,7 @@ export class OBIConfiguration {
     }
     return;
   }
+
 
 
   private static save_config(isUser: boolean, workspaceUri: Uri, data: {}) {
@@ -141,44 +144,7 @@ export class OBIConfiguration {
     if (isUser)
       toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_USER_FILE);
     
-    DirTool.write_toml(toml_file, data.app);
-    
-    let shell_config_file = path.join(workspaceUri.fsPath, Constants.OBI_GLOBAL_CONFIG);
-    if (isUser)
-      shell_config_file = path.join(workspaceUri.fsPath, Constants.OBI_GLOBAL_USER_CONFIG);
-
-    // Shell config
-    const shell_config: string[]|undefined = DirTool.get_key_value_file(shell_config_file);
-    if (!shell_config)
-      return;
-
-    // Replace existing config with new values
-    for (let [k, v] of Object.entries(data.global)) {
-
-      let found = false;
-
-      for (let i=0; i < shell_config.length; i++) {
-
-        if (shell_config[i].split('=')[0] == k) {
-
-          // if empty --> remove from list
-          if (v.length == 0) {
-            shell_config.splice(i, 1);
-            break;
-          }
-
-          shell_config[i] = `${k}=${v}`;
-          found = true;
-          break;
-        }
-      }
-
-      // if not found --> add new entry to list
-      if (!found && v.length > 0)
-        shell_config.push(`${k}=${v}`);
-    }
-
-    DirTool.write_file(shell_config_file, shell_config.join('\n'));
+    DirTool.write_toml(toml_file, data);
 }
   
 
@@ -198,6 +164,7 @@ export class OBIConfiguration {
           vscode.Uri.joinPath(extensionUri, "out"),
           vscode.Uri.joinPath(extensionUri, "asserts")
         ],
+        retainContextWhenHidden: true
       }
     );
   }

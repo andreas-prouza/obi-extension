@@ -50,8 +50,12 @@ export class OBIController implements vscode.WebviewViewProvider {
     if (OBIController.is_config_watcher_set || !OBITools.contains_obi_project())
       return;
 
-    const config = AppConfig.get_app_confg()['app_config'];
-    const compile_list_file_path: string = path.join(Workspace.get_workspace(), config['general']['compile-list']);
+    const config = AppConfig.get_app_confg();
+
+    if (AppConfig.attributes_missing())
+      return;
+
+    const compile_list_file_path: string = path.join(Workspace.get_workspace(), config.general.compile_list);
     // if compile-script changed, refresh the view
     fs.watchFile(compile_list_file_path, {interval: 1000}, function (event, filename) {
       OBIController.update_build_summary_timestamp();
@@ -74,6 +78,9 @@ export class OBIController implements vscode.WebviewViewProvider {
       : undefined;
 
     if (!rootPath)
+      return;
+
+    if (AppConfig.attributes_missing())
       return;
 
     const compile_list = OBITools.get_compile_list(rootPath);

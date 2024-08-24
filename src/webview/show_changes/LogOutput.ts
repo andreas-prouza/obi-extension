@@ -96,11 +96,11 @@ export class LogOutput {
     const fs = require("fs"); 
     
     const config = AppConfig.get_app_confg();
-    let compile_list = fs.readFileSync(path.join(workspaceUri.fsPath, config['app_config']['general']['compile-list']));
+    let compile_list = fs.readFileSync(path.join(workspaceUri.fsPath, config.general.compile_list));
     // Converting to JSON 
     compile_list = JSON.parse(compile_list);
 
-    for (const level_item of compile_list) {
+    for (const level_item of compile_list['compiles']) {
 
       const i_level = level_item['level'];
       const i_sources = level_item['sources'];

@@ -9,6 +9,8 @@ import { OBIConfiguration } from './webview/controller/OBIConfiguration';
 import path from 'path';
 import { DirTool } from './utilities/DirTool';
 import { SSH_Tasks } from './utilities/SSH_Tasks';
+import { AppConfig } from './webview/controller/AppConfig';
+import { ConfigInvalid } from './webview/controller/ConfigInvalid';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -27,6 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
 	SSH_Tasks.context = context;
 	OBITools.ext_context = context;
 
+
 	//const fileUri = vscode.Uri.file('/home/andreas/projekte/opensource/extensions/obi/README.md');
 	//vscode.commands.executeCommand('vscode.open', fileUri);
 
@@ -37,10 +40,29 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(Welcome.viewType, obi_welcome_provider)
 	);
-
+	
 	if (!contains_obi_project)
 		return;
 	
+
+	const obi_config_invalid_provider = new ConfigInvalid(context.extensionUri);
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(ConfigInvalid.viewType, obi_config_invalid_provider)
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.controller.config', ()  => {
+			OBIConfiguration.render(context, context.extensionUri)
+		})
+	)
+
+	const config = AppConfig.get_app_confg();
+	vscode.commands.executeCommand('setContext', 'obi.valid-config', !config.general.attributes_missing());
+
+	if (config.attributes_missing())
+		return;
+
+
 	const run_native: boolean = OBITools.is_native();
 	vscode.commands.executeCommand('setContext', 'obi.run_native', run_native);
 	
@@ -96,11 +118,7 @@ export function activate(context: vscode.ExtensionContext) {
 		treeDataProvider: new SourceListProvider(rootPath)
 	});
 	*/
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.controller.config', ()  => {
-			OBIConfiguration.render(context, context.extensionUri)
-		})
-	)
+
 
 }
 
