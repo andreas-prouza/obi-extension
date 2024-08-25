@@ -34,41 +34,76 @@ export class OBICommands {
 
     const remote_obi: string = path.join(remote_obi_dir, Constants.REMOTE_OBI_PYTHON_PATH);
 
-    const changed_sources: source.ISourceList = await OBITools.generate_source_change_lists();
-    const dependend_sources: string[] = await OBITools.get_dependend_sources(changed_sources);
-    const source_list: string[] = Object.assign([], changed_sources['changed-sources'], changed_sources['new-objects'], dependend_sources);
+    await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: `Transfer project`,
+    }, 
+    async progress => {
+      progress.report({
+        message: `Get changed source list`
+      });
 
-    let check: boolean = await OBITools.check_remote();
+      const source_list: string[] = await OBITools.generate_source_change_lists();
 
-    if (!check) {
-      const answer = await vscode.window.showErrorMessage(`Missing OBI project on remote system. Do you want to transfer all?\nThis can take several minutes.\nRemote folder: ${remote_base_dir}`, { modal: true }, ...['Yes', 'No']);
-      switch (answer) {
-        case 'No':
-          throw new Error('Missing OBI project. Declined by user');
-        case undefined:
-          throw new Error('Missing OBI project. Canceled by user');
-        case 'Yes':
-          await OBITools.transfer_all();
+      if (source_list.length == 0) {
+        vscode.window.showWarningMessage("No changed sources to build");
+        return;
       }
-    }
 
-    const result = await SSH_Tasks.transferSources(source_list);
+      progress.report({
+        message: `Check remote project folder`
+      });
 
-     if (source_list.length == 0) {
-      vscode.window.showWarningMessage("No changed sources to build");
-      return;
-    }
+      let check: boolean = await OBITools.check_remote();
 
-    let ssh_cmd: string = `source .profile; cd '${remote_base_dir}'; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a create -p ${remote_base_dir} || true`;
-    await SSH_Tasks.executeCommand(ssh_cmd);
+      if (!check) {
+        const answer = await vscode.window.showErrorMessage(`Missing OBI project on remote system. Do you want to transfer all?\nThis can take several minutes.\nRemote folder: ${remote_base_dir}`, { modal: true }, ...['Yes', 'No']);
+        switch (answer) {
+          case 'No':
+            throw new Error('Missing OBI project. Declined by user');
+          case undefined:
+            throw new Error('Missing OBI project. Canceled by user');
+          case 'Yes':
+            progress.report({
+              message: `Transfer all`
+            });
+            await OBITools.transfer_all();
+        }
+      }
 
-    ssh_cmd = `source .profile; cd '${remote_base_dir}'; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p ${remote_base_dir} || true`;
-    await SSH_Tasks.executeCommand(ssh_cmd);
+      if (check) {
+        progress.report({
+          message: `Count of source transfer: ${source_list.length}`
+        });
+        const result = await SSH_Tasks.transferSources(source_list);
+      }
 
-    await Promise.all([
-      SSH_Tasks.getRemoteDir(path.join(ws, Constants.BUILD_OUTPUT_DIR), path.join(remote_base_dir, Constants.BUILD_OUTPUT_DIR)),
-      SSH_Tasks.getRemoteDir(path.join(ws, 'tmp'), path.join(remote_base_dir, 'tmp'))
-    ]);
+      progress.report({
+        message: `Generate build script. If it takes too long, use OBI localy (see documentation).`
+      });
+
+      let ssh_cmd: string = `source .profile; cd '${remote_base_dir}'; rm log/* || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a create -p ${remote_base_dir} || true`;
+      await SSH_Tasks.executeCommand(ssh_cmd);
+
+      progress.report({
+        message: `Run build script`
+      });
+
+      ssh_cmd = `source .profile; cd '${remote_base_dir}'; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p ${remote_base_dir} || true`;
+      await SSH_Tasks.executeCommand(ssh_cmd);
+
+      progress.report({
+        message: `Get all outputs back to you`
+      });
+
+      await Promise.all([
+        SSH_Tasks.getRemoteDir(path.join(ws, Constants.BUILD_OUTPUT_DIR), path.join(remote_base_dir, Constants.BUILD_OUTPUT_DIR)),
+        SSH_Tasks.getRemoteFile(path.join(ws, config.general.compiled_object_list), path.join(remote_base_dir, config.general.compiled_object_list)),
+        SSH_Tasks.getRemoteDir(path.join(ws, 'tmp'), path.join(remote_base_dir, 'tmp')),
+        SSH_Tasks.getRemoteDir(path.join(ws, 'log'), path.join(remote_base_dir, 'log'))
+      ]);
+
+    });
   }
 
 

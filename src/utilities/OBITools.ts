@@ -10,6 +10,7 @@ import { SSH_Tasks } from './SSH_Tasks';
 import * as source from '../obi/Source';
 import { Workspace } from './Workspace';
 import * as fs from 'fs';
+import { logger } from './Logger';
 
 
 
@@ -205,7 +206,7 @@ export class OBITools {
 
 
 
-  public static async generate_source_change_lists(): Promise<source.ISourceList> {
+  public static async generate_source_change_lists(): Promise<string[]> {
     const ws = Workspace.get_workspace();
 
     DirTool.clean_dir(path.join(ws, 'tmp'));
@@ -218,7 +219,11 @@ export class OBITools {
     DirTool.write_file(path.join(Workspace.get_workspace(), Constants.CHANGED_OBJECT_LIST), JSON.stringify(changed_sources));
     DirTool.write_file(path.join(Workspace.get_workspace(), Constants.DEPENDEND_OBJECT_LIST), JSON.stringify(dependend_sources));
 
-    return changed_sources;
+    const a = changed_sources['changed-sources'];
+    const x = Object.assign([], changed_sources['changed-sources'], changed_sources['new-objects'], dependend_sources);
+    const y = Object.assign([], a, dependend_sources);
+    //return changed_sources;
+    return [...changed_sources['changed-sources'], ...changed_sources['new-objects'], ...dependend_sources];
   }
 
 
@@ -320,7 +325,7 @@ export class OBITools {
     const local_dir: string = Workspace.get_workspace();
     const remote_dir: string = path.join(config.general.remote_base_dir);
     
-    console.log(`Transer local dir ${local_dir} to ${remote_dir}`);
+    logger.info(`Transer local dir ${local_dir} to ${remote_dir}`);
     await SSH_Tasks.transfer_dir(local_dir, remote_dir);
   }
 

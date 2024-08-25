@@ -11,7 +11,7 @@ import { DirTool } from './utilities/DirTool';
 import { SSH_Tasks } from './utilities/SSH_Tasks';
 import { AppConfig } from './webview/controller/AppConfig';
 import { ConfigInvalid } from './webview/controller/ConfigInvalid';
-
+import { logger } from './utilities/Logger';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -25,7 +25,8 @@ export function activate(context: vscode.ExtensionContext) {
 	? vscode.workspace.workspaceFolders[0].uri
 	: undefined;
 
-
+	logger.info('Start app');
+	
 	SSH_Tasks.context = context;
 	OBITools.ext_context = context;
 

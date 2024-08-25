@@ -155,7 +155,8 @@
     "hasha": "latest",
     "node-ssh": "latest",
     "nunjucks": "^3.2.4",
-    "smol-toml": "latest"
+    "smol-toml": "latest",
+    "winston": "latest"
   },
   "theia": {
     "target": "browser"

@@ -4,6 +4,7 @@ import * as path from 'path';
 import { DirTool } from '../../utilities/DirTool';
 import { SourceList } from '../source_list/SourceList';
 import { Constants } from '../../Constants';
+import { logger } from '../../utilities/Logger';
 
 
 
@@ -147,19 +148,19 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
     // setup: events
     tree.onDidChangeSelection(e => {
-        console.log(`onDidChangeSelection: ${e}`); // breakpoint here for debug
+        logger.info(`onDidChangeSelection: ${e}`); // breakpoint here for debug
         if (e.selection.length == 0)
           return;
-        console.log(e); // breakpoint here for debug
+        logger.info(e); // breakpoint here for debug
       });
     tree.onDidCollapseElement(e => {
-        console.log(`Collapse: ${e}`); // breakpoint here for debug
+        logger.info(`Collapse: ${e}`); // breakpoint here for debug
     });
     tree.onDidChangeVisibility(e => {
-        console.log(`ChangeVisibility: ${e}`); // breakpoint here for debug
+        logger.info(`ChangeVisibility: ${e}`); // breakpoint here for debug
     });
     tree.onDidExpandElement(e => {
-        console.log(`Expand: ${e}`); // breakpoint here for debug
+        logger.info(`Expand: ${e}`); // breakpoint here for debug
     });
 
 

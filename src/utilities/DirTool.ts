@@ -257,7 +257,7 @@ export class DirTool {
     });
     */
 
-  public static checksumFile(root: string, file_path: string) {
+  public static async checksumFile(root: string, file_path: string): Promise<source.ISource> {
     var crypto = require('crypto')
     return new Promise((resolve, reject) => {
       const hash = crypto.createHash('sha256');

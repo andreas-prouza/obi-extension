@@ -17,4 +17,5 @@ export interface IChangedSources {
 export interface ISourceList {
   "new-objects": string[],
   "changed-sources": string[]
+  "dependencies"?: string[]
 }

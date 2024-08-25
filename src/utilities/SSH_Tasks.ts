@@ -5,6 +5,7 @@ import path from 'path';
 import { AppConfig } from '../webview/controller/AppConfig';
 import { fail } from 'assert';
 import { Constants } from '../Constants';
+import { logger } from './Logger';
 
 
 
@@ -57,9 +58,12 @@ export class SSH_Tasks {
       privateKeyPath: ssh_key
     }).catch((reason) => {
       vscode.window.showErrorMessage(reason.message);
+      logger.error(`Connection error: ${reason.message}`);
       throw reason;
     });
     vscode.window.showInformationMessage(`Connected to ${host}`);
+    logger.info(`Connected to ${host}`);
+
     if (callback)
         callback();
   }
@@ -70,19 +74,20 @@ export class SSH_Tasks {
 
     if (!SSH_Tasks.ssh.isConnected()) {
       if (again) {
-        vscode.window.showErrorMessage("Still no connection available");
-        return;
+        throw Error(`Could not connect to remote server`);
       }
       const func = ()=> {SSH_Tasks.executeCommand(cmd, true)};
       await SSH_Tasks.connect(func);
       return;
     }
 
-    console.log(cmd);
+    logger.info(`Execute: cmd`);
     const result = await SSH_Tasks.ssh.execCommand(cmd)
     
-    console.log('STDOUT: ' + result.stdout);
-    console.log('STDERR: ' + result.stderr);
+    logger.info('CODE: ' + result.code);
+    logger.info('STDOUT: ' + result.stdout);
+    if (result.stderr.length > 0)
+      logger.error('STDERR: ' + result.stderr);
 
     if (result.code != 0)
       throw Error(result.stderr);
@@ -91,7 +96,7 @@ export class SSH_Tasks {
 
 
 
-  public static async getRemoteFile(local: string, remote: string, again?: boolean) {
+  public static async getRemoteFile(local: string, remote: string, again?: boolean): Promise<void> {
 
     if (!SSH_Tasks.ssh.isConnected()){
       if (again) {
@@ -103,7 +108,8 @@ export class SSH_Tasks {
       return;
     }
 
-    return SSH_Tasks.ssh.getFile(local, remote);
+    logger.info(`Get remote file: {LOCAL: ${local}, REMOTE: ${remote}}}`);
+    await SSH_Tasks.ssh.getFile(local, remote);
   }
 
 
@@ -137,15 +143,15 @@ export class SSH_Tasks {
         tick: function(localPath, remotePath, error) { // Remember transfer status
           if (error) {
             //failed.push(localPath)
-            console.log(error);
+            logger.error(`Transfer error: ${error}; Local: ${localPath}, Remote: ${remotePath}`);
           } else {
             //successful.push(localPath)
           }
         }
       });
 
-      console.log(failed);
-      console.log(successful);
+      logger.info(failed);
+      logger.info(successful);
   }
 
 
@@ -162,11 +168,11 @@ export class SSH_Tasks {
     }
 
     const cmd = `ls "${file}"`;
-    console.log(`Command: ${cmd}`);
+    logger.info(`Command: ${cmd}`);
     const result = await SSH_Tasks.ssh.execCommand(cmd);
-    console.log('Code: ' + result.code);
-    console.log('STDOUT: ' + result.stdout);
-    console.log('STDERR: ' + result.stderr);
+    logger.info('Code: ' + result.code);
+    logger.info('STDOUT: ' + result.stdout);
+    logger.error('STDERR: ' + result.stderr);
 
     return result.code == 0;
   }
@@ -216,8 +222,8 @@ export class SSH_Tasks {
       })
     });
 
-    console.log('Transfer files:');
-    console.log(transfer_list);
+    logger.info('Transfer files:');
+    logger.info(transfer_list);
 
     await SSH_Tasks.ssh.putFiles(transfer_list, {concurrency: config.connection.ssh_concurrency });
 
