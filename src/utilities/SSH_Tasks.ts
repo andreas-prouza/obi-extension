@@ -81,13 +81,13 @@ export class SSH_Tasks {
       return;
     }
 
-    logger.info(`Execute: cmd`);
+    logger.info(`Execute: ${cmd}`);
     const result = await SSH_Tasks.ssh.execCommand(cmd)
     
-    logger.info('CODE: ' + result.code);
-    logger.info('STDOUT: ' + result.stdout);
+    logger.info(`CODE: ${result.code}`);
+    logger.info(`STDOUT: ${result.stdout}`);
     if (result.stderr.length > 0)
-      logger.error('STDERR: ' + result.stderr);
+      logger.error(`STDERR: ${result.stderr}`);
 
     if (result.code != 0)
       throw Error(result.stderr);
@@ -108,7 +108,7 @@ export class SSH_Tasks {
       return;
     }
 
-    logger.info(`Get remote file: {LOCAL: ${local}, REMOTE: ${remote}}}`);
+    logger.info(`Get remote file. LOCAL: ${local}, REMOTE: ${remote}`);
     await SSH_Tasks.ssh.getFile(local, remote);
   }
 
@@ -142,16 +142,18 @@ export class SSH_Tasks {
         },
         tick: function(localPath, remotePath, error) { // Remember transfer status
           if (error) {
-            //failed.push(localPath)
+            failed.push(localPath)
             logger.error(`Transfer error: ${error}; Local: ${localPath}, Remote: ${remotePath}`);
           } else {
-            //successful.push(localPath)
+            //logger.debug(`Transfered: Local: ${localPath}, Remote: ${remotePath}`);
+            successful.push(localPath)
           }
         }
       });
-
-      logger.info(failed);
-      logger.info(successful);
+      
+      if (failed.length > 0)
+        logger.error(`Failed to transfer ${failed}`);
+      logger.debug(`Transfered: ${successful}`);
   }
 
 
@@ -168,11 +170,13 @@ export class SSH_Tasks {
     }
 
     const cmd = `ls "${file}"`;
-    logger.info(`Command: ${cmd}`);
+    logger.info(`Check path: ${cmd}`);
     const result = await SSH_Tasks.ssh.execCommand(cmd);
-    logger.info('Code: ' + result.code);
-    logger.info('STDOUT: ' + result.stdout);
-    logger.error('STDERR: ' + result.stderr);
+
+    logger.info(`CODE: ${result.code}`);
+    logger.info(`STDOUT: ${result.stdout}`);
+    if (result.stderr.length > 0)
+      logger.error(`STDERR: ${result.stderr}`);
 
     return result.code == 0;
   }
@@ -227,10 +231,10 @@ export class SSH_Tasks {
 
     await SSH_Tasks.ssh.putFiles(transfer_list, {concurrency: config.connection.ssh_concurrency });
 
-    if (transfer_list.length > 1)
-      vscode.window.showInformationMessage(`${transfer_list.length} sources transfered`);
+    if (transfer_list.length == 1)
+      vscode.window.showInformationMessage(`1 source transfered`);
     else
-      vscode.window.showInformationMessage(`${transfer_list.length} source transfered`);
+      vscode.window.showInformationMessage(`${transfer_list.length} sources transfered`);
   }
 
 
@@ -267,7 +271,9 @@ export class SSH_Tasks {
       let failed: string[] = [];
       let successful: string[] = [];
 
-      // SSH transfer
+      //##############################
+      // SSH transfer folder
+      //##############################
       const status = await SSH_Tasks.ssh_put_dir(local_dir, remote_dir, failed, successful);
       if (status)
         vscode.window.showInformationMessage(`${successful.length} files were successfully transfered to ${remote_dir}`);
@@ -280,13 +286,16 @@ export class SSH_Tasks {
     });
 
     vscode.window.showInformationMessage(final_message);
+    logger.info(final_message);
 
   }
   
 
   private static async ssh_put_dir(local_dir: string, remote_dir: string, failed: string[], successful: string[]) {
 
-    return await SSH_Tasks.ssh.putDirectory(local_dir, remote_dir, {
+    logger.debug(`Send directory. Local: ${local_dir}, remote: ${remote_dir}`);
+
+    const result: boolean = await SSH_Tasks.ssh.putDirectory(local_dir, remote_dir, {
       recursive: true,
       concurrency: AppConfig.get_app_confg().connection.ssh_concurrency,
       validate: function(itemPath) {
@@ -305,6 +314,12 @@ export class SSH_Tasks {
         }
       }
       });
+
+      if (failed.length > 0)
+        logger.error(`Failed to transfer ${failed}`);
+      logger.debug(`Transfered: ${successful}`);
+
+      return result;
   }
 
 }

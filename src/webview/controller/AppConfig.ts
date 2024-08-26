@@ -25,6 +25,11 @@ export const APP_CONFIG_TEMPLATE: {} = {
 
 
 
+export interface IConfigCompileSteps {
+  ['extension'] : string[]
+}
+
+
 export interface ConfigConnectionProperties {
   'remote-host' : string,
   'ssh-key' : string | undefined,
@@ -109,10 +114,10 @@ export class ConfigGeneral {
     this.local_base_dir = local_base_dir ?? '.';
     this.remote_base_dir = remote_base_dir;
     this.source_dir = source_dir ?? 'src';
-    this.use_remote_obi = use_remote_obi ?? false;
+    this.use_remote_obi = use_remote_obi != undefined && use_remote_obi === true ? true : false;
     this.local_obi_dir = local_obi_dir;
     this.remote_obi_dir = remote_obi_dir;
-    this.supported_object_types = supported_object_types ?? ['pgm', 'srvpgm', 'file'];
+    this.supported_object_types = supported_object_types && supported_object_types instanceof Array ? supported_object_types : ['pgm', 'srvpgm', 'file'];
     this.file_system_encoding = file_system_encoding ?? 'utf-8';
     this.console_output_encoding = console_output_encoding ?? 'utf-8';
     this.compiled_object_list = compiled_object_list ?? 'etc/object-builds.toml';
@@ -156,11 +161,97 @@ export class ConfigGeneral {
 
 
 
+export class ConfigCompileSettings {
+  public TGTRLS: string;
+  public DBGVIEW: string;
+  public TGTCCSID: string;
+  public STGMDL: string;
+  public LIBL: string[];
+  public INCDIR_RPGLE?: string;
+  public INCDIR_SQLRPGLE?: string;
+  public TARGET_LIB_MAPPING?: {};
+
+  constructor(TGTRLS?: string, DBGVIEW?: string, TGTCCSID?: string, STGMDL?: string, LIBL?: string[], INCDIR_RPGLE?: string, INCDIR_SQLRPGLE?: string, TARGET_LIB_MAPPING?: {}) {
+    this.TGTRLS = TGTRLS ?? '*CURRENT'; 
+    this.DBGVIEW = DBGVIEW ?? '*SOURCE'; 
+    this.TGTCCSID = TGTCCSID ?? '*JOB'; 
+    this.STGMDL = STGMDL ?? '*SNGLVL'; 
+    this.LIBL = LIBL ?? ['QGPL']; 
+    this.INCDIR_RPGLE = INCDIR_RPGLE; 
+    this.INCDIR_SQLRPGLE = INCDIR_SQLRPGLE; 
+    this.TARGET_LIB_MAPPING = TARGET_LIB_MAPPING; 
+  }
+}
+
+
+
+
+
+
+export class ConfigSettings {
+
+  public general: ConfigCompileSettings;
+
+  constructor(general?: ConfigCompileSettings) {
+    if (general) {
+      this.general = new ConfigCompileSettings(
+        general.TGTRLS, 
+        general.DBGVIEW, 
+        general.TGTCCSID, 
+        general.STGMDL, 
+        general.LIBL,
+        general.INCDIR_RPGLE,
+        general.INCDIR_SQLRPGLE,
+        general.TARGET_LIB_MAPPING
+      );
+      return;
+    }
+    this.general = new ConfigCompileSettings();
+
+  }
+
+  public attributes_missing(): boolean {
+    return false;
+  }
+
+}
+
+
+
+
+
+export class ConfigGlobal {
+
+  public settings: ConfigSettings;
+  public cmds: {["key"]: string}|{};
+  public compile_cmds: {["key"]: string}|{};
+  public steps: IConfigCompileSteps|[];
+
+  constructor(settings?: ConfigSettings, cmds?: {["key"]: string}, 
+    compile_cmds?: {["key"]: string}, steps?: IConfigCompileSteps) {
+    
+    this.settings = new ConfigSettings(settings?.general);
+    this.cmds = cmds ?? {};
+    this.compile_cmds = compile_cmds ?? {};
+    this.steps = steps ?? [];
+
+  }
+
+
+  public attributes_missing(): boolean {
+    return false;
+  }
+
+}
+
+
+
 
 export class AppConfig {
 
   public connection: ConfigConnection;
   public general: ConfigGeneral;
+  public global: ConfigGlobal;
 
   private static _config: IConfigProperties;
 
@@ -168,13 +259,17 @@ export class AppConfig {
   constructor() {
     this.connection = new ConfigConnection();
     this.general = new ConfigGeneral();
+    this.global = new ConfigGlobal();
   }
 
 
 
-  public static get_app_confg(): AppConfig {
+  public static get_app_confg(config_dict?: IConfigProperties): AppConfig {
 
-    const configs: IConfigProperties = AppConfig.load_configs();
+    let configs: IConfigProperties|undefined = config_dict;
+
+    if (!configs)
+      configs = AppConfig.load_configs();
 
     let app_config = new AppConfig();
     
@@ -219,7 +314,7 @@ export class AppConfig {
   
   
 
-  public static get_project_app_config(workspace: vscode.Uri): {} {
+  public static get_project_app_config(workspace: vscode.Uri): IConfigProperties {
 
     const app_config = DirTool.get_toml(path.join(workspace.fsPath, Constants.OBI_APP_CONFIG_FILE));
 

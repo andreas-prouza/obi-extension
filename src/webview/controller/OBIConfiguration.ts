@@ -62,8 +62,7 @@ export class OBIConfiguration {
 
     // If a webview panel does not already exist create and show a new one
     const panel = this.createNewPanel(extensionUri);
-    const project_config = AppConfig.get_project_app_config(workspaceUri);
-    const user_config = AppConfig.get_user_app_config(workspaceUri);
+    const project_config = AppConfig.get_app_confg(AppConfig.get_project_app_config(workspaceUri));
 
     const config = AppConfig.get_app_confg();
     const host = config.connection.remote_host;
@@ -78,7 +77,7 @@ export class OBIConfiguration {
         config_css: getUri(panel.webview, extensionUri, ["asserts/css", "config.css"]),
         main_java_script: getUri(panel.webview, extensionUri, ["out", "config.js"]),
         icons: {debug_start: '$(preview)'},
-        user_config: user_config,
+        user_config: config,
         project_config: project_config,
         SSH_PASSWORD: pwd,
         project_config_file: DirTool.get_encoded_file_URI(workspaceUri, Constants.OBI_APP_CONFIG_FILE),

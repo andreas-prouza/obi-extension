@@ -209,7 +209,7 @@
     <section>
       
       <vscode-text-area class="{{ class_prefix }}_save_app type_array {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-3" id="{{ class_prefix }}|general|supported-object-types" placeholder="pgm file srvpgm"
-        value="{{ app_general['supported-object-types'] | join('\n') }}">Supported object types
+        value="{{ app_general['supported-object-types'] }}">Supported object types
       </vscode-text-area>
 
       <br/>
