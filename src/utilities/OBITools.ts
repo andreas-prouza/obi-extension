@@ -22,9 +22,8 @@ export class OBITools {
   public static is_native(): boolean {
 
     const config = AppConfig.get_app_confg();
-    const use_local_obi: boolean = !((config.general.use_remote_obi ?? 'false').toLowerCase() === 'true');
 
-    return use_local_obi;
+    return !config.general['use-remote-obi'] ?? true;
   }
 
 
@@ -32,8 +31,8 @@ export class OBITools {
   public static async check_remote(): Promise<boolean> {
 
     const config = AppConfig.get_app_confg();
-    const remote_base_dir: string|undefined = config.general.remote_base_dir;
-    const remote_obi_dir: string|undefined = config.general.remote_obi_dir;
+    const remote_base_dir: string|undefined = config.general['remote-base-dir'];
+    const remote_obi_dir: string|undefined = config.general['remote-obi-dir'];
     let check: boolean;
 
     if (!remote_base_dir || ! remote_obi_dir)
@@ -43,7 +42,7 @@ export class OBITools {
     if (!check)
       return false;
 
-    check = await SSH_Tasks.check_remote_path(path.join(remote_base_dir, config.general.source_dir));
+    check = await SSH_Tasks.check_remote_path(path.join(remote_base_dir, config.general['source-dir']));
     if (!check)
       return false;
 
@@ -117,11 +116,13 @@ export class OBITools {
 
 
 
-  public static override_dict(from_dict:{}, to_dict:{}): IConfigProperties {
+  public static override_dict(from_dict:{}, to_dict:{}): any {
     for (let [k, v] of Object.entries(from_dict)) {
       if (typeof v==='object' && v!==null && !(v instanceof Array) && !(v instanceof Date))
         v = OBITools.override_dict(from_dict[k], to_dict[k]);
 
+      if (v == undefined)
+        continue;
       if ((typeof v == 'string') && v.length == 0)
         continue;
       if (v instanceof Array && v.length == 0)
@@ -142,14 +143,14 @@ export class OBITools {
       return undefined;
 
     const config = AppConfig.get_app_confg();
-    const file_path: string = path.join(workspaceUri.fsPath, config.general.compile_list);
+    const file_path: string = path.join(workspaceUri.fsPath, config.general['compile-list']);
     
     if (!DirTool.file_exists(file_path))
       return undefined;
 
-    let compile_list: string = fs.readFileSync(file_path).toString();
+    let compile_list_string: string = fs.readFileSync(file_path).toString();
     // Converting to JSON 
-    compile_list = JSON.parse(compile_list);
+    const compile_list = JSON.parse(compile_list_string);
 
     if (typeof compile_list !='object' || compile_list==null || (compile_list instanceof Array) || (compile_list instanceof Date))
       return undefined;
@@ -165,7 +166,7 @@ export class OBITools {
   public static get_source_hash_list(workspace:string): source.ISource | undefined {
 
     const config = AppConfig.get_app_confg();
-    const file:string = path.join(workspace, config.general.compiled_object_list)
+    const file:string = path.join(workspace, config.general['compiled-object-list'])
 
     return DirTool.get_toml(file)
 
@@ -191,7 +192,7 @@ export class OBITools {
 
     const all_sources: string[] = Object.assign([], changed_sources['changed-sources'], changed_sources['new-objects']);
 
-    const dependency_list: {} = DirTool.get_toml(path.join(Workspace.get_workspace(), config.general.dependency_list));
+    const dependency_list: {['source']: string[]} = DirTool.get_toml(path.join(Workspace.get_workspace(), config.general['dependency-list']));
     for (const [k, v] of Object.entries(dependency_list)) {
       for (let i=0; i<all_sources.length; i++) {
         if (v.includes(all_sources[i]) && !all_sources.includes(k)) {
@@ -277,12 +278,12 @@ export class OBITools {
   public static async retrieve_current_source_hashes(workspaceUri: string): Promise<source.ISource[]> {
 
     const config = AppConfig.get_app_confg();
-    const source_dir = path.join(workspaceUri, config.general.source_dir);
+    const source_dir = path.join(workspaceUri, config.general['source-dir']);
 
     const sources = DirTool.get_all_files_in_dir(
       source_dir,
       '.',
-      config.general.supported_object_types
+      config.general['supported-object-types']
     );
 
     let checksum_calls = [];
@@ -304,11 +305,11 @@ export class OBITools {
 
     const config = AppConfig.get_app_confg();
 
-    if (!config.general.remote_base_dir)
+    if (!config.general['remote-base-dir'])
       throw Error(`Config attribute 'config.general.remote_base_dir' missing`);
 
-    const local_file: string = path.join(Workspace.get_workspace(), config.general.compiled_object_list);
-    const remote_file: string = path.join(config.general.remote_base_dir, config.general.compiled_object_list);
+    const local_file: string = path.join(Workspace.get_workspace(), config.general['compiled-object-list']);
+    const remote_file: string = path.join(config.general['remote-base-dir'], config.general['compiled-object-list']);
     
     SSH_Tasks.getRemoteFile(local_file, remote_file);
   }
@@ -319,11 +320,11 @@ export class OBITools {
 
     const config = AppConfig.get_app_confg();
 
-    if (!config.general.remote_base_dir)
+    if (!config.general['remote-base-dir'])
       throw Error(`Config attribute 'config.general.remote_base_dir' missing`);
 
     const local_dir: string = Workspace.get_workspace();
-    const remote_dir: string = path.join(config.general.remote_base_dir);
+    const remote_dir: string = path.join(config.general['remote-base-dir']);
     
     logger.info(`Transer local dir ${local_dir} to ${remote_dir}`);
     await SSH_Tasks.transfer_dir(local_dir, remote_dir);

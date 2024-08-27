@@ -18,7 +18,8 @@ import { Constants } from '../Constants';
 
 export class OBICommands {
 
-  public static status: OBIStatus = OBIStatus.READY;
+  public static run_build_status: OBIStatus = OBIStatus.READY;
+  public static show_changes_status: OBIStatus = OBIStatus.READY;
 
 
 
@@ -26,8 +27,8 @@ export class OBICommands {
 
     const ws = Workspace.get_workspace();
     const config = AppConfig.get_app_confg();
-    const remote_base_dir: string|undefined = config.general.remote_base_dir;
-    const remote_obi_dir: string|undefined = config.general.remote_obi_dir;
+    const remote_base_dir: string|undefined = config.general['remote-base-dir'];
+    const remote_obi_dir: string|undefined = config.general['remote-obi-dir'];
     
     if (!remote_base_dir || !remote_obi_dir)
       throw Error(`Missing 'remote_base_dir' or 'remote_obi_dir'`);
@@ -82,14 +83,14 @@ export class OBICommands {
         message: `Generate build script. If it takes too long, use OBI localy (see documentation).`
       });
 
-      let ssh_cmd: string = `source .profile; cd '${remote_base_dir}'; rm log/* || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a create -p ${remote_base_dir} || true`;
+      let ssh_cmd: string = `source .profile; cd '${remote_base_dir}'; rm log/* || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a create -p . || true`;
       await SSH_Tasks.executeCommand(ssh_cmd);
 
       progress.report({
         message: `Run build script`
       });
 
-      ssh_cmd = `source .profile; cd '${remote_base_dir}'; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p ${remote_base_dir} || true`;
+      ssh_cmd = `source .profile; cd '${remote_base_dir}'; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p . || true`;
       await SSH_Tasks.executeCommand(ssh_cmd);
 
       progress.report({
@@ -98,7 +99,7 @@ export class OBICommands {
 
       await Promise.all([
         SSH_Tasks.getRemoteDir(path.join(ws, Constants.BUILD_OUTPUT_DIR), path.join(remote_base_dir, Constants.BUILD_OUTPUT_DIR)),
-        SSH_Tasks.getRemoteFile(path.join(ws, config.general.compiled_object_list), path.join(remote_base_dir, config.general.compiled_object_list)),
+        SSH_Tasks.getRemoteFile(path.join(ws, config.general['compiled-object-list']), path.join(remote_base_dir, config.general['compiled-object-list'])),
         SSH_Tasks.getRemoteDir(path.join(ws, 'tmp'), path.join(remote_base_dir, 'tmp')),
         SSH_Tasks.getRemoteDir(path.join(ws, 'log'), path.join(remote_base_dir, 'log'))
       ]);
@@ -112,15 +113,17 @@ export class OBICommands {
 
   public static async run_build(context: vscode.ExtensionContext) {
 
-    if (OBICommands.status != OBIStatus.READY) {
+    if (OBICommands.run_build_status != OBIStatus.READY) {
       vscode.window.showErrorMessage('OBI process is already running');
       return;
     }
 
-    OBICommands.status = OBIStatus.IN_PROCESS;
+    OBICommands.run_build_status = OBIStatus.IN_PROCESS;
 
     const ws_uri = Workspace.get_workspace_uri();
     let buff;
+
+    OBICommands.show_changes(context);
 
     try {
       if (OBITools.is_native())
@@ -131,11 +134,11 @@ export class OBICommands {
       BuildSummary.render(context.extensionUri, ws_uri)
       OBIController.update_build_summary_timestamp();
     }
-    catch(e) {
+    catch(e: any) {
       vscode.window.showErrorMessage(e.message);
     }
 
-    OBICommands.status = OBIStatus.READY;
+    OBICommands.run_build_status = OBIStatus.READY;
     OBIController.run_finished();
     return;
   }
@@ -144,7 +147,7 @@ export class OBICommands {
 
   public static async show_changes(context: vscode.ExtensionContext) {
 
-    if (OBICommands.status != OBIStatus.READY) {
+    if (OBICommands.show_changes_status != OBIStatus.READY) {
       vscode.window.showErrorMessage('OBI process is already running');
       return;
     }
@@ -154,7 +157,7 @@ export class OBICommands {
       return;
     }
 
-    OBICommands.status = OBIStatus.IN_PROCESS;
+    OBICommands.show_changes_status = OBIStatus.IN_PROCESS;
     const ws: string = Workspace.get_workspace();
     let buff: Buffer;
 
@@ -166,7 +169,7 @@ export class OBICommands {
 
     BuildSummary.render(context.extensionUri, Workspace.get_workspace_uri());
 
-    OBICommands.status = OBIStatus.READY;
+    OBICommands.show_changes_status = OBIStatus.READY;
     OBIController.run_finished();
     OBIController.update_build_summary_timestamp();
 

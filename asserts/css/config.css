@@ -12,3 +12,13 @@ vscode-text-field.missing_value {
   padding: 5px;
 }
 
+.save-button-wrapper {
+  position: absolute;
+  right: 10%; /* button width plus margin */
+  top: 5%; /* or whatever you need */
+}
+
+.save-button {
+  position: fixed;
+  z-index: 1;
+}

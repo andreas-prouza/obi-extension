@@ -96,7 +96,7 @@ export class LogOutput {
     const fs = require("fs"); 
     
     const config = AppConfig.get_app_confg();
-    let compile_list = fs.readFileSync(path.join(workspaceUri.fsPath, config.general.compile_list));
+    let compile_list = fs.readFileSync(path.join(workspaceUri.fsPath, config.general['compile-list']));
     // Converting to JSON 
     compile_list = JSON.parse(compile_list);
 

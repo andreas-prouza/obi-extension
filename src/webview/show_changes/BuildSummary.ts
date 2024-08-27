@@ -83,7 +83,7 @@ export class BuildSummary {
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         object_list: this.get_object_list(workspaceUri),
         compile_list: OBITools.get_compile_list(workspaceUri),
-        compile_file: DirTool.get_encoded_file_URI(workspaceUri, config.general.compile_list)
+        compile_file: DirTool.get_encoded_file_URI(workspaceUri, config.general['compile-list'])
       }
     );
     panel.webview.html = html;

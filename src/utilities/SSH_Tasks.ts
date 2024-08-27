@@ -24,9 +24,9 @@ export class SSH_Tasks {
   public static async connect(callback?: Function) {
 
     const config = AppConfig.get_app_confg();
-    let host = config.connection.remote_host;
-    let user = config.connection.ssh_user;
-    const ssh_key = config.connection.ssh_key;
+    let host = config.connection['remote-host'];
+    let user = config.connection['ssh-user'];
+    const ssh_key = config.connection['ssh-key'];
 
 
     if (!host || host.length == 0) {
@@ -131,7 +131,7 @@ export class SSH_Tasks {
 
     await SSH_Tasks.ssh.getDirectory(local, remote, 
       { recursive: true, 
-        concurrency: AppConfig.get_app_confg().connection.ssh_concurrency,
+        concurrency: AppConfig.get_app_confg().connection['ssh-concurrency'] ?? 5,
         validate: function(itemPath) {
           const baseName = path.basename(itemPath)
           return baseName !== '.git' && // Don't send git directory
@@ -196,25 +196,25 @@ export class SSH_Tasks {
     }
     
     const config = AppConfig.get_app_confg();
-    if (!config.general.remote_base_dir)
+    if (!config.general['remote-base-dir'])
       throw Error(`Config attribute 'config.general.remote_base_dir' missing`);
     
-    const source_dir: string = config.general.source_dir;
-    const local_source_dir: string = path.join(Workspace.get_workspace(), config.general.local_base_dir, source_dir);
-    const remote_source_dir: string = path.join(config.general.remote_base_dir, source_dir);
+    const source_dir: string = config.general['source-dir'];
+    const local_source_dir: string = path.join(Workspace.get_workspace(), config.general['local-base-dir'], source_dir);
+    const remote_source_dir: string = path.join(config.general['remote-base-dir'], source_dir);
     
     let transfer_list: FileTransfer[] = [
       {
         local: path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_FILE),
-        remote: path.join(config.general.remote_base_dir, Constants.OBI_APP_CONFIG_FILE),
+        remote: path.join(config.general['remote-base-dir'], Constants.OBI_APP_CONFIG_FILE),
       },
       {
         local: path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_USER_FILE),
-        remote: path.join(config.general.remote_base_dir, Constants.OBI_APP_CONFIG_USER_FILE),
+        remote: path.join(config.general['remote-base-dir'], Constants.OBI_APP_CONFIG_USER_FILE),
       },
       {
         local: path.join(Workspace.get_workspace(), 'etc', 'constants.py'),
-        remote: path.join(config.general.remote_base_dir, 'etc', 'constants.py'),
+        remote: path.join(config.general['remote-base-dir'], 'etc', 'constants.py'),
       }
     ];
 
@@ -229,7 +229,7 @@ export class SSH_Tasks {
     logger.info('Transfer files:');
     logger.info(transfer_list);
 
-    await SSH_Tasks.ssh.putFiles(transfer_list, {concurrency: config.connection.ssh_concurrency });
+    await SSH_Tasks.ssh.putFiles(transfer_list, {concurrency: config.connection['ssh-concurrency'] ?? 5 });
 
     if (transfer_list.length == 1)
       vscode.window.showInformationMessage(`1 source transfered`);
@@ -297,7 +297,7 @@ export class SSH_Tasks {
 
     const result: boolean = await SSH_Tasks.ssh.putDirectory(local_dir, remote_dir, {
       recursive: true,
-      concurrency: AppConfig.get_app_confg().connection.ssh_concurrency,
+      concurrency: AppConfig.get_app_confg().connection['ssh-concurrency'] ?? 5,
       validate: function(itemPath) {
         const baseName = path.basename(itemPath)
         return baseName !== '.git' && // Don't send git directory

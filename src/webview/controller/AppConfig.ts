@@ -30,14 +30,14 @@ export interface IConfigCompileSteps {
 }
 
 
-export interface ConfigConnectionProperties {
+export interface IConfigConnectionProperties {
   'remote-host' : string,
   'ssh-key' : string | undefined,
   'ssh-user' : string,
   'ssh-concurrency' : number
 }
 
-export interface ConfigGeneralProperties {
+export interface IConfigGeneralProperties {
   'local-base-dir' : string,
   'remote-base-dir' : string,
   'source-dir' : string,
@@ -55,37 +55,41 @@ export interface ConfigGeneralProperties {
   'compile-list' : string
 }
 
-export interface ConfigProperties {
-  connection : ConfigConnectionProperties
-  general : ConfigGeneralProperties
-}
+
 
 
 export interface IConfigProperties {
-  connection : ConfigConnectionProperties
-  general : ConfigGeneralProperties
+  connection : IConfigConnectionProperties
+  general : IConfigGeneralProperties
+  global: ConfigGlobal
 }
 
 
+export interface IConfigLanguageCompileSettings {
+  [language: string] : ConfigCompileSettings
+}
+
+
+
 export class ConfigConnection {
-  public remote_host?: string;
-  public ssh_key?: string;
-  public ssh_user?: string;
-  public ssh_concurrency: number;
+  public ['remote-host']?: string;
+  public ['ssh-key']?: string;
+  public ['ssh-user']?: string;
+  public ['ssh-concurrency']?: number;
 
   constructor(remote_host?: string, ssh_key?: string, ssh_user?: string, ssh_concurrency?: number) {
-    this.remote_host = remote_host;
-    this.ssh_key = ssh_key;
-    this.ssh_user = ssh_user;
-    this.ssh_concurrency = ssh_concurrency ?? 5;
+    this['remote-host'] = remote_host;
+    this['ssh-key'] = ssh_key;
+    this['ssh-user'] = ssh_user;
+    this['ssh-concurrency'] = ssh_concurrency;
   }
 
   public attributes_missing(): boolean {
     const x = (
-      !this.remote_host
+      !this['remote-host']
     );
     return (
-      !this.remote_host
+      !this['remote-host']
     );
   }
 }
@@ -94,66 +98,57 @@ export class ConfigConnection {
 
 export class ConfigGeneral {
 
-  public local_base_dir: string;
-  public remote_base_dir?: string;
-  public source_dir: string;
-  public use_remote_obi: boolean;
-  public local_obi_dir?: string; // if not used, not necessary
-  public remote_obi_dir?: string;
-  public supported_object_types: string[];
-  public file_system_encoding: string;
-  public console_output_encoding: string;
-  public compiled_object_list: string;
-  public dependency_list: string;
-  public deployment_object_list: string;
-  public build_output_dir: string;
-  public compile_list: string;
-  public compiled_object_list_md: string;
+  public ['local-base-dir']?: string;
+  public ['remote-base-dir']?: string;
+  public ['source-dir']?: string;
+  public ['use-remote-obi']?: boolean;
+  public ['local-obi-dir']?: string; // if not used, not necessary
+  public ['remote-obi-dir']?: string;
+  public ['supported-object-types']?: string[];
+  public ['file-system-encoding']?: string;
+  public ['console-output-encoding']?: string;
+  public ['compiled-object-list']?: string;
+  public ['dependency-list']?: string;
+  public ['deployment-object-list']?: string;
+  public ['build-output-dir']?: string;
+  public ['compile-list']?: string;
+  public ['compiled-object-list-md']?: string;
 
   constructor(local_base_dir?: string, remote_base_dir?: string, source_dir?: string, use_remote_obi?: boolean, local_obi_dir?: string, remote_obi_dir?: string, supported_object_types?: string[], file_system_encoding?: string, console_output_encoding?: string, compiled_object_list?: string, dependency_list?: string, deployment_object_list?: string, build_output_dir?: string, compile_list?: string, compiled_object_list_md?: string) {
-    this.local_base_dir = local_base_dir ?? '.';
-    this.remote_base_dir = remote_base_dir;
-    this.source_dir = source_dir ?? 'src';
-    this.use_remote_obi = use_remote_obi != undefined && use_remote_obi === true ? true : false;
-    this.local_obi_dir = local_obi_dir;
-    this.remote_obi_dir = remote_obi_dir;
-    this.supported_object_types = supported_object_types && supported_object_types instanceof Array ? supported_object_types : ['pgm', 'srvpgm', 'file'];
-    this.file_system_encoding = file_system_encoding ?? 'utf-8';
-    this.console_output_encoding = console_output_encoding ?? 'utf-8';
-    this.compiled_object_list = compiled_object_list ?? 'etc/object-builds.toml';
-    this.dependency_list = dependency_list ?? "etc/dependency.toml";
-    this.deployment_object_list = deployment_object_list ?? "build-output/object-list.txt";
-    this.build_output_dir = build_output_dir ?? 'build-output/objects';
-    this.compile_list = compile_list ?? 'build-output/compile-list.json';
-    this.compiled_object_list_md = compiled_object_list_md ?? 'build-output/compiled-object-list.md';
+    this['local-base-dir'] = local_base_dir;
+    this['remote-base-dir'] = remote_base_dir;
+    this['source-dir'] = source_dir;
+    this['use-remote-obi'] = use_remote_obi;
+    this['local-obi-dir'] = local_obi_dir;
+    this['remote-obi-dir'] = remote_obi_dir;
+    this['supported-object-types'] = supported_object_types;
+    this['file-system-encoding'] = file_system_encoding;
+    this['console-output-encoding'] = console_output_encoding;
+    this['compiled-object-list'] = compiled_object_list;
+    this['dependency-list'] = dependency_list;
+    this['deployment-object-list'] = deployment_object_list;
+    this['build-output-dir'] = build_output_dir;
+    this['compile-list'] = compile_list;
+    this['compiled-object-list-md'] = compiled_object_list_md;
   }
 
   public attributes_missing(): boolean {
-    
-    const x = (
-      !this.local_base_dir ||
-      !this.remote_base_dir ||
-      !this.remote_obi_dir ||
-      this.supported_object_types.length == 0 ||
-      !this.source_dir ||
-      !this.compiled_object_list ||
-      !this.dependency_list ||
-      !this.compiled_object_list ||
-      !this.build_output_dir ||
-      !this.compile_list
-    );
-    
+
     return (
-      !this.local_base_dir ||
-      !this.remote_base_dir ||
-      !this.remote_obi_dir ||
-      this.supported_object_types.length == 0 ||
-      !this.source_dir ||
-      !this.compiled_object_list ||
-      !this.dependency_list ||
-      !this.compiled_object_list ||
-      !this.build_output_dir ||
-      !this.compile_list
+      !this['local-base-dir'] ||
+      !this['remote-base-dir'] ||
+      !this['source-dir'] ||
+      this['use-remote-obi'] == undefined ||
+      !this['remote-obi-dir'] ||
+      (!this['supported-object-types'] || this['supported-object-types'].length == 0) ||
+      !this['file-system-encoding'] ||
+      !this['console-output-encoding'] ||
+      !this['compiled-object-list'] ||
+      !this['dependency-list'] ||
+      !this['deployment-object-list'] ||
+      !this['build-output-dir'] ||
+      !this['compile-list'] ||
+      !this['compiled-object-list-md']
     );
   }
 
@@ -162,24 +157,41 @@ export class ConfigGeneral {
 
 
 export class ConfigCompileSettings {
-  public TGTRLS: string;
-  public DBGVIEW: string;
-  public TGTCCSID: string;
-  public STGMDL: string;
-  public LIBL: string[];
+  public TGTRLS?: string;
+  public DBGVIEW?: string;
+  public TGTCCSID?: string;
+  public STGMDL?: string;
+  public LIBL?: string[];
+  public RPGPPOPT?: string;
   public INCDIR_RPGLE?: string;
   public INCDIR_SQLRPGLE?: string;
   public TARGET_LIB_MAPPING?: {};
+  public INCLUDE_BNDDIR?: string;
+  public ACTGRP?: string;
 
-  constructor(TGTRLS?: string, DBGVIEW?: string, TGTCCSID?: string, STGMDL?: string, LIBL?: string[], INCDIR_RPGLE?: string, INCDIR_SQLRPGLE?: string, TARGET_LIB_MAPPING?: {}) {
-    this.TGTRLS = TGTRLS ?? '*CURRENT'; 
-    this.DBGVIEW = DBGVIEW ?? '*SOURCE'; 
-    this.TGTCCSID = TGTCCSID ?? '*JOB'; 
-    this.STGMDL = STGMDL ?? '*SNGLVL'; 
-    this.LIBL = LIBL ?? ['QGPL']; 
+  constructor(TGTRLS?: string, DBGVIEW?: string, TGTCCSID?: string, STGMDL?: string, LIBL?: string[], INCDIR_RPGLE?: string, INCDIR_SQLRPGLE?: string, TARGET_LIB_MAPPING?: {}, RPGPPOPT?: string, INCLUDE_BNDDIR?: string, ACTGRP?: string) {
+    this.TGTRLS = TGTRLS; 
+    this.DBGVIEW = DBGVIEW; 
+    this.TGTCCSID = TGTCCSID; 
+    this.STGMDL = STGMDL; 
+    this.LIBL = LIBL; 
     this.INCDIR_RPGLE = INCDIR_RPGLE; 
     this.INCDIR_SQLRPGLE = INCDIR_SQLRPGLE; 
     this.TARGET_LIB_MAPPING = TARGET_LIB_MAPPING; 
+    this.RPGPPOPT = RPGPPOPT;
+    this.INCLUDE_BNDDIR = INCLUDE_BNDDIR;
+    this.ACTGRP = ACTGRP;
+  }
+
+  public attributes_missing(): boolean {
+    return (
+      !this.TGTRLS ||
+      !this.DBGVIEW ||
+      !this.TGTCCSID ||
+      !this.STGMDL ||
+      !this.LIBL
+    )
+    ;
   }
 }
 
@@ -190,9 +202,13 @@ export class ConfigCompileSettings {
 
 export class ConfigSettings {
 
-  public general: ConfigCompileSettings;
+  public general?: ConfigCompileSettings;
+  public language?: IConfigLanguageCompileSettings;
 
-  constructor(general?: ConfigCompileSettings) {
+
+
+  constructor(general?: ConfigCompileSettings, language?: IConfigLanguageCompileSettings) {
+
     if (general) {
       this.general = new ConfigCompileSettings(
         general.TGTRLS, 
@@ -202,16 +218,21 @@ export class ConfigSettings {
         general.LIBL,
         general.INCDIR_RPGLE,
         general.INCDIR_SQLRPGLE,
-        general.TARGET_LIB_MAPPING
+        general.TARGET_LIB_MAPPING,
+        general.RPGPPOPT,
+        general.INCLUDE_BNDDIR,
+        general.ACTGRP
       );
-      return;
     }
-    this.general = new ConfigCompileSettings();
+
+    if (language) {
+      this.language = language;
+    }
 
   }
 
   public attributes_missing(): boolean {
-    return false;
+    return !this.general || this.general.attributes_missing();
   }
 
 }
@@ -222,24 +243,32 @@ export class ConfigSettings {
 
 export class ConfigGlobal {
 
-  public settings: ConfigSettings;
-  public cmds: {["key"]: string}|{};
-  public compile_cmds: {["key"]: string}|{};
-  public steps: IConfigCompileSteps|[];
+  public settings?: ConfigSettings;
+  public cmds?: {["key"]: string};
+  public "compile-cmds"?: {["key"]: string};
+  public steps?: IConfigCompileSteps;
 
-  constructor(settings?: ConfigSettings, cmds?: {["key"]: string}, 
-    compile_cmds?: {["key"]: string}, steps?: IConfigCompileSteps) {
+  constructor(settings?: ConfigSettings, 
+    cmds?: {["key"]: string}, 
+    compile_cmds?: {["key"]: string}, 
+    steps?: IConfigCompileSteps) {
     
-    this.settings = new ConfigSettings(settings?.general);
-    this.cmds = cmds ?? {};
-    this.compile_cmds = compile_cmds ?? {};
-    this.steps = steps ?? [];
+    if (settings?.general)
+      this.settings = new ConfigSettings(settings?.general, settings?.language);
+
+    this.cmds = cmds;
+    this['compile-cmds'] = compile_cmds;
+    this.steps = steps ;
 
   }
 
-
   public attributes_missing(): boolean {
-    return false;
+    return (
+      !this.settings || this.settings.attributes_missing() ||
+      !this.cmds ||
+      !this['compile-cmds'] ||
+      !this.steps
+    );
   }
 
 }
@@ -253,40 +282,50 @@ export class AppConfig {
   public general: ConfigGeneral;
   public global: ConfigGlobal;
 
-  private static _config: IConfigProperties;
+  private static _config: AppConfig;
 
 
-  constructor() {
-    this.connection = new ConfigConnection();
-    this.general = new ConfigGeneral();
-    this.global = new ConfigGlobal();
+  constructor(con?: ConfigConnection, gen?: ConfigGeneral, glob?: ConfigGlobal) {
+    this.connection = new ConfigConnection(
+      AppConfig.get_string(con?.['remote-host']),
+      AppConfig.get_string(con?.['ssh-key']),
+      AppConfig.get_string(con?.['ssh-user']),
+      con?.['ssh-concurrency']
+  );
+    this.general = gen ?? new ConfigGeneral();
+    this.global = glob ?? new ConfigGlobal();
   }
 
 
 
-  public static get_app_confg(config_dict?: IConfigProperties): AppConfig {
+  public static get_app_confg(config_dict?: AppConfig): AppConfig {
 
-    let configs: IConfigProperties|undefined = config_dict;
+    let configs: AppConfig|undefined = config_dict;
+
+    let con_obj: ConfigConnection|undefined = undefined;
+    let gen_obj: ConfigGeneral|undefined = undefined;
+    let glob_obj: ConfigGlobal|undefined = undefined;
 
     if (!configs)
       configs = AppConfig.load_configs();
 
-    let app_config = new AppConfig();
     
-    if (configs['connection']) {
-      const con: ConfigConnectionProperties = configs['connection']
-      app_config.connection.remote_host = AppConfig.get_string(con['remote-host']);
-      app_config.connection.ssh_key = AppConfig.get_string(con['ssh-key']);
-      app_config.connection.ssh_user = AppConfig.get_string(con['ssh-user']);
+    if (configs.connection) {
+      const con_dict: ConfigConnection = configs.connection;
+      con_obj = new ConfigConnection(
+        AppConfig.get_string(con_dict['remote-host']), 
+        AppConfig.get_string(con_dict['ssh-key']), 
+        AppConfig.get_string(con_dict['ssh-user'])
+      );
     }
     
     if (configs['general']) {
-      const gen: ConfigGeneralProperties = configs['general']
-      app_config.general = new ConfigGeneral(
+      const gen: ConfigGeneral = configs.general
+      gen_obj = new ConfigGeneral(
         AppConfig.get_string(gen['local-base-dir']),
         AppConfig.get_string(gen['remote-base-dir']),
         AppConfig.get_string(gen['source-dir']),
-        gen['use-remote-obi'],
+        gen['use-remote-obi'] === true,
         AppConfig.get_string(gen['local-obi-dir']),
         AppConfig.get_string(gen['remote-obi-dir']),
         gen['supported-object-types'],
@@ -301,6 +340,13 @@ export class AppConfig {
       );
     }
 
+    if (configs['global']) {
+      const global: ConfigGlobal = configs['global'];
+      glob_obj = new ConfigGlobal(global['settings'], global['cmds'], global['compile-cmds'], global['steps']);
+    }
+
+    let app_config = new AppConfig(con_obj, gen_obj, glob_obj);
+
     return app_config;
   }
 
@@ -314,7 +360,7 @@ export class AppConfig {
   
   
 
-  public static get_project_app_config(workspace: vscode.Uri): IConfigProperties {
+  public static get_project_app_config(workspace: vscode.Uri): AppConfig {
 
     const app_config = DirTool.get_toml(path.join(workspace.fsPath, Constants.OBI_APP_CONFIG_FILE));
 
@@ -323,14 +369,11 @@ export class AppConfig {
 
 
 
-  public static get_user_app_config(workspace: vscode.Uri): {} {
+  public static get_user_app_config(workspace: vscode.Uri): AppConfig {
 
-    const user_app_config: {} = DirTool.get_toml(path.join(workspace.fsPath, Constants.OBI_APP_CONFIG_USER_FILE)) || {};
+    const user_app_config: AppConfig|undefined = DirTool.get_toml(path.join(workspace.fsPath, Constants.OBI_APP_CONFIG_USER_FILE));
 
-    const project_app_config: {} = AppConfig.get_project_app_config(workspace) || {};
-    AppConfig.empty(project_app_config);
-
-    const app_config = OBITools.override_dict(user_app_config, project_app_config);
+    const app_config: AppConfig = new AppConfig(user_app_config?.connection, user_app_config?.general, user_app_config?.global);
 
     return app_config;
 
@@ -338,7 +381,7 @@ export class AppConfig {
 
 
 
-  private static empty(object: {}): void {
+  private static empty(object: any): void {
     Object.keys(object).forEach(function (k:string){
         if (object[k] && typeof object[k] === 'object' && !(object[k] instanceof Array)) {
             return AppConfig.empty(object[k]);
@@ -352,7 +395,7 @@ export class AppConfig {
 
 
 
-  private static load_configs(): IConfigProperties {
+  private static load_configs(): AppConfig {
     
     const ws_uri = Workspace.get_workspace_uri();
 
@@ -368,7 +411,11 @@ export class AppConfig {
 
 
   public attributes_missing(): boolean {
-    return this.connection.attributes_missing() || this.general.attributes_missing();
+    return (
+      !this.connection || this.connection.attributes_missing() || 
+      !this.general || this.general.attributes_missing() || 
+      !this.global || this.global.attributes_missing()
+    );
   }
 
 

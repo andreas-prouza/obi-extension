@@ -6,7 +6,7 @@ import { DirTool } from '../../utilities/DirTool';
 import path from 'path';
 import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
-import { AppConfig } from './AppConfig';
+import { AppConfig, ConfigCompileSettings } from './AppConfig';
 import { Workspace } from '../../utilities/Workspace';
 
 /*
@@ -25,6 +25,8 @@ export class OBIConfiguration {
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
   private static _context: vscode.ExtensionContext;
+  private static _extensionUri: Uri;
+
 
 
   /**
@@ -52,7 +54,7 @@ export class OBIConfiguration {
   public static async render(context: vscode.ExtensionContext, extensionUri: Uri) {
 
     OBIConfiguration._context = context;
-    const workspaceUri = Workspace.get_workspace_uri();
+    OBIConfiguration._extensionUri = extensionUri;
 
     if (OBIConfiguration.currentPanel) {
       // If the webview panel already exists reveal it
@@ -62,22 +64,36 @@ export class OBIConfiguration {
 
     // If a webview panel does not already exist create and show a new one
     const panel = this.createNewPanel(extensionUri);
+
+    panel.webview.html = await OBIConfiguration.generate_html(context, extensionUri, panel.webview);
+    
+    panel.webview.onDidReceiveMessage(this.onReceiveMessage);
+
+    OBIConfiguration.currentPanel = new OBIConfiguration(panel, extensionUri);
+  
+  }
+
+
+
+  private static async generate_html(context: vscode.ExtensionContext, extensionUri: Uri, webview: Webview): Promise<string> {
+    const workspaceUri = Workspace.get_workspace_uri();
     const project_config = AppConfig.get_app_confg(AppConfig.get_project_app_config(workspaceUri));
+    const user_config = AppConfig.get_user_app_config(workspaceUri);
 
     const config = AppConfig.get_app_confg();
-    const host = config.connection.remote_host;
-    const user = config.connection.ssh_user;
+    const host = config.connection['remote-host'];
+    const user = config.connection['ssh-user'];
 
     const pwd = await context.secrets.get(`obi|${host}|${user}`);
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
     const html = nunjucks.render('controller/configuration.html', 
       {
-        global_stuff: OBITools.get_global_stuff(panel.webview, extensionUri),
-        config_css: getUri(panel.webview, extensionUri, ["asserts/css", "config.css"]),
-        main_java_script: getUri(panel.webview, extensionUri, ["out", "config.js"]),
+        global_stuff: OBITools.get_global_stuff(webview, extensionUri),
+        config_css: getUri(webview, extensionUri, ["asserts/css", "config.css"]),
+        main_java_script: getUri(webview, extensionUri, ["out", "config.js"]),
         icons: {debug_start: '$(preview)'},
-        user_config: config,
+        user_config: user_config,
         project_config: project_config,
         SSH_PASSWORD: pwd,
         project_config_file: DirTool.get_encoded_file_URI(workspaceUri, Constants.OBI_APP_CONFIG_FILE),
@@ -87,13 +103,22 @@ export class OBIConfiguration {
         //compile_list: this.get_compile_list(workspaceUri)
       }
     );
-    panel.webview.html = html;
-    //panel.webview.html = index_html.html;
 
-    panel.webview.onDidReceiveMessage(this.onReceiveMessage);
+    return html;
+  }
 
-    OBIConfiguration.currentPanel = new OBIConfiguration(panel, extensionUri);
-  
+
+
+
+  public static async update(): Promise<void> {
+
+    const panel = OBIConfiguration.currentPanel;
+    
+    if (!panel)
+      return;
+
+    panel._panel.webview.html = await OBIConfiguration.generate_html(OBIConfiguration._context, OBIConfiguration._extensionUri, OBIConfiguration.currentPanel?._panel.webview);
+    
   }
 
 
@@ -102,6 +127,9 @@ export class OBIConfiguration {
 
     const is_user = true;
     const is_project = false;
+    let config: AppConfig;
+    let lang: string;
+    let attr: string;
 
     const workspaceUri =
     vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
@@ -114,20 +142,57 @@ export class OBIConfiguration {
     const command = message.command;
 
     switch (command) {
+
       case "user_save":
         OBIConfiguration.save_config(is_user, workspaceUri, message.data);
         break;
+
       case "project_save":
         OBIConfiguration.save_config(is_project, workspaceUri, message.data);
         break;
-      case "save_ssh_password":
-        const config = AppConfig.get_app_confg();
+
+        case "save_ssh_password":
+        config = AppConfig.get_app_confg();
         const host = config['connection']['remote-host'];
         const user = config['connection']['ssh-user'];
         OBIConfiguration._context.secrets.delete(`obi|${host}|${user}`);
         if (message.password.length > 0)
           OBIConfiguration._context.secrets.store(`obi|${host}|${user}`, message.password);
         break;
+
+      case "add_language_attribute":
+        config: AppConfig;
+        lang = message.language;
+        attr = message.attribute;
+
+        if(message.user_project == 'user')
+          config = AppConfig.get_user_app_config(workspaceUri);
+        else
+          config = AppConfig.get_project_app_config(workspaceUri);
+
+        if (config.global.settings && config.global.settings.language)
+          config.global.settings.language[lang][attr] = '';
+
+        OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
+        OBIConfiguration.update();
+        break;
+
+      case "add_language_settings":
+        lang = message.language;
+        attr = message.attribute;
+
+        if(message.user_project == 'user')
+          config = AppConfig.get_user_app_config(workspaceUri);
+        else
+          config = AppConfig.get_project_app_config(workspaceUri);
+
+        if (config.global.settings && config.global.settings.language)
+          config.global.settings.language[lang] = new ConfigCompileSettings();
+
+        OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
+        OBIConfiguration.update();
+        break;
+
     }
     return;
   }
@@ -138,12 +203,14 @@ export class OBIConfiguration {
 
     vscode.window.showInformationMessage('Configuration saved');
 
+    const app_config = new AppConfig(data['connection'], data['general'], data['global']);
+
     // App config
     let toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_FILE);
     if (isUser)
       toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_USER_FILE);
     
-    DirTool.write_toml(toml_file, data);
+    DirTool.write_toml(toml_file, app_config);
 }
   
 

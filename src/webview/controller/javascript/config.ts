@@ -29,6 +29,26 @@ function main() {
   const save_button = document.getElementById("save_config") as Button;
   save_button?.addEventListener("click", save_configs);
 
+  // Add new attributes for language settings
+  const new_language_button = document.getElementById('add_language_settings');
+  new_language_button?.addEventListener('click', () => {
+    const lang: string = document.getElementById('add_language_settings_name')?.value;
+    const config: string = new_language_button.getAttribute('config') ?? '';
+    add_language_settings(config, lang);
+  });
+
+  const new_property_buttons = document.getElementsByName(`language-settings-add-property`);
+  new_property_buttons.forEach((e) => {
+    e.addEventListener('click', () => {
+      const attr: string = e.getAttribute('id_of_property') ?? '';
+      const value: string = document.getElementById(attr)?.value;
+      const config: string = e.getAttribute('config') ?? '';
+      const attr_arr = attr.split('|');
+      add_language_attribute(config, attr_arr[0], value);
+    });
+  });
+
+
   const app_elements = document.getElementsByTagName(`vscode-text-field`);
   
   for (let i = 0; i < app_elements.length; i++) {
@@ -56,6 +76,39 @@ function main() {
   window.addEventListener('message', receive_message);
 
 }
+
+
+
+
+function add_language_attribute(class_prefix: string, language: string, attribute: string) {
+  
+  save_config(class_prefix);
+  console.log(`saved ${language}, ${attribute}`);
+
+  vscode.postMessage({
+    command: "add_language_attribute",
+    user_project: class_prefix,
+    language: language,
+    attribute: attribute
+  });
+
+}
+
+
+
+
+function add_language_settings(class_prefix: string, language: string) {
+  
+  save_config(class_prefix);
+
+  vscode.postMessage({
+    command: "add_language_settings",
+    user_project: class_prefix,
+    language: language
+  });
+
+}
+
 
 
 
@@ -242,8 +295,14 @@ function save_config(class_prefix:string) {
 
     const elem_value = app_elements[i].value.replaceAll('\\', '\\\\').replaceAll('"', '\\\"');
 
+    if (elem_value.length == 0 || elem_value == 'NaN')
+      continue;
+
     // Standard element
     let json_value = `"${elem_value.replaceAll('\n', '\\n')}"`;
+    if (app_elements[i].getAttribute('type') == 'number') {
+      json_value = elem_value;
+    }
     
     // Checkbox element
     if (app_elements[i].classList.contains('type_checkbox')) {
@@ -305,25 +364,6 @@ function save_config(class_prefix:string) {
   });
 }
 
-
-function show_changes() {
-
-  const show_changes_ring = document.getElementById("show_changes_ring");
-  if (show_changes_ring)
-    show_changes_ring.style.visibility='visible';
-  
-  vscode.postMessage({
-    command: "show_changes"
-  });
-}
-
-//--function handleHowdyClick() {
-function controller_refresh() {
-
-  vscode.postMessage({
-    command: "refresh"
-  });
-}
 
 
 

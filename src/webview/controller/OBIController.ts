@@ -55,7 +55,7 @@ export class OBIController implements vscode.WebviewViewProvider {
     if (AppConfig.attributes_missing())
       return;
 
-    const compile_list_file_path: string = path.join(Workspace.get_workspace(), config.general.compile_list);
+    const compile_list_file_path: string = path.join(Workspace.get_workspace(), config.general['compile-list']);
     // if compile-script changed, refresh the view
     fs.watchFile(compile_list_file_path, {interval: 1000}, function (event, filename) {
       OBIController.update_build_summary_timestamp();
@@ -123,7 +123,7 @@ export class OBIController implements vscode.WebviewViewProvider {
     
     const html_template = 'controller/index.html';
 
-    const compile_list = OBITools.get_compile_list(workspaceFolder);
+    const compile_list: {}|undefined = OBITools.get_compile_list(workspaceFolder);
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
     const html = nunjucks.render(html_template, 

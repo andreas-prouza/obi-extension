@@ -58,7 +58,7 @@ export function activate(context: vscode.ExtensionContext) {
 	)
 
 	const config = AppConfig.get_app_confg();
-	vscode.commands.executeCommand('setContext', 'obi.valid-config', !config.general.attributes_missing());
+	vscode.commands.executeCommand('setContext', 'obi.valid-config', !config.attributes_missing());
 
 	if (config.attributes_missing())
 		return;

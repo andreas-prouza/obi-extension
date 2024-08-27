@@ -19,7 +19,7 @@
       <br />
       <br />
 
-      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-1" regex_validator="^\d*$" id="{{ class_prefix }}|connection|ssh-concurrency" placeholder="5"
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-1" regex_validator="^\d*$" type="number" id="{{ class_prefix }}|connection|ssh-concurrency" placeholder="5"
         value="{{ app_config['connection']['ssh-concurrency'] }}">SSH Concurrency <label style="visibility: hidden;" id="hint_{{ class_prefix }}|connection|ssh-concurrency">&nbsp;&nbsp;&nbsp;⚠️ Only numbers</label></vscode-text-field>
 
       <br />
@@ -111,12 +111,12 @@
         value="{{ general_settings['TGTCCSID'] }}">TGTCCSID</vscode-text-field>
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|STGMDL" placeholder="*SNGLVL"
         value="{{ general_settings['STGMDL'] }}">STGMDL</vscode-text-field>
-      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|ACTGRP" placeholder="*SNGLVL"
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|ACTGRP" placeholder="*CALLER|NAME|*NEW"
         value="{{ general_settings['ACTGRP'] }}">ACTGRP</vscode-text-field>
       <br />
       <br />
-      <vscode-text-field class="{{ class_prefix }}_save_app type_array {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-2" id="{{ class_prefix }}|global|settings|general|LIBL" size="50"
-        placeholder="$(TARGET_LIB), QGPL" value="{{ general_settings['LIBL'] | join('\n') }}">LIBL</vscode-text-field>
+      <vscode-text-area class="{{ class_prefix }}_save_app type_array {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-2" id="{{ class_prefix }}|global|settings|general|LIBL" size="50"
+        placeholder="$(TARGET_LIB)&#10;QGPL" value="{% if general_settings['LIBL'] %}{{ general_settings['LIBL'] | join('\n') }}{% endif %}">LIBL</vscode-text-area>
       <br />
       <br />
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|INCLUDE_BNDDIR" size="50"
@@ -142,18 +142,52 @@
       <hr />
       <br />
       
-      <h2>Language</h2>
+      <table>
+        <colgroup></colgroup>
+        <tr>
+          <td>
+            <h2>Individual language settings</h2>
+          </td>
+          <td>
+            &nbsp;
+          </td>
+          <td>
+            &nbsp;
+          </td>
+          <td>
+            <vscode-button config="{{ class_prefix }}" id="add_language_settings">Add language</vscode-button>
+          </td>
+          <td>
+            <vscode-text-field config="{{ class_prefix }}" panel="tab-2" placeholder="sqlrpgle.pgm" id="add_language_settings_name"></vscode-text-field>
+          </td>
+        </tr>
+      </table>
       {% set app_language = app_global['settings']['language'] %}
 
       {% for key, value in app_language %}
-        <h3>{{ key }}</h3>
+        <table>
+          <colgroup></colgroup>
+          <tr>
+            <td style="width: 50%"><h3>{{ key }}</h3></td>
+            <td><vscode-button name="language-settings-add-property" config="{{ class_prefix }}" language="{{ key }}" id_of_property="{{ key }}|new_property">Add property</vscode-button></td>
+            <td>
+              <vscode-dropdown id="{{ key }}|new_property">
+                {% for ks, vs in general_settings %}
+                  {% if ks not in value %}
+                  <vscode-option>{{ ks }}</vscode-option>
+                  {% endif %}
+                {% endfor %}
+              </vscode-dropdown>
+            </td>
+          </tr>
+        </table>
         {% for k2, v2 in value %}
-          <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|language|{{ key }}|{{ k2 }}" placeholder="utf-8"
+          <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|language|{{ key }}|{{ k2 }}"
             value="{{ v2 }}">{{ k2 }}
           </vscode-text-field>
-          <br/>
-          <br/>
         {% endfor %}
+        <br/>
+        <br/>
       {% endfor %}
       <br />
       <hr />
@@ -208,8 +242,8 @@
   <vscode-panel-view id="view-system-3">
     <section>
       
-      <vscode-text-area class="{{ class_prefix }}_save_app type_array {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-3" id="{{ class_prefix }}|general|supported-object-types" placeholder="pgm file srvpgm"
-        value="{{ app_general['supported-object-types'] }}">Supported object types
+      <vscode-text-area rows="4" class="{{ class_prefix }}_save_app type_array {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-3" id="{{ class_prefix }}|general|supported-object-types" placeholder="pgm file srvpgm"
+        value="{% if app_general['supported-object-types'] %}{{ app_general['supported-object-types'] | join('\n') }}{% endif %}">Supported object types
       </vscode-text-area>
 
       <br/>
