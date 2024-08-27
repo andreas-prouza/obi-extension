@@ -80,14 +80,19 @@ export class OBITools {
     const ws = Workspace.get_workspace();
     const ext_ws = path.join(OBITools.ext_context.asAbsolutePath('.'), 'obi-media');
 
-    const x = DirTool.dir_exists(path.join(ws, 'etc'));
-    
     if (!DirTool.dir_exists(path.join(ws, 'etc'))){
       fs.mkdirSync(path.join(ws, 'etc'));
     }
 
-    fs.copyFileSync(path.join(ext_ws, 'etc', 'app-config.toml'), path.join(ws, 'etc', 'app-config.toml'));
-    fs.copyFileSync(path.join(ext_ws, 'etc', 'global.cfg'), path.join(ws, 'etc', 'global.cfg'));
+    const files = DirTool.get_all_files_in_dir(ws, 'etc', ['toml', '.py']);
+    if (!files)
+      return;
+
+    for (const file of files) {
+      fs.copyFileSync(path.join(ext_ws, file), path.join(ws, file));
+    }
+
+    
 
   }
 

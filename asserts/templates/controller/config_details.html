@@ -134,7 +134,7 @@
       <br />
       <br />
       <vscode-text-area class="{{ class_prefix }}_save_app type_dict" panel="tab-2" id="{{ class_prefix }}|global|settings|general|TARGET_LIB_MAPPING" size="50"
-        placeholder="prouzalib=prouzat1, prouzalib2=prouzat2"
+        placeholder="prouzalib=prouzat1&#10;prouzalib2=prouzat2"
         value="{% for k, v in general_settings['TARGET_LIB_MAPPING'] %}{% if loop.index0 > 0 %}{{ '\n' }}{% endif %}{{ k }}={{ v }}{% endfor %}">TARGET_LIB_MAPPING</vscode-text-area>
       <br />
       
@@ -242,8 +242,8 @@
   <vscode-panel-view id="view-system-3">
     <section>
       
-      <vscode-text-area rows="4" class="{{ class_prefix }}_save_app type_array {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-3" id="{{ class_prefix }}|general|supported-object-types" placeholder="pgm file srvpgm"
-        value="{% if app_general['supported-object-types'] %}{{ app_general['supported-object-types'] | join('\n') }}{% endif %}">Supported object types
+      <vscode-text-area rows="4" class="{{ class_prefix }}_save_app type_array {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-3" id="{{ class_prefix }}|general|supported-object-types" 
+        placeholder="pgm&#10;file&#10;srvpgm" value="{% if app_general['supported-object-types'] %}{{ app_general['supported-object-types'] | join('\n') }}{% endif %}">Supported object types
       </vscode-text-area>
 
       <br/>

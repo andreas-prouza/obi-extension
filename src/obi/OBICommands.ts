@@ -97,12 +97,17 @@ export class OBICommands {
         message: `Get all outputs back to you`
       });
 
-      await Promise.all([
+      let promise_list = [
         SSH_Tasks.getRemoteDir(path.join(ws, Constants.BUILD_OUTPUT_DIR), path.join(remote_base_dir, Constants.BUILD_OUTPUT_DIR)),
-        SSH_Tasks.getRemoteFile(path.join(ws, config.general['compiled-object-list']), path.join(remote_base_dir, config.general['compiled-object-list'])),
         SSH_Tasks.getRemoteDir(path.join(ws, 'tmp'), path.join(remote_base_dir, 'tmp')),
         SSH_Tasks.getRemoteDir(path.join(ws, 'log'), path.join(remote_base_dir, 'log'))
-      ]);
+      ];
+
+      if (config.general['compiled-object-list'])
+        promise_list.push(SSH_Tasks.getRemoteFile(path.join(ws, config.general['compiled-object-list']), path.join(remote_base_dir, config.general['compiled-object-list'])));
+
+
+      await Promise.all(promise_list);
 
     });
   }
