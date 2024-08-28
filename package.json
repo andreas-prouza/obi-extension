@@ -156,7 +156,8 @@
     "node-ssh": "latest",
     "nunjucks": "^3.2.4",
     "smol-toml": "latest",
-    "winston": "latest"
+    "winston": "latest",
+    "fs-extra": "latest"
   },
   "theia": {
     "target": "browser"

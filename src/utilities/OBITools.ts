@@ -9,7 +9,7 @@ import { AppConfig, IConfigProperties } from '../webview/controller/AppConfig';
 import { SSH_Tasks } from './SSH_Tasks';
 import * as source from '../obi/Source';
 import { Workspace } from './Workspace';
-import * as fs from 'fs';
+import * as fs from 'fs-extra';
 import { logger } from './Logger';
 
 
@@ -84,15 +84,21 @@ export class OBITools {
       fs.mkdirSync(path.join(ws, 'etc'));
     }
 
-    const files = DirTool.get_all_files_in_dir(ws, 'etc', ['toml', '.py']);
+    const files = DirTool.get_all_files_in_dir(ext_ws, 'etc', ['toml', '.py']);
     if (!files)
       return;
 
+    let copies: Promise<void>[] = [];
     for (const file of files) {
-      fs.copyFileSync(path.join(ext_ws, file), path.join(ws, file));
+      copies.push(fs.copy(path.join(ext_ws, file), path.join(ws, file)));
     }
 
-    
+    Promise.all(copies).then(() => {
+      vscode.window.showInformationMessage(`${copies.length} files copied`);
+    })
+    .catch((reason: Error) => {
+      vscode.window.showErrorMessage(reason.message);
+    });
 
   }
 
@@ -122,11 +128,14 @@ export class OBITools {
 
 
   public static override_dict(from_dict:{}, to_dict:{}): any {
+    if (to_dict == undefined)
+      to_dict = {};
+
     for (let [k, v] of Object.entries(from_dict)) {
-      if (typeof v==='object' && v!==null && !(v instanceof Array) && !(v instanceof Date))
+      if (typeof v==='object' && v!==null && to_dict[k] && !(v instanceof Array) && !(v instanceof Date))
         v = OBITools.override_dict(from_dict[k], to_dict[k]);
 
-      if (v == undefined)
+      if (v == undefined || to_dict[k] == undefined)
         continue;
       if ((typeof v == 'string') && v.length == 0)
         continue;

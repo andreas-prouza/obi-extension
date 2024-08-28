@@ -82,7 +82,7 @@ export class SSH_Tasks {
     }
 
     logger.info(`Execute: ${cmd}`);
-    const result = await SSH_Tasks.ssh.execCommand(cmd)
+    const result = await SSH_Tasks.ssh.execCommand('cmd invalid')
     
     logger.info(`CODE: ${result.code}`);
     logger.info(`STDOUT: ${result.stdout}`);

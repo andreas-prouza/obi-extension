@@ -25,9 +25,12 @@ export class ConfigInvalid implements vscode.WebviewViewProvider {
   private _context?: vscode.WebviewViewResolveContext;
   private readonly _extensionUri: vscode.Uri;
 
+	
 	constructor(extensionUri: vscode.Uri) {
     this._extensionUri = extensionUri;
    }
+
+
 
 	public resolveWebviewView(
 		webviewView: vscode.WebviewView,
