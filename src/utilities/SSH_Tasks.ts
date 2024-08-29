@@ -6,6 +6,7 @@ import { AppConfig } from '../webview/controller/AppConfig';
 import { fail } from 'assert';
 import { Constants } from '../Constants';
 import { logger } from './Logger';
+import { config } from 'process';
 
 
 
@@ -82,7 +83,7 @@ export class SSH_Tasks {
     }
 
     logger.info(`Execute: ${cmd}`);
-    const result = await SSH_Tasks.ssh.execCommand('cmd invalid')
+    const result = await SSH_Tasks.ssh.execCommand(cmd);
     
     logger.info(`CODE: ${result.code}`);
     logger.info(`STDOUT: ${result.stdout}`);
@@ -196,10 +197,10 @@ export class SSH_Tasks {
     }
     
     const config = AppConfig.get_app_confg();
-    if (!config.general['remote-base-dir'])
-      throw Error(`Config attribute 'config.general.remote_base_dir' missing`);
+    if (!config.general['remote-base-dir'] || !config.general['local-base-dir'])
+      throw Error(`Config attribute 'config.general.remote_base_dir' or 'config.general.local-base-dir' missing`);
     
-    const source_dir: string = config.general['source-dir'];
+    const source_dir: string = config.general['source-dir'] ?? 'src';
     const local_source_dir: string = path.join(Workspace.get_workspace(), config.general['local-base-dir'], source_dir);
     const remote_source_dir: string = path.join(config.general['remote-base-dir'], source_dir);
     
@@ -235,6 +236,39 @@ export class SSH_Tasks {
       vscode.window.showInformationMessage(`1 source transfered`);
     else
       vscode.window.showInformationMessage(`${transfer_list.length} sources transfered`);
+  }
+
+
+
+
+  public static async transfer_files(file_list: string[], again?: boolean) {
+
+    if (!SSH_Tasks.ssh.isConnected()){
+      if (again) {
+        vscode.window.showErrorMessage("Still no connection available");
+        return;
+      }
+      const func = ()=> {SSH_Tasks.transfer_files(file_list, true)};
+      await SSH_Tasks.connect(func);
+      return;
+    }
+    
+    const config = AppConfig.get_app_confg();
+    if (!config.general['remote-base-dir'] || !config.general['local-base-dir'])
+      throw Error(`Config attribute 'config.general.remote_base_dir' missing`);
+    const local_base_dir: string = path.join(Workspace.get_workspace(), config.general['local-base-dir']);
+    const remote_base_dir: string = config.general['remote-base-dir'];
+
+    let transfer_list: FileTransfer[] = [];
+
+    file_list.map((file: string) => {
+      transfer_list.push({
+        local: path.join(local_base_dir, file),
+        remote: path.join(remote_base_dir, file),
+      })
+    });
+
+    await SSH_Tasks.ssh.putFiles(transfer_list, {concurrency: config.connection['ssh-concurrency'] ?? 5 });
   }
 
 
@@ -291,8 +325,18 @@ export class SSH_Tasks {
   }
   
 
-  private static async ssh_put_dir(local_dir: string, remote_dir: string, failed: string[], successful: string[]) {
+  private static async ssh_put_dir(local_dir: string, remote_dir: string, failed: string[], successful: string[], again?: boolean) {
 
+    if (!SSH_Tasks.ssh.isConnected()){
+      if (again) {
+        vscode.window.showErrorMessage("Still no connection available");
+        return;
+      }
+      const func = ()=> {SSH_Tasks.ssh_put_dir(local_dir, remote_dir, failed, successful, true)};
+      await SSH_Tasks.connect(func);
+      return;
+    }
+    
     logger.debug(`Send directory. Local: ${local_dir}, remote: ${remote_dir}`);
 
     const result: boolean = await SSH_Tasks.ssh.putDirectory(local_dir, remote_dir, {

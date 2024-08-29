@@ -42,6 +42,18 @@
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
+        "command": "obi.get-remote-source-list",
+        "title": "Get remote source list",
+        "icon": "$(refresh)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.check-remote-sources",
+        "title": "Check remote sources",
+        "icon": "$(refresh)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
         "command": "obi.controller.config",
         "title": "Configuration",
         "icon": "$(settings-gear)",
@@ -69,6 +81,11 @@
         },
         {
           "command": "obi.controller.config",
+          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
+          "group": "navigation"
+        },
+        {
+          "command": "obi.get-remote-source-list",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
           "group": "navigation"
         }

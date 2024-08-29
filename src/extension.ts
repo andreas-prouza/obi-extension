@@ -64,6 +64,20 @@ export function activate(context: vscode.ExtensionContext) {
 		return;
 
 
+	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.get-remote-source-list', () => {
+			// Only available with workspaces
+			OBICommands.get_remote_source_list();
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.check-remote-sources', () => {
+			// Only available with workspaces
+			OBITools.check_remote_sources();
+		})
+	);
+
 	const run_native: boolean = OBITools.is_native();
 	vscode.commands.executeCommand('setContext', 'obi.run_native', run_native);
 	
@@ -120,6 +134,9 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	*/
 
+	if (config.general['check-remote-source-on-startup'] && config.general['check-remote-source-on-startup'] === true)
+		OBITools.check_remote_sources();
+		
 
 }
 

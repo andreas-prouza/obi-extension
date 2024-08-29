@@ -16,6 +16,7 @@ export const APP_CONFIG_TEMPLATE: {} = {
     "console-output-encoding": "",
     "source-dir": "",
     "compiled-object-list": "",
+    "source-list": "",
     "dependency-list": "",
     "deployment-object-list": "",
     "build-output-dir": "",
@@ -48,11 +49,13 @@ export interface IConfigGeneralProperties {
   'file-system-encoding' : string,
   'console-output-encoding' : string,
   'compiled-object-list' : string,
+  'source-list' : string,
   'compiled-object-list-md' : string,
   'dependency-list' : string,
   'deployment-object-list' : string,
   'build-output-dir' : string,
   'compile-list' : string
+  'check-remote-source-on-startup' : boolean
 }
 
 
@@ -108,13 +111,15 @@ export class ConfigGeneral {
   public ['file-system-encoding']?: string;
   public ['console-output-encoding']?: string;
   public ['compiled-object-list']?: string;
+  public ['source-list']?: string;
   public ['dependency-list']?: string;
   public ['deployment-object-list']?: string;
   public ['build-output-dir']?: string;
   public ['compile-list']?: string;
   public ['compiled-object-list-md']?: string;
+  public ['check-remote-source-on-startup']?: boolean;
 
-  constructor(local_base_dir?: string, remote_base_dir?: string, source_dir?: string, use_remote_obi?: boolean, local_obi_dir?: string, remote_obi_dir?: string, supported_object_types?: string[], file_system_encoding?: string, console_output_encoding?: string, compiled_object_list?: string, dependency_list?: string, deployment_object_list?: string, build_output_dir?: string, compile_list?: string, compiled_object_list_md?: string) {
+  constructor(local_base_dir?: string, remote_base_dir?: string, source_dir?: string, use_remote_obi?: boolean, local_obi_dir?: string, remote_obi_dir?: string, supported_object_types?: string[], file_system_encoding?: string, console_output_encoding?: string, compiled_object_list?: string, dependency_list?: string, deployment_object_list?: string, build_output_dir?: string, compile_list?: string, compiled_object_list_md?: string, source_list?: string, check_remote_source_on_startup?: boolean) {
     this['local-base-dir'] = local_base_dir;
     this['remote-base-dir'] = remote_base_dir;
     this['source-dir'] = source_dir;
@@ -125,11 +130,13 @@ export class ConfigGeneral {
     this['file-system-encoding'] = file_system_encoding;
     this['console-output-encoding'] = console_output_encoding;
     this['compiled-object-list'] = compiled_object_list;
+    this['source-list'] = source_list;
     this['dependency-list'] = dependency_list;
     this['deployment-object-list'] = deployment_object_list;
     this['build-output-dir'] = build_output_dir;
     this['compile-list'] = compile_list;
     this['compiled-object-list-md'] = compiled_object_list_md;
+    this['check-remote-source-on-startup'] = check_remote_source_on_startup;
   }
 
   public attributes_missing(): boolean {
@@ -144,6 +151,7 @@ export class ConfigGeneral {
       !this['file-system-encoding'] ||
       !this['console-output-encoding'] ||
       !this['compiled-object-list'] ||
+      !this['source-list'] ||
       !this['dependency-list'] ||
       !this['deployment-object-list'] ||
       !this['build-output-dir'] ||
@@ -337,6 +345,8 @@ export class AppConfig {
         AppConfig.get_string(gen['build-output-dir']),
         AppConfig.get_string(gen['compile-list']),
         AppConfig.get_string(gen['compiled-object-list-md']),
+        AppConfig.get_string(gen['source-list']),
+        gen['check-remote-source-on-startup'] === true
       );
     }
 

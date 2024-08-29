@@ -76,6 +76,11 @@
 
       <br />
       <br />
+      <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox" panel="tab-1" id="{{ class_prefix }}|general|check-remote-source-on-startup" 
+      {% if app_config['general']['check-remote-source-on-startup'] == true %}checked{% endif %}>Check remote sources on start up</vscode-checkbox>
+
+      <br />
+      <br />
       <br />
       <hr />
       <br />
@@ -85,7 +90,7 @@
       <br />
 
       <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox" panel="tab-1" id="{{ class_prefix }}|general|use-remote-obi" 
-        {% if app_config['general']['use-remote-obi'] == 'true' %}checked{% endif %}>Use remote OBI (show changes)</vscode-checkbox>
+        {% if app_config['general']['use-remote-obi'] == true %}checked{% endif %}>Use remote OBI (show changes)</vscode-checkbox>
       <br />
       <br />
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-1" id="{{ class_prefix }}|general|local-obi-dir" size="80" placeholder="~/project/obi"
@@ -269,37 +274,43 @@
 
     <section>
 
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compiled-object-list" placeholder="utf-8"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compiled-object-list" placeholder="etc/object-builds.toml"
         value="{{ app_general['compiled-object-list'] }}">Compiled object list
       </vscode-text-field>
             
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|dependency-list" placeholder="utf-8"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|source-list" placeholder="etc/source-list.toml"
+        value="{{ app_general['source-list'] }}">Source list
+      </vscode-text-field>
+            
+      <br/>
+      <br/>
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|dependency-list" placeholder="etc/dependency.toml"
         value="{{ app_general['dependency-list'] }}">Dependency list
       </vscode-text-field>
             
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|deployment-object-list" placeholder="utf-8"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|deployment-object-list" placeholder="build-output/object-list.txt"
         value="{{ app_general['deployment-object-list'] }}">Deployment object list
       </vscode-text-field>
             
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|build-output-dir" placeholder="utf-8"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|build-output-dir" placeholder="build-output/objects"
         value="{{ app_general['build-output-dir'] }}">Build output dir
       </vscode-text-field>
     
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compile-list" placeholder="utf-8"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compile-list" placeholder="build-output/compile-list.json"
         value="{{ app_general['compile-list'] }}">Compile list
       </vscode-text-field>
     
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compiled-object-list-md" placeholder="utf-8"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compiled-object-list-md" placeholder="build-output/compiled-object-list.md"
         value="{{ app_general['compiled-object-list-md'] }}">Compiled object list md
       </vscode-text-field>
     

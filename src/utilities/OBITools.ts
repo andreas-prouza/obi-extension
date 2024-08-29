@@ -11,6 +11,7 @@ import * as source from '../obi/Source';
 import { Workspace } from './Workspace';
 import * as fs from 'fs-extra';
 import { logger } from './Logger';
+import { OBICommands } from '../obi/OBICommands';
 
 
 
@@ -49,6 +50,40 @@ export class OBITools {
     if (!check)
       return false;
 
+    return true;
+
+  }
+
+
+
+  public static async check_remote_sources(): Promise<boolean> {
+
+    await OBITools.check_remote();
+
+    const config = AppConfig.get_app_confg();
+    const ws: string = Workspace.get_workspace();
+
+    if (!config.general['source-list'])
+      return false;
+
+    await OBICommands.get_remote_source_list();
+    const remote_source_list: source.ISource = DirTool.get_toml(path.join(ws, config.general['source-list']));
+    const current_hash_list = await OBITools.retrieve_current_source_hashes();
+    const changed_sources: source.ISourceList = await OBITools.compare_source_change(current_hash_list, remote_source_list);
+    const all_sources: string[] = [...changed_sources['changed-sources'], ...changed_sources['new-objects']];
+
+    if (all_sources.length) {
+      const answer = await vscode.window.showErrorMessage(`${all_sources.length} changed sources. Do you want to transfer to remote?`, { modal: true }, ...['Yes', 'No']);
+      switch (answer) {
+        case 'No':
+        case undefined: // Canceled
+        case 'Yes':
+          await SSH_Tasks.transferSources(all_sources);
+          vscode.window.showInformationMessage(`Sources transfered to ${config.connection['remote-host']}`);
+      }
+    }
+
+    vscode.window.showInformationMessage('Remote source check finished');
     return true;
 
   }
@@ -138,7 +173,7 @@ export class OBITools {
       if (typeof v==='object' && v!==null && to_dict[k] && !(v instanceof Array) && !(v instanceof Date))
         v = OBITools.override_dict(from_dict[k], to_dict[k]);
 
-      if (v == undefined || to_dict[k] == undefined)
+      if (v == undefined)
         continue;
       if ((typeof v == 'string') && v.length == 0)
         continue;
@@ -201,7 +236,7 @@ export class OBITools {
 
   public static async get_changed_sources(): Promise<source.ISourceList> { // results: source.Source[]
 
-    const current_hash_list = await OBITools.retrieve_current_source_hashes(Workspace.get_workspace());
+    const current_hash_list = await OBITools.retrieve_current_source_hashes();
 
     const changed_sources: source.ISourceList = await OBITools.compare_source_change(current_hash_list);
 
@@ -254,10 +289,12 @@ export class OBITools {
 
 
 
-  public static compare_source_change(results: source.ISource[]): source.ISourceList {
+  public static compare_source_change(results: source.ISource[], last_source_hashes?: source.ISource|undefined): source.ISourceList {
 
     // Get all sources which are new or have changed
-    const last_source_hashes: source.ISource | undefined = OBITools.get_source_hash_list(Workspace.get_workspace());
+    if (!last_source_hashes)
+      last_source_hashes = OBITools.get_source_hash_list(Workspace.get_workspace());
+
     let changed_sources: string[] = [];
     let new_sources: string[] = [];
 
@@ -300,10 +337,10 @@ export class OBITools {
   }
 
 
-  public static async retrieve_current_source_hashes(workspaceUri: string): Promise<source.ISource[]> {
+  public static async retrieve_current_source_hashes(): Promise<source.ISource[]> {
 
     const config = AppConfig.get_app_confg();
-    const source_dir = path.join(workspaceUri, config.general['source-dir']);
+    const source_dir = path.join(Workspace.get_workspace(), config.general['source-dir']);
 
     const sources = DirTool.get_all_files_in_dir(
       source_dir,

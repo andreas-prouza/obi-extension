@@ -306,9 +306,9 @@ function save_config(class_prefix:string) {
     
     // Checkbox element
     if (app_elements[i].classList.contains('type_checkbox')) {
-      json_value = '"false"';
+      json_value = 'false';
       if (app_elements[i].checked)
-        json_value = '"true"';
+        json_value = 'true';
     }
 
     // Array

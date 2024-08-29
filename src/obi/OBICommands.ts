@@ -14,12 +14,14 @@ import { AppConfig } from '../webview/controller/AppConfig';
 import path from 'path';
 import { DirTool } from '../utilities/DirTool';
 import { Constants } from '../Constants';
+import { logger } from '../utilities/Logger';
 
 
 export class OBICommands {
 
   public static run_build_status: OBIStatus = OBIStatus.READY;
   public static show_changes_status: OBIStatus = OBIStatus.READY;
+  public static remote_source_list_status: OBIStatus = OBIStatus.READY;
 
 
 
@@ -83,14 +85,14 @@ export class OBICommands {
         message: `Generate build script. If it takes too long, use OBI localy (see documentation).`
       });
 
-      let ssh_cmd: string = `source .profile; cd '${remote_base_dir}'; rm log/* || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a create -p . || true`;
+      let ssh_cmd: string = `source .profile; cd '${remote_base_dir}'; rm log/* || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a create -p .`;
       await SSH_Tasks.executeCommand(ssh_cmd);
 
       progress.report({
         message: `Run build script`
       });
 
-      ssh_cmd = `source .profile; cd '${remote_base_dir}'; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p . || true`;
+      ssh_cmd = `source .profile; cd '${remote_base_dir}'; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p .`;
       await SSH_Tasks.executeCommand(ssh_cmd);
 
       progress.report({
@@ -177,6 +179,49 @@ export class OBICommands {
     OBICommands.show_changes_status = OBIStatus.READY;
     OBIController.run_finished();
     OBIController.update_build_summary_timestamp();
+
+    return;
+  }
+
+
+
+  public static async get_remote_source_list(): Promise<void> {
+
+    if (OBICommands.remote_source_list_status != OBIStatus.READY) {
+      vscode.window.showErrorMessage('OBI process is already running');
+      return;
+    }
+
+    OBICommands.remote_source_list_status = OBIStatus.IN_PROCESS;
+
+    try {
+      const ws = Workspace.get_workspace();
+      const config = AppConfig.get_app_confg();
+      const remote_base_dir: string|undefined = config.general['remote-base-dir'];
+      const remote_obi_dir: string|undefined = config.general['remote-obi-dir'];
+
+      if (!remote_base_dir || !remote_obi_dir)
+        throw Error(`Missing 'remote_base_dir' or 'remote_obi_dir'`);
+
+      const remote_obi: string = path.join(remote_obi_dir, Constants.REMOTE_OBI_PYTHON_PATH);
+
+      await SSH_Tasks.transfer_files([Constants.OBI_APP_CONFIG_FILE, Constants.OBI_APP_CONFIG_USER_FILE]);
+
+      let ssh_cmd: string = `source .profile; cd '${remote_base_dir}'; rm log/* || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a gen_src_list -p .`;
+      await SSH_Tasks.executeCommand(ssh_cmd);
+
+      if (config.general['source-list'])
+        await SSH_Tasks.getRemoteFile(path.join(ws, config.general['source-list']), path.join(remote_base_dir, config.general['source-list']));
+
+      vscode.window.showInformationMessage('Remote source list transfered from remote');
+    }
+    catch (e: any) {
+      OBICommands.remote_source_list_status = OBIStatus.READY;
+      vscode.window.showErrorMessage('Failed to get remote source list');
+      logger.error(e.message);
+      throw e;
+    }
+    OBICommands.remote_source_list_status = OBIStatus.READY;
 
     return;
   }
