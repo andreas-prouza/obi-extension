@@ -42,6 +42,9 @@ export class OBITools {
     if (!check)
       return false;
 
+    if (!config.general['source-dir'])
+      return false;
+
     check = await SSH_Tasks.check_remote_path(path.join(remote_base_dir, config.general['source-dir']));
     if (!check)
       return false;
@@ -157,6 +160,11 @@ export class OBITools {
       return undefined;
 
     const config = AppConfig.get_app_confg();
+    if (!config.general['compile-list']) {
+      vscode.window.showErrorMessage('OBI config is invalid');
+      throw Error('OBI config is invalid');
+    }
+      
     const file_path: string = path.join(workspaceUri.fsPath, config.general['compile-list']);
     
     if (!DirTool.file_exists(file_path))
@@ -180,6 +188,9 @@ export class OBITools {
   public static get_source_hash_list(workspace:string): source.ISource | undefined {
 
     const config = AppConfig.get_app_confg();
+    if (!config.general['compiled-object-list'])
+      return undefined
+    
     const file:string = path.join(workspace, config.general['compiled-object-list'])
 
     return DirTool.get_toml(file)
