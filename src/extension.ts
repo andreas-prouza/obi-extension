@@ -74,7 +74,12 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('obi.check-remote-sources', () => {
 			// Only available with workspaces
-			OBITools.check_remote_sources();
+			OBITools.check_remote_sources().then((success)=> {
+				if (success)
+					vscode.window.showInformationMessage('Remote source check succeeded');
+				else
+					vscode.window.showWarningMessage('Remote source check failed');
+			});
 		})
 	);
 
@@ -135,7 +140,12 @@ export function activate(context: vscode.ExtensionContext) {
 	*/
 
 	if (config.general['check-remote-source-on-startup'] && config.general['check-remote-source-on-startup'] === true)
-		OBITools.check_remote_sources();
+		OBITools.check_remote_sources().then((success)=> {
+			if (success)
+				vscode.window.showInformationMessage('Remote source check succeeded');
+			else
+				vscode.window.showWarningMessage('Remote source check failed');
+		});
 		
 
 }

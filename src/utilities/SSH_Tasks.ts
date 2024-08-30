@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import {NodeSSH} from 'node-ssh';
+import {NodeSSH, SSHExecCommandResponse} from 'node-ssh';
 import { Workspace } from './Workspace';
 import path from 'path';
 import { AppConfig } from '../webview/controller/AppConfig';
@@ -180,6 +180,38 @@ export class SSH_Tasks {
       logger.error(`STDERR: ${result.stderr}`);
 
     return result.code == 0;
+  }
+
+
+
+
+  public static async delete_sources(source_list: string[], again?: boolean) {
+
+    if (!SSH_Tasks.ssh.isConnected()){
+      if (again) {
+        vscode.window.showErrorMessage("Still no connection available");
+        return;
+      }
+      const func = ()=> {SSH_Tasks.delete_sources(source_list, true)};
+      await SSH_Tasks.connect(func);
+      return;
+    }
+    
+    const config = AppConfig.get_app_confg();
+    if (!config.general['remote-base-dir'] || !config.general['local-base-dir'])
+      throw Error(`Config attribute 'config.general.remote_base_dir' or 'config.general.local-base-dir' missing`);
+    
+    const source_dir: string = config.general['source-dir'] ?? 'src';
+    const local_source_dir: string = path.join(Workspace.get_workspace(), config.general['local-base-dir'], source_dir);
+    const remote_source_dir: string = path.join(config.general['remote-base-dir'], source_dir);
+    
+    let cmds: Promise<SSHExecCommandResponse>[] = [];
+
+    source_list.map((file: string) => {
+      cmds.push(SSH_Tasks.ssh.execCommand(`rm ${remote_source_dir}/${file}`));
+    })
+
+    await Promise.all(cmds);
   }
 
 

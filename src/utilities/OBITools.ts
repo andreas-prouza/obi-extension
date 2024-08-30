@@ -73,16 +73,30 @@ export class OBITools {
     const all_sources: string[] = [...changed_sources['changed-sources'], ...changed_sources['new-objects']];
 
     if (all_sources.length) {
-      const answer = await vscode.window.showErrorMessage(`${all_sources.length} changed sources. Do you want to transfer to remote?`, { modal: true }, ...['Yes', 'No']);
+      const answer = await vscode.window.showErrorMessage(`${all_sources.length} changed sources. Do you want to transfer to remote?\n\n${all_sources.join('\n')}`, { modal: true }, ...['Yes', 'No']);
       switch (answer) {
         case 'No':
+          return false;
         case undefined: // Canceled
+          return false;
         case 'Yes':
           await SSH_Tasks.transferSources(all_sources);
           vscode.window.showInformationMessage(`Sources transfered to ${config.connection['remote-host']}`);
       }
     }
 
+    if (changed_sources['old-sources'] && changed_sources['old-sources'].length) {
+      const answer = await vscode.window.showErrorMessage(`${changed_sources['old-sources'].length} not needed sources on remote system.\nDo you want to delete them?\n\n${changed_sources['old-sources'].join('\n')}`, { modal: true }, ...['Yes', 'No']);
+      switch (answer) {
+        case 'No':
+          return false;
+        case undefined: // Canceled
+          return false;
+        case 'Yes':
+          await SSH_Tasks.delete_sources(changed_sources['old-sources']);
+          vscode.window.showInformationMessage(`Sources transfered to ${config.connection['remote-host']}`);
+      }
+    }
     vscode.window.showInformationMessage('Remote source check finished');
     return true;
 
@@ -297,11 +311,13 @@ export class OBITools {
 
     let changed_sources: string[] = [];
     let new_sources: string[] = [];
+    let old_sources: string[] = [];
 
     if (!last_source_hashes)
       return {
         "new-objects": [],
-        "changed-sources": []
+        "changed-sources": [],
+        "old-sources": []
       };
     
     // check for changed sources
@@ -329,10 +345,24 @@ export class OBITools {
       if (source_changed)
         changed_sources.push(k_source);
     });
+
+    for (const [k, v] of Object.entries(last_source_hashes)) {
+      let found =false;
+      results.map((source_item: source.ISource) => {
+        if (source_item[k]){
+          found = true;
+          return;
+        }
+      });
+      
+      if (!found)
+        old_sources.push(k);
+    };
     
     return {
       "new-objects": new_sources,
-      "changed-sources": changed_sources
+      "changed-sources": changed_sources,
+      "old-sources": old_sources
     };
   }
 
@@ -355,7 +385,7 @@ export class OBITools {
         checksum_calls.push(DirTool.checksumFile(source_dir, source));
       }
 
-    const all_promises = Promise.all(checksum_calls);
+    const all_promises = await Promise.all(checksum_calls);
     const hash_values: source.ISource[] = await all_promises;
 
     return hash_values;
