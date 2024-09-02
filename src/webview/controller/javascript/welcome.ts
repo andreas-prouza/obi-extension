@@ -25,6 +25,9 @@ function main() {
   const btn_open_folder = document.getElementById("open_folder") as Button;
   btn_open_folder?.addEventListener("click", open_folder);
   
+  const btn_reload_window = document.getElementById("reload_window") as Button;
+  btn_reload_window?.addEventListener("click", reload_window);
+  
   window.addEventListener('message', receive_message);
 
 }
@@ -34,6 +37,14 @@ function initialize_folder() {
 
   vscode.postMessage({
     command: "initialize_folder"
+  });
+}
+
+
+function reload_window() {
+
+  vscode.postMessage({
+    command: "reload_window"
   });
 }
 

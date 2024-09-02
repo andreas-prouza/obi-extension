@@ -75,6 +75,11 @@ export class Welcome implements vscode.WebviewViewProvider {
 						OBITools.initialize_folder();
 						break;
 					}
+				case 'reload_window':
+					{
+						vscode.commands.executeCommand("workbench.action.reloadWindow");
+						break;
+					}
 			}
 		});
 	}

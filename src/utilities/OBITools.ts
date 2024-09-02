@@ -133,20 +133,21 @@ export class OBITools {
     const ext_ws = path.join(OBITools.ext_context.asAbsolutePath('.'), 'obi-media');
 
     if (!DirTool.dir_exists(path.join(ws, '.obi', 'etc'))){
-      fs.mkdirSync(path.join(ws, '.obi', 'etc'));
+      fs.mkdirSync(path.join(ws, '.obi', 'etc'), { recursive: true});
     }
 
-    const files = DirTool.get_all_files_in_dir(path.join(ext_ws, '.obi'), 'etc', ['toml', '.py']);
+    const files = DirTool.get_all_files_in_dir(ext_ws, 'etc', ['toml', '.py']);
     if (!files)
       return;
 
     let copies: Promise<void>[] = [];
     for (const file of files) {
-      copies.push(fs.copy(path.join(ext_ws, '.obi', file), path.join(ws, '.obi', file)));
+      copies.push(fs.copy(path.join(ext_ws, file), path.join(ws, '.obi', file)));
     }
 
     Promise.all(copies).then(() => {
       vscode.window.showInformationMessage(`${copies.length} files copied`);
+      vscode.commands.executeCommand("workbench.action.reloadWindow");
     })
     .catch((reason: Error) => {
       vscode.window.showErrorMessage(reason.message);
