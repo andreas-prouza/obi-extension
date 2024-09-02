@@ -132,17 +132,17 @@ export class OBITools {
     const ws = Workspace.get_workspace();
     const ext_ws = path.join(OBITools.ext_context.asAbsolutePath('.'), 'obi-media');
 
-    if (!DirTool.dir_exists(path.join(ws, 'etc'))){
-      fs.mkdirSync(path.join(ws, 'etc'));
+    if (!DirTool.dir_exists(path.join(ws, '.obi', 'etc'))){
+      fs.mkdirSync(path.join(ws, '.obi', 'etc'));
     }
 
-    const files = DirTool.get_all_files_in_dir(ext_ws, 'etc', ['toml', '.py']);
+    const files = DirTool.get_all_files_in_dir(path.join(ext_ws, '.obi'), 'etc', ['toml', '.py']);
     if (!files)
       return;
 
     let copies: Promise<void>[] = [];
     for (const file of files) {
-      copies.push(fs.copy(path.join(ext_ws, file), path.join(ws, file)));
+      copies.push(fs.copy(path.join(ext_ws, '.obi', file), path.join(ws, '.obi', file)));
     }
 
     Promise.all(copies).then(() => {
@@ -284,13 +284,13 @@ export class OBITools {
   public static async generate_source_change_lists(): Promise<string[]> {
     const ws = Workspace.get_workspace();
 
-    DirTool.clean_dir(path.join(ws, 'tmp'));
-    DirTool.clean_dir(path.join(ws, 'build-output'));
+    DirTool.clean_dir(path.join(ws, '.obi', 'tmp'));
+    DirTool.clean_dir(path.join(ws, '.obi', 'build-output'));
 
     const changed_sources: source.ISourceList = await OBITools.get_changed_sources();
     const dependend_sources: string[] = await OBITools.get_dependend_sources(changed_sources);
 
-    DirTool.clean_dir(path.join(Workspace.get_workspace(), 'tmp'));
+    DirTool.clean_dir(path.join(Workspace.get_workspace(), '.obi', 'tmp'));
     DirTool.write_file(path.join(Workspace.get_workspace(), Constants.CHANGED_OBJECT_LIST), JSON.stringify(changed_sources));
     DirTool.write_file(path.join(Workspace.get_workspace(), Constants.DEPENDEND_OBJECT_LIST), JSON.stringify(dependend_sources));
 
@@ -418,6 +418,12 @@ export class OBITools {
     const local_dir: string = Workspace.get_workspace();
     const remote_dir: string = path.join(config.general['remote-base-dir']);
     
+    const result = await SSH_Tasks.cleanup_directory();
+    if (!result) {
+      vscode.window.showErrorMessage('Cleanup of remote directory failed!');
+      return;
+    }
+
     logger.info(`Transer local dir ${local_dir} to ${remote_dir}`);
     await SSH_Tasks.transfer_dir(local_dir, remote_dir);
   }

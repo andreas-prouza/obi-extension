@@ -101,8 +101,8 @@ export class OBICommands {
 
       let promise_list = [
         SSH_Tasks.getRemoteDir(path.join(ws, Constants.BUILD_OUTPUT_DIR), path.join(remote_base_dir, Constants.BUILD_OUTPUT_DIR)),
-        SSH_Tasks.getRemoteDir(path.join(ws, 'tmp'), path.join(remote_base_dir, 'tmp')),
-        SSH_Tasks.getRemoteDir(path.join(ws, 'log'), path.join(remote_base_dir, 'log'))
+        SSH_Tasks.getRemoteDir(path.join(ws, '.obi', 'tmp'), path.join(remote_base_dir, '.obi', 'tmp')),
+        SSH_Tasks.getRemoteDir(path.join(ws, '.obi', 'log'), path.join(remote_base_dir, '.obi', 'log'))
       ];
 
       if (config.general['compiled-object-list'])

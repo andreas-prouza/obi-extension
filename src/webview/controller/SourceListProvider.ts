@@ -58,7 +58,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
         '',
         vscode.TreeItemCollapsibleState.Collapsed,
         element,
-        Constants.SOURCE_LIST_FOLDER_NAME
+        'source-list'
       ))
     }
 

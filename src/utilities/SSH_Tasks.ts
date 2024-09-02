@@ -65,8 +65,10 @@ export class SSH_Tasks {
     vscode.window.showInformationMessage(`Connected to ${host}`);
     logger.info(`Connected to ${host}`);
 
-    if (callback)
-        callback();
+    if (callback) {
+      const result = await callback();
+      return result;
+    }
   }
 
 
@@ -216,6 +218,42 @@ export class SSH_Tasks {
 
 
 
+
+  public static async cleanup_directory(again?: boolean, return_value?: boolean): Promise<boolean> {
+
+    if (!SSH_Tasks.ssh.isConnected()){
+      if (again) {
+        vscode.window.showErrorMessage("Still no connection available");
+        return false;
+      }
+      let return_value2 = false;
+      const func = ()=> {SSH_Tasks.cleanup_directory(true, return_value2)};
+      await SSH_Tasks.connect(await func);
+      return return_value2;
+    }
+    
+    const config = AppConfig.get_app_confg();
+    if (!config.general['remote-base-dir'] || config.general['remote-base-dir'].length < 4) // to be sure it's not root!
+      throw Error(`Config attribute 'config.general.remote_base_dir' invalid: ${config.general['remote-base-dir']}`);
+    
+    const remote_base_dir: string = config.general['remote-base-dir'];
+    const cmd = `cd ${remote_base_dir}; [ \`echo $(pwd) | wc -c\` -ge 3 ] &&  echo \`pwd\` || ( >&2 echo "Directory \`pwd\` is not allowed" &&  exit 1 ) ; cd - ;  rm -rf ${remote_base_dir}`;
+    logger.info(`Execute cmd: ${cmd}`);
+    const result = await SSH_Tasks.ssh.execCommand(cmd);
+
+    logger.info(`CODE: ${result.code}`);
+    logger.info(`STDOUT: ${result.stdout}`);
+    if (result.stderr.length > 0) {
+      logger.error(`STDERR: ${result.stderr}`);
+      vscode.window.showErrorMessage(result.stderr);
+    }
+
+    return_value = result.code == 0;
+    return return_value;
+  }
+
+
+
   public static async transferSources(source_list: string[], again?: boolean) {
 
     if (!SSH_Tasks.ssh.isConnected()){
@@ -246,8 +284,8 @@ export class SSH_Tasks {
         remote: path.join(config.general['remote-base-dir'], Constants.OBI_APP_CONFIG_USER_FILE),
       },
       {
-        local: path.join(Workspace.get_workspace(), 'etc', 'constants.py'),
-        remote: path.join(config.general['remote-base-dir'], 'etc', 'constants.py'),
+        local: path.join(Workspace.get_workspace(), '.obi', 'etc', 'constants.py'),
+        remote: path.join(config.general['remote-base-dir'], '.obi', 'etc', 'constants.py'),
       }
     ];
 

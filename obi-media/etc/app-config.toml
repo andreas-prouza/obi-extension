@@ -11,13 +11,13 @@ remote-obi-dir = "/home/prouzat1/obi"
 supported-object-types = [ "pgm", "file", "srvpgm" ]
 file-system-encoding = "utf-8"
 console-output-encoding = "utf-8"
-compiled-object-list = "etc/object-builds.toml"
-source-list="etc/source-list.toml"
-dependency-list = "etc/dependency.toml"
-deployment-object-list = "build-output/object-list.txt"
-build-output-dir = "build-output/objects"
-compile-list = "build-output/compile-list.json"
-compiled-object-list-md = "build-output/compiled-object-list.md"
+compiled-object-list = ".obi/etc/object-builds.toml"
+source-list=".obi/etc/source-list.toml"
+dependency-list = ".obi/etc/dependency.toml"
+deployment-object-list = ".obi/build-output/object-list.txt"
+build-output-dir = ".obi/build-output/objects"
+compile-list = ".obi/build-output/compile-list.json"
+compiled-object-list-md = ".obi/build-output/compiled-object-list.md"
 
 [global]
 [global.settings]

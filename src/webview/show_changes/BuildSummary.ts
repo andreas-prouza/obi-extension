@@ -113,8 +113,8 @@ export class BuildSummary {
 
   private static get_object_list(workspaceUri: Uri): {}|undefined {
 
-    const changed_object_list = `${workspaceUri.path}/tmp/changed-object-list.json`;
-    const dependend_object_list = `${workspaceUri.path}/tmp/dependend-object-list.json`;
+    const changed_object_list = path.join(workspaceUri.path, Constants.CHANGED_OBJECT_LIST);
+    const dependend_object_list = path.join(workspaceUri.path, Constants.DEPENDEND_OBJECT_LIST);
 
     if (!DirTool.file_exists(changed_object_list) || !DirTool.file_exists(dependend_object_list))
       return undefined;

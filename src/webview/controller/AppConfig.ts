@@ -120,12 +120,26 @@ export class ConfigGeneral {
   public ['check-remote-source-on-startup']?: boolean;
 
   constructor(local_base_dir?: string, remote_base_dir?: string, source_dir?: string, use_remote_obi?: boolean, local_obi_dir?: string, remote_obi_dir?: string, supported_object_types?: string[], file_system_encoding?: string, console_output_encoding?: string, compiled_object_list?: string, dependency_list?: string, deployment_object_list?: string, build_output_dir?: string, compile_list?: string, compiled_object_list_md?: string, source_list?: string, check_remote_source_on_startup?: boolean) {
+
+    if (local_base_dir == '/')
+      throw Error("Root for 'local-base-dir' is not allowed!");
     this['local-base-dir'] = local_base_dir;
+
+    if (remote_base_dir == '/')
+      throw Error("Root for 'remote-base-dir' is not allowed!");
     this['remote-base-dir'] = remote_base_dir;
+
     this['source-dir'] = source_dir;
     this['use-remote-obi'] = use_remote_obi;
+
+    if (local_obi_dir == '/')
+      throw Error("Root for 'local-obi-dir' is not allowed!");
     this['local-obi-dir'] = local_obi_dir;
+
+    if (remote_obi_dir == '/')
+      throw Error("Root for 'remote-obi-dir' is not allowed!");
     this['remote-obi-dir'] = remote_obi_dir;
+
     this['supported-object-types'] = supported_object_types;
     this['file-system-encoding'] = file_system_encoding;
     this['console-output-encoding'] = console_output_encoding;

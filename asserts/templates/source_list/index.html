@@ -22,20 +22,20 @@
     <br/>
 
 
-  <!-- /.box-header -->
-  <table id="source_list"
-  class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
-  data-toggle="table" 
-  data-filter-control="true"
-  data-show-search-clear-button="true" 
-  data-show-columns="true"
-  data-pagination="true" 
-  data-page-list="[5, 10, 20, 50, 100, all]"
-  data-page-size="10"
-  data-pagination-h-align="left"
-  data-pagination-detail-h-align="left"
-  data-buttons-align="left"
-  data-search-align="left">
+    <!-- /.box-header -->
+    <table id="source_list"
+    class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
+    data-toggle="table" 
+    data-filter-control="true"
+    data-show-search-clear-button="true" 
+    data-show-columns="true"
+    data-pagination="true" 
+    data-page-list="[5, 10, 20, 50, 100, all]"
+    data-page-size="10"
+    data-pagination-h-align="left"
+    data-pagination-detail-h-align="left"
+    data-buttons-align="left"
+    data-search-align="left">
       <thead>
           <tr>
               <!--- <th>Auswahl</th> -->
@@ -64,13 +64,25 @@
             {% endfor %}
         </tr>
         {% endfor %}
-    </tbody>
-  </table>
+      </tbody>
+    </table>
 
     <br/><br/>
     <br/><br/>
 
-    <vscode-button id="howdy" appearance="primary">Button Text</vscode-button>
+
+    {% if source_list|length > 0 %}
+      {% for key, value in source_list[0] %}
+        {% if key != 'path' %}
+          <vscode-text-field class="new_entry" field="{{ key }}"
+          id="{{ class_prefix }}|general|build-output-dir" placeholder="{{ key }}"
+            value=""><b>{{ key }}</b>
+          </vscode-text-field>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    <br/>
+    <vscode-button id="howdy" appearance="primary">Add</vscode-button>
 
     <script src="{{ global_stuff['asserts_uri'] }}/js/jquery.min.js"></script>
     <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table.min.js"></script>
