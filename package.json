@@ -1,8 +1,24 @@
 {
   "name": "obi",
-  "displayName": "obi",
-  "description": "Object Builder for i",
-  "version": "0.0.1",
+  "displayName": "Object Builder for i (OBI)",
+  "description": "Automated build tool for IBM i",
+  "version": "0.1.0",
+  "keywords": [
+		"ibmi",
+		"iseries",
+		"as400",
+		"rpgle",
+		"ile",
+		"build"
+	],
+  "author": {
+		"name": "Andreas Prouza",
+		"url": "https://www.prouza.at"
+	},
+	"license": "MIT",
+  "repository": {
+		"url": "https://github.com/andreas-prouza/obi-extension"
+	},
   "engines": {
     "vscode": "^1.91.0"
   },
