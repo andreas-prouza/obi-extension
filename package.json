@@ -2,23 +2,24 @@
   "name": "obi",
   "displayName": "Object Builder for i (OBI)",
   "description": "Automated build tool for IBM i",
+  "publisher": "andreas-prouza",
   "version": "0.1.0",
   "keywords": [
-		"ibmi",
-		"iseries",
-		"as400",
-		"rpgle",
-		"ile",
-		"build"
-	],
+    "ibmi",
+    "iseries",
+    "as400",
+    "rpgle",
+    "ile",
+    "build"
+  ],
   "author": {
-		"name": "Andreas Prouza",
-		"url": "https://www.prouza.at"
-	},
-	"license": "MIT",
+    "name": "Andreas Prouza",
+    "url": "https://www.prouza.at"
+  },
+  "license": "MIT",
   "repository": {
-		"url": "https://github.com/andreas-prouza/obi-extension"
-	},
+    "url": "https://github.com/andreas-prouza/obi-extension"
+  },
   "engines": {
     "vscode": "^1.91.0"
   },
@@ -185,17 +186,18 @@
     "deepmerge": "latest",
     "esbuild": "^0.16.17",
     "eslint": "^8.57.0",
+    "fs-extra": "latest",
     "hasha": "latest",
     "node-ssh": "latest",
     "nunjucks": "^3.2.4",
     "smol-toml": "latest",
-    "winston": "latest",
-    "fs-extra": "latest"
+    "winston": "latest"
   },
   "theia": {
     "target": "browser"
   },
   "dependencies": {
+    "@vscode/vsce": "^3.0.0",
     "@vscode/webview-ui-toolkit": "^1.4.0"
   }
 }
