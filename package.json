@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -23,7 +23,7 @@
     "url": "https://github.com/andreas-prouza/obi-extension"
   },
   "engines": {
-    "vscode": "^1.91.0"
+    "vscode": "^1.66.0"
   },
   "categories": [
     "Other"
@@ -218,12 +218,12 @@
   },
   "dependencies": {
     "@vscode/webview-ui-toolkit": "^1.4.0",
-    "deepmerge": "latest",
-    "fs-extra": "latest",
-    "hasha": "latest",
-    "node-ssh": "latest",
+    "deepmerge": "^4.3.1",
+    "fs-extra": "^11.2.0",
+    "hasha": "6.0.0",
+    "node-ssh": "13.1.0",
     "nunjucks": "^3.2.4",
-    "smol-toml": "latest",
-    "winston": "latest"
+    "smol-toml": "3.2.0",
+    "winston": "3.1.0"
   }
 }
