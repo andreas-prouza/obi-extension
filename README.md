@@ -51,9 +51,9 @@ Final release will be available soon.
 
 ## Release Notes
 
-### 0.1.0 Beta
+### 0.1.4 Beta
 
-Initial release of OBI
+Beta release of OBI
 
 
 ---
