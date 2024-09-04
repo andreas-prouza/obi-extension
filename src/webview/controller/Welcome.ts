@@ -47,10 +47,10 @@ export class Welcome implements vscode.WebviewViewProvider {
 			]
 		};
 
-    if (vscode.workspace.workspaceFolders == undefined) {
-      vscode.window.showErrorMessage('No workspace defined');
-      return;
-    }
+    //if (vscode.workspace.workspaceFolders == undefined) {
+    //  vscode.window.showErrorMessage('No workspace defined');
+    //  return;
+    //}
     
     const html_template = 'controller/welcome.html';
 
@@ -58,7 +58,8 @@ export class Welcome implements vscode.WebviewViewProvider {
     const html = nunjucks.render(html_template, 
       {
         global_stuff: OBITools.get_global_stuff(webviewView.webview, this._extensionUri),
-				main_java_script: getUri(webviewView.webview, this._extensionUri, ["out", "welcome.js"])
+				main_java_script: getUri(webviewView.webview, this._extensionUri, ["out", "welcome.js"]),
+				workspace_exist: vscode.workspace.workspaceFolders != undefined
       }
     );
 		webviewView.webview.html = html;

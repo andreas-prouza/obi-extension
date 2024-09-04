@@ -7,13 +7,14 @@
   </head>
   <body>
     
-    <h2>No OBI project found!</h2>
+    <h2>Use OBI in your project?</h2>
     <br/>
     You need to open a folder containing an OBI project:
     <br/>
     <br/>
     <vscode-button id="open_folder">Open folder</vscode-button>
     
+    {% if workspace_exist %}
     <br/>
     <br/>
     <br/>
@@ -27,6 +28,7 @@
     <br/>
     <vscode-button id="reload_window">Reload window</vscode-button>
 
+    {% endif %}
 
     <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
     

@@ -1,10 +1,12 @@
 {
   "name": "obi",
-  "displayName": "Object Builder for i (OBI)",
+  "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "0.1.0",
+  "version": "0.1.3",
+  "icon": "asserts/img/logo.png",
   "keywords": [
+    "ibm i",
     "ibmi",
     "iseries",
     "as400",
@@ -33,58 +35,62 @@
   "contributes": {
     "commands": [
       {
-        "command": "obi.helloWorld",
-        "title": "Hello World"
-      },
-      {
         "command": "obi.show_changes",
-        "title": "Show changes",
+        "title": "OBI: Show changes",
+        "icon": "$(book)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.run_build",
-        "title": "Run build",
+        "title": "OBI: Run build",
+        "icon" : "$(play)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.source-lists.update",
-        "title": "Update source list",
+        "title": "OBI: Update source list",
         "icon": "$(refresh)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.get-remote-compiled-object-list",
-        "title": "Get remote compiled object list",
-        "icon": "$(refresh)",
+        "title": "OBI: Get remote compiled object list",
+        "icon": "$(arrow-circle-down)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.reset-compiled-object-list",
+        "title": "OBI: Reset compiled object list",
+        "icon": "$(extensions)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.get-remote-source-list",
-        "title": "Get remote source list",
-        "icon": "$(refresh)",
+        "title": "OBI: Get remote source list",
+        "icon": "$(arrow-down)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.check-remote-sources",
-        "title": "Check remote sources",
-        "icon": "$(refresh)",
+        "title": "OBI: Check remote sources",
+        "icon": "$(tasklist)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.controller.config",
-        "title": "Configuration",
+        "title": "OBI: Configuration",
         "icon": "$(settings-gear)",
         "when": "obi.contains_obi_project"
       },
       {
         "command": "obi.transfer-all",
-        "title": "Transfer all",
-        "icon": "$(settings-gear)",
+        "title": "OBI: Transfer all to remote",
+        "icon": "$(cloud-upload)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.source-lists.show-view",
-        "title": "Show source list",
+        "title": "OBI: Show source list",
         "icon": "$(preview)",
         "when": "obi.contains_obi_project && obi.valid-config"
       }
@@ -94,17 +100,47 @@
         {
           "command": "obi.source-lists.update",
           "when": "obi.contains_obi_project && obi.valid-config && view == obi.source-lists",
-          "group": "navigation"
+          "group": "navigation@5"
         },
         {
-          "command": "obi.controller.config",
+          "command": "obi.run_build",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
-          "group": "navigation"
+          "group": "navigation@0"
+        },
+        {
+          "command": "obi.show_changes",
+          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
+          "group": "navigation@1"
         },
         {
           "command": "obi.get-remote-source-list",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
-          "group": "navigation"
+          "group": "navigation@2"
+        },
+        {
+          "command": "obi.get-remote-compiled-object-list",
+          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
+          "group": "navigation@3"
+        },
+        {
+          "command": "obi.reset-compiled-object-list",
+          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
+          "group": "navigation@4"
+        },
+        {
+          "command": "obi.check-remote-sources",
+          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
+          "group": "navigation@5"
+        },
+        {
+          "command": "obi.transfer-all",
+          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
+          "group": "navigation@6"
+        },
+        {
+          "command": "obi.controller.config",
+          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
+          "group": "navigation@7"
         }
       ],
       "view/item/context": [
@@ -183,21 +219,20 @@
     "@typescript-eslint/parser": "^7.11.0",
     "@vscode/test-cli": "^0.0.9",
     "@vscode/test-electron": "^2.4.1",
-    "deepmerge": "latest",
     "esbuild": "^0.16.17",
-    "eslint": "^8.57.0",
+    "eslint": "^8.57.0"
+  },
+  "theia": {
+    "target": "browser"
+  },
+  "dependencies": {
+    "@vscode/webview-ui-toolkit": "^1.4.0",
+    "deepmerge": "latest",
     "fs-extra": "latest",
     "hasha": "latest",
     "node-ssh": "latest",
     "nunjucks": "^3.2.4",
     "smol-toml": "latest",
     "winston": "latest"
-  },
-  "theia": {
-    "target": "browser"
-  },
-  "dependencies": {
-    "@vscode/vsce": "^3.0.0",
-    "@vscode/webview-ui-toolkit": "^1.4.0"
   }
 }

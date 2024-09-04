@@ -185,6 +185,35 @@ export class OBICommands {
 
 
 
+
+  public static async reset_compiled_object_list() {
+
+    const config = AppConfig.get_app_confg();
+
+    if (!config.general['compiled-object-list'])
+      throw Error(`Invalid config for config.general['compiled-object-list']: ${config.general['compiled-object-list']}`);
+
+    const object_list_file: string = config.general['compiled-object-list'];
+    let toml_dict = {};
+
+    const source_hashes: source.ISource[] = await OBITools.retrieve_current_source_hashes();
+
+    source_hashes.map((source: source.ISource) => {
+      toml_dict[source.keys()[0]] = source[source.keys()[0]].hash;
+    });
+    DirTool.write_toml(object_list_file, toml_dict);
+    return;
+  }
+
+
+
+  /**
+   * Generates remote source list.
+   * 
+   * It's similar to object list.
+   * 
+   * @returns 
+   */
   public static async get_remote_source_list(): Promise<void> {
 
     if (OBICommands.remote_source_list_status != OBIStatus.READY) {

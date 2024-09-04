@@ -88,9 +88,11 @@ export function activate(context: vscode.ExtensionContext) {
 	
 	//SSH_Tasks.connect();
 
+
 	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.helloWorld', () => {
-			vscode.window.showInformationMessage('Hello World from obi 2!');
+		vscode.commands.registerCommand('obi.reset-compiled-object-list', () => {
+			// Only available with workspaces
+			OBICommands.reset_compiled_object_list();
 		})
 	);
 
