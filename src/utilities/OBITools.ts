@@ -251,9 +251,15 @@ export class OBITools {
 
   public static async get_changed_sources(): Promise<source.ISourceList> { // results: source.Source[]
 
+    const t0 = performance.now();
     const current_hash_list = await OBITools.retrieve_current_source_hashes();
-
+    const t1 = performance.now();
+    console.log(`1. It took ${t1 - t0} milliseconds.`);
+    
+    const t2 = performance.now();
     const changed_sources: source.ISourceList = await OBITools.compare_source_change(current_hash_list);
+    const t3 = performance.now();
+    console.log(`2. It took ${t3 - t2} milliseconds.`);
 
     return changed_sources;
   }
@@ -288,23 +294,23 @@ export class OBITools {
     DirTool.clean_dir(path.join(ws, '.obi', 'tmp'));
     DirTool.clean_dir(path.join(ws, '.obi', 'build-output'));
 
+    console.log('Get changed sources');
     const changed_sources: source.ISourceList = await OBITools.get_changed_sources();
+    console.log('Get dependend sources');
     const dependend_sources: string[] = await OBITools.get_dependend_sources(changed_sources);
 
+    console.log('Clean dir');
     DirTool.clean_dir(path.join(Workspace.get_workspace(), '.obi', 'tmp'));
     DirTool.write_file(path.join(Workspace.get_workspace(), Constants.CHANGED_OBJECT_LIST), JSON.stringify(changed_sources));
     DirTool.write_file(path.join(Workspace.get_workspace(), Constants.DEPENDEND_OBJECT_LIST), JSON.stringify(dependend_sources));
 
-    const a = changed_sources['changed-sources'];
-    const x = Object.assign([], changed_sources['changed-sources'], changed_sources['new-objects'], dependend_sources);
-    const y = Object.assign([], a, dependend_sources);
     //return changed_sources;
     return [...changed_sources['changed-sources'], ...changed_sources['new-objects'], ...dependend_sources];
   }
 
 
 
-  public static compare_source_change(results: source.ISource[], last_source_hashes?: source.ISource|undefined): source.ISourceList {
+  public static async compare_source_change(results: source.ISource[], last_source_hashes?: source.ISource|undefined): Promise<source.ISourceList> {
 
     // Get all sources which are new or have changed
     if (!last_source_hashes)
@@ -314,46 +320,67 @@ export class OBITools {
     let new_sources: string[] = [];
     let old_sources: string[] = [];
 
-    
+    console.log(`Check ${results.length} sources`);
+
+    //----------------------------------------
+    // First start all processes
+    //----------------------------------------
+
+    const t6 = performance.now();
+    let promise_list: Promise<source.ISourceList>[] = [];
+
     // check for changed sources
     results.map((source_item: source.ISource) => {
+      promise_list.push(OBITools.check_source_change_item(source_item, last_source_hashes));
+    });
+    const t7 = performance.now();
+    console.log(`Start check_source_change_item: It took ${t7 - t6} milliseconds.`);
 
-      const source_name: string = Object.keys(source_item)[0];
+    //----
+/*
+    let promise_list2: Promise<string|undefined>[] = [];
 
-      const k_source: string = source_name;
-      const v_hash: string = source_item[source_name]['hash'];
-      let source_changed = true;
+    // Check for old sources
+    const t4 = performance.now();
+  
+    for (const k in last_source_hashes) {
+      promise_list2.push(OBITools.check_old_source_item(k, results));
+    };
 
-      if (!(k_source in last_source_hashes)) {
-        new_sources.push(k_source);
-        return;
-      }
+    const t5 = performance.now();
+    console.log(`Start check_old_source_item: It took ${t5 - t4} milliseconds.`);
+  */
 
-      if (k_source in last_source_hashes) {
-
-        if (last_source_hashes[k_source]['hash'] == v_hash) {
-          source_changed = false;
-          return;
-        }
-      }
-
-      if (source_changed)
-        changed_sources.push(k_source);
+    //----------------------------------------
+    // Then get the results
+    //----------------------------------------
+    const t0 = performance.now();
+    const all_promises = await Promise.all(promise_list);
+    const t1 = performance.now();
+    console.log(`Change check: It took ${t1 - t0} milliseconds.`);
+    
+    all_promises.map((source_item_list: source.ISourceList) => {
+      if (source_item_list['changed-sources'].length > 0)
+        changed_sources.push(source_item_list['changed-sources'][0]);
+      if (source_item_list['new-objects'].length > 0)
+        new_sources.push(source_item_list['new-objects'][0]);
     });
 
-    for (const [k, v] of Object.entries(last_source_hashes)) {
-      let found =false;
-      results.map((source_item: source.ISource) => {
-        if (source_item[k]){
-          found = true;
-          return;
-        }
-      });
-      
-      if (!found)
-        old_sources.push(k);
-    };
-    
+    //----
+/*
+    const t2 = performance.now();
+    const all_promises2 = await Promise.all(promise_list2);
+    const t3 = performance.now();
+    console.log(`Old check: It took ${t3 - t2} milliseconds.`);
+
+    all_promises2.map((source_item: string|undefined) => {
+      if (source_item)
+        old_sources.push(source_item);
+    });
+*/
+
+    console.log(`new_sources: ${new_sources.length}, changed-sources: ${changed_sources.length}`);
+
     return {
       "new-objects": new_sources,
       "changed-sources": changed_sources,
@@ -362,8 +389,57 @@ export class OBITools {
   }
 
 
+
+  private static async check_old_source_item(source_from_list: string, current_sources: source.ISource[]): Promise<string|undefined> {
+
+    let found =false;
+    current_sources.map((source_item: source.ISource) => {
+      if (source_item[source_from_list]){
+        found = true;
+        return;
+      }
+    });
+    
+    if (found)
+      return source_from_list;
+
+    return undefined;
+  }
+
+
+
+  private static async check_source_change_item(source_item: source.ISource, last_source_hashes: source.ISource): Promise<source.ISourceList> {
+    
+    const source_name: string = Object.keys(source_item)[0];
+    const k_source: string = source_name;
+    const v_hash: string = source_item[source_name]['hash'];
+    let source_changed = true;
+
+    if (!(k_source in last_source_hashes)) {
+      return {"changed-sources": [], "new-objects": [k_source]};
+    }
+
+    if (k_source in last_source_hashes) {
+
+      if (last_source_hashes[k_source]['hash'] == v_hash) {
+        source_changed = false;
+        return {"changed-sources": [], "new-objects": []};
+      }
+    }
+
+    if (source_changed)
+      return {"changed-sources": [k_source], "new-objects": []};
+
+    return {"changed-sources": [], "new-objects": []};
+
+  }
+
+
+
+
   public static async retrieve_current_source_hashes(): Promise<source.ISource[]> {
 
+    const max_threads = 20;
     const config = AppConfig.get_app_confg();
     const source_dir = path.join(Workspace.get_workspace(), config.general['source-dir']);
 
@@ -373,17 +449,47 @@ export class OBITools {
       config.general['supported-object-types']
     );
 
+    console.log(`Get checksum of sources`);
+
     let checksum_calls = [];
-    if (sources)
+    let counter = 0;
+    let hash_values: source.ISource[] = [];
+
+    if (sources) {
       
+      //OBITools.parallel(sources, )
+      //... eher mit dowhile und Promise.all und immer dazuhängen ...
       for (const source of sources) {
+        counter ++;
         checksum_calls.push(DirTool.checksumFile(source_dir, source));
+        if (counter > max_threads) {
+          const all_promises = await Promise.all(checksum_calls);
+          if (all_promises)
+            hash_values = [...hash_values, ...all_promises];
+          counter = 0;
+          checksum_calls = [];
+        }
       }
 
-    const all_promises = await Promise.all(checksum_calls);
-    const hash_values: source.ISource[] = await all_promises;
+      const all_promises = await Promise.all(checksum_calls);
+      if (all_promises)
+        hash_values = [...hash_values, ...all_promises];
+    }
 
+    console.log(`In total ${hash_values.length} hash values`);
     return hash_values;
+  }
+
+
+
+
+  public static async parallel(arr: [], fn: Function, threads:number = 10) {
+    const result = [];
+    while (arr.length) {
+      const res = await Promise.all(arr.splice(0, threads).map(x => fn(x)));
+      result.push(res);
+    }
+    return result.flat();
   }
 
 

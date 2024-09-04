@@ -8,6 +8,7 @@ import { OBITools } from '../../utilities/OBITools';
 import path from 'path';
 import { LogOutput } from './LogOutput';
 import { AppConfig } from '../controller/AppConfig';
+import { Workspace } from '../../utilities/Workspace';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -57,6 +58,8 @@ export class BuildSummary {
    * @param extensionUri The URI of the directory containing the extension.
    */
   public static render(extensionUri: Uri, workspaceUri: Uri|undefined) {
+
+    console.log('Render BuildSummary');
     if (BuildSummary.currentPanel) {
       // If the webview panel already exists reveal it
       BuildSummary.currentPanel.dispose();
@@ -64,7 +67,7 @@ export class BuildSummary {
       //return;
     }
 
-  if (!workspaceUri){
+    if (!workspaceUri){
       vscode.window.showErrorMessage("No workspace opened");
       return
     }
@@ -72,7 +75,7 @@ export class BuildSummary {
     const config = AppConfig.get_app_confg();
 
     // If a webview panel does not already exist create and show a new one
-    const panel = this.createNewPanel(extensionUri);
+    const panel = BuildSummary.createNewPanel(extensionUri);
 
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
@@ -81,7 +84,7 @@ export class BuildSummary {
         global_stuff: OBITools.get_global_stuff(panel.webview, extensionUri),
         main_java_script: getUri(panel.webview, extensionUri, ["out", "show_changes.js"]),
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
-        object_list: this.get_object_list(workspaceUri),
+        object_list: BuildSummary.get_object_list(workspaceUri),
         compile_list: OBITools.get_compile_list(workspaceUri),
         compile_file: DirTool.get_encoded_file_URI(workspaceUri, config.general['compile-list'])
       }
@@ -113,11 +116,14 @@ export class BuildSummary {
 
   private static get_object_list(workspaceUri: Uri): {}|undefined {
 
-    const changed_object_list = path.join(workspaceUri.path, Constants.CHANGED_OBJECT_LIST);
-    const dependend_object_list = path.join(workspaceUri.path, Constants.DEPENDEND_OBJECT_LIST);
+    const changed_object_list = path.join(Workspace.get_workspace(), Constants.CHANGED_OBJECT_LIST);
+    const dependend_object_list = path.join(Workspace.get_workspace(), Constants.DEPENDEND_OBJECT_LIST);
 
-    if (!DirTool.file_exists(changed_object_list) || !DirTool.file_exists(dependend_object_list))
+    if (!DirTool.file_exists(changed_object_list) || !DirTool.file_exists(dependend_object_list)) {
+      console.log(`${changed_object_list}: ${DirTool.file_exists(changed_object_list)}`);
+      console.log(`${dependend_object_list}: ${DirTool.file_exists(dependend_object_list)}`);
       return undefined;
+    }
       
     const fs = require("fs");
     let compile_list = fs.readFileSync(changed_object_list);
@@ -137,6 +143,9 @@ export class BuildSummary {
     for (let index = 0; index < dependend_sources.length; index++) {
       dependend_sources[index] = {source: dependend_sources[index], file: DirTool.get_encoded_source_URI(workspaceUri, dependend_sources[index])};
     }
+
+    console.log(`compile_list['new-objects']: ${compile_list['new-objects'].length}`);
+    console.log(`compile_list['changed-sources']: ${compile_list['changed-sources'].length}`);
 
     return {
       new_sources : compile_list['new-objects'], 

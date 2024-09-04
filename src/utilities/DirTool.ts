@@ -166,6 +166,8 @@ export class DirTool {
 
   public static write_file(file: string, content: string): void {
 
+    console.log(`Write data to ${file}`);
+    
     try{
       
       fs.writeFileSync(file, content, 'utf8');
