@@ -11,13 +11,14 @@ import { Workspace } from '../utilities/Workspace';
 import * as source from '../obi/Source';
 import { SSH_Tasks } from '../utilities/SSH_Tasks';
 import { AppConfig } from '../webview/controller/AppConfig';
-import path from 'path';
+import path, { join } from 'path';
 import { DirTool } from '../utilities/DirTool';
 import { Constants } from '../Constants';
 import { logger } from '../utilities/Logger';
 
 
 export class OBICommands {
+
 
   public static run_build_status: OBIStatus = OBIStatus.READY;
   public static show_changes_status: OBIStatus = OBIStatus.READY;
@@ -70,7 +71,7 @@ export class OBICommands {
             progress.report({
               message: `Transfer all`
             });
-            await OBITools.transfer_all();
+            await OBITools.transfer_all(true);
         }
       }
 
@@ -85,14 +86,14 @@ export class OBICommands {
         message: `Generate build script. If it takes too long, use OBI localy (see documentation).`
       });
 
-      let ssh_cmd: string = `source .profile; cd '${remote_base_dir}'; rm log/* || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a create -p .`;
+      let ssh_cmd: string = `source .profile; cd '${remote_base_dir}' || exit 1; rm log/*2> /dev/null || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a create -p .`;
       await SSH_Tasks.executeCommand(ssh_cmd);
 
       progress.report({
         message: `Run build script`
       });
 
-      ssh_cmd = `source .profile; cd '${remote_base_dir}'; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p .`;
+      ssh_cmd = `source .profile; cd '${remote_base_dir}' || exit 1; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p .`;
       await SSH_Tasks.executeCommand(ssh_cmd);
 
       progress.report({
@@ -194,14 +195,17 @@ export class OBICommands {
       throw Error(`Invalid config for config.general['compiled-object-list']: ${config.general['compiled-object-list']}`);
 
     const object_list_file: string = config.general['compiled-object-list'];
-    let toml_dict = {};
+    let toml_dict: {} = {};
 
     const source_hashes: source.ISource[] = await OBITools.retrieve_current_source_hashes();
 
     source_hashes.map((source: source.ISource) => {
-      toml_dict[source.keys()[0]] = source[source.keys()[0]].hash;
+      const source_name: string = Object.keys(source)[0];
+      toml_dict[source_name] = {hash: source[source_name].hash};
     });
-    DirTool.write_toml(object_list_file, toml_dict);
+    DirTool.write_toml(join(Workspace.get_workspace(), object_list_file), toml_dict);
+
+    vscode.window.showInformationMessage(`Object list created`);
     return;
   }
 
@@ -236,7 +240,7 @@ export class OBICommands {
 
       await SSH_Tasks.transfer_files([Constants.OBI_APP_CONFIG_FILE, Constants.OBI_APP_CONFIG_USER_FILE]);
 
-      let ssh_cmd: string = `source .profile; cd '${remote_base_dir}'; rm log/* || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a gen_src_list -p .`;
+      let ssh_cmd: string = `source .profile; cd '${remote_base_dir}' || exit 1; rm log/* 2>/dev/null || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a gen_src_list -p .`;
       await SSH_Tasks.executeCommand(ssh_cmd);
 
       if (config.general['source-list'])
@@ -254,5 +258,25 @@ export class OBICommands {
 
     return;
   }
+
+
+
+  public static async get_remote_compiled_object_list() {
+
+    const config = AppConfig.get_app_confg();
+    const remote_base_dir: string|undefined = config.general['remote-base-dir'];
+    const remote_obi_dir: string|undefined = config.general['remote-obi-dir'];
+
+    if (!remote_base_dir || !remote_obi_dir)
+      throw Error(`Missing config 'remote-base-dir' or 'remote-obi-dir'`);
+
+    if (!config.general['compiled-object-list'])
+      throw Error(`Missing config 'compiled-object-list'`);
+
+    await SSH_Tasks.getRemoteFile(path.join(Workspace.get_workspace(), config.general['compiled-object-list']), path.join(remote_base_dir, config.general['compiled-object-list']));
+
+    vscode.window.showInformationMessage('Compiled object list transfered from remote');
+
+	}
 
 }

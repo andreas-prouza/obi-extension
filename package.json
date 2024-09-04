@@ -4,7 +4,7 @@
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
   "version": "0.1.3",
-  "icon": "asserts/img/logo.png",
+  "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
     "ibmi",
@@ -37,7 +37,7 @@
       {
         "command": "obi.show_changes",
         "title": "OBI: Show changes",
-        "icon": "$(book)",
+        "icon": "$(telescope)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
@@ -145,18 +145,9 @@
       ],
       "view/item/context": [
         {
-          "command": "obi.source-lists.update",
-          "when": "obi.contains_obi_project && view == obi.source-lists && viewItem == source-member",
-          "group": "inline"
-        },
-        {
           "command": "obi.source-lists.show-view",
           "when": "obi.contains_obi_project && view == obi.source-lists && viewItem == source-list",
           "group": "inline"
-        },
-        {
-          "command": "obi.source-lists.update",
-          "when": "view == obi.source-lists && obi.contains_obi_project"
         }
       ]
     },

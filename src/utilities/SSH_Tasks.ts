@@ -237,7 +237,7 @@ export class SSH_Tasks {
       throw Error(`Config attribute 'config.general.remote_base_dir' invalid: ${config.general['remote-base-dir']}`);
     
     const remote_base_dir: string = config.general['remote-base-dir'];
-    const cmd = `cd ${remote_base_dir}; [ \`echo $(pwd) | wc -c\` -ge 3 ] &&  echo \`pwd\` || ( >&2 echo "Directory \`pwd\` is not allowed" &&  exit 1 ) ; cd - ;  rm -rf ${remote_base_dir}`;
+    const cmd = `source .profile; cd ${remote_base_dir} 2> /dev/null || mkdir -p ${remote_base_dir} && cd ${remote_base_dir} && echo "pwd: $(pwd)" || exit 1; [ \`echo $(pwd) | wc -c\` -ge 3 ] &&  echo "Current dir: $(pwd)" ||  exit 1  ;  echo "Change back from $(pwd)" &&  cd -  && echo "pwd 2: $(pwd)" && rm -rf ${remote_base_dir}`;
     logger.info(`Execute cmd: ${cmd}`);
     const result = await SSH_Tasks.ssh.execCommand(cmd);
 
@@ -249,6 +249,7 @@ export class SSH_Tasks {
     }
 
     return_value = result.code == 0;
+    logger.info(`Finished cleanup: ${return_value}`);
     return return_value;
   }
 

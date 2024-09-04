@@ -246,8 +246,8 @@ class SourceListItem extends vscode.TreeItem {
     }
 
     this.iconPath = {
-      light: path.join(__filename, '..', '..', 'asserts', 'img', 'light', icon),
-      dark: path.join(__filename, '..', '..', 'asserts', 'img', 'dark', icon)
+      light: path.join(__filename, '..', '..', '..', '..', 'asserts', 'img', 'light', icon),
+      dark: path.join(__filename, '..', '..', '..', '..', 'asserts', 'img', 'dark', icon)
     };
     
     if (list_level != 'source-member')

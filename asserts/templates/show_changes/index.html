@@ -121,17 +121,21 @@
                   <td>{{ cmd_entry.timestamp }}</td>
                   <td><span class="{{ cmd_entry.status }}">{{ cmd_entry.status }}</span></td>
                   <td><details><summary><code>{{ cmd_entry.cmd | truncate(15) }}</code></summary><code>{{ cmd_entry.cmd }}</code></details></td>
-                  <td>
-                    {% if 'joblog' in cmd_entry and cmd_entry['joblog']|length %}
+                  {% if 'joblog' in cmd_entry and cmd_entry['joblog']|length %}
+                    <td>
                       <vscode-button onclick="document.getElementById('source').value ='{{ source_item['source'] }}'; document.getElementById('level').value ='{{ level_item['level'] }}'; document.getElementById('cmd_index').value ='{{ loop.index0 }}'" class="joblog" appearance="primary">Joblog</vscode-button>
-                    {% endif %}
-                    {% if 'stdout' in cmd_entry and cmd_entry['stdout']|length %}
+                    </td>
+                  {% endif %}
+                  {% if 'stdout' in cmd_entry and cmd_entry['stdout']|length %}
+                   <td>
                       <vscode-button onclick="document.getElementById('source').value ='{{ source_item['source'] }}'; document.getElementById('level').value ='{{ level_item['level'] }}'; document.getElementById('cmd_index').value ='{{ loop.index0 }}'" class="stdout" appearance="primary">Spool file</vscode-button>
-                    {% endif %}
-                    {% if 'stderr' in cmd_entry and cmd_entry['stderr']|length %}
+                    </td>
+                  {% endif %}
+                  {% if 'stderr' in cmd_entry and cmd_entry['stderr']|length %}
+                    <td>
                       <vscode-button onclick="document.getElementById('source').value ='{{ source_item['source'] }}'; document.getElementById('level').value ='{{ level_item['level'] }}'; document.getElementById('cmd_index').value ='{{ loop.index0 }}'" class="stderr" appearance="primary">Error</vscode-button>
-                    {% endif %}
-                  </td>
+                    </td>
+                  {% endif %}
                 </tr>
               {% endfor %}
               </table>

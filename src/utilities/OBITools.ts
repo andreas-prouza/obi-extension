@@ -308,18 +308,12 @@ export class OBITools {
 
     // Get all sources which are new or have changed
     if (!last_source_hashes)
-      last_source_hashes = OBITools.get_source_hash_list(Workspace.get_workspace());
+      last_source_hashes = OBITools.get_source_hash_list(Workspace.get_workspace()) || {};
 
     let changed_sources: string[] = [];
     let new_sources: string[] = [];
     let old_sources: string[] = [];
 
-    if (!last_source_hashes)
-      return {
-        "new-objects": [],
-        "changed-sources": [],
-        "old-sources": []
-      };
     
     // check for changed sources
     results.map((source_item: source.ISource) => {
@@ -409,7 +403,7 @@ export class OBITools {
 
 
 
-  public static async transfer_all() {
+  public static async transfer_all(silent: boolean|undefined) {
 
     const config = AppConfig.get_app_confg();
 
@@ -419,9 +413,24 @@ export class OBITools {
     const local_dir: string = Workspace.get_workspace();
     const remote_dir: string = path.join(config.general['remote-base-dir']);
     
+    if (!silent) {
+      const answer = await vscode.window.showErrorMessage(`Do you want to transfer all?\nThis can take several minutes.\n\nRemote folder: ${remote_dir}`, { modal: true }, ...['Yes', 'No']);
+      switch (answer) {
+        case 'No':
+          throw new Error('Transfer canceled by user');
+        case undefined:
+          throw new Error('Transfer canceled by user');
+        case 'Yes':
+          break;
+        }
+    }
+
+    vscode.window.showInformationMessage('Start transfer');
+
     const result = await SSH_Tasks.cleanup_directory();
     if (!result) {
       vscode.window.showErrorMessage('Cleanup of remote directory failed!');
+      throw Error('Cleanup of remote directory failed!');
       return;
     }
 

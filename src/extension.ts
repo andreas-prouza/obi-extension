@@ -97,6 +97,13 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.get-remote-compiled-object-list', () => {
+			// Only available with workspaces
+			OBICommands.get_remote_compiled_object_list();
+		})
+	);
+
+	context.subscriptions.push(
 		vscode.commands.registerCommand('obi.show_changes', () => {
 			// Only available with workspaces
 			OBICommands.show_changes(context);
