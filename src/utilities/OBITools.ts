@@ -411,7 +411,7 @@ export class OBITools {
   private static async check_source_change_item(source_item: source.ISource, last_source_hashes: source.ISource): Promise<source.ISourceList> {
     
     const source_name: string = Object.keys(source_item)[0];
-    const k_source: string = source_name;
+    const k_source: string = source_name.replaceAll('\\', '/');
     const v_hash: string = source_item[source_name]['hash'];
     let source_changed = true;
 

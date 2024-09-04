@@ -201,7 +201,7 @@ export class OBICommands {
 
     source_hashes.map((source: source.ISource) => {
       const source_name: string = Object.keys(source)[0];
-      toml_dict[source_name] = {hash: source[source_name].hash};
+      toml_dict[source_name.replaceAll('\\', '/')] = {hash: source[source_name].hash};
     });
     DirTool.write_toml(join(Workspace.get_workspace(), object_list_file), toml_dict);
 
