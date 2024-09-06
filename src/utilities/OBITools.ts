@@ -441,12 +441,12 @@ export class OBITools {
 
     const max_threads = 20;
     const config = AppConfig.get_app_confg();
-    const source_dir = path.join(Workspace.get_workspace(), config.general['source-dir']);
+    const source_dir = path.join(Workspace.get_workspace(), config.general['source-dir'] || 'src');
 
     const sources = DirTool.get_all_files_in_dir(
       source_dir,
       '.',
-      config.general['supported-object-types']
+      config.general['supported-object-types'] || ['pgm', 'file', 'srvpgm']
     );
 
     console.log(`Get checksum of sources`);

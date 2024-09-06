@@ -112,6 +112,7 @@ export class ConfigGeneral {
   public ['console-output-encoding']?: string;
   public ['compiled-object-list']?: string;
   public ['source-list']?: string;
+  public ['source-infos']?: string;
   public ['dependency-list']?: string;
   public ['deployment-object-list']?: string;
   public ['build-output-dir']?: string;
@@ -119,7 +120,7 @@ export class ConfigGeneral {
   public ['compiled-object-list-md']?: string;
   public ['check-remote-source-on-startup']?: boolean;
 
-  constructor(local_base_dir?: string, remote_base_dir?: string, source_dir?: string, use_remote_obi?: boolean, local_obi_dir?: string, remote_obi_dir?: string, supported_object_types?: string[], file_system_encoding?: string, console_output_encoding?: string, compiled_object_list?: string, dependency_list?: string, deployment_object_list?: string, build_output_dir?: string, compile_list?: string, compiled_object_list_md?: string, source_list?: string, check_remote_source_on_startup?: boolean) {
+  constructor(local_base_dir?: string, remote_base_dir?: string, source_dir?: string, use_remote_obi?: boolean, local_obi_dir?: string, remote_obi_dir?: string, supported_object_types?: string[], file_system_encoding?: string, console_output_encoding?: string, compiled_object_list?: string, dependency_list?: string, deployment_object_list?: string, build_output_dir?: string, compile_list?: string, compiled_object_list_md?: string, source_list?: string, check_remote_source_on_startup?: boolean, source_infos?: string) {
 
     if (local_base_dir == '/')
       throw Error("Root for 'local-base-dir' is not allowed!");
@@ -145,6 +146,7 @@ export class ConfigGeneral {
     this['console-output-encoding'] = console_output_encoding;
     this['compiled-object-list'] = compiled_object_list;
     this['source-list'] = source_list;
+    this['source-infos'] = source_infos;
     this['dependency-list'] = dependency_list;
     this['deployment-object-list'] = deployment_object_list;
     this['build-output-dir'] = build_output_dir;
@@ -360,7 +362,8 @@ export class AppConfig {
         AppConfig.get_string(gen['compile-list']),
         AppConfig.get_string(gen['compiled-object-list-md']),
         AppConfig.get_string(gen['source-list']),
-        gen['check-remote-source-on-startup'] === true
+        gen['check-remote-source-on-startup'] === true,
+        AppConfig.get_string(gen['source-infos']),
       );
     }
 

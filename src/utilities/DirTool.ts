@@ -29,6 +29,45 @@ export class DirTool {
   }
 
 
+  /**
+   * List files in a directory recursive
+   * It's async for better performance
+   * @param rootdir 
+   * @param dir 
+   * @param file_extensions 
+   * @returns 
+   */
+  public static async get_all_files_in_dir2(rootdir:string, dir: string, file_extensions: string[]): Promise<string[] | undefined> {
+    
+    if (!DirTool.dir_exists(path.join(rootdir, dir)))
+      return undefined;
+    
+    let file_list: string[] = [];
+    let call_list = [];
+
+    const fs = require('fs');
+    const files = fs.readdirSync(path.join(rootdir, dir), { withFileTypes: true });
+
+
+    for (const file of files) {
+      if (file.isDirectory()) {
+        call_list.push(DirTool.get_all_files_in_dir2(rootdir, path.join(dir, file.name), file_extensions));
+      } else {
+        if (file_extensions.includes(file.name.split('.').pop()))
+          file_list.push(path.join(dir, file.name));
+      }
+    }
+
+    const results = await Promise.all(call_list);
+    results.map((list: string[]|undefined) => {
+      if (list)
+        file_list = [...file_list, ...list];
+    });
+
+    return file_list;
+  }
+
+
   public static list_dir(dir: string): string[] {
     const files = fs.readdirSync(dir);
 

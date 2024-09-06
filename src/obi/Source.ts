@@ -1,4 +1,13 @@
 
+
+export interface IQualifiedSource {
+  "source-lib": string,
+  "source-file": string,
+  "source-member": string,
+  description?: string
+}
+
+
 export interface ISourceItem {
   hash: string,
   created: Date

@@ -274,43 +274,49 @@
 
     <section>
 
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compiled-object-list" placeholder="etc/object-builds.toml"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compiled-object-list" placeholder=".obi/etc/object-builds.toml"
         value="{{ app_general['compiled-object-list'] }}">Compiled object list
       </vscode-text-field>
             
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|source-list" placeholder="etc/source-list.toml"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|source-list" placeholder=".obi/etc/source-list.toml"
         value="{{ app_general['source-list'] }}">Source list
       </vscode-text-field>
             
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|dependency-list" placeholder="etc/dependency.toml"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|source-infos" placeholder=".obi/etc/source-infos.json"
+        value="{{ app_general['source-infos'] }}">Extended source infos
+      </vscode-text-field>
+            
+      <br/>
+      <br/>
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|dependency-list" placeholder=".obi/etc/dependency.toml"
         value="{{ app_general['dependency-list'] }}">Dependency list
       </vscode-text-field>
             
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|deployment-object-list" placeholder="build-output/object-list.txt"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|deployment-object-list" placeholder=".obi/build-output/object-list.txt"
         value="{{ app_general['deployment-object-list'] }}">Deployment object list
       </vscode-text-field>
             
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|build-output-dir" placeholder="build-output/objects"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|build-output-dir" placeholder=".obi/build-output/objects"
         value="{{ app_general['build-output-dir'] }}">Build output dir
       </vscode-text-field>
     
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compile-list" placeholder="build-output/compile-list.json"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compile-list" placeholder=".obi/build-output/compile-list.json"
         value="{{ app_general['compile-list'] }}">Compile list
       </vscode-text-field>
     
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compiled-object-list-md" placeholder="build-output/compiled-object-list.md"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compiled-object-list-md" placeholder=".obi/build-output/compiled-object-list.md"
         value="{{ app_general['compiled-object-list-md'] }}">Compiled object list md
       </vscode-text-field>
     
