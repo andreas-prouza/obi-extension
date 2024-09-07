@@ -5,7 +5,10 @@ import { DirTool } from '../../utilities/DirTool';
 import { SourceList } from '../source_list/SourceList';
 import { Constants } from '../../Constants';
 import { logger } from '../../utilities/Logger';
-
+import * as source from '../../obi/Source';
+import { AppConfig } from './AppConfig';
+import { Workspace } from '../../utilities/Workspace';
+import { SourceListConfig } from '../source_list/SourceListConfig';
 
 
 export class SourceListProvider implements vscode.TreeDataProvider<SourceListItem> {
@@ -54,7 +57,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
         continue;
 
       child.push(new SourceListItem(
-        element,
+        element.replaceAll('.json', ''),
         '',
         vscode.TreeItemCollapsibleState.Collapsed,
         element,
@@ -122,6 +125,29 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     this._onDidChangeTreeData.fire();
   }
 
+
+  async add_new_source_list(): Promise<void> {
+    const config = AppConfig.get_app_confg();
+
+    if (!config.general['source-list']) {
+      vscode.window.showInformationMessage('Config "general.source-list" missing');
+      return;
+    }
+
+    const source_list: string|undefined = await vscode.window.showInputBox({ title: `Name of source list`, placeHolder: "source list name" });
+    if (!source_list)
+      throw new Error('Canceled by user. No source list name provided');
+
+
+    const data: source.IQualifiedSource[] = [{"source-lib": '.*', "source-file": '.*', 'source-member': '.*'}];
+
+    DirTool.write_file(path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, `${source_list}.json`), JSON.stringify(data));
+
+    this.refresh();
+  }
+
+
+
   public register(context: vscode.ExtensionContext): any {
     // setup
     const options = {
@@ -138,11 +164,20 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     vscode.commands.registerCommand('obi.source-lists.update', () => {
         this.refresh();
     });
+    vscode.commands.registerCommand('obi.source-lists.add', () => {
+        this.add_new_source_list();
+    });
 
     vscode.commands.registerCommand('obi.source-lists.show-view', async (item: SourceListItem)  => {
         if (!vscode.workspace.workspaceFolders)
           return;
-        SourceList.render(context.extensionUri, vscode.workspace.workspaceFolders[0].uri, item.label)
+        SourceList.render(context.extensionUri, vscode.workspace.workspaceFolders[0].uri, item.source_list)
+    });
+
+    vscode.commands.registerCommand('obi.source-lists.edit-config', async (item: SourceListItem)  => {
+        if (!vscode.workspace.workspaceFolders)
+          return;
+        SourceListConfig.render(context, item.source_list)
     });
 
 

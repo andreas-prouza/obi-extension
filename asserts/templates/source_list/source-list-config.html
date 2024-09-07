@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
+  <link rel="stylesheet" href="{{ config_css }}">
+</head>
+
+<body>
+
+
+  <h1>Source list config: <code>{{ source_list_file }}</code></h1>
+
+  <hr />
+  <br/>
+
+  💡 Search patterns are regex based.<br/>
+  So, instead of <code>*</code> please use <code>.*</code>.<br/><br/>
+  You can define multiple patterns separated by comma (<code>,</code>).
+
+  <div class="save-button-wrapper">
+    <vscode-button class="save-button" id="save_config">Save</vscode-button>
+  </div>
+
+
+  <table id="source_list"
+    class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
+    data-toggle="table" 
+    data-filter-control="false"
+    data-show-search-clear-button="false" 
+    data-show-columns="true"
+    data-pagination="false" 
+    data-page-size="10"
+    data-buttons-align="left">
+    <thead>
+      <tr>
+        <th>Lib</th>
+        <th>File</th>
+        <th>Member</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in source_list %}
+      <tr>
+        <td style="white-space: nowrap;">
+          <vscode-text-field class="source_filter_{{ loop.index0 }}" id="lib_{{ loop.index0 }}" name="lib" lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}"
+          value="{{ row['source-lib'] }}"></vscode-text-field>
+        </td>
+        <td style="white-space: nowrap;">
+          <vscode-text-field class="source_filter_{{ loop.index0 }}" id="file_{{ loop.index0 }}" name="file" lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}"
+          value="{{ row['source-file'] }}"></vscode-text-field>
+        </td>
+        <td style="white-space: nowrap;">
+          <vscode-text-field class="source_filter_{{ loop.index0 }}" id="member_{{ loop.index0 }}" name="member" lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}"
+          value="{{ row['source-member'] }}"></vscode-text-field>
+        </td>
+        <td>
+          <vscode-button class="delete_filter" lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}" list_index="{{ loop.index0 }}" id="delete_filter_{{ loop.index0 }}">
+            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
+          </vscode-button>
+        </td>
+      </tr>
+      {% endfor %}
+      <tr><td></td></tr>
+      <tr>
+        <td>
+          <vscode-text-field id="new_lib" placeholder="prouzalib"></vscode-text-field>
+        </td>
+        <td>
+          <vscode-text-field id="new_file" placeholder="qrpglesrc"></vscode-text-field>
+        </td>
+        <td>
+          <vscode-text-field id="new_member" placeholder="source.rpgle.pgm"></vscode-text-field>
+        </td>
+        <td>
+          <vscode-button id="add_filter">
+            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
+          </vscode-button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <br />
+
+  <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
+
+</body>
+
+</html>

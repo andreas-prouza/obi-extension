@@ -68,6 +68,14 @@ const configInvalidViewConfig = {
 };
 
 
+const sourceListConfigViewConfig = {
+  ...baseConfig,
+  target: "es2020",
+  format: "esm",
+  entryPoints: ["./src/webview/controller/javascript/source_list_config.ts"],
+  outfile: "./out/source_list_config.js",
+};
+
 (async () => {
   try {
     await build(extensionConfig);
@@ -77,6 +85,7 @@ const configInvalidViewConfig = {
     await build(welcomeViewConfig);
     await build(configViewConfig);
     await build(configInvalidViewConfig);
+    await build(sourceListConfigViewConfig);
     console.log("build complete");
   } catch (err) {
     process.stderr.write(err.stderr);

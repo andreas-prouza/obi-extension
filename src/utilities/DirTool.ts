@@ -208,7 +208,9 @@ export class DirTool {
     console.log(`Write data to ${file}`);
     
     try{
-      
+      if (!DirTool.dir_exists(path.dirname(file)))
+        fs.mkdirSync(path.dirname(file), {recursive: true});
+
       fs.writeFileSync(file, content, 'utf8');
     }
     catch (e: any) {

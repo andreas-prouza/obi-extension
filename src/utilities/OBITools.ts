@@ -544,4 +544,91 @@ export class OBITools {
     await SSH_Tasks.transfer_dir(local_dir, remote_dir);
   }
 
+
+
+
+  public static async get_filtered_sources_with_details(source_list_file: string): Promise<source.IQualifiedSource[]|undefined> {
+
+    const config = AppConfig.get_app_confg();
+    const source_dir = path.join(Workspace.get_workspace(), config.general['source-dir'] || 'src');
+
+    const sources = await DirTool.get_all_files_in_dir2(
+      source_dir,
+      '.',
+      config.general['supported-object-types'] || ['pgm', 'file', 'srvpgm']
+    );
+    
+    const source_filters: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, source_list_file));
+
+    const filtered_sources = OBITools.get_filtered_sources(sources, source_filters);
+    const filtered_sources_extended = OBITools.get_extended_source_infos(filtered_sources);
+
+    return filtered_sources_extended;
+  }
+
+
+
+
+
+  private static get_extended_source_infos(sources: source.IQualifiedSource[]|undefined): source.IQualifiedSource[] | undefined {
+
+    if (!sources)
+      return;
+
+    let new_list: source.IQualifiedSource[] = [];
+
+    const config: AppConfig = AppConfig.get_app_confg();
+    const source_infos: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['source-infos'] || '.obi/etc/source-infos.json'));
+
+    for (let source of sources) {
+
+      source.description = '';
+      
+      for (const source_info of source_infos) {
+        
+        if (source['source-member'] == source_info['source-member'] && source['source-file'] == source_info['source-file'] && source['source-lib'] == source_info['source-lib']) {
+          source.description = source_info.description;
+          break;
+        }
+      }
+      new_list.push(source);
+    }
+
+    return new_list;
+  }
+
+
+
+
+  private static get_filtered_sources(sources: string[]|undefined, source_filters: source.IQualifiedSource[]): source.IQualifiedSource[] | undefined {
+
+    if (!sources)
+      return;
+
+    let filtered_sources: source.IQualifiedSource[] = [];
+
+    for (let source of sources) {
+      
+      source = source.replaceAll('\\', '/');
+      const source_arr: string[] = source.split('/').reverse();
+      const src_mbr = source_arr[0];
+      const src_file = source_arr[1];
+      const src_lib = source_arr[2];
+
+      for (const source_filter of source_filters) {
+        
+        const re_lib = new RegExp(source_filter['source-lib']);
+        const re_file = new RegExp(source_filter['source-file']);
+        const re_mbr = new RegExp(source_filter['source-member']);
+
+        if (src_lib.match(re_lib) && src_file.match(re_file) && src_mbr.match(re_mbr))
+          filtered_sources.push({"source-lib": src_lib, "source-file": src_file, "source-member": src_mbr});
+      }
+    }
+
+    return filtered_sources;
+  }
+
+
+
 }

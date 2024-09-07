@@ -53,6 +53,12 @@
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
+        "command": "obi.source-lists.add",
+        "title": "OBI: Add new source list",
+        "icon": "$(add)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
         "command": "obi.get-remote-compiled-object-list",
         "title": "OBI: Get remote compiled object list",
         "icon": "$(arrow-circle-down)",
@@ -93,10 +99,21 @@
         "title": "OBI: Show source list",
         "icon": "$(preview)",
         "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.source-lists.edit-config",
+        "title": "OBI: Edit source list config",
+        "icon": "$(settings-gear)",
+        "when": "obi.contains_obi_project && obi.valid-config"
       }
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "obi.source-lists.add",
+          "when": "obi.contains_obi_project && obi.valid-config && view == obi.source-lists",
+          "group": "navigation@1"
+        },
         {
           "command": "obi.source-lists.update",
           "when": "obi.contains_obi_project && obi.valid-config && view == obi.source-lists",
@@ -146,6 +163,11 @@
       "view/item/context": [
         {
           "command": "obi.source-lists.show-view",
+          "when": "obi.contains_obi_project && view == obi.source-lists && viewItem == source-list",
+          "group": "inline"
+        },
+        {
+          "command": "obi.source-lists.edit-config",
           "when": "obi.contains_obi_project && view == obi.source-lists && viewItem == source-list",
           "group": "inline"
         }
