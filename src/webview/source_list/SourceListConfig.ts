@@ -9,6 +9,7 @@ import { OBITools } from '../../utilities/OBITools';
 import { AppConfig, ConfigCompileSettings } from '../controller/AppConfig';
 import { Workspace } from '../../utilities/Workspace';
 import * as source from '../../obi/Source';
+import { SourceListProvider } from '../controller/SourceListProvider';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -62,8 +63,7 @@ export class SourceListConfig {
 
     if (SourceListConfig.currentPanel) {
       // If the webview panel already exists reveal it
-      SourceListConfig.currentPanel._panel.reveal(ViewColumn.One);
-      return;
+      SourceListConfig.currentPanel._panel.dispose();
     }
 
     // If a webview panel does not already exist create and show a new one
@@ -110,7 +110,7 @@ export class SourceListConfig {
       return;
 
     panel._panel.webview.html = await SourceListConfig.generate_html(SourceListConfig._extensionUri, SourceListConfig.currentPanel?._panel.webview);
-    
+    SourceListProvider.source_list_provider.refresh();
   }
 
 

@@ -9,18 +9,26 @@ import * as source from '../../obi/Source';
 import { AppConfig } from './AppConfig';
 import { Workspace } from '../../utilities/Workspace';
 import { SourceListConfig } from '../source_list/SourceListConfig';
+import { OBITools } from '../../utilities/OBITools';
 
+
+interface ISourceLists {
+  [element: string]: Promise<source.IQualifiedSource[]|undefined>
+}
 
 export class SourceListProvider implements vscode.TreeDataProvider<SourceListItem> {
 
+  public static source_list_provider: SourceListProvider;
   private workspaceRoot: string = '';
   private _onDidChangeTreeData: vscode.EventEmitter<SourceListItem | undefined | null | void> = new vscode.EventEmitter<SourceListItem | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<SourceListItem | undefined | null | void> = this._onDidChangeTreeData.event;
+  public static source_lists: ISourceLists = {};
 
 
   constructor(workspaceRoot: string | undefined) {
     if (workspaceRoot !== undefined)
       this.workspaceRoot = workspaceRoot
+    SourceListProvider.source_list_provider = this;
   }
 
 
@@ -37,9 +45,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     }
 
     if (element) {
-      return Promise.resolve(
-        this.get_child_elements(element)
-      );
+      return this.get_child_elements(element);
     } 
     
     const source_list_path = path.join(this.workspaceRoot, Constants.SOURCE_LIST_FOLDER_NAME);
@@ -53,8 +59,15 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     for (let index = 0; index < source_list.length; index++) {
       const element = source_list[index];
 
-      if (!DirTool.is_file(path.join(this.workspaceRoot, Constants.SOURCE_LIST_FOLDER_NAME, element)))
+      const file = path.join(this.workspaceRoot, Constants.SOURCE_LIST_FOLDER_NAME, element);
+
+      if (!DirTool.is_file(file))
         continue;
+
+      //OBITools.get_filtered_sources_with_details(element).then((result) => {
+      //  SourceListProvider.source_lists[element] = result;
+      //});
+      SourceListProvider.source_lists[element] = OBITools.get_filtered_sources_with_details(element);
 
       child.push(new SourceListItem(
         element.replaceAll('.json', ''),
@@ -70,49 +83,49 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
   }
 
 
-  get_child_elements(element: SourceListItem): any {
+  async get_child_elements(element: SourceListItem): Promise<any> {
 
-    const sl = DirTool.get_json(path.join(this.workspaceRoot, Constants.SOURCE_LIST_FOLDER_NAME, element.source_list));
     let content_list: {}[] = [];
     let item: SourceListItem;
     let level: string = 'source-list';
     let results: SourceListItem[] = [];
     let description: string|undefined = undefined;
-    let tmp_items: string[] = [];
+    let lib: string|undefined;
+    let file: string|undefined;
+    let member: string|undefined;
+    let path: string|undefined;
 
     let collapsibleState: vscode.TreeItemCollapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
 
+    const sources: source.IQualifiedSource[]|undefined = await SourceListProvider.source_lists[element['source_list']];
+    
     if (element.list_level == 'source-list') {
       level = 'source-lib';
     }
     if (element.list_level == 'source-lib') {
       level = 'source-file';
+      lib = element.label;
       collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
     }
     if (element.list_level == 'source-file') {
       level = 'source-member';
+      lib = element.src_lib;
+      file = element.label;
       collapsibleState = vscode.TreeItemCollapsibleState.None;
     }
 
-    content_list = SourceListProvider.get_values_by_key(sl, level);
+    content_list = SourceListProvider.get_values_by_key(sources, level, lib, file);
     
     // Read each source list entry
-    for (let index = 0; index < sl.length; index++) {
-
-      if (tmp_items.indexOf(sl[index][level]) >= 0)
-        continue;
-
-      if (element.src_lib && element.src_lib != sl[index]['source-lib'] ||
-          element.src_file && element.src_file != sl[index]['source-file'])
-        continue;
-
+    for (const entry of content_list) {
+    
       if (level == 'source-member') {
-        description = sl[index]['description'] || undefined;
+        description = entry['description'] || undefined;
+        member = entry[level];
       }
 
-      item = new SourceListItem(sl[index][level], description, collapsibleState, element.source_list, level, sl[index]['source-lib'], sl[index]['source-file'], sl[index]['source-member'], sl[index]['path'])
-
-      tmp_items.push(sl[index][level]);  
+      item = new SourceListItem(entry[level], description, collapsibleState, element.source_list, level, lib, file, member)
+ 
       results.push(item);
     }
     return results;
@@ -203,13 +216,26 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     context.subscriptions.push(tree);
   }
 
-  private static get_values_by_key(source_list:[], key:string): {}[] {
+
+
+  private static get_values_by_key(source_list:source.IQualifiedSource[], key:string, lib?: string, file?: string): {}[] {
 
     let result: {}[] = [];
+    let item: {} = {};
 
     for (let i = 0; i < source_list.length; i++) {
       const element = source_list[i];
-      result.push({key: element[key]});
+      const value = element[key];
+      item = {};
+      item[key] = value;
+      if (result.some( e => e[key] === value) || lib && lib != element['source-lib'] || file && file != element['source-file'])
+        continue;
+
+      if (key == 'source-member')
+        item['description'] = element.description;
+      
+      item[key] = element[key];
+      result.push(item);
     }
 
     return result;
@@ -239,8 +265,7 @@ class SourceListItem extends vscode.TreeItem {
     list_level: string,
     src_lib?: string |undefined,
     src_file?: string |undefined,
-    src_member?: string |undefined,
-    file_path?: string | undefined
+    src_member?: string |undefined
   ) {
     super(label, collapsibleState);
     this.label = label;
@@ -274,8 +299,8 @@ class SourceListItem extends vscode.TreeItem {
     if (['source-member', 'source_list'].indexOf(list_level) == -1)
       return;
 
-    if (file_path) {
-      member_path = path.join(ws, 'src', file_path);
+    if (list_level == 'source-member') {
+      member_path = path.join(ws, 'src', this.src_lib || '', this.src_file || '', this.src_member || '');
       if (!DirTool.file_exists(member_path))
         icon = 'error.svg';
     }

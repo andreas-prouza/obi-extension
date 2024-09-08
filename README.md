@@ -51,24 +51,53 @@ Final release will be available soon.
 
 ## Release Notes
 
-### 0.1.4 Beta
+### 0.1.8 Beta
 
 Beta release of OBI
 
 
 ---
 
+## The concept
+
+The idea is to work with your **sources locally** on your PC.  
+Only for compile process, sources will be synchronised to the IFS.
+
+Because you work locally, you need to sync your changes with other developers.
+--> This is where **git** came in.
+
+![img](asserts/img/ext/concept.png)
+
 ## Following steps you need to do
 
 1. Get your Sources to IFS (to your project folder)
-2. Take a look into the config (server, user, ifs locations, ...)
+2. Create a git repository
+3. Add the project folder to this git repository
+4. Open the OBI extension in vscode
+   You will see the welcome screen
+    <img src="asserts/img/ext/welcome.png" style="width: 40%">
+5. Initialize the project with OBI
+   A new folder ```.obi``` will be created including some initial config files.
+6. Take a look into the config (server, user, ifs locations, ...)
+     <img src="asserts/img/ext/config-2.png" style="width: 40%">
      ![img](asserts/img/ext/config.png)
      ![img](asserts/img/ext/config-compile.png)
-
+     >User specific settings (like IFS remote directory, SSH password, ...) can be defined/overwritten in the ```User configuration``` area.
+7. Check if it works with ```Show changes```
+     ![img](asserts/img/ext/show-changes-2.png)
+     You should see a list of sources, ready to compile.
+8. Reset the compiled object list
+   <img src="asserts/img/ext/compiled-obj-list.png" style="width: 50%">
+   From now, the ```Show changes``` action only shows changed sources.
+9.  When you are motivated, you can create a dependency list.
+    With a dependency OBI creates the correct build order and includes all dependend objects. (E.g. for SRVPGM, files, ...)
+    (See [dependency list](https://github.com/andreas-prouza/ibm-i-build-obi/blob/main/docs/pages/configuration.md#etcdependencytoml))
+10. Sync all changes to your git repo
 
 If no OBI config could be found, you will see the welcome screen:
 
-![img](asserts/img/ext/welcome.png)
+<img src="asserts/img/ext/welcome.png" style="width: 40%">
+
 
 
 

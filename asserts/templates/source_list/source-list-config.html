@@ -24,6 +24,8 @@
     <vscode-button class="save-button" id="save_config">Save</vscode-button>
   </div>
 
+  <br/>
+  <br/>
 
   <table id="source_list"
     class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
@@ -63,7 +65,8 @@
         </td>
       </tr>
       {% endfor %}
-      <tr><td></td></tr>
+      <tr><td>&nbsp;</td></tr>
+      <tr><td>Add new</td></tr>
       <tr>
         <td>
           <vscode-text-field id="new_lib" placeholder="prouzalib"></vscode-text-field>

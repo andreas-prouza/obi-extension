@@ -54,8 +54,7 @@ export class SourceList {
   public static async render(extensionUri: Uri, workspaceUri: Uri, source_list_file: string) {
     if (SourceList.currentPanel) {
       // If the webview panel already exists reveal it
-      SourceList.currentPanel._panel.reveal(ViewColumn.One);
-      return;
+      SourceList.currentPanel._panel.dispose();
     }
 
     let filtered_sources_extended = await OBITools.get_filtered_sources_with_details(source_list_file) || [];

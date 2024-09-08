@@ -16,7 +16,7 @@
     <img src="{{ global_stuff['logo'] }}" alt="logo" height=100 style="position: absolute; top:8.5; right:0;">
 -->
     
-    <h1>Source list: <code>{{ source_list_file }}</code></h1>
+    <h1>Source list: <code>{{ source_list_file | replace('.json', '') }}</code></h1>
 
     <hr />
     <br/>
@@ -69,20 +69,6 @@
 
     <br/><br/>
     <br/><br/>
-
-
-    {% if source_list|length > 0 %}
-      {% for key, value in source_list[0] %}
-        {% if key != 'path' %}
-          <vscode-text-field class="new_entry" field="{{ key }}"
-          id="{{ class_prefix }}|general|build-output-dir" placeholder="{{ key }}"
-            value=""><b>{{ key }}</b>
-          </vscode-text-field>
-        {% endif %}
-      {% endfor %}
-    {% endif %}
-    <br/>
-    <vscode-button id="howdy" appearance="primary">Add</vscode-button>
 
     <script src="{{ global_stuff['asserts_uri'] }}/js/jquery.min.js"></script>
     <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table.min.js"></script>
