@@ -49,12 +49,6 @@ Final release will be available soon.
   https://github.com/andreas-prouza/obi
 
 
-## Release Notes
-
-### 0.2.0 Beta
-
-Beta release of OBI
-
 
 ---
 

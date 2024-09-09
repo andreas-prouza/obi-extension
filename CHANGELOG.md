@@ -5,6 +5,12 @@
 * Multilanguage support
 
 
+## [0.2.2]
+
+### Changed
+* Improve performance
+
+
 ## [0.2.1]
 
 ### Added
