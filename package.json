@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -105,6 +105,12 @@
         "title": "OBI: Edit source list config",
         "icon": "$(settings-gear)",
         "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.source-lists.delete-config",
+        "title": "OBI: Delete source list config",
+        "icon": "$(trash)",
+        "when": "obi.contains_obi_project && obi.valid-config"
       }
     ],
     "menus": {
@@ -164,12 +170,17 @@
         {
           "command": "obi.source-lists.show-view",
           "when": "obi.contains_obi_project && view == obi.source-lists && viewItem == source-list",
-          "group": "inline"
+          "group": "inline@0"
         },
         {
           "command": "obi.source-lists.edit-config",
           "when": "obi.contains_obi_project && view == obi.source-lists && viewItem == source-list",
-          "group": "inline"
+          "group": "inline@2"
+        },
+        {
+          "command": "obi.source-lists.delete-config",
+          "when": "obi.contains_obi_project && view == obi.source-lists && viewItem == source-list",
+          "group": "inline@3"
         }
       ]
     },

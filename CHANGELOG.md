@@ -1,9 +1,25 @@
-# Change Log
-
-All notable changes to the "obi" extension will be documented in this file.
-
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
-
 ## [Unreleased]
+
+### Added
+
+* Multilanguage support
+
+
+## [0.2.1]
+
+### Added
+* Delete button for source list filters
+
+
+## [0.2.0]
+
+### Added
+* Config for source list filters
+
+### Changed
+* Extend documentation
+
+
+## [0.1.8]
 
 - Initial release
