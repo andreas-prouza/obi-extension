@@ -49,7 +49,7 @@ export interface IConfigGeneralProperties {
   'file-system-encoding' : string,
   'console-output-encoding' : string,
   'compiled-object-list' : string,
-  'source-list' : string,
+  'remote-source-list' : string,
   'compiled-object-list-md' : string,
   'dependency-list' : string,
   'deployment-object-list' : string,
@@ -111,7 +111,8 @@ export class ConfigGeneral {
   public ['file-system-encoding']?: string;
   public ['console-output-encoding']?: string;
   public ['compiled-object-list']?: string;
-  public ['source-list']?: string;
+  public ['local-source-list']?: string;
+  public ['remote-source-list']?: string;
   public ['source-infos']?: string;
   public ['dependency-list']?: string;
   public ['deployment-object-list']?: string;
@@ -119,8 +120,13 @@ export class ConfigGeneral {
   public ['compile-list']?: string;
   public ['compiled-object-list-md']?: string;
   public ['check-remote-source-on-startup']?: boolean;
+  public ['max-threads']?: number;
 
-  constructor(local_base_dir?: string, remote_base_dir?: string, source_dir?: string, use_remote_obi?: boolean, local_obi_dir?: string, remote_obi_dir?: string, supported_object_types?: string[], file_system_encoding?: string, console_output_encoding?: string, compiled_object_list?: string, dependency_list?: string, deployment_object_list?: string, build_output_dir?: string, compile_list?: string, compiled_object_list_md?: string, source_list?: string, check_remote_source_on_startup?: boolean, source_infos?: string) {
+  constructor(local_base_dir?: string, remote_base_dir?: string, source_dir?: string, use_remote_obi?: boolean, 
+    local_obi_dir?: string, remote_obi_dir?: string, supported_object_types?: string[], file_system_encoding?: string, 
+    console_output_encoding?: string, compiled_object_list?: string, dependency_list?: string, deployment_object_list?: string, 
+    build_output_dir?: string, compile_list?: string, compiled_object_list_md?: string, remote_source_list?: string, 
+    check_remote_source_on_startup?: boolean, source_infos?: string, max_threads?: number, local_source_list?: string) {
 
     if (local_base_dir == '/')
       throw Error("Root for 'local-base-dir' is not allowed!");
@@ -145,7 +151,8 @@ export class ConfigGeneral {
     this['file-system-encoding'] = file_system_encoding;
     this['console-output-encoding'] = console_output_encoding;
     this['compiled-object-list'] = compiled_object_list;
-    this['source-list'] = source_list;
+    this['remote-source-list'] = remote_source_list;
+    this['local-source-list'] = local_source_list;
     this['source-infos'] = source_infos;
     this['dependency-list'] = dependency_list;
     this['deployment-object-list'] = deployment_object_list;
@@ -153,6 +160,7 @@ export class ConfigGeneral {
     this['compile-list'] = compile_list;
     this['compiled-object-list-md'] = compiled_object_list_md;
     this['check-remote-source-on-startup'] = check_remote_source_on_startup;
+    this['max-threads'] = max_threads;
   }
 
   public attributes_missing(): boolean {
@@ -167,7 +175,7 @@ export class ConfigGeneral {
       !this['file-system-encoding'] ||
       !this['console-output-encoding'] ||
       !this['compiled-object-list'] ||
-      !this['source-list'] ||
+      !this['remote-source-list'] ||
       !this['dependency-list'] ||
       !this['deployment-object-list'] ||
       !this['build-output-dir'] ||
@@ -361,9 +369,11 @@ export class AppConfig {
         AppConfig.get_string(gen['build-output-dir']),
         AppConfig.get_string(gen['compile-list']),
         AppConfig.get_string(gen['compiled-object-list-md']),
-        AppConfig.get_string(gen['source-list']),
+        AppConfig.get_string(gen['remote-source-list']),
         gen['check-remote-source-on-startup'] === true,
         AppConfig.get_string(gen['source-infos']),
+        gen['max-threads'],
+        AppConfig.get_string(gen['local-source-list'])
       );
     }
 

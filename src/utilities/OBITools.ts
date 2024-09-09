@@ -63,11 +63,11 @@ export class OBITools {
     const config = AppConfig.get_app_confg();
     const ws: string = Workspace.get_workspace();
 
-    if (!config.general['source-list'])
+    if (!config.general['remote-source-list'])
       return false;
 
     await OBICommands.get_remote_source_list();
-    const remote_source_list: source.ISource = DirTool.get_toml(path.join(ws, config.general['source-list']));
+    const remote_source_list: source.ISource = DirTool.get_toml(path.join(ws, config.general['remote-source-list']));
     const current_hash_list = await OBITools.retrieve_current_source_hashes();
     const changed_sources: source.ISourceList = await OBITools.compare_source_change(current_hash_list, remote_source_list);
     const all_sources: string[] = [...changed_sources['changed-sources'], ...changed_sources['new-objects']];
@@ -122,7 +122,7 @@ export class OBITools {
 
 
 
-  public static initialize_folder(): void {
+  public static async initialize_folder(): Promise<void> {
     
     if (! vscode.workspace.workspaceFolders || !OBITools.ext_context) {
       vscode.window.showErrorMessage('No workspace is opened!');
@@ -136,7 +136,7 @@ export class OBITools {
       fs.mkdirSync(path.join(ws, '.obi', 'etc'), { recursive: true});
     }
 
-    const files = DirTool.get_all_files_in_dir(ext_ws, 'etc', ['toml', '.py']);
+    const files = await DirTool.get_all_files_in_dir2(ext_ws, 'etc', ['toml', '.py']);
     if (!files)
       return;
 
@@ -439,15 +439,21 @@ export class OBITools {
 
   public static async retrieve_current_source_hashes(): Promise<source.ISource[]> {
 
-    const max_threads = 20;
+    console.log('Start retrieve_current_source_hashes');
+    let p1 = performance.now();
+
     const config = AppConfig.get_app_confg();
+    const max_threads = config.general['max-threads'] || 20;
     const source_dir = path.join(Workspace.get_workspace(), config.general['source-dir'] || 'src');
 
-    const sources = DirTool.get_all_files_in_dir(
+    const sources = await DirTool.get_all_files_in_dir2(
       source_dir,
       '.',
       config.general['supported-object-types'] || ['pgm', 'file', 'srvpgm']
     );
+
+    let p2 = performance.now();
+    console.log(`Duration: ${p2-p1} milliseconds`);
 
     console.log(`Get checksum of sources`);
 
@@ -455,6 +461,7 @@ export class OBITools {
     let counter = 0;
     let hash_values: source.ISource[] = [];
 
+    p1 = performance.now();
     if (sources) {
       
       //OBITools.parallel(sources, )
@@ -475,8 +482,9 @@ export class OBITools {
       if (all_promises)
         hash_values = [...hash_values, ...all_promises];
     }
-
-    console.log(`In total ${hash_values.length} hash values`);
+    
+    p2 = performance.now();
+    console.log(`In total ${hash_values.length} hash values. Duration: ${p2-p1}`);
     return hash_values;
   }
 

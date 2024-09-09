@@ -21,6 +21,9 @@ function main() {
 
   const btn_initialize_folder = document.getElementById("initialize_folder") as Button;
   btn_initialize_folder?.addEventListener("click", initialize_folder);
+
+  const btn_reload_workspace = document.getElementById("reload_workspace") as Button;
+  btn_reload_workspace?.addEventListener("click", reload_workspace);
   
   window.addEventListener('message', receive_message);
 
@@ -31,6 +34,14 @@ function initialize_folder() {
 
   vscode.postMessage({
     command: "initialize_folder"
+  });
+}
+
+
+function reload_workspace() {
+
+  vscode.postMessage({
+    command: "reload_workspace"
   });
 }
 

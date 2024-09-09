@@ -263,6 +263,12 @@
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-3" id="{{ class_prefix }}|general|console-output-encoding" placeholder="utf-8"
         value="{{ app_general['console-output-encoding'] }}">Console output encoding
       </vscode-text-field>
+
+      <br/>
+      <br/>
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-3" id="{{ class_prefix }}|general|max-threads" placeholder="20"
+        value="{{ app_general['max-threads'] }}">Maximum number of threads
+      </vscode-text-field>
     
     </section>
 
@@ -280,8 +286,14 @@
             
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|source-list" placeholder=".obi/etc/source-list.toml"
-        value="{{ app_general['source-list'] }}">Source list
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|remote-source-list" placeholder=".obi/etc/source-list-remote.toml"
+        value="{{ app_general['remote-source-list'] }}">Remote source list
+      </vscode-text-field>
+            
+      <br/>
+      <br/>
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|local-source-list" placeholder=".obi/etc/source-list-local.toml"
+        value="{{ app_general['local-source-list'] }}">Local source list
       </vscode-text-field>
             
       <br/>

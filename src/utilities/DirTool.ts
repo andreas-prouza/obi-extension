@@ -7,6 +7,9 @@ import * as source from "../obi/Source";
 import * as fs from 'fs';
 
 
+const crypto = require('crypto')
+
+
 export class DirTool {
 
 
@@ -307,7 +310,6 @@ export class DirTool {
     */
 
   public static async checksumFile(root: string, file_path: string): Promise<source.ISource> {
-    var crypto = require('crypto')
     return new Promise((resolve, reject) => {
       const hash = crypto.createHash('sha256');
       const stream = fs.createReadStream(path.join(root, file_path));
