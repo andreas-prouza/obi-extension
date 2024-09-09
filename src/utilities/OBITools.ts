@@ -558,7 +558,7 @@ export class OBITools {
       config.general['supported-object-types'] || ['pgm', 'file', 'srvpgm']
     );
     
-    const source_filters: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, source_list_file));
+  const source_filters: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, source_list_file)) || [];
 
     const filtered_sources = OBITools.get_filtered_sources(sources, source_filters);
     const filtered_sources_extended = OBITools.get_extended_source_infos(filtered_sources);
@@ -578,7 +578,7 @@ export class OBITools {
     let new_list: source.IQualifiedSource[] = [];
 
     const config: AppConfig = AppConfig.get_app_confg();
-    const source_infos: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['source-infos'] || '.obi/etc/source-infos.json'));
+    const source_infos: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['source-infos'] || '.obi/etc/source-infos.json')) || [];
 
     for (let source of sources) {
 

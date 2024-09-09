@@ -106,7 +106,13 @@ export class DirTool {
   }
 
 
-  public static get_json(path: string) {
+  public static get_json(path: string): any|undefined {
+
+    if (!DirTool.file_exists(path)) {
+      console.warn(`File does not exist: ${path}`);
+      return undefined
+    }
+
     const fs = require("fs"); 
     
     let json_string = fs.readFileSync(path);

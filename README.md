@@ -32,8 +32,7 @@ Final release will be available soon.
 
 
 * See which objects has been compiled and their details  
-  Each task has its own:
-  
+  * Command
   * joblog
   * spool file
   * error output
@@ -51,7 +50,7 @@ Final release will be available soon.
 
 ## Release Notes
 
-### 0.1.8 Beta
+### 0.2.0 Beta
 
 Beta release of OBI
 
@@ -75,28 +74,32 @@ Because you work locally, you need to sync your changes with other developers.
 3. Add the project folder to this git repository
 4. Open the OBI extension in vscode
    You will see the welcome screen
-    <img src="asserts/img/ext/welcome.png" style="width: 40%">
+    <img src="asserts/img/ext/welcome.png" style="width: 300px">
 5. Initialize the project with OBI
    A new folder ```.obi``` will be created including some initial config files.
 6. Take a look into the config (server, user, ifs locations, ...)
-     <img src="asserts/img/ext/config-2.png" style="width: 40%">
-     ![img](asserts/img/ext/config.png)
-     ![img](asserts/img/ext/config-compile.png)
+     <img src="asserts/img/ext/config-2.png" style="width: 300px">
+     <img src="asserts/img/ext/config.png" style="width: 800px">
+     <img src="asserts/img/ext/config-compile.png" style="width: 800px">
      >User specific settings (like IFS remote directory, SSH password, ...) can be defined/overwritten in the ```User configuration``` area.
 7. Check if it works with ```Show changes```
-     ![img](asserts/img/ext/show-changes-2.png)
+     <img src="asserts/img/ext/show-changes-2.png" style="width: 800px">
      You should see a list of sources, ready to compile.
 8. Reset the compiled object list
-   <img src="asserts/img/ext/compiled-obj-list.png" style="width: 50%">
+   <img src="asserts/img/ext/compiled-obj-list.png" style="width: 300px">
    From now, the ```Show changes``` action only shows changed sources.
-9.  When you are motivated, you can create a dependency list.
+9. On your IBM i clone OBI from GitHub somewhere in the IFS.
+    ```git clone https://github.com/andreas-prouza/obi /ifs/path/obi```
+    (Remember the path. You need to set it in your project config)
+    <img src="asserts/img/ext/obi-path.png" style="width: 800px">
+10.  When you are motivated, you can create a dependency list.
     With a dependency OBI creates the correct build order and includes all dependend objects. (E.g. for SRVPGM, files, ...)
     (See [dependency list](https://github.com/andreas-prouza/ibm-i-build-obi/blob/main/docs/pages/configuration.md#etcdependencytoml))
-10. Sync all changes to your git repo
+11. Sync all changes to your git repo
 
 If no OBI config could be found, you will see the welcome screen:
 
-<img src="asserts/img/ext/welcome.png" style="width: 40%">
+<img src="asserts/img/ext/welcome.png" style="width: 300px">
 
 
 
