@@ -21,9 +21,9 @@ const nunjucks = require('nunjucks');
 
 
 
-export class SourceListConfig {
+export class SourceInfos {
 
-  public static currentPanel: SourceListConfig;
+  public static currentPanel: SourceInfos|undefined;
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
   private static _context: vscode.ExtensionContext;
@@ -40,6 +40,7 @@ export class SourceListConfig {
    */
   private constructor(panel: WebviewPanel, extensionUri: Uri) {
     this._panel = panel;
+    SourceInfos._extensionUri = extensionUri;
 
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
     // the panel or when the panel is closed programmatically)
@@ -54,25 +55,22 @@ export class SourceListConfig {
    *
    * @param extensionUri The URI of the directory containing the extension.
    */
-  public static async render(context: vscode.ExtensionContext, source_list_file: string) {
+  public static async render(context: vscode.ExtensionContext) {
 
-    const extensionUri = context.extensionUri;
-    SourceListConfig._context = context;
-    SourceListConfig._extensionUri = extensionUri;
-    SourceListConfig.source_list_file = source_list_file;
+    SourceInfos._context = context;
 
-    if (SourceListConfig.currentPanel) {
+    if (SourceInfos.currentPanel) {
       // If the webview panel already exists reveal it
-      SourceListConfig.currentPanel._panel.dispose();
+      SourceInfos.currentPanel._panel.dispose();
     }
 
     // If a webview panel does not already exist create and show a new one
-    const panel = this.createNewPanel(extensionUri);
-    panel.webview.html = await SourceListConfig.generate_html(extensionUri, panel.webview);
+    const panel = this.createNewPanel(context.extensionUri);
+    panel.webview.html = await SourceInfos.generate_html(context.extensionUri, panel.webview);
     
     panel.webview.onDidReceiveMessage(this.onReceiveMessage);
 
-    SourceListConfig.currentPanel = new SourceListConfig(panel, extensionUri);
+    SourceInfos.currentPanel = new SourceInfos(panel, context.extensionUri);
   
   }
 
@@ -82,17 +80,16 @@ export class SourceListConfig {
 
     const config = AppConfig.get_app_confg();
 
-    const source_list: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, SourceListConfig.source_list_file)) || [];
+    const sources = await OBITools.get_local_sources();
+    const source_list: source.IQualifiedSource[] = OBITools.get_extended_source_infos(sources)||[];
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-    const html = nunjucks.render('source_list/source-list-config.html', 
+    const html = nunjucks.render('source_list/source-infos.html', 
       {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),
         config_css: getUri(webview, extensionUri, ["asserts/css", "config.css"]),
-        main_java_script: getUri(webview, extensionUri, ["out", "source_list_config.js"]),
-        source_list: source_list,
-        source_list_file: SourceListConfig.source_list_file.replace('.json', ''),
-        icons: {trash: "${trash}"}
+        main_java_script: getUri(webview, extensionUri, ["out", "source_infos.js"]),
+        source_list: source_list
       }
     );
 
@@ -104,12 +101,12 @@ export class SourceListConfig {
 
   public static async update(): Promise<void> {
 
-    const panel = SourceListConfig.currentPanel;
+    const panel = SourceInfos.currentPanel;
     
     if (!panel)
       return;
 
-    panel._panel.webview.html = await SourceListConfig.generate_html(SourceListConfig._extensionUri, SourceListConfig.currentPanel?._panel.webview);
+    panel._panel.webview.html = await SourceInfos.generate_html(SourceInfos._extensionUri, SourceInfos.currentPanel?._panel.webview);
     SourceListProvider.source_list_provider.refresh();
   }
 
@@ -132,87 +129,29 @@ export class SourceListConfig {
     switch (command) {
 
       case "save_config":
-        SourceListConfig.save_filter(message.data);
-        SourceListConfig.update();
+        SourceInfos.save_infos(message.data);
+        SourceInfos.update();
         break;
 
-      case "delete_filter":
-        SourceListConfig.delete_filter(message.lib, message.file, message.member);
-        SourceListConfig.update();
-        break;
-
-      case "add_filter":
-        SourceListConfig.add_filter(message.lib, message.file, message.member);
-        SourceListConfig.update();
-        break;
     }
     return;
   }
 
 
 
-  private static delete_filter(lib: string, file: string, member: string) {
+  private static save_infos(sources: source.IQualifiedSource[]) {
 
-    const json_file: string = path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, SourceListConfig.source_list_file);
-    const sl: source.IQualifiedSource[] = DirTool.get_json(json_file) || [];
+    const json_file: string = path.join(Workspace.get_workspace(), AppConfig.get_app_confg().general['source-infos']||'.obi/etc/source-infos.json');
 
-    for (let i=0; i<sl.length; i++) {
-      if (sl[i]['source-lib'] == lib && sl[i]['source-file'] == file && sl[i]['source-member'] == member) {
-        sl.splice(i, 1);
-        i--;
-      }
-    }
-
-    DirTool.write_file(json_file, JSON.stringify(sl));
+    DirTool.write_file(json_file, JSON.stringify(sources));
   }
 
 
-  private static add_filter(lib: string, file: string, member: string) {
-
-    const json_file: string = path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, SourceListConfig.source_list_file);
-    const sl: source.IQualifiedSource[] = DirTool.get_json(json_file) || [];
-
-    // check if it already exist
-    for (let i=0; i<sl.length; i++) {
-      if (sl[i]['source-lib'] == lib && sl[i]['source-file'] == file && sl[i]['source-member'] == member) {
-        return;
-      }
-    }
-
-    sl.push({"source-lib": lib, "source-file": file, "source-member": member});
-
-    DirTool.write_file(json_file, JSON.stringify(sl));
-  }
-
-
-  private static save_filter(filter: source.IQualifiedSource[]) {
-
-    const json_file: string = path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, SourceListConfig.source_list_file);
-
-    DirTool.write_file(json_file, JSON.stringify(filter));
-  }
-
-
-
-  private static save_config(isUser: boolean, workspaceUri: Uri, data: {}) {
-
-    vscode.window.showInformationMessage('Configuration saved');
-
-    const app_config = new AppConfig(data['connection'], data['general'], data['global']);
-
-    // App config
-    let toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_FILE);
-    if (isUser)
-      toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_USER_FILE);
-    
-    DirTool.write_toml(toml_file, app_config);
-}
-  
 
   private static createNewPanel(extensionUri : Uri) {
     return window.createWebviewPanel(
-      'obi_filter_config', // Identifies the type of the webview. Used internally
-      'OBI filter config', // Title of the panel displayed to the user
+      'obi_source_infos_config', // Identifies the type of the webview. Used internally
+      'OBI Source infos', // Title of the panel displayed to the user
       // The editor column the panel should be displayed in
       ViewColumn.One,
       // Extra panel configurations
@@ -235,7 +174,7 @@ export class SourceListConfig {
    * Cleans up and disposes of webview resources when the webview panel is closed.
    */
   public dispose() {
-    SourceListConfig.currentPanel = undefined;
+    SourceInfos.currentPanel = undefined;
 
     // Dispose of the current webview panel
     this._panel.dispose();

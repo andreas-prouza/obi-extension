@@ -70,12 +70,59 @@ export class DirTool {
     return file_list;
   }
 
+  
+
+  /**
+   * List files in a directory recursive
+   * It's async for better performance
+   * @param rootdir 
+   * @param dir 
+   * @param file_extensions 
+   * @returns 
+   */
+  public static async get_all_files_in_dir3(rootdir:string, dir: string, file_extensions: string[]): Promise<source.IQualifiedSource[] | undefined> {
+    
+    if (!DirTool.dir_exists(path.join(rootdir, dir)))
+      return undefined;
+    
+    let file_list: source.IQualifiedSource[] = [];
+    let call_list = [];
+
+    const fs = require('fs');
+    const files = fs.readdirSync(path.join(rootdir, dir), { withFileTypes: true });
+
+
+    for (const file of files) {
+      if (file.isDirectory()) {
+        call_list.push(DirTool.get_all_files_in_dir3(rootdir, path.join(dir, file.name), file_extensions));
+      } else {
+        if (file_extensions.includes(file.name.split('.').pop())) {
+          const source: string = path.join(dir, file.name).replaceAll('\\', '/');
+          const source_arr: string[] = source.split('/').reverse();
+          const src_mbr = source_arr[0];
+          const src_file = source_arr[1];
+          const src_lib = source_arr[2];
+          file_list.push({"source-lib": src_lib, "source-file": src_file, "source-member": src_mbr});
+        }
+      }
+    }
+
+    const results = await Promise.all(call_list);
+    results.map((list: source.IQualifiedSource[]|undefined) => {
+      if (list)
+        file_list = [...file_list, ...list];
+    });
+
+    return file_list;
+  }
+
 
   public static list_dir(dir: string): string[] {
     const files = fs.readdirSync(dir);
 
     return files;
   }
+
 
 
   public static file_exists(path: string): boolean {

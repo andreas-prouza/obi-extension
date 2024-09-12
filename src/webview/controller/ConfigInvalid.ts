@@ -78,6 +78,11 @@ export class ConfigInvalid implements vscode.WebviewViewProvider {
 						vscode.commands.executeCommand('workbench.action.reloadWindow');
 						break;
 					}
+				case 'config':
+					{
+						vscode.commands.executeCommand('obi.controller.config');
+						break;
+					}
 			}
 		});
 	}

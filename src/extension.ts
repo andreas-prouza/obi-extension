@@ -12,6 +12,7 @@ import { SSH_Tasks } from './utilities/SSH_Tasks';
 import { AppConfig } from './webview/controller/AppConfig';
 import { ConfigInvalid } from './webview/controller/ConfigInvalid';
 import { logger } from './utilities/Logger';
+import { SourceInfos } from './webview/source_list/SourceInfos';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -127,7 +128,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('obi.transfer-all', () => {
 			// Only available with workspaces
-			OBITools.transfer_all();
+			OBITools.transfer_all(false);
 		})
 	);
 
@@ -148,14 +149,20 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	*/
 
-	if (config.general['check-remote-source-on-startup'] && config.general['check-remote-source-on-startup'] === true)
+	if (config.general['check-remote-source-on-startup'] && config.general['check-remote-source-on-startup'] === true) {
 		OBITools.check_remote_sources().then((success)=> {
 			if (success)
 				vscode.window.showInformationMessage('Remote source check succeeded');
 			else
 				vscode.window.showWarningMessage('Remote source check failed');
 		});
-		
+	}
 
+	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.source-lists.maintain-source-infos', () => {
+			// Only available with workspaces
+			SourceInfos.render(context);
+		})
+	);
 }
 

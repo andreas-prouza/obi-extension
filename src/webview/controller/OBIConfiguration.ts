@@ -202,6 +202,7 @@ export class OBIConfiguration {
   private static save_config(isUser: boolean, workspaceUri: Uri, data: {}) {
 
     vscode.window.showInformationMessage('Configuration saved');
+    const old_config: AppConfig = AppConfig.get_app_confg();
 
     const app_config = new AppConfig(data['connection'], data['general'], data['global']);
 
@@ -211,6 +212,9 @@ export class OBIConfiguration {
       toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_USER_FILE);
     
     DirTool.write_toml(toml_file, app_config);
+
+    if (old_config.attributes_missing() && !AppConfig.get_app_confg().attributes_missing())
+      vscode.commands.executeCommand('workbench.action.reloadWindow');
 }
   
 
@@ -225,6 +229,7 @@ export class OBIConfiguration {
         // Enable JavaScript in the webview
         enableScripts: true,
         enableCommandUris: true,
+        enableFindWidget: true,
         // Restrict the webview to only load resources from the `out` directory
         localResourceRoots: [
           vscode.Uri.joinPath(extensionUri, "out"),

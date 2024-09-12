@@ -4,6 +4,12 @@
 
 * Multilanguage support
 
+## [0.2.3]
+
+### Changed
+* Find funktion in logs
+* Maintain source infos (description text)
+
 
 ## [0.2.2]
 

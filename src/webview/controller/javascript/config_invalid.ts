@@ -25,10 +25,20 @@ function main() {
   const btn_reload_workspace = document.getElementById("reload_workspace") as Button;
   btn_reload_workspace?.addEventListener("click", reload_workspace);
   
+  const btn_config = document.getElementById("config") as Button;
+  btn_config?.addEventListener("click", config);
+  
   window.addEventListener('message', receive_message);
 
 }
 
+
+function config() {
+
+  vscode.postMessage({
+    command: "config"
+  });
+}
 
 function initialize_folder() {
 

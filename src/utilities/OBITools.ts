@@ -557,16 +557,9 @@ export class OBITools {
 
   public static async get_filtered_sources_with_details(source_list_file: string): Promise<source.IQualifiedSource[]|undefined> {
 
-    const config = AppConfig.get_app_confg();
-    const source_dir = path.join(Workspace.get_workspace(), config.general['source-dir'] || 'src');
-
-    const sources = await DirTool.get_all_files_in_dir2(
-      source_dir,
-      '.',
-      config.general['supported-object-types'] || ['pgm', 'file', 'srvpgm']
-    );
+    const sources = await OBITools.get_local_sources();
     
-  const source_filters: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, source_list_file)) || [];
+    const source_filters: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, source_list_file)) || [];
 
     const filtered_sources = OBITools.get_filtered_sources(sources, source_filters);
     const filtered_sources_extended = OBITools.get_extended_source_infos(filtered_sources);
@@ -575,6 +568,20 @@ export class OBITools {
   }
 
 
+
+  public static async get_local_sources(): Promise<source.IQualifiedSource[]|undefined> {
+
+    const config = AppConfig.get_app_confg();
+    const source_dir = path.join(Workspace.get_workspace(), config.general['source-dir'] || 'src');
+
+    const sources = await DirTool.get_all_files_in_dir3(
+      source_dir,
+      '.',
+      config.general['supported-object-types'] || ['pgm', 'file', 'srvpgm']
+    );
+
+    return sources;
+  }
 
 
 
@@ -608,7 +615,7 @@ export class OBITools {
 
 
 
-  private static get_filtered_sources(sources: string[]|undefined, source_filters: source.IQualifiedSource[]): source.IQualifiedSource[] | undefined {
+  private static get_filtered_sources(sources: source.IQualifiedSource[]|undefined, source_filters: source.IQualifiedSource[]): source.IQualifiedSource[] | undefined {
 
     if (!sources)
       return;
@@ -617,11 +624,9 @@ export class OBITools {
 
     for (let source of sources) {
       
-      source = source.replaceAll('\\', '/');
-      const source_arr: string[] = source.split('/').reverse();
-      const src_mbr = source_arr[0];
-      const src_file = source_arr[1];
-      const src_lib = source_arr[2];
+      const src_mbr = source['source-member'];
+      const src_file = source['source-file'];
+      const src_lib = source['source-lib'];
 
       for (const source_filter of source_filters) {
         

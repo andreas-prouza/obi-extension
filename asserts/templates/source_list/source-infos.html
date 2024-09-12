@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="{{ global_stuff['theme_mode'] }}">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
+  <link rel="stylesheet" href="{{ config_css }}">
+</head>
+
+<body>
+
+  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
+
+  <br/>
+
+  <h1>Source infos</h1>
+
+  
+  <div class="save-button-wrapper">
+    <vscode-button class="save-button" id="save_config">Save</vscode-button>
+  </div>
+  
+  <hr />
+  <br/>
+
+  <table id="source_list"
+  class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
+  data-toggle="table" 
+  data-filter-control="true"
+  data-show-search-clear-button="true" 
+  data-show-columns="true"
+  data-pagination="true" 
+  data-page-list="[5, 10, 20, 50, 100, all]"
+  data-page-size="10"
+  data-pagination-h-align="left"
+  data-pagination-detail-h-align="left"
+  data-buttons-align="left"
+  data-search-align="left">
+    <thead>
+      <tr>
+        <th data-field="lib" data-sortable="true" data-filter-control="select" data-filter-control-container="#lib">Lib</th>
+        <th data-field="file" data-sortable="true" data-filter-control="select" data-filter-control-container="#file">File</th>
+        <th data-field="member" data-sortable="true" data-filter-control="select" data-filter-control-container="#member">Member</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in source_list %}
+      <tr>
+        <td id="lib" style="white-space: nowrap;">{{ row['source-lib'] }}</td>
+        <td id="file" style="white-space: nowrap;">{{ row['source-file'] }}</td>
+        <td id="member" style="white-space: nowrap;">{{ row['source-member'] }}</td>
+        <td style="white-space: nowrap;">
+          <vscode-text-field class="source_description" size="80" placeholder="description" lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}"
+            value="{{ row['description'] }}"></vscode-text-field>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+
+  <br />
+
+  <script src="{{ global_stuff['asserts_uri'] }}/js/jquery.min.js"></script>
+  <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table.min.js"></script>
+  <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-resizable.min.js"></script>
+  <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-filter-control.min.js"></script>
+
+  <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+  <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
+
+</body>
+
+</html>

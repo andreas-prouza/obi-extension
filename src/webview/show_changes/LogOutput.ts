@@ -83,6 +83,7 @@ export class LogOutput {
       ViewColumn.One,
       // Extra panel configurations
       {
+        enableFindWidget: true
       }
     );
   }
