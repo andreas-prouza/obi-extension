@@ -4,6 +4,11 @@
 
 * Multilanguage support
 
+## [0.2.4]
+
+* Updated some NPM packages
+
+
 ## [0.2.3]
 
 ### Changed
