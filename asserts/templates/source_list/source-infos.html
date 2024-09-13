@@ -16,11 +16,11 @@
 
   <br/>
 
-  <h1>Source infos</h1>
+  <h1>{{ global_stuff['get_text']('Source infos') }}</h1>
 
   
   <div class="save-button-wrapper">
-    <vscode-button class="save-button" id="save_config">Save</vscode-button>
+    <vscode-button class="save-button" id="save_config">{{ global_stuff['get_text']('Save') }}</vscode-button>
   </div>
   
   <hr />
@@ -28,6 +28,7 @@
 
   <table id="source_list"
   class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
+  data-locale="{{ global_stuff['locale'] }}"
   data-toggle="table" 
   data-filter-control="true"
   data-show-search-clear-button="true" 
@@ -41,10 +42,10 @@
   data-search-align="left">
     <thead>
       <tr>
-        <th data-field="lib" data-sortable="true" data-filter-control="select" data-filter-control-container="#lib">Lib</th>
-        <th data-field="file" data-sortable="true" data-filter-control="select" data-filter-control-container="#file">File</th>
-        <th data-field="member" data-sortable="true" data-filter-control="select" data-filter-control-container="#member">Member</th>
-        <th>Description</th>
+        <th data-field="lib" data-sortable="true" data-filter-control="select" data-filter-control-container="#lib">{{ global_stuff['get_text']('Lib') }}</th>
+        <th data-field="file" data-sortable="true" data-filter-control="select" data-filter-control-container="#file">{{ global_stuff['get_text']('File') }}</th>
+        <th data-field="member" data-sortable="true" data-filter-control="select" data-filter-control-container="#member">{{ global_stuff['get_text']('Member') }}</th>
+        <th>{{ global_stuff['get_text']('Description') }}</th>
       </tr>
     </thead>
     <tbody>
@@ -54,7 +55,7 @@
         <td id="file" style="white-space: nowrap;">{{ row['source-file'] }}</td>
         <td id="member" style="white-space: nowrap;">{{ row['source-member'] }}</td>
         <td style="white-space: nowrap;">
-          <vscode-text-field class="source_description" size="80" placeholder="description" lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}"
+          <vscode-text-field class="source_description" size="80" placeholder="{{ global_stuff['get_text']('description') }}" lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}"
             value="{{ row['description'] }}"></vscode-text-field>
         </td>
       </tr>

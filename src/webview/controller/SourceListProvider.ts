@@ -156,7 +156,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
     const data: source.IQualifiedSource[] = [{ "source-lib": '.*', "source-file": '.*', 'source-member': '.*' }];
 
-    DirTool.write_file(path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, `${source_list}.json`), JSON.stringify(data));
+    DirTool.write_file(path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, `${source_list}.json`), JSON.stringify(data, undefined, 2));
 
     return `${source_list}.json`;
   }

@@ -6,13 +6,15 @@ import { OBICommands } from './obi/OBICommands';
 import { Welcome } from './webview/controller/Welcome';
 import { OBITools } from './utilities/OBITools';
 import { OBIConfiguration } from './webview/controller/OBIConfiguration';
-import path from 'path';
-import { DirTool } from './utilities/DirTool';
 import { SSH_Tasks } from './utilities/SSH_Tasks';
 import { AppConfig } from './webview/controller/AppConfig';
 import { ConfigInvalid } from './webview/controller/ConfigInvalid';
 import { logger } from './utilities/Logger';
 import { SourceInfos } from './webview/source_list/SourceInfos';
+import { LocaleText } from './utilities/LocaleText';
+
+const nunjucks = require('nunjucks');
+
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -30,6 +32,9 @@ export function activate(context: vscode.ExtensionContext) {
 	
 	SSH_Tasks.context = context;
 	OBITools.ext_context = context;
+	
+	// Add support for multi language
+	LocaleText.init(vscode.env.language, context);
 
 
 	//const fileUri = vscode.Uri.file('/home/andreas/projekte/opensource/extensions/obi/README.md');

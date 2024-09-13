@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -36,85 +36,85 @@
     "commands": [
       {
         "command": "obi.show_changes",
-        "title": "OBI: Show changes",
+        "title": "%obi.show_changes%",
         "icon": "$(telescope)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.run_build",
-        "title": "OBI: Run build",
+        "title": "%obi.run_build%",
         "icon" : "$(play)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.source-lists.update",
-        "title": "OBI: Update source list",
+        "title": "%obi.source-lists.update%",
         "icon": "$(refresh)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.source-lists.add",
-        "title": "OBI: Add new source list",
+        "title": "%obi.source-lists.add%",
         "icon": "$(add)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.get-remote-compiled-object-list",
-        "title": "OBI: Get remote compiled object list",
+        "title": "%obi.get-remote-compiled-object-list%",
         "icon": "$(arrow-circle-down)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.reset-compiled-object-list",
-        "title": "OBI: Reset compiled object list",
+        "title": "%obi.reset-compiled-object-list%",
         "icon": "$(extensions)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.get-remote-source-list",
-        "title": "OBI: Get remote source list",
+        "title": "%obi.get-remote-source-list%",
         "icon": "$(arrow-down)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.check-remote-sources",
-        "title": "OBI: Check remote sources",
+        "title": "%obi.check-remote-sources%",
         "icon": "$(tasklist)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.controller.config",
-        "title": "OBI: Configuration",
+        "title": "%obi.controller.config%",
         "icon": "$(settings-gear)",
         "when": "obi.contains_obi_project"
       },
       {
         "command": "obi.transfer-all",
-        "title": "OBI: Transfer all to remote",
+        "title": "%obi.transfer-all%",
         "icon": "$(cloud-upload)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.source-lists.show-view",
-        "title": "OBI: Show source list",
+        "title": "%obi.source-lists.show-view%",
         "icon": "$(preview)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.source-lists.edit-config",
-        "title": "OBI: Edit source list config",
+        "title": "%obi.source-lists.edit-config%",
         "icon": "$(settings-gear)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.source-lists.delete-config",
-        "title": "OBI: Delete source list config",
+        "title": "%obi.source-lists.delete-config%",
         "icon": "$(trash)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.source-lists.maintain-source-infos",
-        "title": "OBI: Maintain source infos",
+        "title": "%obi.source-lists.maintain-source-infos%",
         "icon": "$(settings-gear)",
         "when": "obi.contains_obi_project && obi.valid-config"
       }
@@ -215,19 +215,19 @@
         {
           "type": "tree",
           "id": "obi.source-lists",
-          "name": "Source lists",
+          "name": "%Source lists%",
           "when": "obi.contains_obi_project && obi.valid-config"
         },
         {
           "type": "webview",
           "id": "obi-welcome",
-          "name": "Welcome",
+          "name": "%Welcome%",
           "when": "obi.contains_obi_project == false"
         },
         {
           "type": "webview",
           "id": "obi-config-invalid",
-          "name": "Invalid config",
+          "name": "%Invalid config%",
           "when": "obi.contains_obi_project && !obi.valid-config"
         }
       ]

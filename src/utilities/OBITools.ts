@@ -12,12 +12,14 @@ import { Workspace } from './Workspace';
 import * as fs from 'fs-extra';
 import { logger } from './Logger';
 import { OBICommands } from '../obi/OBICommands';
+import { LocaleText } from './LocaleText';
 
 
 
 export class OBITools {
 
   public static ext_context?: vscode.ExtensionContext;
+  public static lang: LocaleText|undefined = undefined;
 
 
   public static is_native(): boolean {
@@ -173,7 +175,11 @@ export class OBITools {
       styleUri: styleUri,
       nonce: nonce,
       current_date: new Date().toLocaleString(),
-      theme_mode: theme_mode
+      theme_mode: theme_mode,
+      get_text: (v: string) => {
+        return LocaleText.localeText?.get_Text(v);
+      },
+      locale: LocaleText.localeText?.current_locale
     }
   }
 
@@ -301,8 +307,8 @@ export class OBITools {
 
     console.log('Clean dir');
     DirTool.clean_dir(path.join(Workspace.get_workspace(), '.obi', 'tmp'));
-    DirTool.write_file(path.join(Workspace.get_workspace(), Constants.CHANGED_OBJECT_LIST), JSON.stringify(changed_sources));
-    DirTool.write_file(path.join(Workspace.get_workspace(), Constants.DEPENDEND_OBJECT_LIST), JSON.stringify(dependend_sources));
+    DirTool.write_file(path.join(Workspace.get_workspace(), Constants.CHANGED_OBJECT_LIST), JSON.stringify(changed_sources, undefined, 2));
+    DirTool.write_file(path.join(Workspace.get_workspace(), Constants.DEPENDEND_OBJECT_LIST), JSON.stringify(dependend_sources, undefined, 2));
 
     //return changed_sources;
     return [...changed_sources['changed-sources'], ...changed_sources['new-objects'], ...dependend_sources];

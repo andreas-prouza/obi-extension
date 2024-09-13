@@ -163,7 +163,7 @@ export class SourceListConfig {
       }
     }
 
-    DirTool.write_file(json_file, JSON.stringify(sl));
+    DirTool.write_file(json_file, JSON.stringify(sl, undefined, 2));
   }
 
 
@@ -181,7 +181,7 @@ export class SourceListConfig {
 
     sl.push({"source-lib": lib, "source-file": file, "source-member": member});
 
-    DirTool.write_file(json_file, JSON.stringify(sl));
+    DirTool.write_file(json_file, JSON.stringify(sl, undefined, 2));
   }
 
 
@@ -189,7 +189,7 @@ export class SourceListConfig {
 
     const json_file: string = path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, SourceListConfig.source_list_file);
 
-    DirTool.write_file(json_file, JSON.stringify(filter));
+    DirTool.write_file(json_file, JSON.stringify(filter, undefined, 2));
   }
 
 

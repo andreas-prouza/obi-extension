@@ -16,7 +16,7 @@
     <img src="{{ global_stuff['logo'] }}" alt="logo" height=100 style="position: absolute; top:8.5; right:0;">
 -->
     
-    <h1>Source list: <code>{{ source_list_file | replace('.json', '') }}</code></h1>
+    <h1>{{ global_stuff['get_text']('Source list:') }} <code>{{ source_list_file | replace('.json', '') }}</code></h1>
 
     <hr />
     <br/>
@@ -25,6 +25,7 @@
     <!-- /.box-header -->
     <table id="source_list"
     class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
+    data-locale="{{ global_stuff['locale'] }}"
     data-toggle="table" 
     data-filter-control="true"
     data-show-search-clear-button="true" 
@@ -42,7 +43,7 @@
               {% if source_list|length > 0 %}
                   {% for key, value in source_list[0] %}
                     {% if key != 'path' %}
-                      <th data-field="{{ key }}" data-sortable="true" data-filter-control={% if key == 'status' %}"select"{% else %}"input"{% endif %}  data-filter-control-container="#filter">{{ key }}</th>
+                      <th data-field="{{ key }}" data-sortable="true" data-filter-control={% if key == 'status' %}"select"{% else %}"input"{% endif %}  data-filter-control-container="#filter">{{ global_stuff['get_text'](key) }}</th>
                     {% endif %}
                   {% endfor %}
               {% endif %}
@@ -72,6 +73,8 @@
 
     <script src="{{ global_stuff['asserts_uri'] }}/js/jquery.min.js"></script>
     <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table.min.js"></script>
+    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-de.js"></script>
+    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-en.js"></script>
     <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-resizable.min.js"></script>
     <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-filter-control.min.js"></script>
   

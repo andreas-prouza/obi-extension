@@ -1,8 +1,9 @@
-## [Unreleased]
+## [0.2.5]
 
 ### Added
 
 * Multilanguage support
+
 
 ## [0.2.4]
 

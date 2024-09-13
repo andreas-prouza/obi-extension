@@ -5,51 +5,51 @@
 
 <vscode-panels activeid="tab-1" aria-label="Default">
 
-  <vscode-panel-tab id="tab-1"><h3>Configuration</h3></vscode-panel-tab>
-  <vscode-panel-tab id="tab-2"><h3>Compile settings</h3></vscode-panel-tab>
-  <vscode-panel-tab id="tab-3"><h3>System settings</h3></vscode-panel-tab>
-  <vscode-panel-tab id="tab-4"><h3>Constants</h3></vscode-panel-tab>
+  <vscode-panel-tab id="tab-1"><h3>{{ global_stuff['get_text']('Configuration') }}</h3></vscode-panel-tab>
+  <vscode-panel-tab id="tab-2"><h3>{{ global_stuff['get_text']('Compile settings') }}</h3></vscode-panel-tab>
+  <vscode-panel-tab id="tab-3"><h3>{{ global_stuff['get_text']('System settings') }}</h3></vscode-panel-tab>
+  <vscode-panel-tab id="tab-4"><h3>{{ global_stuff['get_text']('Constants') }}</h3></vscode-panel-tab>
 
   <vscode-panel-view id="view-1">
     <section>
 
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-1" id="{{ class_prefix }}|connection|remote-host" placeholder="IBM i host (or IP)"
-        value="{{ app_config['connection']['remote-host'] }}">Remote host</vscode-text-field>
+        value="{{ app_config['connection']['remote-host'] }}">{{ global_stuff['get_text']('Remote host') }}</vscode-text-field>
 
       <br />
       <br />
 
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-1" regex_validator="^\d*$" type="number" id="{{ class_prefix }}|connection|ssh-concurrency" placeholder="5"
-        value="{{ app_config['connection']['ssh-concurrency'] }}">SSH Concurrency <label style="visibility: hidden;" id="hint_{{ class_prefix }}|connection|ssh-concurrency">&nbsp;&nbsp;&nbsp;⚠️ Only numbers</label></vscode-text-field>
+        value="{{ app_config['connection']['ssh-concurrency'] }}">{{ global_stuff['get_text']('SSH Concurrency') }}<label style="visibility: hidden;" id="hint_{{ class_prefix }}|connection|ssh-concurrency">&nbsp;&nbsp;&nbsp;⚠️ Only numbers</label></vscode-text-field>
 
       <br />
       <br />
 
       <vscode-text-field class="{{ class_prefix }}_save_app type_file" panel="tab-1" id="{{ class_prefix }}|connection|ssh-key" placeholder="~/.ssh/ibmi_rsa"
-        value="{{ app_config['connection']['ssh-key'] }}">🔑 SSH Key</vscode-text-field>
+        value="{{ app_config['connection']['ssh-key'] }}">🔑 {{ global_stuff['get_text']('SSH Key') }}</vscode-text-field>
       <br />
       <br />
 
       {% if class_prefix != 'user' %}
       <vscode-text-field class="" readonly="true"
-        value="">User (is only available in user config)</vscode-text-field>
+        value="">{{ global_stuff['get_text']('User (is only available in user config)') }}</vscode-text-field>
 
       <br />
       <br />      
       <vscode-text-field class="" readonly="true"
-        value="">🔑 Password (is only available in user config)</vscode-text-field>
+        value="">🔑 {{ global_stuff['get_text']('Password (is only available in user config)') }}</vscode-text-field>
 
       <br />
       <br />
       {% endif %}
       {% if class_prefix == 'user' %}
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-1" id="{{ class_prefix }}|connection|ssh-user"
-        value="{{ app_config['connection']['ssh-user'] }}">User</vscode-text-field>
+        value="{{ app_config['connection']['ssh-user'] }}">{{ global_stuff['get_text']('User') }}</vscode-text-field>
 
       <br />
       <br />
       <vscode-text-field class="" panel="tab-1" id="{{ class_prefix }}|SSH_PASSWORD" type="password"
-        value="{{ SSH_PASSWORD }}">🔑 Password</vscode-text-field>
+        value="{{ SSH_PASSWORD }}">🔑 {{ global_stuff['get_text']('Password') }}</vscode-text-field>
 
       <br />
       <br />
@@ -58,26 +58,25 @@
       <br />
       <hr />
       <br />
-      💡 Tilde (~) and env vars (e.g. $HOME) are not supported for paths.
+      💡 {{ global_stuff['get_text']('Tilde (~) and env vars (e.g. $HOME) are not supported for paths.') }}
       <br />
       <br />
 
       <vscode-text-field class="{{ class_prefix }}_save_app type_text {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-1" id="{{ class_prefix }}|general|local-base-dir" size="80"
-        value="{{ app_config['general']['local-base-dir'] | replace('"$HOME"', '$HOME' ) }}">Local path</vscode-text-field>
+        value="{{ app_config['general']['local-base-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Local path') }}</vscode-text-field>
       <br />
       <br />
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-1" id="{{ class_prefix }}|general|remote-base-dir" size="80"
-        value="{{ app_config['general']['remote-base-dir'] | replace('"$HOME"', '$HOME' ) }}">Remote ifs path</vscode-text-field>
+        value="{{ app_config['general']['remote-base-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Remote ifs path') }}</vscode-text-field>
       <br />
       <br />
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-1" id="{{ class_prefix }}|general|source-dir" placeholder="src"
-        value="{{ app_config['general']['source-dir'] | replace('"$HOME"', '$HOME' ) }}">Source
-        directory</vscode-text-field>
+        value="{{ app_config['general']['source-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Source directory') }}</vscode-text-field>
 
       <br />
       <br />
       <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox" panel="tab-1" id="{{ class_prefix }}|general|check-remote-source-on-startup" 
-      {% if app_config['general']['check-remote-source-on-startup'] == true %}checked{% endif %}>Check remote sources on start up</vscode-checkbox>
+      {% if app_config['general']['check-remote-source-on-startup'] == true %}checked{% endif %}>{{ global_stuff['get_text']('Check remote sources on start up') }}</vscode-checkbox>
 
       <br />
       <br />
@@ -85,20 +84,20 @@
       <hr />
       <br />
 
-      💡 Tilde (~) and env vars (e.g. $HOME) are not supported for paths.
+      💡 {{ global_stuff['get_text']('Tilde (~) and env vars (e.g. $HOME) are not supported for paths.') }}
       <br />
       <br />
 
       <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox" panel="tab-1" id="{{ class_prefix }}|general|use-remote-obi" 
-        {% if app_config['general']['use-remote-obi'] == true %}checked{% endif %}>Use remote OBI (show changes)</vscode-checkbox>
+        {% if app_config['general']['use-remote-obi'] == true %}checked{% endif %}>{{ global_stuff['get_text']('Use remote OBI (show changes)') }}</vscode-checkbox>
       <br />
       <br />
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-1" id="{{ class_prefix }}|general|local-obi-dir" size="80" placeholder="~/project/obi"
-        value="{{ app_config['general']['local-obi-dir'] | replace('"$HOME"', '$HOME' ) }}">Local OBI path</vscode-text-field>
+        value="{{ app_config['general']['local-obi-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Local OBI path') }}</vscode-text-field>
       <br />
       <br />
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-1" id="{{ class_prefix }}|general|remote-obi-dir" size="80" placeholder="~/project/obi"
-        value="{{ app_config['general']['remote-obi-dir'] | replace('"$HOME"', '$HOME' ) }}">Remote OBI path</vscode-text-field>
+        value="{{ app_config['general']['remote-obi-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Remote OBI path') }}</vscode-text-field>
     </section>
   </vscode-panel-view>
 
@@ -106,7 +105,7 @@
   <vscode-panel-view id="view-2">
     <section>
 
-      <h2>General</h2>
+      <h2>{{ global_stuff['get_text']('General') }}</h2>
 
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|TGTRLS" placeholder="*CURRENT"
         value="{{ general_settings['TGTRLS'] }}">TGTRLS</vscode-text-field>
@@ -151,7 +150,7 @@
         <colgroup></colgroup>
         <tr>
           <td>
-            <h2>Individual language settings</h2>
+            <h2>{{ global_stuff['get_text']('Individual language settings') }}</h2>
           </td>
           <td>
             &nbsp;
@@ -160,7 +159,7 @@
             &nbsp;
           </td>
           <td>
-            <vscode-button config="{{ class_prefix }}" id="add_language_settings">Add language</vscode-button>
+            <vscode-button config="{{ class_prefix }}" id="add_language_settings">{{ global_stuff['get_text']('Add language') }}</vscode-button>
           </td>
           <td>
             <vscode-text-field config="{{ class_prefix }}" panel="tab-2" placeholder="sqlrpgle.pgm" id="add_language_settings_name"></vscode-text-field>
@@ -174,7 +173,7 @@
           <colgroup></colgroup>
           <tr>
             <td style="width: 50%"><h3>{{ key }}</h3></td>
-            <td><vscode-button name="language-settings-add-property" config="{{ class_prefix }}" language="{{ key }}" id_of_property="{{ key }}|new_property">Add property</vscode-button></td>
+            <td><vscode-button name="language-settings-add-property" config="{{ class_prefix }}" language="{{ key }}" id_of_property="{{ key }}|new_property">{{ global_stuff['get_text']('Add property') }}</vscode-button></td>
             <td>
               <vscode-dropdown id="{{ key }}|new_property">
                 {% for ks, vs in general_settings %}
@@ -198,7 +197,7 @@
       <hr />
       <br />
       
-      <h2>General commands</h2>
+      <h2>{{ global_stuff['get_text']('General commands') }}</h2>
       {% set cmds = app_global['cmds'] %}
 
       {% for key, value in cmds %}
@@ -214,7 +213,7 @@
       <br />
       
       
-      <h2>Compile commands</h2>
+      <h2>{{ global_stuff['get_text']('Compile commands') }}</h2>
       {% set compile_cmds = app_global['compile-cmds'] %}
 
       {% for key, value in compile_cmds %}
@@ -229,7 +228,7 @@
       <hr />
       <br />
       
-      <h2>Compile steps</h2>
+      <h2>{{ global_stuff['get_text']('Compile steps') }}</h2>
       {% set compile_steps = app_global['steps'] %}
 
       {% for key, value in compile_steps %}
@@ -248,27 +247,23 @@
     <section>
       
       <vscode-text-area rows="4" class="{{ class_prefix }}_save_app type_array {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-3" id="{{ class_prefix }}|general|supported-object-types" 
-        placeholder="pgm&#10;file&#10;srvpgm" value="{% if app_general['supported-object-types'] %}{{ app_general['supported-object-types'] | join('\n') }}{% endif %}">Supported object types
-      </vscode-text-area>
+        placeholder="pgm&#10;file&#10;srvpgm" value="{% if app_general['supported-object-types'] %}{{ app_general['supported-object-types'] | join('\n') }}{% endif %}">{{ global_stuff['get_text']('Supported object types') }}</vscode-text-area>
 
       <br/>
       <br/>
 
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-3" id="{{ class_prefix }}|general|file-system-encoding" placeholder="utf-8"
-        value="{{ app_general['file-system-encoding'] }}">File system encoding
-      </vscode-text-field>
+        value="{{ app_general['file-system-encoding'] }}">{{ global_stuff['get_text']('File system encoding') }}</vscode-text-field>
 
       <br/>
       <br/>
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-3" id="{{ class_prefix }}|general|console-output-encoding" placeholder="utf-8"
-        value="{{ app_general['console-output-encoding'] }}">Console output encoding
-      </vscode-text-field>
+        value="{{ app_general['console-output-encoding'] }}">{{ global_stuff['get_text']('Console output encoding') }}</vscode-text-field>
 
       <br/>
       <br/>
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-3" id="{{ class_prefix }}|general|max-threads" placeholder="20"
-        value="{{ app_general['max-threads'] }}">Maximum number of threads
-      </vscode-text-field>
+        value="{{ app_general['max-threads'] }}">{{ global_stuff['get_text']('Maximum number of threads') }}</vscode-text-field>
     
     </section>
 
@@ -281,56 +276,47 @@
     <section>
 
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compiled-object-list" placeholder=".obi/etc/object-builds.toml"
-        value="{{ app_general['compiled-object-list'] }}">Compiled object list
-      </vscode-text-field>
+        value="{{ app_general['compiled-object-list'] }}">{{ global_stuff['get_text']('Compiled object list') }}</vscode-text-field>
             
       <br/>
       <br/>
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|remote-source-list" placeholder=".obi/etc/source-list-remote.toml"
-        value="{{ app_general['remote-source-list'] }}">Remote source list
-      </vscode-text-field>
+        value="{{ app_general['remote-source-list'] }}">{{ global_stuff['get_text']('Remote source list') }}</vscode-text-field>
             
       <br/>
       <br/>
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|local-source-list" placeholder=".obi/etc/source-list-local.toml"
-        value="{{ app_general['local-source-list'] }}">Local source list
-      </vscode-text-field>
+        value="{{ app_general['local-source-list'] }}">{{ global_stuff['get_text']('Local source list') }}</vscode-text-field>
             
       <br/>
       <br/>
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|source-infos" placeholder=".obi/etc/source-infos.json"
-        value="{{ app_general['source-infos'] }}">Extended source infos
-      </vscode-text-field>
+        value="{{ app_general['source-infos'] }}">{{ global_stuff['get_text']('Extended source infos') }}</vscode-text-field>
             
       <br/>
       <br/>
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|dependency-list" placeholder=".obi/etc/dependency.toml"
-        value="{{ app_general['dependency-list'] }}">Dependency list
-      </vscode-text-field>
+        value="{{ app_general['dependency-list'] }}">{{ global_stuff['get_text']('Dependency list') }}</vscode-text-field>
             
       <br/>
       <br/>
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|deployment-object-list" placeholder=".obi/build-output/object-list.txt"
-        value="{{ app_general['deployment-object-list'] }}">Deployment object list
-      </vscode-text-field>
+        value="{{ app_general['deployment-object-list'] }}">{{ global_stuff['get_text']('Deployment object list') }}</vscode-text-field>
             
       <br/>
       <br/>
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|build-output-dir" placeholder=".obi/build-output/objects"
-        value="{{ app_general['build-output-dir'] }}">Build output dir
-      </vscode-text-field>
+        value="{{ app_general['build-output-dir'] }}">{{ global_stuff['get_text']('Build output dir') }}</vscode-text-field>
     
       <br/>
       <br/>
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compile-list" placeholder=".obi/build-output/compile-list.json"
-        value="{{ app_general['compile-list'] }}">Compile list
-      </vscode-text-field>
+        value="{{ app_general['compile-list'] }}">{{ global_stuff['get_text']('Compile list') }}</vscode-text-field>
     
       <br/>
       <br/>
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|compiled-object-list-md" placeholder=".obi/build-output/compiled-object-list.md"
-        value="{{ app_general['compiled-object-list-md'] }}">Compiled object list md
-      </vscode-text-field>
+        value="{{ app_general['compiled-object-list-md'] }}">{{ global_stuff['get_text']('Compiled object list md') }}</vscode-text-field>
     
 
     </section>

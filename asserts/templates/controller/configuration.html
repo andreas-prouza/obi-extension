@@ -8,29 +8,29 @@
   <link rel="stylesheet" href="{{ config_css }}">
 </head>
 
+
 <body>
   
-  <div id="still_missing"><br/><b>⚠️ There are still missing values ...</b><br/></div>
+  <div id="still_missing"><br/><b>⚠️ {{ global_stuff['get_text']('There are still missing values ...') }}</b><br/></div>
 
   <div class="save-button-wrapper">
-    <vscode-button class="save-button" id="save_config">Save</vscode-button>
+    <vscode-button class="save-button" id="save_config">{{  global_stuff['get_text']('Save') }}</vscode-button>
   </div>
 
   <vscode-panels activeid="project_cfg" aria-label="Default">
 
-    <vscode-panel-tab id="project_cfg"><h2>Project configuration</h2></vscode-panel-tab>
-    <vscode-panel-tab id="user_cfg"><h2>User configuration</h2></vscode-panel-tab>
+    <vscode-panel-tab id="project_cfg"><h2>{{  global_stuff['get_text']('Project configuration') }}</h2></vscode-panel-tab>
+    <vscode-panel-tab id="user_cfg"><h2>{{  global_stuff['get_text']('User configuration') }}</h2></vscode-panel-tab>
 
     
     <vscode-panel-view id="project_cfg-view">
       
       <section>
       
-        📝 <a href='command:vscode.open?{{ project_config_file }}'>Open project config file</a>
+        📝 <a href='command:vscode.open?{{ project_config_file }}'>{{  global_stuff['get_text']('Open project config file') }}</a>
         <br/>
         <br/>
 
-        
         {% set class_prefix = 'project' %}
 
         {% set app_config = project_config %}
@@ -45,7 +45,7 @@
 
       <section>
         
-        📝 <a href='command:vscode.open?{{ user_config_file }}'>Open user config file</a>
+        📝 <a href='command:vscode.open?{{ user_config_file }}'>{{  global_stuff['get_text']('Open user config file') }}</a>
         <br/>
         <br/>
 

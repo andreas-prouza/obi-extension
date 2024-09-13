@@ -75,6 +75,8 @@ export class OBIConfiguration {
 
 
 
+
+
   private static async generate_html(context: vscode.ExtensionContext, extensionUri: Uri, webview: Webview): Promise<string> {
     const workspaceUri = Workspace.get_workspace_uri();
     const project_config = AppConfig.get_app_confg(AppConfig.get_project_app_config(workspaceUri));
@@ -87,6 +89,7 @@ export class OBIConfiguration {
     const pwd = await context.secrets.get(`obi|${host}|${user}`);
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
+    
     const html = nunjucks.render('controller/configuration.html', 
       {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),

@@ -143,7 +143,7 @@ export class SourceInfos {
 
     const json_file: string = path.join(Workspace.get_workspace(), AppConfig.get_app_confg().general['source-infos']||'.obi/etc/source-infos.json');
 
-    DirTool.write_file(json_file, JSON.stringify(sources));
+    DirTool.write_file(json_file, JSON.stringify(sources, undefined, 2));
   }
 
 
