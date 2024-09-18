@@ -7,21 +7,21 @@
   </head>
   <body>
     
-    <h2>global_stuff['get_text']('OBI invalid!')</h2>
+    <h2>{{ global_stuff['get_text']('OBI invalid!') }}</h2>
     <br/>
-    global_stuff['get_text']('Please finish configuration first')
+    {{ global_stuff['get_text']('Please finish configuration first') }}
     <br/>
     <br/>
-    <vscode-button id="config">global_stuff['get_text']('Configuration')</vscode-button>
+    <vscode-button id="config">{{ global_stuff['get_text']('Configuration') }}</vscode-button>
 
     <br/>
     <br/>
     <br/>
-    global_stuff['get_text']('Or initialize your current folder with OBI:')
+    {{ global_stuff['get_text']('Or initialize your current folder with OBI:') }}
     <br/>
     <br/>
-    <vscode-button id="initialize_folder">global_stuff['get_text']('Initialize')</vscode-button>
-    <vscode-button id="reload_workspace">global_stuff['get_text']('Reload')</vscode-button>
+    <vscode-button id="initialize_folder">{{ global_stuff['get_text']('Initialize') }}</vscode-button>
+    <vscode-button id="reload_workspace">{{ global_stuff['get_text']('Reload') }}</vscode-button>
 
 
     <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>

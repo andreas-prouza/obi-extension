@@ -82,7 +82,7 @@ export class SourceListConfig {
 
     const config = AppConfig.get_app_confg();
 
-    const source_list: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, SourceListConfig.source_list_file)) || [];
+    const source_list: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, SourceListConfig.source_list_file)) || [];
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
     const html = nunjucks.render('source_list/source-list-config.html', 
@@ -153,7 +153,7 @@ export class SourceListConfig {
 
   private static delete_filter(lib: string, file: string, member: string) {
 
-    const json_file: string = path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, SourceListConfig.source_list_file);
+    const json_file: string = path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, SourceListConfig.source_list_file);
     const sl: source.IQualifiedSource[] = DirTool.get_json(json_file) || [];
 
     for (let i=0; i<sl.length; i++) {
@@ -169,7 +169,7 @@ export class SourceListConfig {
 
   private static add_filter(lib: string, file: string, member: string) {
 
-    const json_file: string = path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, SourceListConfig.source_list_file);
+    const json_file: string = path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, SourceListConfig.source_list_file);
     const sl: source.IQualifiedSource[] = DirTool.get_json(json_file) || [];
 
     // check if it already exist
@@ -187,7 +187,7 @@ export class SourceListConfig {
 
   private static save_filter(filter: source.IQualifiedSource[]) {
 
-    const json_file: string = path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, SourceListConfig.source_list_file);
+    const json_file: string = path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, SourceListConfig.source_list_file);
 
     DirTool.write_file(json_file, JSON.stringify(filter, undefined, 2));
   }

@@ -146,10 +146,10 @@ export function activate(context: vscode.ExtensionContext) {
 	new SourceListProvider(rootPath).register(context);
 	/*
 	vscode.window.registerTreeDataProvider(
-		'obi.source-lists',
+		'obi.source-filter',
 		new SourceListProvider(rootPath)
 	);
-	vscode.window.createTreeView('obi.source-lists', {
+	vscode.window.createTreeView('obi.source-filter', {
 		treeDataProvider: new SourceListProvider(rootPath)
 	});
 	*/
@@ -164,7 +164,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.source-lists.maintain-source-infos', () => {
+		vscode.commands.registerCommand('obi.source-filter.maintain-source-infos', () => {
 			// Only available with workspaces
 			SourceInfos.render(context);
 		})

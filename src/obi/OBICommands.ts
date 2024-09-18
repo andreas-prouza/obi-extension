@@ -243,8 +243,8 @@ export class OBICommands {
       let ssh_cmd: string = `source .profile; cd '${remote_base_dir}' || exit 1; rm log/* 2>/dev/null || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a gen_src_list -p .`;
       await SSH_Tasks.executeCommand(ssh_cmd);
 
-      if (config.general['remote-source-list'])
-        await SSH_Tasks.getRemoteFile(path.join(ws, config.general['remote-source-list']), path.join(remote_base_dir, config.general['remote-source-list']));
+      if (config.general['remote-source-list'] && config.general['source-list'])
+        await SSH_Tasks.getRemoteFile(path.join(ws, config.general['remote-source-list']), path.join(remote_base_dir, config.general['source-list']));
 
       vscode.window.showInformationMessage('Remote source list transfered from remote');
     }

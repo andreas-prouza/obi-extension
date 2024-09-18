@@ -1,3 +1,17 @@
+## [0.2.7]
+
+### Added
+
+* Rename of feature `source-list` to `source-filter`
+
+
+## [0.2.6]
+
+### Added
+
+* English support for code-oss
+
+
 ## [0.2.5]
 
 ### Added

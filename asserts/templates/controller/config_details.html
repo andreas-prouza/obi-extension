@@ -31,28 +31,29 @@
       <br />
 
       {% if class_prefix != 'user' %}
-      <vscode-text-field class="" readonly="true"
-        value="">{{ global_stuff['get_text']('User (is only available in user config)') }}</vscode-text-field>
+        <vscode-text-field class="" readonly="true"
+          value="">{{ global_stuff['get_text']('User (is only available in user config)') }}</vscode-text-field>
 
-      <br />
-      <br />      
-      <vscode-text-field class="" readonly="true"
-        value="">🔑 {{ global_stuff['get_text']('Password (is only available in user config)') }}</vscode-text-field>
+        <br />
+        <br />      
+        <vscode-text-field class="" readonly="true"
+          value="">🔑 {{ global_stuff['get_text']('Password (is only available in user config)') }}</vscode-text-field>
 
-      <br />
-      <br />
+        <br />
+        <br />
       {% endif %}
+      
       {% if class_prefix == 'user' %}
-      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-1" id="{{ class_prefix }}|connection|ssh-user"
-        value="{{ app_config['connection']['ssh-user'] }}">{{ global_stuff['get_text']('User') }}</vscode-text-field>
+        <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-1" id="{{ class_prefix }}|connection|ssh-user"
+          value="{{ app_config['connection']['ssh-user'] }}">{{ global_stuff['get_text']('User') }}</vscode-text-field>
 
-      <br />
-      <br />
-      <vscode-text-field class="" panel="tab-1" id="{{ class_prefix }}|SSH_PASSWORD" type="password"
-        value="{{ SSH_PASSWORD }}">🔑 {{ global_stuff['get_text']('Password') }}</vscode-text-field>
+        <br />
+        <br />
+        <vscode-text-field class="" panel="tab-1" id="{{ class_prefix }}|SSH_PASSWORD" type="password"
+          value="{{ SSH_PASSWORD }}">🔑 {{ global_stuff['get_text']('Password') }}</vscode-text-field>
 
-      <br />
-      <br />
+        <br />
+        <br />
       {% endif %}
 
       <br />
@@ -107,13 +108,13 @@
 
       <h2>{{ global_stuff['get_text']('General') }}</h2>
 
-      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|TGTRLS" placeholder="*CURRENT"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-2" id="{{ class_prefix }}|global|settings|general|TGTRLS" placeholder="*CURRENT"
         value="{{ general_settings['TGTRLS'] }}">TGTRLS</vscode-text-field>
-      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|DBGVIEW" placeholder="*ALL"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-2" id="{{ class_prefix }}|global|settings|general|DBGVIEW" placeholder="*ALL"
         value="{{ general_settings['DBGVIEW'] }}">DBGVIEW</vscode-text-field>
-      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|TGTCCSID" placeholder="*JOB"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-2" id="{{ class_prefix }}|global|settings|general|TGTCCSID" placeholder="*JOB"
         value="{{ general_settings['TGTCCSID'] }}">TGTCCSID</vscode-text-field>
-      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|STGMDL" placeholder="*SNGLVL"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-2" id="{{ class_prefix }}|global|settings|general|STGMDL" placeholder="*SNGLVL"
         value="{{ general_settings['STGMDL'] }}">STGMDL</vscode-text-field>
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-2" id="{{ class_prefix }}|global|settings|general|ACTGRP" placeholder="*CALLER|NAME|*NEW"
         value="{{ general_settings['ACTGRP'] }}">ACTGRP</vscode-text-field>
@@ -262,7 +263,7 @@
 
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-3" id="{{ class_prefix }}|general|max-threads" placeholder="20"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-3" id="{{ class_prefix }}|general|max-threads" placeholder="20"
         value="{{ app_general['max-threads'] }}">{{ global_stuff['get_text']('Maximum number of threads') }}</vscode-text-field>
     
     </section>
@@ -285,8 +286,8 @@
             
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|local-source-list" placeholder=".obi/etc/source-list-local.toml"
-        value="{{ app_general['local-source-list'] }}">{{ global_stuff['get_text']('Local source list') }}</vscode-text-field>
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="tab-4" id="{{ class_prefix }}|general|source-list" placeholder=".obi/etc/source-list-local.toml"
+        value="{{ app_general['source-list'] }}">{{ global_stuff['get_text']('Local source list') }}</vscode-text-field>
             
       <br/>
       <br/>

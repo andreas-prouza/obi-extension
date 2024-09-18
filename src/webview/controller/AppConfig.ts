@@ -6,24 +6,6 @@ import { Constants } from '../../Constants';
 import { Workspace } from '../../utilities/Workspace';
 
 
-export const APP_CONFIG_TEMPLATE: {} = {
-  general: {
-    // key: default-value
-    "local-base-dir": "",
-    "remote-base-dir": "",
-    "supported-object-types": [],
-    "file-system-encoding": "",
-    "console-output-encoding": "",
-    "source-dir": "",
-    "compiled-object-list": "",
-    "source-list": "",
-    "dependency-list": "",
-    "deployment-object-list": "",
-    "build-output-dir": "",
-
-  }
-}
-
 
 
 export interface IConfigCompileSteps {
@@ -111,7 +93,7 @@ export class ConfigGeneral {
   public ['file-system-encoding']?: string;
   public ['console-output-encoding']?: string;
   public ['compiled-object-list']?: string;
-  public ['local-source-list']?: string;
+  public ['source-list']?: string;
   public ['remote-source-list']?: string;
   public ['source-infos']?: string;
   public ['dependency-list']?: string;
@@ -152,7 +134,7 @@ export class ConfigGeneral {
     this['console-output-encoding'] = console_output_encoding;
     this['compiled-object-list'] = compiled_object_list;
     this['remote-source-list'] = remote_source_list;
-    this['local-source-list'] = local_source_list;
+    this['source-list'] = local_source_list;
     this['source-infos'] = source_infos;
     this['dependency-list'] = dependency_list;
     this['deployment-object-list'] = deployment_object_list;
@@ -175,12 +157,15 @@ export class ConfigGeneral {
       !this['file-system-encoding'] ||
       !this['console-output-encoding'] ||
       !this['compiled-object-list'] ||
+      !this['source-list'] ||
       !this['remote-source-list'] ||
+      !this['source-infos'] ||
       !this['dependency-list'] ||
       !this['deployment-object-list'] ||
       !this['build-output-dir'] ||
       !this['compile-list'] ||
-      !this['compiled-object-list-md']
+      !this['compiled-object-list-md'] ||
+      !this['max-threads']
     );
   }
 
@@ -373,7 +358,7 @@ export class AppConfig {
         gen['check-remote-source-on-startup'] === true,
         AppConfig.get_string(gen['source-infos']),
         gen['max-threads'],
-        AppConfig.get_string(gen['local-source-list'])
+        AppConfig.get_string(gen['source-list'])
       );
     }
 

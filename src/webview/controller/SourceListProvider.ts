@@ -48,7 +48,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       return this.get_child_elements(element);
     }
 
-    const source_list_path = path.join(this.workspaceRoot, Constants.SOURCE_LIST_FOLDER_NAME);
+    const source_list_path = path.join(this.workspaceRoot, Constants.SOURCE_FILTER_FOLDER_NAME);
     if (!DirTool.dir_exists(source_list_path)) {
       return Promise.resolve([]);
     }
@@ -59,7 +59,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     for (let index = 0; index < source_list.length; index++) {
       const element = source_list[index];
 
-      const file = path.join(this.workspaceRoot, Constants.SOURCE_LIST_FOLDER_NAME, element);
+      const file = path.join(this.workspaceRoot, Constants.SOURCE_FILTER_FOLDER_NAME, element);
 
       if (!DirTool.is_file(file))
         continue;
@@ -140,23 +140,16 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
 
 
-  async add_new_source_list(): Promise<string|undefined> {
+  async add_new_source_filter(): Promise<string|undefined> {
 
-    const config = AppConfig.get_app_confg();
-
-    if (!config.general['source-list']) {
-      vscode.window.showInformationMessage('Config "general.source-list" missing');
-      return undefined;
-    }
-
-    const source_list: string | undefined = await vscode.window.showInputBox({ title: `Name of source list`, placeHolder: "source list name" });
+    const source_list: string | undefined = await vscode.window.showInputBox({ title: `Name of source filter`, placeHolder: "source filter name" });
     if (!source_list)
-      throw new Error('Canceled by user. No source list name provided');
+      throw new Error('Canceled by user. No source filter name provided');
 
 
     const data: source.IQualifiedSource[] = [{ "source-lib": '.*', "source-file": '.*', 'source-member': '.*' }];
 
-    DirTool.write_file(path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, `${source_list}.json`), JSON.stringify(data, undefined, 2));
+    DirTool.write_file(path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, `${source_list}.json`), JSON.stringify(data, undefined, 2));
 
     return `${source_list}.json`;
   }
@@ -171,36 +164,36 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     };
 
     // build
-    vscode.window.registerTreeDataProvider('obi.source-lists', this);
+    vscode.window.registerTreeDataProvider('obi.source-filter', this);
 
     // create
-    const tree = vscode.window.createTreeView('obi.source-lists', options);
+    const tree = vscode.window.createTreeView('obi.source-filter', options);
 
-    vscode.commands.registerCommand('obi.source-lists.update', () => {
+    vscode.commands.registerCommand('obi.source-filter.update', () => {
       this.refresh();
     });
 
-    vscode.commands.registerCommand('obi.source-lists.add', () => {
-      this.add_new_source_list().then((source_list: string|undefined) => {
+    vscode.commands.registerCommand('obi.source-filter.add', () => {
+      this.add_new_source_filter().then((source_list: string|undefined) => {
         this.refresh();
         if (source_list)
           SourceListConfig.render(context, source_list);
       });
     });
 
-    vscode.commands.registerCommand('obi.source-lists.show-view', async (item: SourceListItem) => {
+    vscode.commands.registerCommand('obi.source-filter.show-view', async (item: SourceListItem) => {
       SourceList.render(context.extensionUri, Workspace.get_workspace_uri(), item.source_list);
     });
 
-    vscode.commands.registerCommand('obi.source-lists.edit-config', async (item: SourceListItem) => {
+    vscode.commands.registerCommand('obi.source-filter.edit-config', async (item: SourceListItem) => {
       SourceListConfig.render(context, item.source_list);
     });
 
-    vscode.commands.registerCommand('obi.source-lists.delete-config', async (item: SourceListItem) => {
+    vscode.commands.registerCommand('obi.source-filter.delete-config', async (item: SourceListItem) => {
 
       if (SourceListConfig.currentPanel && SourceListConfig.source_list_file == item.source_list)
         SourceListConfig.currentPanel.dispose();
-      fs.rmSync(path.join(Workspace.get_workspace(), Constants.SOURCE_LIST_FOLDER_NAME, item.source_list));
+      fs.rmSync(path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, item.source_list));
       this.refresh();
     });
 
