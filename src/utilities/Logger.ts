@@ -15,8 +15,8 @@ export const logger = winston.createLogger({
     // - Write all logs with importance level of `error` or less to `error.log`
     // - Write all logs with importance level of `info` or less to `combined.log`
     //
-    new winston.transports.File({ dirname: '/home/andreas/projekte/tests/test/test-build-obi/log', filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ dirname: '/home/andreas/projekte/tests/test/test-build-obi/log', filename: 'combined.log' }),
+    new winston.transports.File({ dirname: 'log', filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ dirname: 'log', filename: 'combined.log' }),
   ],
 });
 

@@ -1,3 +1,10 @@
+## [0.2.8]
+
+### Changed
+
+* Relative log path
+
+
 ## [0.2.7]
 
 ### Added
