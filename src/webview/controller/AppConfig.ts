@@ -434,6 +434,7 @@ export class AppConfig {
     
     const ws_uri = Workspace.get_workspace_uri();
 
+    this._config?.general['local-obi-dir']
     const project_app_config: {} = AppConfig.get_project_app_config(ws_uri);
     const user_app_config: {} = AppConfig.get_user_app_config(ws_uri);
 

@@ -26,9 +26,8 @@ export class OBITools {
   public static is_native(): boolean {
 
     const config = AppConfig.get_app_confg();
-    const check = !config.general['use-remote-obi'] ?? true;
 
-    return check || OBITools.get_local_obi_python_path() == undefined;
+    return OBITools.get_local_obi_python_path() == undefined;
   }
 
 
