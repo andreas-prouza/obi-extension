@@ -13,6 +13,8 @@ const crypto = require('crypto')
 export class DirTool {
 
 
+
+
   public static *get_all_files_in_dir(rootdir:string, dir: string, file_extensions: string[]): Generator<string> | undefined {
     
     if (!DirTool.dir_exists(path.join(rootdir, dir)))

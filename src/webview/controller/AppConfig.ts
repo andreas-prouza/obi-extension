@@ -299,7 +299,8 @@ export class AppConfig {
   public general: ConfigGeneral;
   public global: ConfigGlobal;
 
-  private static _config: AppConfig;
+  private static _config: AppConfig|undefined = undefined;
+  private static _last_loading_time: number = 0;
 
 
   constructor(con?: ConfigConnection, gen?: ConfigGeneral, glob?: ConfigGlobal) {
@@ -314,6 +315,12 @@ export class AppConfig {
   }
 
 
+  public static reset() {
+    this._last_loading_time = 0;
+    this._config = undefined;
+  }
+
+
 
   public static get_app_confg(config_dict?: AppConfig): AppConfig {
 
@@ -323,8 +330,12 @@ export class AppConfig {
     let gen_obj: ConfigGeneral|undefined = undefined;
     let glob_obj: ConfigGlobal|undefined = undefined;
 
-    if (!configs)
+    if (!configs) {
+      if (this._config && this._last_loading_time > (Date.now() - 2000)) // Reuse if only 2 seconds old
+        return this._config;
+
       configs = AppConfig.load_configs();
+    }
 
     
     if (configs.connection) {
@@ -368,6 +379,8 @@ export class AppConfig {
     }
 
     let app_config = new AppConfig(con_obj, gen_obj, glob_obj);
+    this._last_loading_time = Date.now();
+    this._config = app_config;
 
     return app_config;
   }
@@ -424,9 +437,9 @@ export class AppConfig {
     const project_app_config: {} = AppConfig.get_project_app_config(ws_uri);
     const user_app_config: {} = AppConfig.get_user_app_config(ws_uri);
 
-    AppConfig._config = OBITools.override_dict(user_app_config, project_app_config);
+    const config = OBITools.override_dict(user_app_config, project_app_config);
 
-    return AppConfig._config;
+    return config;
     
   }
 

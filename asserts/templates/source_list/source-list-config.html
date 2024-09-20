@@ -11,19 +11,19 @@
 <body>
 
 
-  <h1>{{ global_stuff['get_text']('Source filter config:') }} <code>{{ source_list_file }}</code></h1>
+  <h1>{{ global_stuff['get_text']('Source filter config:') | safe }} <code>{{ source_list_file }}</code></h1>
 
   
   <div class="save-button-wrapper">
-    <vscode-button class="save-button" id="save_config">{{ global_stuff['get_text']('Save') }}</vscode-button>
+    <vscode-button class="save-button" id="save_config">{{ global_stuff['get_text']('Save') | safe }}</vscode-button>
   </div>
   
   <hr />
   <br/>
 
-  💡 {{ global_stuff['get_text']('Search patterns are regex based.') }}<br/>
-  {{ global_stuff['get_text']('So, instead of <code>*</code> please use <code>.*</code>.') }}<br/><br/>
-  {{ global_stuff['get_text']('You can define multiple patterns separated by comma (<code>,</code>)') }}.
+  💡 {{ global_stuff['get_text']('Search patterns are regex based.') | safe }}<br/>
+  {{ global_stuff['get_text']('So, instead of <code>*</code> please use <code>.*</code>.') | safe }}<br/><br/>
+  {{ global_stuff['get_text']('You can define multiple patterns separated by comma (<code>,</code>)') | safe }}.
 
   <br/>
   <br/>
@@ -40,9 +40,9 @@
     data-buttons-align="left">
     <thead>
       <tr>
-        <th>{{ global_stuff['get_text']('Lib') }}</th>
-        <th>{{ global_stuff['get_text']('File') }}</th>
-        <th>{{ global_stuff['get_text']('Member') }}</th>
+        <th>{{ global_stuff['get_text']('Lib') | safe }}</th>
+        <th>{{ global_stuff['get_text']('File') | safe }}</th>
+        <th>{{ global_stuff['get_text']('Member') | safe }}</th>
       </tr>
     </thead>
     <tbody>
@@ -68,7 +68,7 @@
       </tr>
       {% endfor %}
       <tr><td>&nbsp;</td></tr>
-      <tr><td>{{ global_stuff['get_text']('Add new') }}</td></tr>
+      <tr><td>{{ global_stuff['get_text']('Add new') | safe }}</td></tr>
       <tr>
         <td>
           <vscode-text-field id="new_lib" placeholder="prouzalib"></vscode-text-field>

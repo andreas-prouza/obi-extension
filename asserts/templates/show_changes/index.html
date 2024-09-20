@@ -11,11 +11,11 @@
     <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
     
-    <h1>{{ global_stuff['get_text']('Summary') }}</h1>
+    <h1>{{ global_stuff['get_text']('Summary') | safe }}</h1>
     {% if compile_list %}
     <br/><br/>
     <div>
-      {{ global_stuff['get_text']('Created at') }} <b><u>{{ compile_list['timestamp'] }}</u></b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='command:vscode.open?{{ compile_file }}'>{{ global_stuff['get_text']('open JSON file') }}</a>
+      {{ global_stuff['get_text']('Created at') | safe }} <b><u>{{ compile_list['timestamp'] }}</u></b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='command:vscode.open?{{ compile_file }}'>{{ global_stuff['get_text']('open JSON file') | safe }}</a>
     </div>
     <br/>
     {% endif %}
@@ -36,7 +36,7 @@
     data-pagination-detail-h-align="left"
     data-buttons-align="left"
     data-search-align="left">
-      <tr><th>{{ global_stuff['get_text']('New sources') }}</th><th>{{ global_stuff['get_text']('Changed sources') }}</th><th>{{ global_stuff['get_text']('Dependend objects') }}</th></tr>
+      <tr><th>{{ global_stuff['get_text']('New sources') | safe }}</th><th>{{ global_stuff['get_text']('Changed sources') | safe }}</th><th>{{ global_stuff['get_text']('Dependend objects') | safe }}</th></tr>
       <tr>
         <td>
           <ul>
@@ -68,7 +68,7 @@
     
     <hr />
 
-    <h2>{{ global_stuff['get_text']('Details') }}</h2>
+    <h2>{{ global_stuff['get_text']('Details') | safe }}</h2>
     <vscode-divider role="presentation"></vscode-divider>
 
     <table id="details"
@@ -87,16 +87,16 @@
     data-search-align="left">
     <thead>
       <tr>
-        <th>{{ global_stuff['get_text']('level') }}</th>
-        <th>{{ global_stuff['get_text']('object') }}</th>
-        <th>{{ global_stuff['get_text']('status') }}</th>
-        <th>{{ global_stuff['get_text']('commands') }}</th>
+        <th>{{ global_stuff['get_text']('level') | safe }}</th>
+        <th>{{ global_stuff['get_text']('object') | safe }}</th>
+        <th>{{ global_stuff['get_text']('status') | safe }}</th>
+        <th>{{ global_stuff['get_text']('commands') | safe }}</th>
       </tr>
     </thead>
     <tbody>
       {% for level_item in compile_list['compiles'] %}
         <tr>
-          <th>{{ level_item['level'] }}. {{ global_stuff['get_text']('level') }}</th>
+          <th>{{ level_item['level'] }}. {{ global_stuff['get_text']('level') | safe }}</th>
         </tr>
         {% for source_item in level_item['sources'] %}
         <tr>
@@ -111,12 +111,12 @@
             <span class="{{ last_cmd.status }}">{{ last_cmd.status }}</span>
           </td>
           <td>
-            <details><summary>{{ source_item['cmds'] | length }} {{ global_stuff['get_text']('commands') }}</summary>
+            <details><summary>{{ source_item['cmds'] | length }} {{ global_stuff['get_text']('commands') | safe }}</summary>
               <table>
                 <tr>
-                  <th>{{ global_stuff['get_text']('timestamp') }}</th>
-                  <th>{{ global_stuff['get_text']('status') }}</th>
-                  <th>{{ global_stuff['get_text']('command') }}</th>
+                  <th>{{ global_stuff['get_text']('timestamp') | safe }}</th>
+                  <th>{{ global_stuff['get_text']('status') | safe }}</th>
+                  <th>{{ global_stuff['get_text']('command') | safe }}</th>
                 </tr>
               {% for cmd_entry in source_item['cmds'] %}
                 <tr>

@@ -7,26 +7,26 @@
   </head>
   <body>
     
-    <h2>{{ global_stuff['get_text']('Use OBI in your project?') }}</h2>
+    <h2>{{ global_stuff['get_text']('Use OBI in your project?') | safe }}</h2>
     <br/>
-    {{ global_stuff['get_text']('You need to open a folder containing an OBI project:') }}
+    {{ global_stuff['get_text']('You need to open a folder containing an OBI project:') | safe }}
     <br/>
     <br/>
-    <vscode-button id="open_folder">{{ global_stuff['get_text']('Open folder') }}</vscode-button>
+    <vscode-button id="open_folder">{{ global_stuff['get_text']('Open folder') | safe }}</vscode-button>
     
     {% if workspace_exist %}
     <br/>
     <br/>
     <br/>
-    {{ global_stuff['get_text']('Or initialize your current folder with OBI:') }}
+    {{ global_stuff['get_text']('Or initialize your current folder with OBI:') | safe }}
     <br/>
     <br/>
-    <vscode-button id="initialize_folder">{{ global_stuff['get_text']('Initialize') }}</vscode-button>
+    <vscode-button id="initialize_folder">{{ global_stuff['get_text']('Initialize') | safe }}</vscode-button>
 
     <br/>
     <br/>
     <br/>
-    <vscode-button id="reload_window">{{ global_stuff['get_text']('Reload window') }}</vscode-button>
+    <vscode-button id="reload_window">{{ global_stuff['get_text']('Reload window') | safe }}</vscode-button>
 
     {% endif %}
 

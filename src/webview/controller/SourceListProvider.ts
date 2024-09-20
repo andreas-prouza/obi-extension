@@ -142,7 +142,11 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
   async add_new_source_filter(): Promise<string|undefined> {
 
-    const source_list: string | undefined = await vscode.window.showInputBox({ title: `Name of source filter`, placeHolder: "source filter name" });
+    const source_list: string | undefined = await vscode.window.showInputBox({ title: `Name of source filter`, placeHolder: "source filter name", validateInput(value) {
+      if (value.replace(/[\/|\\:*?"<>]/g, " ") != value)
+        return "Not allowed characters: \\, /, |, :, *, ?, \", <, >";
+      return null;
+    },});
     if (!source_list)
       throw new Error('Canceled by user. No source filter name provided');
 

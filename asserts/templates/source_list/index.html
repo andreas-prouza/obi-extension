@@ -16,7 +16,7 @@
     <img src="{{ global_stuff['logo'] }}" alt="logo" height=100 style="position: absolute; top:8.5; right:0;">
 -->
     
-    <h1>{{ global_stuff['get_text']('Source filter:') }} <code>{{ source_list_file | replace('.json', '') }}</code></h1>
+    <h1>{{ global_stuff['get_text']('Source filter:') | safe }} <code>{{ source_list_file | replace('.json', '') }}</code></h1>
 
     <hr />
     <br/>
@@ -43,7 +43,7 @@
               {% if source_list|length > 0 %}
                   {% for key, value in source_list[0] %}
                     {% if key != 'path' %}
-                      <th data-field="{{ key }}" data-sortable="true" data-filter-control={% if key == 'status' %}"select"{% else %}"input"{% endif %}  data-filter-control-container="#filter">{{ global_stuff['get_text'](key) }}</th>
+                      <th data-field="{{ key }}" data-sortable="true" data-filter-control={% if key in ['status', 'source-lib', 'source-file'] %}"select"{% else %}"input"{% endif %}  data-filter-control-container="#filter">{{ global_stuff['get_text'](key) | safe }}</th>
                     {% endif %}
                   {% endfor %}
               {% endif %}

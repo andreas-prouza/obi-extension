@@ -215,6 +215,7 @@ export class OBIConfiguration {
       toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_USER_FILE);
     
     DirTool.write_toml(toml_file, app_config);
+    AppConfig.reset();
 
     if (old_config.attributes_missing() && !AppConfig.get_app_confg().attributes_missing())
       vscode.commands.executeCommand('workbench.action.reloadWindow');

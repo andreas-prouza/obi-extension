@@ -218,6 +218,20 @@ export class SSH_Tasks {
 
 
 
+  public static async create_remote_project_dir(): Promise<void> {
+    const config = AppConfig.get_app_confg();
+    if (!config.general['remote-base-dir'] || config.general['remote-base-dir'].length < 4) // to be sure it's not root!
+    throw Error(`Config attribute 'config.general.remote_base_dir' invalid: ${config.general['remote-base-dir']}`);
+  
+    const remote_base_dir: string = config.general['remote-base-dir'];
+    const remote_src_dir: string = `${remote_base_dir}/${config.general['source-dir']||'src'}`;
+    const remote_build_out_dir: string = `${remote_base_dir}/${config.general['build-output-dir'] || Constants.BUILD_OUTPUT_DIR}`;
+    const remote_src_filter_dir: string = `${remote_base_dir}/${Constants.SOURCE_FILTER_FOLDER_NAME}`;
+    const cmd = `mkdir -p ${remote_src_dir} ${remote_build_out_dir} ${remote_src_filter_dir}`;
+
+  }
+
+
 
   public static async cleanup_directory(again?: boolean, return_value?: boolean): Promise<boolean> {
 
@@ -237,6 +251,16 @@ export class SSH_Tasks {
       throw Error(`Config attribute 'config.general.remote_base_dir' invalid: ${config.general['remote-base-dir']}`);
     
     const remote_base_dir: string = config.general['remote-base-dir'];
+    const answer = await vscode.window.showInformationMessage(`Process with remote folder: '${remote_base_dir}'?`, { modal: true }, ...['Yes', 'No']);
+    switch (answer) {
+      case 'No':
+        throw new Error('Transfer canceled by user');
+      case undefined:
+        throw new Error('Transfer canceled by user');
+      case 'Yes':
+        break;
+    }
+
     const cmd = `source .profile; cd ${remote_base_dir} 2> /dev/null || mkdir -p ${remote_base_dir} && cd ${remote_base_dir} && echo "pwd: $(pwd)" || exit 1; [ \`echo $(pwd) | wc -c\` -ge 3 ] &&  echo "Current dir: $(pwd)" ||  exit 1  ;  echo "Change back from $(pwd)" &&  cd -  && echo "pwd 2: $(pwd)" && rm -rf ${remote_base_dir}`;
     logger.info(`Execute cmd: ${cmd}`);
     const result = await SSH_Tasks.ssh.execCommand(cmd);

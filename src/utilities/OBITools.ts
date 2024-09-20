@@ -13,6 +13,7 @@ import * as fs from 'fs-extra';
 import { logger } from './Logger';
 import { OBICommands } from '../obi/OBICommands';
 import { LocaleText } from './LocaleText';
+import { platform } from 'os';
 
 
 
@@ -25,9 +26,32 @@ export class OBITools {
   public static is_native(): boolean {
 
     const config = AppConfig.get_app_confg();
+    const check = !config.general['use-remote-obi'] ?? true;
 
-    return !config.general['use-remote-obi'] ?? true;
+    return check || OBITools.get_local_obi_python_path() == undefined;
   }
+
+
+
+  public static get_local_obi_python_path(): string|undefined {
+
+    const config = AppConfig.get_app_confg();
+    
+    if (!config.general['local-obi-dir'])
+      return undefined;
+    
+    let venv_bin = 'bin';
+    if (process.platform == 'win32')
+      venv_bin = 'Scripts';
+
+    const local_obi_python: string = path.join(config.general['local-obi-dir'], 'venv', venv_bin, 'python');
+
+    if (! DirTool.file_exists(local_obi_python))
+      return undefined;
+
+    return local_obi_python;
+  }
+
 
 
 
@@ -58,6 +82,7 @@ export class OBITools {
 
 
 
+
   public static async check_remote_sources(): Promise<boolean> {
 
     await OBITools.check_remote();
@@ -67,6 +92,11 @@ export class OBITools {
 
     if (!config.general['remote-source-list'])
       return false;
+
+    if (!await OBITools.check_remote()) {
+        vscode.window.showWarningMessage('Missing OBI project on remote system.');
+        await OBITools.transfer_all(false);
+    }
 
     await OBICommands.get_remote_source_list();
     const remote_source_list: source.ISource = DirTool.get_toml(path.join(ws, config.general['remote-source-list']));
@@ -136,6 +166,9 @@ export class OBITools {
 
     if (!DirTool.dir_exists(path.join(ws, '.obi', 'etc'))){
       fs.mkdirSync(path.join(ws, '.obi', 'etc'), { recursive: true});
+    }
+    if (!DirTool.dir_exists(path.join(ws, '.obi', 'log'))){
+      fs.mkdirSync(path.join(ws, '.obi', 'log'), { recursive: true});
     }
 
     const files = await DirTool.get_all_files_in_dir2(ext_ws, 'etc', ['toml', '.py']);
