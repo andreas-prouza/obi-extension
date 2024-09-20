@@ -32,10 +32,9 @@ export function activate(context: vscode.ExtensionContext) {
 	
 	SSH_Tasks.context = context;
 	OBITools.ext_context = context;
-	
+
 	// Add support for multi language
 	LocaleText.init(vscode.env.language, context);
-
 
 	//const fileUri = vscode.Uri.file('/home/andreas/projekte/opensource/extensions/obi/README.md');
 	//vscode.commands.executeCommand('vscode.open', fileUri);
@@ -50,6 +49,8 @@ export function activate(context: vscode.ExtensionContext) {
 	
 	if (!contains_obi_project)
 		return;
+	
+	OBITools.self_check();
 	
 
 	const obi_config_invalid_provider = new ConfigInvalid(context.extensionUri);

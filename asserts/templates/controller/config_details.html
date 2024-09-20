@@ -89,10 +89,6 @@
       <br />
       <br />
 
-      <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox" panel="tab-1" id="{{ class_prefix }}|general|use-remote-obi" 
-        {% if app_config['general']['use-remote-obi'] == true %}checked{% endif %}>{{ global_stuff['get_text']('Use remote OBI (show changes)') | safe }}</vscode-checkbox>
-      <br />
-      <br />
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="tab-1" id="{{ class_prefix }}|general|local-obi-dir" size="80" placeholder="~/project/obi"
         value="{{ app_config['general']['local-obi-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Local OBI path') | safe }}</vscode-text-field>
       <br />

@@ -23,6 +23,57 @@ export class OBITools {
   public static lang: LocaleText|undefined = undefined;
 
 
+  /**
+   * Self check of the extension
+   */
+  public static self_check() {
+    if (! vscode.workspace.workspaceFolders || !OBITools.ext_context) {
+      vscode.window.showErrorMessage('No workspace is opened!');
+      return;
+    }
+
+    const ws = Workspace.get_workspace();
+    const ext_ws = path.join(OBITools.ext_context.asAbsolutePath('.'), 'obi-media');
+    const current_version: string = vscode.extensions.getExtension('obi')?.packageJSON['version'];
+    const previous_version: string|undefined = DirTool.get_file_content(Constants.VERSION_FILE);
+    const config: AppConfig = AppConfig.get_app_confg();
+
+    if (!DirTool.dir_exists(path.join(ws, '.obi', 'log'))){
+      fs.mkdirSync(path.join(ws, '.obi', 'log'), { recursive: true});
+    }
+    if (!DirTool.dir_exists(path.join(ws, '.obi', Constants.SOURCE_FILTER_FOLDER_NAME))){
+      fs.mkdirSync(path.join(ws, '.obi', Constants.SOURCE_FILTER_FOLDER_NAME), { recursive: true});
+    }
+    if (!DirTool.dir_exists(path.join(ws, '.obi', 'tmp'))){
+      fs.mkdirSync(path.join(ws, '.obi', 'tmp'), { recursive: true});
+    }
+    if (!DirTool.file_exists(path.join(ws, '.obi', 'etc', config.general['source-infos']||'source-infos.json'))){
+      DirTool.write_file(path.join(ws, '.obi', 'etc', config.general['source-infos']||'source-infos.json'), '[]');
+    }
+    if (!DirTool.file_exists(path.join(ws, '.obi', 'etc', config.general['dependency-list']||'dependency.toml'))){
+      DirTool.write_file(path.join(ws, '.obi', 'etc', config.general['dependency-list']||'dependency.toml'), '');
+    }
+    if (!DirTool.file_exists(path.join(ws, '.obi', 'etc', config.general['compiled-object-list']||'object-build.toml'))){
+      DirTool.write_file(path.join(ws, '.obi', 'etc', config.general['compiled-object-list']||'object-build.toml'), '');
+    }
+    
+    switch (previous_version) {
+      case undefined:
+      case '0.2.5':
+      case '0.2.6':
+      case '0.2.7':
+      case '0.2.8':
+      case '0.2.9':
+        fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
+        fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'logger_config.py'), path.join(ws, '.obi', 'etc', 'logger_config.py'));
+    }
+
+    DirTool.write_file(Constants.VERSION_FILE, current_version);
+    
+  }
+
+
+
   public static is_native(): boolean {
 
     const config = AppConfig.get_app_confg();

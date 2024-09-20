@@ -10,5 +10,6 @@ export class Constants {
   public static readonly DEPENDEND_OBJECT_LIST: string = ".obi/tmp/dependend-object-list.json";
   public static readonly CHANGED_OBJECT_LIST: string = ".obi/tmp/changed-object-list.json";
   public static readonly REMOTE_OBI_PYTHON_PATH: string = "venv/bin/python";
+  public static readonly VERSION_FILE: string = '.obi/etc/.version';
 
 }

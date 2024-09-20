@@ -24,7 +24,6 @@ export interface IConfigGeneralProperties {
   'local-base-dir' : string,
   'remote-base-dir' : string,
   'source-dir' : string,
-  'use-remote-obi' : boolean,
   'local-obi-dir' : string,
   'remote-obi-dir' : string,
   'supported-object-types' : string[],
@@ -86,7 +85,6 @@ export class ConfigGeneral {
   public ['local-base-dir']?: string;
   public ['remote-base-dir']?: string;
   public ['source-dir']?: string;
-  public ['use-remote-obi']?: boolean;
   public ['local-obi-dir']?: string; // if not used, not necessary
   public ['remote-obi-dir']?: string;
   public ['supported-object-types']?: string[];
@@ -104,7 +102,7 @@ export class ConfigGeneral {
   public ['check-remote-source-on-startup']?: boolean;
   public ['max-threads']?: number;
 
-  constructor(local_base_dir?: string, remote_base_dir?: string, source_dir?: string, use_remote_obi?: boolean, 
+  constructor(local_base_dir?: string, remote_base_dir?: string, source_dir?: string, 
     local_obi_dir?: string, remote_obi_dir?: string, supported_object_types?: string[], file_system_encoding?: string, 
     console_output_encoding?: string, compiled_object_list?: string, dependency_list?: string, deployment_object_list?: string, 
     build_output_dir?: string, compile_list?: string, compiled_object_list_md?: string, remote_source_list?: string, 
@@ -119,8 +117,7 @@ export class ConfigGeneral {
     this['remote-base-dir'] = remote_base_dir;
 
     this['source-dir'] = source_dir;
-    this['use-remote-obi'] = use_remote_obi;
-
+    
     if (local_obi_dir == '/')
       throw Error("Root for 'local-obi-dir' is not allowed!");
     this['local-obi-dir'] = local_obi_dir;
@@ -151,7 +148,6 @@ export class ConfigGeneral {
       !this['local-base-dir'] ||
       !this['remote-base-dir'] ||
       !this['source-dir'] ||
-      this['use-remote-obi'] == undefined ||
       !this['remote-obi-dir'] ||
       (!this['supported-object-types'] || this['supported-object-types'].length == 0) ||
       !this['file-system-encoding'] ||
@@ -353,7 +349,6 @@ export class AppConfig {
         AppConfig.get_string(gen['local-base-dir']),
         AppConfig.get_string(gen['remote-base-dir']),
         AppConfig.get_string(gen['source-dir']),
-        gen['use-remote-obi'] === true,
         AppConfig.get_string(gen['local-obi-dir']),
         AppConfig.get_string(gen['remote-obi-dir']),
         gen['supported-object-types'],

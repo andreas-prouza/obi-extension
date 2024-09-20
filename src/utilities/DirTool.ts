@@ -301,6 +301,24 @@ export class DirTool {
 
 
 
+  public static get_file_content(file: string): string|undefined {
+
+    if (!DirTool.file_exists(file))
+      return undefined;
+    
+    try{
+      // Read the TOML file into a string
+      const data = fs.readFileSync(file, 'utf8');
+      return data.toString();
+    }
+    catch (e: any) {
+      console.error(`Error on reading ${file}`);
+    }
+    return undefined;
+  }
+
+
+
   public static clean_dir(file: string): void {
 
     fs.rmSync(file, { recursive: true, force: true });
