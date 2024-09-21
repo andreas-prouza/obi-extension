@@ -272,8 +272,9 @@ export class DirTool {
       fs.writeFileSync(file, content, 'utf8');
     }
     catch (e: any) {
-      console.error(`Error in toml file: ${file}`);
-      console.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
+      console.error(`Error write file: ${file}: ${e.message}`);
+      if (e.line)
+        console.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
     }
     return;
   }

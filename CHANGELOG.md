@@ -1,3 +1,16 @@
+## [0.2.9]
+
+### Added
+
+* Self check
+* Creation support for further SQL objects
+  
+### Changed
+
+* Better support for local OBI if exist
+* Optimized some SSH commands
+
+
 ## [0.2.8]
 
 ### Changed

@@ -32,7 +32,7 @@
   "Source directory": "Source directory",
   "Check remote sources on start up": "Check remote sources on start up",
   "Use remote OBI (show changes)": "Use remote OBI (show changes)",
-  "Local OBI path": "Local OBI path",
+  "Local OBI path (if exist)": "Local OBI path (if exist)",
   "Remote OBI path": "Remote OBI path",
   "General": "General",
   "Individual language settings": "Individual language settings",

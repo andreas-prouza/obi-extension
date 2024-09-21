@@ -17,8 +17,6 @@
   "Source filters": "Source Filters",
   "Source filter": "Source Filters",
   "Invalid config": "Konfig ungültig",
-
-
   "Configuration": "Konfiguration",
   "Compile settings": "Kompile Parameter",
   "System settings": "System Einstellungen",
@@ -34,7 +32,7 @@
   "Source directory": "Source Verzeichnis",
   "Check remote sources on start up": "Sourcen auf IBM i beim Starten prüfen",
   "Use remote OBI (show changes)": "Verwende OBI auf IBM i (Anzeige Änderungen)",
-  "Local OBI path": "OBI Pfad lokal",
+  "Local OBI path (if exist)": "OBI Pfad lokal (falls vorhanden)",
   "Remote OBI path": "OBI Pfad auf IBM i",
   "General": "General",
   "Individual language settings": "Individuelle Sprach-Einstellungen",
