@@ -219,6 +219,8 @@ export class OBIConfiguration {
 
     if (old_config.attributes_missing() && !AppConfig.get_app_confg().attributes_missing())
       vscode.commands.executeCommand('workbench.action.reloadWindow');
+
+    AppConfig.self_check();
 }
   
 

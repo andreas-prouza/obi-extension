@@ -41,20 +41,20 @@ export class OBITools {
     if (!DirTool.dir_exists(path.join(ws, '.obi', 'log'))){
       fs.mkdirSync(path.join(ws, '.obi', 'log'), { recursive: true});
     }
-    if (!DirTool.dir_exists(path.join(ws, '.obi', Constants.SOURCE_FILTER_FOLDER_NAME))){
-      fs.mkdirSync(path.join(ws, '.obi', Constants.SOURCE_FILTER_FOLDER_NAME), { recursive: true});
+    if (!DirTool.dir_exists(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME))){
+      fs.mkdirSync(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME), { recursive: true});
     }
     if (!DirTool.dir_exists(path.join(ws, '.obi', 'tmp'))){
       fs.mkdirSync(path.join(ws, '.obi', 'tmp'), { recursive: true});
     }
-    if (!DirTool.file_exists(path.join(ws, '.obi', 'etc', config.general['source-infos']||'source-infos.json'))){
-      DirTool.write_file(path.join(ws, '.obi', 'etc', config.general['source-infos']||'source-infos.json'), '[]');
+    if (!DirTool.file_exists(path.join(ws, config.general['source-infos']||'source-infos.json'))){
+      DirTool.write_file(path.join(ws, config.general['source-infos']||'source-infos.json'), '[]');
     }
-    if (!DirTool.file_exists(path.join(ws, '.obi', 'etc', config.general['dependency-list']||'dependency.toml'))){
-      DirTool.write_file(path.join(ws, '.obi', 'etc', config.general['dependency-list']||'dependency.toml'), '');
+    if (!DirTool.file_exists(path.join(ws, config.general['dependency-list']||'dependency.toml'))){
+      DirTool.write_file(path.join(ws, config.general['dependency-list']||'dependency.toml'), '');
     }
-    if (!DirTool.file_exists(path.join(ws, '.obi', 'etc', config.general['compiled-object-list']||'object-build.toml'))){
-      DirTool.write_file(path.join(ws, '.obi', 'etc', config.general['compiled-object-list']||'object-build.toml'), '');
+    if (!DirTool.file_exists(path.join(ws, config.general['compiled-object-list']||'object-build.toml'))){
+      DirTool.write_file(path.join(ws, config.general['compiled-object-list']||'object-build.toml'), '');
     }
     
     switch (previous_version) {
@@ -69,7 +69,9 @@ export class OBITools {
     }
 
     OBITools.ext_context.workspaceState.update('obi.version', current_version);
-    
+
+    AppConfig.self_check();
+
   }
 
 
@@ -90,12 +92,13 @@ export class OBITools {
     if (!config.general['local-obi-dir'])
       return undefined;
     
-    let venv_bin = 'bin';
+    let venv_bin = path.join('venv', 'bin', 'python');
     if (process.platform == 'win32')
-      venv_bin = 'Scripts';
+      venv_bin = path.join('venv', 'Scripts', 'python.exe');
 
-    const local_obi_python: string = path.join(config.general['local-obi-dir'], 'venv', venv_bin, 'python');
+    const local_obi_python: string = path.join(config.general['local-obi-dir'], venv_bin);
 
+    console.log(`Check OBI path ${local_obi_python}: ${DirTool.file_exists(local_obi_python)}`);
     if (! DirTool.file_exists(local_obi_python))
       return undefined;
 

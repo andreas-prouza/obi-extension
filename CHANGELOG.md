@@ -1,3 +1,10 @@
+## [0.2.10]
+
+### Changed
+
+* Bugfix in self check
+
+
 ## [0.2.9]
 
 ### Added
