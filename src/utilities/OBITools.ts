@@ -685,18 +685,15 @@ export class OBITools {
     let new_list: source.IQualifiedSource[] = [];
 
     const config: AppConfig = AppConfig.get_app_confg();
-    const source_infos: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['source-infos'] || '.obi/etc/source-infos.json')) || [];
+    const source_infos: source.ISourceInfos = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['source-infos'] || '.obi/etc/source-infos.json')) || [];
 
     for (let source of sources) {
 
       source.description = '';
       
-      for (const source_info of source_infos) {
-        
-        if (source['source-member'] == source_info['source-member'] && source['source-file'] == source_info['source-file'] && source['source-lib'] == source_info['source-lib']) {
-          source.description = source_info.description;
-          break;
-        }
+      const full_name: string = `${source['source-lib']}/${source['source-file']}/${source['source-member']}`;
+      if (full_name in source_infos) {
+        source.description = source_infos[full_name].description;
       }
       new_list.push(source);
     }

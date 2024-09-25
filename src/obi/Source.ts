@@ -8,6 +8,14 @@ export interface IQualifiedSource {
   description?: string
 }
 
+export interface ISourceInfo {
+  description: string
+}
+
+export interface ISourceInfos {
+  [key: string] : ISourceInfo
+}
+
 
 export interface ISourceItem {
   hash: string,
