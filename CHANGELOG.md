@@ -1,3 +1,10 @@
+## [0.2.12]
+
+### Changed
+
+* Improved json structure of source infos
+
+
 ## [0.2.10]
 
 ### Changed

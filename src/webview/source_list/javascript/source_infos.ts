@@ -37,7 +37,7 @@ function main() {
 
 function save_config() {
 
-  let sources: source.IQualifiedSource[] = [];
+  let sources: source.ISourceInfos = {};
   let els  = document.getElementsByClassName('source_description');
   let lib: string|null = '';
   let file: string|null = '';
@@ -59,12 +59,8 @@ function save_config() {
     if (member == '')
       member = '.*';
 
-    sources.push({
-      "source-file":file||'UNKNOWN', 
-      "source-lib":lib||'UNKNOWN', 
-      "source-member":member||'UNKNOWN',
-      description: (el as TextField).value
-    });
+    const full_name = `${lib||'UNKNOWN'}/${file||'UNKNOWN'}/${member||'UNKNOWN'}`;
+    sources[full_name] = {description: (el as TextField).value};
   }
 
   vscode.postMessage({
