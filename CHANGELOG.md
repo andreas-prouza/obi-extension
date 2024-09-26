@@ -1,3 +1,10 @@
+## [0.2.13]
+
+### Changed
+
+* Improved source filters
+
+
 ## [0.2.12]
 
 ### Changed

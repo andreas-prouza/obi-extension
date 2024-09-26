@@ -108,20 +108,30 @@ function save_config() {
 
   while (els.length > 0) {
 
-    lib = document.getElementById(`lib_${counter}`).value;
-    if (lib == '')
-      lib = '.*';
+    const libs = document.getElementById(`lib_${counter}`).value.split(',');
+    const files = document.getElementById(`file_${counter}`).value.split(',');
+    const members = document.getElementById(`member_${counter}`).value.split(',');
     
-    file = document.getElementById(`file_${counter}`).value;
-    if (file == '')
-      file = '.*';
-    
-    member = document.getElementById(`member_${counter}`).value;
-    if (member == '')
-      member = '.*';
+    for (let lib of libs) {
+      for (let file of files) {
+        for (let member of members) {
+          if (lib == '')
+            lib = '.*';
+          if (file == '')
+            file = '.*';
+          if (member == '')
+            member = '.*';
+      
+          filter.push({
+            "source-file":file.trim(), 
+            "source-lib":lib.trim(), 
+            "source-member":member.trim()
+          });
+        }
+      }
+    }
+  
 
-    filter.push({"source-file":file, "source-lib":lib, "source-member":member});
-    
     counter++;
     els = document.getElementsByClassName(`source_filter_${counter}`);
   }

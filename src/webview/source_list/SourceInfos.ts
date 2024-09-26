@@ -89,7 +89,8 @@ export class SourceInfos {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),
         config_css: getUri(webview, extensionUri, ["asserts/css", "config.css"]),
         main_java_script: getUri(webview, extensionUri, ["out", "source_infos.js"]),
-        source_list: source_list
+        source_list: source_list,
+        source_info_file: DirTool.get_encoded_file_URI(Workspace.get_workspace_uri(), config.general['source-infos'])
       }
     );
 
@@ -106,7 +107,7 @@ export class SourceInfos {
     if (!panel)
       return;
 
-    panel._panel.webview.html = await SourceInfos.generate_html(SourceInfos._extensionUri, SourceInfos.currentPanel?._panel.webview);
+    //panel._panel.webview.html = await SourceInfos.generate_html(SourceInfos._extensionUri, SourceInfos.currentPanel?._panel.webview);
     SourceListProvider.source_list_provider.refresh();
   }
 

@@ -17,7 +17,7 @@
   <br/>
 
   <h1>{{ global_stuff['get_text']('Source infos') | safe }}</h1>
-
+  <a href='command:vscode.open?{{ source_info_file }}'>{{ global_stuff['get_text']('open JSON file') | safe }}</a>
   
   <div class="save-button-wrapper">
     <vscode-button class="save-button" id="save_config">{{ global_stuff['get_text']('Save') | safe }}</vscode-button>
