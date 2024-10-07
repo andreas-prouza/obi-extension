@@ -99,8 +99,8 @@ export class OBIConfiguration {
         user_config: user_config,
         project_config: project_config,
         SSH_PASSWORD: pwd,
-        project_config_file: DirTool.get_encoded_file_URI(workspaceUri, Constants.OBI_APP_CONFIG_FILE),
-        user_config_file: DirTool.get_encoded_file_URI(workspaceUri, Constants.OBI_APP_CONFIG_USER_FILE)
+        project_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_FILE),
+        user_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_USER_FILE)
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         //object_list: this.get_object_list(workspaceUri),
         //compile_list: this.get_compile_list(workspaceUri)

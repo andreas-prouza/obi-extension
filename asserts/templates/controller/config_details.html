@@ -59,6 +59,12 @@
       <br />
       <hr />
       <br />
+
+      <vscode-text-field class="{{ class_prefix }}_save_app type_text" panel="tab-1" id="{{ class_prefix }}|general|cloud-ws-ssh-remote-host" size="80" placeholder="andy-workspace.code.prouza.dev"
+        value="{{ app_config['general']['cloud-ws-ssh-remote-host'] }}">{{ global_stuff['get_text']('Cloud workspace host (ℹ️ only when using remote workspaces)') | safe }}</vscode-text-field>
+      <br />
+      <br />
+
       💡 {{ global_stuff['get_text']('Tilde (~) and env vars (e.g. $HOME) are not supported for paths.') | safe }}
       <br />
       <br />

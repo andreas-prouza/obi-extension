@@ -308,8 +308,8 @@ class SourceListItem extends vscode.TreeItem {
       return;
 
     if (list_level == 'source-member') {
-      member_path = path.join(ws, 'src', this.src_lib || '', this.src_file || '', this.src_member || '');
-      if (!DirTool.file_exists(member_path))
+      member_path = path.join(AppConfig.get_app_confg().general['source-dir']||'src', this.src_lib || '', this.src_file || '', this.src_member || '');
+      if (!DirTool.file_exists(path.join(ws, member_path)))
         icon = 'error.svg';
     }
 
@@ -324,11 +324,9 @@ class SourceListItem extends vscode.TreeItem {
     this.command = {
       command: 'vscode.open',
       title: 'Open source member',
-      arguments: [{
-        scheme: 'file',
-        path: member_path,
-        authority: ''
-      }]
+      arguments: [
+        DirTool.get_file_URI(member_path)
+      ]
     }
   }
 

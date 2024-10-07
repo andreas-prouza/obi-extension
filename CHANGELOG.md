@@ -1,3 +1,10 @@
+## [0.2.14]
+
+### Added
+
+* Support for remote workspaces
+
+
 ## [0.2.13]
 
 ### Changed

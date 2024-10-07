@@ -101,12 +101,14 @@ export class ConfigGeneral {
   public ['compiled-object-list-md']?: string;
   public ['check-remote-source-on-startup']?: boolean;
   public ['max-threads']?: number;
+  public ['cloud-ws-ssh-remote-host']?: string; // This is the remote instead of local workspace not the IBM i server
+
 
   constructor(local_base_dir?: string, remote_base_dir?: string, source_dir?: string, 
     local_obi_dir?: string, remote_obi_dir?: string, supported_object_types?: string[], file_system_encoding?: string, 
     console_output_encoding?: string, compiled_object_list?: string, dependency_list?: string, deployment_object_list?: string, 
     build_output_dir?: string, compile_list?: string, compiled_object_list_md?: string, remote_source_list?: string, 
-    check_remote_source_on_startup?: boolean, source_infos?: string, max_threads?: number, local_source_list?: string) {
+    check_remote_source_on_startup?: boolean, source_infos?: string, max_threads?: number, local_source_list?: string, cloud_ws_ssh_remote_host?: string) {
 
     if (local_base_dir == '/')
       throw Error("Root for 'local-base-dir' is not allowed!");
@@ -140,6 +142,7 @@ export class ConfigGeneral {
     this['compiled-object-list-md'] = compiled_object_list_md;
     this['check-remote-source-on-startup'] = check_remote_source_on_startup;
     this['max-threads'] = max_threads;
+    this['cloud-ws-ssh-remote-host'] = cloud_ws_ssh_remote_host;
   }
 
   public attributes_missing(): boolean {
@@ -376,7 +379,8 @@ export class AppConfig {
         gen['check-remote-source-on-startup'] === true,
         AppConfig.get_string(gen['source-infos']),
         gen['max-threads'],
-        AppConfig.get_string(gen['source-list'])
+        AppConfig.get_string(gen['source-list']),
+        AppConfig.get_string(gen['cloud-ws-ssh-remote-host'])
       );
     }
 

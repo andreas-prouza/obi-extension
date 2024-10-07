@@ -1,10 +1,12 @@
 'use strict';
 
+import * as vscode from 'vscode';
 import { Uri } from "vscode";
 import { AppConfig } from "../webview/controller/AppConfig";
 import path from "path";
 import * as source from "../obi/Source";
 import * as fs from 'fs';
+import { Workspace } from "./Workspace";
 
 
 const crypto = require('crypto')
@@ -179,14 +181,30 @@ export class DirTool {
   }
 
 
-  public static get_encoded_file_URI(workspaceUri: Uri, file: string) : string {
+  public static get_file_URI(file: string) : {} {
+
+    let scheme:string = 'file';
+    let remote_ws_host:string = '';
+
+    if (vscode.env.remoteName) {
+      scheme = 'vscode-remote';
+      remote_ws_host = AppConfig.get_app_confg().general['cloud-ws-ssh-remote-host'] || vscode.env.remoteName;
+    }
 
     const fileUri = {
-      scheme: 'file',
-      path: `${workspaceUri.path}/${file}`,
-      authority: ''
+      scheme: scheme,
+      path: path.join(Workspace.get_workspace(), file),
+      authority: remote_ws_host
     };
-    return encodeURIComponent(JSON.stringify(fileUri))
+
+    return fileUri;
+  }
+
+
+
+  public static get_encoded_file_URI(file: string) : string {
+
+    return encodeURIComponent(JSON.stringify(DirTool.get_file_URI(file)));
   }
 
 
@@ -194,26 +212,17 @@ export class DirTool {
 
     const config = AppConfig.get_app_confg();
 
-    const fileUri = {
-      scheme: 'file',
-      path: `${workspaceUri.path}/${config.general["source-dir"]}/${file}`,
-      authority: ''
-    };
-    return encodeURIComponent(JSON.stringify(fileUri))
+    return DirTool.get_encoded_file_URI(path.join(config.general["source-dir"], file))
   }
 
 
 
-  public static get_encoded_build_output_URI(workspaceUri: Uri, file: string) : string {
+  public static get_encoded_build_output_URI(file: string) : string {
 
     const config = AppConfig.get_app_confg();
 
-    const fileUri = {
-      scheme: 'file',
-      path: `${workspaceUri.path}/${config.general["build-output-dir"]}/${file}`,
-      authority: ''
-    };
-    return encodeURIComponent(JSON.stringify(fileUri))
+    return DirTool.get_encoded_file_URI(path.join(config.general["build-output-dir"], file))
+
   }
 
 

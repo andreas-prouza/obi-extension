@@ -12,6 +12,7 @@ import { ConfigInvalid } from './webview/controller/ConfigInvalid';
 import { logger } from './utilities/Logger';
 import { SourceInfos } from './webview/source_list/SourceInfos';
 import { LocaleText } from './utilities/LocaleText';
+import { Workspace } from './utilities/Workspace';
 
 const nunjucks = require('nunjucks');
 
@@ -29,6 +30,13 @@ export function activate(context: vscode.ExtensionContext) {
 	: undefined;
 
 	logger.info('Start app');
+
+	console.log(`URI: ${Workspace.get_workspace_uri()}`);
+	console.log(`Path: ${Workspace.get_workspace()}`);
+	console.log(`vscode.env.remoteName: ${vscode.env.remoteName}`);
+	console.log(`vscode.env.uriScheme: ${vscode.env.uriScheme}`);
+	console.log(`vscode.env.appHost: ${vscode.env.appHost}`);
+	console.log(`vscode.env.appHost: ${vscode.env.remoteName}`);
 	
 	SSH_Tasks.context = context;
 	OBITools.ext_context = context;

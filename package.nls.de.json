@@ -101,5 +101,6 @@
   "Search patterns are regex based.": "Suchmuster mit regex.",
   "So, instead of <code>*</code> please use <code>.*</code>.": "Deshalb, statt <code>*</code> verwende <code>.*</code>.",
   "You can define multiple patterns separated by comma (<code>,</code>)": "Mehrfach auswahl mit Komma trennen (<code>,</code>)",
-  "Add new": "Neu"
+  "Add new": "Neu",
+  "Cloud workspace host (ℹ️ only when using remote workspaces)": "Cloud Workspace Host (ℹ️ nur bei Verwendung von Remote Workspaces)"
 }
