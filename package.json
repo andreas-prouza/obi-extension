@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "0.2.14",
+  "version": "0.2.16",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -37,13 +37,25 @@
       {
         "command": "obi.show_changes",
         "title": "%obi.show_changes%",
-        "icon": "$(telescope)",
+        "icon": "$(check-all)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.show_single_changes",
+        "title": "%obi.show_single_changes%",
+        "icon": "$(check)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.run_build",
         "title": "%obi.run_build%",
-        "icon": "$(play)",
+        "icon": "$(run-all)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.run_single_build",
+        "title": "%obi.run_single_build%",
+        "icon": "$(run)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
@@ -139,42 +151,52 @@
         {
           "command": "obi.run_build",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
+          "group": "navigation@10"
+        },
+        {
+          "command": "obi.run_single_build",
+          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
           "group": "navigation@0"
         },
         {
           "command": "obi.show_changes",
+          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
+          "group": "navigation@11"
+        },
+        {
+          "command": "obi.show_single_changes",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
           "group": "navigation@1"
         },
         {
           "command": "obi.get-remote-source-list",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
-          "group": "navigation@2"
+          "group": "navigation@20"
         },
         {
           "command": "obi.get-remote-compiled-object-list",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
-          "group": "navigation@3"
+          "group": "navigation@30"
         },
         {
           "command": "obi.reset-compiled-object-list",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
-          "group": "navigation@4"
+          "group": "navigation@40"
         },
         {
           "command": "obi.check-remote-sources",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
-          "group": "navigation@5"
+          "group": "navigation@50"
         },
         {
           "command": "obi.transfer-all",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
-          "group": "navigation@6"
+          "group": "navigation@60"
         },
         {
           "command": "obi.controller.config",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
-          "group": "navigation@7"
+          "group": "navigation@70"
         }
       ],
       "view/item/context": [

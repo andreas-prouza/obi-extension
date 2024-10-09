@@ -98,7 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
 		})
 	);
 
-	const run_native: boolean = OBITools.is_native();
+	const run_native: boolean = OBITools.without_local_obi();
 	vscode.commands.executeCommand('setContext', 'obi.run_native', run_native);
 	
 	//SSH_Tasks.connect();
@@ -126,9 +126,23 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.show_single_changes', () => {
+			// Only available with workspaces
+			OBICommands.show_single_changes(context);
+		})
+	);
+
+	context.subscriptions.push(
 		vscode.commands.registerCommand('obi.run_build', () => {
 			// Only available with workspaces
 			OBICommands.run_build(context);
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.run_single_build', () => {
+			// Only available with workspaces
+			OBICommands.run_single_build(context);
 		})
 	);
 

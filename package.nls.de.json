@@ -1,6 +1,8 @@
 {
   "obi.show_changes": "OBI: Änderungen anzeigen",
+  "obi.show_single_changes": "OBI: Einzelne Änderung anzeigen",
   "obi.run_build": "OBI: Build starten",
+  "obi.run_single_build": "OBI: Einzelnen Build starten",
   "obi.source-filter.update": "OBI: Source Filter aktualisieren",
   "obi.source-filter.add": "OBI: Source Filter erstellen",
   "obi.get-remote-compiled-object-list": "OBI: Liste erstellter Objekte von IBM i holen",

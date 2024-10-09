@@ -76,10 +76,7 @@ export class OBITools {
 
 
 
-  public static is_native(): boolean {
-
-    const config = AppConfig.get_app_confg();
-
+  public static without_local_obi(): boolean {
     return OBITools.get_local_obi_python_path() == undefined;
   }
 
@@ -108,7 +105,43 @@ export class OBITools {
 
 
 
+  public static async get_remote_obi_python_path(): Promise<string|undefined> {
+
+    const config = AppConfig.get_app_confg();
+    
+    if (!config.general['remote-obi-dir'])
+      return undefined;
+    
+    const remote_obi_python: string = `${config.general['remote-obi-dir']}/venv/bin/python`;
+
+    if (! await SSH_Tasks.check_remote_path(remote_obi_python))
+      return undefined;
+
+    return remote_obi_python;
+  }
+
+
+
+
   public static async check_remote(): Promise<boolean> {
+
+    if (! await OBITools.check_remote_basics()) {
+      vscode.window.showWarningMessage('Missing OBI project on remote system.');
+      try {
+        await OBITools.transfer_all(false);
+      }
+      catch {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+
+
+
+  public static async check_remote_basics(): Promise<boolean> {
 
     const config = AppConfig.get_app_confg();
     const remote_base_dir: string|undefined = config.general['remote-base-dir'];
@@ -118,14 +151,14 @@ export class OBITools {
     if (!remote_base_dir || ! remote_obi_dir)
       throw Error(`Missing 'remote_base_dir' or 'remote_obi_dir'`);
 
-    check = await SSH_Tasks.check_remote_path(path.join(remote_base_dir, Constants.OBI_APP_CONFIG_FILE));
+    check = await SSH_Tasks.check_remote_path(`${remote_base_dir}/${Constants.OBI_APP_CONFIG_FILE}`);
     if (!check)
       return false;
 
     if (!config.general['source-dir'])
       return false;
 
-    check = await SSH_Tasks.check_remote_path(path.join(remote_base_dir, config.general['source-dir']));
+    check = await SSH_Tasks.check_remote_path(`${remote_base_dir}/${config.general['source-dir']}`);
     if (!check)
       return false;
 
@@ -135,10 +168,7 @@ export class OBITools {
 
 
 
-
   public static async check_remote_sources(): Promise<boolean> {
-
-    await OBITools.check_remote();
 
     const config = AppConfig.get_app_confg();
     const ws: string = Workspace.get_workspace();
@@ -146,45 +176,70 @@ export class OBITools {
     if (!config.general['remote-source-list'])
       return false;
 
-    if (!await OBITools.check_remote()) {
-        vscode.window.showWarningMessage('Missing OBI project on remote system.');
-        await OBITools.transfer_all(false);
-    }
+    const result = await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: `Remote source check`,
+    }, 
+    async progress => {
 
-    await OBICommands.get_remote_source_list();
-    const remote_source_list: source.ISource = DirTool.get_toml(path.join(ws, config.general['remote-source-list']));
-    const current_hash_list = await OBITools.retrieve_current_source_hashes();
-    const changed_sources: source.ISourceList = await OBITools.compare_source_change(current_hash_list, remote_source_list);
-    const all_sources: string[] = [...changed_sources['changed-sources'], ...changed_sources['new-objects']];
+      progress.report({
+        message: `Check remote sources`
+      });
 
-    if (all_sources.length) {
-      const answer = await vscode.window.showErrorMessage(`${all_sources.length} changed sources. Do you want to transfer to remote?\n\n${all_sources.join('\n')}`, { modal: true }, ...['Yes', 'No']);
-      switch (answer) {
-        case 'No':
-          return false;
-        case undefined: // Canceled
-          return false;
-        case 'Yes':
-          await SSH_Tasks.transferSources(all_sources);
-          vscode.window.showInformationMessage(`Sources transfered to ${config.connection['remote-host']}`);
+      if (!await OBITools.check_remote()) {
+        return false;
       }
-    }
 
-    if (changed_sources['old-sources'] && changed_sources['old-sources'].length) {
-      const answer = await vscode.window.showErrorMessage(`${changed_sources['old-sources'].length} not needed sources on remote system.\nDo you want to delete them?\n\n${changed_sources['old-sources'].join('\n')}`, { modal: true }, ...['Yes', 'No']);
-      switch (answer) {
-        case 'No':
-          return false;
-        case undefined: // Canceled
-          return false;
-        case 'Yes':
-          await SSH_Tasks.delete_sources(changed_sources['old-sources']);
-          vscode.window.showInformationMessage(`Sources transfered to ${config.connection['remote-host']}`);
+      progress.report({
+        message: `Get remote source hashes`
+      });
+
+      await OBICommands.get_remote_source_list();
+      const remote_source_list: source.ISource = DirTool.get_toml(path.join(ws, config.general['remote-source-list']));
+      
+      progress.report({
+        message: `Get local source hashes`
+      });
+
+      const current_hash_list = await OBITools.retrieve_current_source_hashes();
+
+      progress.report({
+        message: `Compare remote vs. local`
+      });
+
+      const changed_sources: source.ISourceList = await OBITools.compare_source_change(current_hash_list, remote_source_list);
+      const all_sources: string[] = [...changed_sources['changed-sources'], ...changed_sources['new-objects']];
+
+      if (all_sources.length) {
+        const answer = await vscode.window.showErrorMessage(`${all_sources.length} changed sources. Do you want to transfer to remote?\n\n${all_sources.slice(0, 5).join('\n')}`, { modal: true }, ...['Yes', 'No']);
+        switch (answer) {
+          case 'No':
+            return false;
+          case undefined: // Canceled
+            return false;
+          case 'Yes':
+            await SSH_Tasks.transferSources(all_sources);
+            vscode.window.showInformationMessage(`Sources transfered to ${config.connection['remote-host']}`);
+        }
       }
-    }
-    vscode.window.showInformationMessage('Remote source check finished');
-    return true;
 
+      if (changed_sources['old-sources'] && changed_sources['old-sources'].length) {
+        const answer = await vscode.window.showErrorMessage(`${changed_sources['old-sources'].length} not needed sources on remote system.\nDo you want to delete them?\n\n${changed_sources['old-sources'].join('\n')}`, { modal: true }, ...['Yes', 'No']);
+        switch (answer) {
+          case 'No':
+            return false;
+          case undefined: // Canceled
+            return false;
+          case 'Yes':
+            await SSH_Tasks.delete_sources(changed_sources['old-sources']);
+            vscode.window.showInformationMessage(`Sources transfered to ${config.connection['remote-host']}`);
+        }
+      }
+      vscode.window.showInformationMessage('Remote source check finished');
+      return true;
+    })
+
+    return result;
   }
 
   
@@ -602,7 +657,7 @@ export class OBITools {
       throw Error(`Config attribute 'config.general.remote_base_dir' missing`);
 
     const local_file: string = path.join(Workspace.get_workspace(), config.general['compiled-object-list']);
-    const remote_file: string = path.join(config.general['remote-base-dir'], config.general['compiled-object-list']);
+    const remote_file: string = `${config.general['remote-base-dir']}/${config.general['compiled-object-list']}`;
     
     SSH_Tasks.getRemoteFile(local_file, remote_file);
   }
@@ -617,14 +672,14 @@ export class OBITools {
       throw Error(`Config attribute 'config.general.remote_base_dir' missing`);
 
     const local_dir: string = Workspace.get_workspace();
-    const remote_dir: string = path.join(config.general['remote-base-dir']);
+    const remote_dir: string = config.general['remote-base-dir'];
     
     if (!silent) {
       const answer = await vscode.window.showErrorMessage(`Do you want to transfer all?\nThis can take several minutes.\n\nRemote folder: ${remote_dir}`, { modal: true }, ...['Yes', 'No']);
       switch (answer) {
         case 'No':
-          throw new Error('Transfer canceled by user');
         case undefined:
+          vscode.window.showErrorMessage('Transfer canceled by user');
           throw new Error('Transfer canceled by user');
         case 'Yes':
           break;

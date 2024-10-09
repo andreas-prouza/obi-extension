@@ -205,7 +205,7 @@ export class SSH_Tasks {
     
     const source_dir: string = config.general['source-dir'] ?? 'src';
     const local_source_dir: string = path.join(Workspace.get_workspace(), config.general['local-base-dir'], source_dir);
-    const remote_source_dir: string = path.join(config.general['remote-base-dir'], source_dir);
+    const remote_source_dir: string = `${config.general['remote-base-dir']}/${source_dir}`;
     
     let cmds: Promise<SSHExecCommandResponse>[] = [];
 
@@ -297,20 +297,20 @@ export class SSH_Tasks {
     
     const source_dir: string = config.general['source-dir'] ?? 'src';
     const local_source_dir: string = path.join(Workspace.get_workspace(), config.general['local-base-dir'], source_dir);
-    const remote_source_dir: string = path.join(config.general['remote-base-dir'], source_dir);
+    const remote_source_dir: string = `${config.general['remote-base-dir']}/${source_dir}`;
     
     let transfer_list: FileTransfer[] = [
       {
         local: path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_FILE),
-        remote: path.join(config.general['remote-base-dir'], Constants.OBI_APP_CONFIG_FILE),
+        remote: `${config.general['remote-base-dir']}/${Constants.OBI_APP_CONFIG_FILE}`,
       },
       {
         local: path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_USER_FILE),
-        remote: path.join(config.general['remote-base-dir'], Constants.OBI_APP_CONFIG_USER_FILE),
+        remote: `${config.general['remote-base-dir']}/${Constants.OBI_APP_CONFIG_USER_FILE}`,
       },
       {
         local: path.join(Workspace.get_workspace(), '.obi', 'etc', 'constants.py'),
-        remote: path.join(config.general['remote-base-dir'], '.obi', 'etc', 'constants.py'),
+        remote: `${config.general['remote-base-dir']}/.obi/etc/constants.py'}`,
       }
     ];
 
@@ -318,7 +318,7 @@ export class SSH_Tasks {
 
       transfer_list.push({
         local: path.join(local_source_dir, source),
-        remote: path.join(remote_source_dir, source),
+        remote: `${remote_source_dir}/${source}`,
       })
     });
 
@@ -359,7 +359,7 @@ export class SSH_Tasks {
     file_list.map((file: string) => {
       transfer_list.push({
         local: path.join(local_base_dir, file),
-        remote: path.join(remote_base_dir, file),
+        remote: `${remote_base_dir}/${file}`,
       })
     });
 

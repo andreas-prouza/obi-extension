@@ -1,6 +1,8 @@
 {
   "obi.show_changes": "OBI: Show changes",
+  "obi.show_single_changes": "OBI: Show single change",
   "obi.run_build": "OBI: Run build",
+  "obi.run_single_build": "OBI: Run single build",
   "obi.source-filter.update": "OBI: Update source filter",
   "obi.source-filter.add": "OBI: Add new source filter",
   "obi.get-remote-compiled-object-list": "OBI: Get remote compiled object list",

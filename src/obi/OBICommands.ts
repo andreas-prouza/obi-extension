@@ -26,7 +26,7 @@ export class OBICommands {
 
 
 
-  public static async run_build_native() {
+  public static async run_build_process(source?: string) {
 
     const ws = Workspace.get_workspace();
     const config = AppConfig.get_app_confg();
@@ -36,7 +36,7 @@ export class OBICommands {
     if (!remote_base_dir || !remote_obi_dir)
       throw Error(`Missing 'remote_base_dir' or 'remote_obi_dir'`);
     
-    const remote_obi: string|undefined = OBITools.get_local_obi_python_path();
+    const remote_obi: string|undefined = await OBITools.get_remote_obi_python_path();
     if (!remote_obi)
       throw Error(`OBI path is not korrekt`);
 
@@ -45,11 +45,16 @@ export class OBICommands {
       title: `Transfer project`,
     }, 
     async progress => {
+      
+      let ssh_cmd: string = '';
+
       progress.report({
         message: `Get changed source list`
       });
 
-      const source_list: string[] = await OBITools.generate_source_change_lists();
+      let source_list: string[] = [source||''];
+      if (!source)
+        source_list = await OBITools.generate_source_change_lists();
 
       if (source_list.length == 0) {
         vscode.window.showWarningMessage("No changed sources to build");
@@ -74,18 +79,41 @@ export class OBICommands {
         const result = await SSH_Tasks.transferSources(source_list);
       }
 
+      if (!OBITools.without_local_obi()) {
+
+        progress.report({
+          message: `Generate build script by local OBI.`
+        });
+        let cmd = `${OBITools.get_local_obi_python_path()} -X utf8 ${path.join(config.general['local-obi-dir'], 'main.py')} -a create -p .`;
+        if (source)
+          cmd = `${cmd} --source '${source}'`;
+        console.log(`CMD: ${cmd}`);
+        const child = await OBICommands.run_system_cmd(Workspace.get_workspace(), cmd);
+
+        progress.report({
+          message: `Transfer build list to remote.`
+        });
+        await SSH_Tasks.transfer_files([config.general['compile-list']]);
+        await SSH_Tasks.transfer_dir(path.join(Workspace.get_workspace(), Constants.OBI_TMP_DIR), `${config.general['remote-base-dir']}/${Constants.OBI_TMP_DIR}`);
+  
+      }
+      else {
+
+        progress.report({
+          message: `Generate build script on remote. If it takes too long, use OBI localy (see documentation).`
+        });
+        ssh_cmd = `source .profile; cd '${remote_base_dir}' || exit 1; rm log/* .obi/log/* 2> /dev/null || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a create -p .`;
+        if (source)
+          ssh_cmd = `${ssh_cmd} --source '${source}'`;
+        await SSH_Tasks.executeCommand(ssh_cmd);
+
+      }
+
       progress.report({
-        message: `Generate build script. If it takes too long, use OBI localy (see documentation).`
+        message: `Run build on IBM i`
       });
 
-      let ssh_cmd: string = `source .profile; cd '${remote_base_dir}' || exit 1; rm log /*2> /dev/null || true; ${remote_obi} -X utf8 ${path.join(remote_obi_dir, 'main.py')} -a create -p .`;
-      await SSH_Tasks.executeCommand(ssh_cmd);
-
-      progress.report({
-        message: `Run build script`
-      });
-
-      ssh_cmd = `source .profile; cd '${remote_base_dir}' || exit 1; ${remote_obi} -X utf8 ${path.join(remote_obi_dir, 'main.py')} -a run -p .`;
+      ssh_cmd = `source .profile; cd '${remote_base_dir}' || exit 1; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p .`;
       await SSH_Tasks.executeCommand(ssh_cmd);
 
       progress.report({
@@ -93,13 +121,13 @@ export class OBICommands {
       });
 
       let promise_list = [
-        SSH_Tasks.getRemoteDir(path.join(ws, Constants.BUILD_OUTPUT_DIR), path.join(remote_base_dir, Constants.BUILD_OUTPUT_DIR)),
-        SSH_Tasks.getRemoteDir(path.join(ws, '.obi', 'tmp'), path.join(remote_base_dir, '.obi', 'tmp')),
-        SSH_Tasks.getRemoteDir(path.join(ws, '.obi', 'log'), path.join(remote_base_dir, '.obi', 'log'))
+        SSH_Tasks.getRemoteDir(path.join(ws, Constants.BUILD_OUTPUT_DIR), `${remote_base_dir}/${Constants.BUILD_OUTPUT_DIR}`),
+        SSH_Tasks.getRemoteDir(path.join(ws, '.obi', 'tmp'), `${remote_base_dir}/.obi/tmp`),
+        SSH_Tasks.getRemoteDir(path.join(ws, '.obi', 'log'), `${remote_base_dir}/.obi/log`)
       ];
 
       if (config.general['compiled-object-list'])
-        promise_list.push(SSH_Tasks.getRemoteFile(path.join(ws, config.general['compiled-object-list']), path.join(remote_base_dir, config.general['compiled-object-list'])));
+        promise_list.push(SSH_Tasks.getRemoteFile(path.join(ws, config.general['compiled-object-list']), `${remote_base_dir}/${config.general['compiled-object-list']}`));
 
 
       await Promise.all(promise_list);
@@ -110,8 +138,35 @@ export class OBICommands {
 
 
 
+  public static get_current_active_source(): string|undefined {
+    if (!vscode.window.activeTextEditor) {
+      vscode.window.showWarningMessage('No active source');
+      return undefined;
+    }
 
-  public static async run_build(context: vscode.ExtensionContext) {
+    let source = vscode.window.activeTextEditor.document.fileName.replace(path.join(Workspace.get_workspace(), AppConfig.get_app_confg().general['source-dir']||'src'), '');
+    if (['/', '\\'].includes(source.charAt(0)))
+      source = source.substring(1);
+
+    return source
+  }
+
+
+
+  public static async run_single_build(context: vscode.ExtensionContext) {
+
+    const source = OBICommands.get_current_active_source();
+
+    if (!source)
+      return;
+
+    OBICommands.run_build(context, source);
+  }
+
+
+
+
+  public static async run_build(context: vscode.ExtensionContext, source?: string) {
 
     if (OBICommands.run_build_status != OBIStatus.READY) {
       vscode.window.showErrorMessage('OBI process is already running');
@@ -123,15 +178,10 @@ export class OBICommands {
     const ws_uri = Workspace.get_workspace_uri();
     let buff;
 
-    OBICommands.show_changes(context);
+    OBICommands.show_changes(context, source);
 
     try {
-      if (OBITools.is_native())
-        await OBICommands.run_build_native();
-      else {
-        const cmd = `${OBITools.get_local_obi_python_path()} -X utf8 ${path.join(config.general['local-obi-dir'], 'main.py')} -a run -p .`;
-        buff = OBICommands.run_system_cmd(Workspace.get_workspace(), cmd);
-      }
+      await OBICommands.run_build_process(source);
 
       BuildSummary.render(context.extensionUri, ws_uri)
       OBIController.update_build_summary_timestamp();
@@ -147,7 +197,19 @@ export class OBICommands {
 
 
 
-  public static async show_changes(context: vscode.ExtensionContext) {
+  public static async show_single_changes(context: vscode.ExtensionContext) {
+    const source = OBICommands.get_current_active_source();
+
+    if (!source)
+      return;
+
+    OBICommands.show_changes(context, source);
+  }
+
+
+
+
+  public static async show_changes(context: vscode.ExtensionContext, source?: string) {
 
     if (OBICommands.show_changes_status != OBIStatus.READY) {
       vscode.window.showErrorMessage('OBI process is already running');
@@ -161,12 +223,14 @@ export class OBICommands {
 
     let child;
 
-    if (OBITools.is_native())
+    if (OBITools.without_local_obi())
       await OBITools.generate_source_change_lists();
     else {
       console.log(`WS: ${Workspace.get_workspace()}`);
-      console.log(`CMD: ${OBITools.get_local_obi_python_path()} -X utf8 ${path.join(config.general['local-obi-dir'], 'main.py')} -a create -p .`);
-      const cmd = `${OBITools.get_local_obi_python_path()} -X utf8 ${path.join(config.general['local-obi-dir'], 'main.py')} -a create -p .`;
+      let cmd = `${OBITools.get_local_obi_python_path()} -X utf8 ${path.join(config.general['local-obi-dir'], 'main.py')} -a create -p .`;
+      if (source)
+        cmd = `${cmd} --source '${source}'`;
+      console.log(`CMD: ${cmd}`);
       child = await OBICommands.run_system_cmd(Workspace.get_workspace(), cmd);
     }
 
@@ -241,17 +305,15 @@ export class OBICommands {
       if (!remote_base_dir || !remote_obi_dir)
         throw Error(`Missing 'remote_base_dir' or 'remote_obi_dir'`);
 
-      const remote_obi: string|undefined = OBITools.get_local_obi_python_path();
-      if (!remote_obi)
-        throw Error(`OBI path is not korrekt`);
+      const remote_obi: string|undefined = `${config.general['remote-obi-dir']}/venv/bin/python`;
 
       await SSH_Tasks.transfer_files([Constants.OBI_APP_CONFIG_FILE, Constants.OBI_APP_CONFIG_USER_FILE]);
 
-      let ssh_cmd: string = `source .profile; cd '${remote_base_dir}' || exit 1; rm log /* 2>/dev/null || true; ${remote_obi} -X utf8 ${path.join(remote_obi_dir, 'main.py')} -a gen_src_list -p .`;
+      let ssh_cmd: string = `source .profile; cd '${remote_base_dir}' || exit 1; rm log/* .obi/log/* 2>/dev/null || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a gen_src_list -p .`;
       await SSH_Tasks.executeCommand(ssh_cmd);
 
       if (config.general['remote-source-list'] && config.general['source-list'])
-        await SSH_Tasks.getRemoteFile(path.join(ws, config.general['remote-source-list']), path.join(remote_base_dir, config.general['source-list']));
+        await SSH_Tasks.getRemoteFile(path.join(ws, config.general['remote-source-list']), `${remote_base_dir}/${config.general['source-list']}`);
 
       vscode.window.showInformationMessage('Remote source list transfered from remote');
     }
@@ -281,7 +343,7 @@ export class OBICommands {
     if (!config.general['compiled-object-list'])
       throw Error(`Missing config 'compiled-object-list'`);
 
-    await SSH_Tasks.getRemoteFile(path.join(Workspace.get_workspace(), config.general['compiled-object-list']), path.join(remote_base_dir, config.general['compiled-object-list']));
+    await SSH_Tasks.getRemoteFile(path.join(Workspace.get_workspace(), config.general['compiled-object-list']), `${remote_base_dir}/${config.general['compiled-object-list']}`);
 
     vscode.window.showInformationMessage('Compiled object list transfered from remote');
 

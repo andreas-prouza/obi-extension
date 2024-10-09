@@ -1,3 +1,17 @@
+## [0.2.16]
+
+* Run build & show changes for a single source
+* Bugfixes
+* NPM updates
+
+
+## [0.2.15]
+
+### Bugfix
+
+* Windows file system
+
+
 ## [0.2.14]
 
 ### Added
