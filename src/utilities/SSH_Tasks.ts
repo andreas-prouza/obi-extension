@@ -323,7 +323,7 @@ export class SSH_Tasks {
     });
 
     logger.info('Transfer files:');
-    logger.info(transfer_list);
+    logger.info(transfer_list.join(', '));
 
     await SSH_Tasks.ssh.putFiles(transfer_list, {concurrency: config.connection['ssh-concurrency'] ?? 5 });
 

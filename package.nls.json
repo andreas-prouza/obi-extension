@@ -104,5 +104,7 @@
   "So, instead of <code>*</code> please use <code>.*</code>.": "So, instead of <code>*</code> please use <code>.*</code>.",
   "You can define multiple patterns separated by comma (<code>,</code>)": "You can define multiple patterns separated by comma (<code>,</code>)",
   "Add new": "Add new",
-  "Cloud workspace host (ℹ️ only when using remote workspaces)": "Cloud workspace host (ℹ️ only when using remote workspaces)"
+  "Cloud workspace host (ℹ️ only when using remote workspaces)": "Cloud workspace host (ℹ️ only when using remote workspaces)",
+  "Run single build": "Run single build",
+  "Show single changes": "Show single changes"
 }

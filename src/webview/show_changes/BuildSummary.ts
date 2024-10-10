@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
 import { getUri } from "../../utilities/getUri";
-import { getNonce } from "../../utilities/getNonce";
 import { DirTool } from '../../utilities/DirTool';
 import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
@@ -9,6 +8,7 @@ import path from 'path';
 import { LogOutput } from './LogOutput';
 import { AppConfig } from '../controller/AppConfig';
 import { Workspace } from '../../utilities/Workspace';
+import { logger } from '../../utilities/Logger';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -59,7 +59,7 @@ export class BuildSummary {
    */
   public static render(extensionUri: Uri, workspaceUri: Uri|undefined) {
 
-    console.log('Render BuildSummary');
+    logger.info('Render BuildSummary');
     if (BuildSummary.currentPanel) {
       // If the webview panel already exists reveal it
       BuildSummary.currentPanel.dispose();
@@ -120,8 +120,8 @@ export class BuildSummary {
     const dependend_object_list = path.join(Workspace.get_workspace(), Constants.DEPENDEND_OBJECT_LIST);
 
     if (!DirTool.file_exists(changed_object_list) || !DirTool.file_exists(dependend_object_list)) {
-      console.log(`${changed_object_list}: ${DirTool.file_exists(changed_object_list)}`);
-      console.log(`${dependend_object_list}: ${DirTool.file_exists(dependend_object_list)}`);
+      logger.info(`${changed_object_list}: ${DirTool.file_exists(changed_object_list)}`);
+      logger.info(`${dependend_object_list}: ${DirTool.file_exists(dependend_object_list)}`);
       return undefined;
     }
       
@@ -144,8 +144,8 @@ export class BuildSummary {
       dependend_sources[index] = {source: dependend_sources[index], file: DirTool.get_encoded_source_URI(workspaceUri, dependend_sources[index])};
     }
 
-    console.log(`compile_list['new-objects']: ${compile_list['new-objects'].length}`);
-    console.log(`compile_list['changed-sources']: ${compile_list['changed-sources'].length}`);
+    logger.info(`compile_list['new-objects']: ${compile_list['new-objects'].length}`);
+    logger.info(`compile_list['changed-sources']: ${compile_list['changed-sources'].length}`);
 
     return {
       new_sources : compile_list['new-objects'], 

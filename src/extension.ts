@@ -19,7 +19,7 @@ const nunjucks = require('nunjucks');
 
 export function activate(context: vscode.ExtensionContext) {
 
-	console.log('Congratulations, your extension "obi" is now active!');
+	logger.info('Congratulations, your extension "obi" is now active!');
 	const rootPath =
 	vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
 	? vscode.workspace.workspaceFolders[0].uri.fsPath
@@ -31,12 +31,13 @@ export function activate(context: vscode.ExtensionContext) {
 
 	logger.info('Start app');
 
-	console.log(`URI: ${Workspace.get_workspace_uri()}`);
-	console.log(`Path: ${Workspace.get_workspace()}`);
-	console.log(`vscode.env.remoteName: ${vscode.env.remoteName}`);
-	console.log(`vscode.env.uriScheme: ${vscode.env.uriScheme}`);
-	console.log(`vscode.env.appHost: ${vscode.env.appHost}`);
-	console.log(`vscode.env.appHost: ${vscode.env.remoteName}`);
+
+	logger.info(`URI: ${Workspace.get_workspace_uri()}`);
+	logger.info(`Path: ${Workspace.get_workspace()}`);
+	logger.info(`vscode.env.remoteName: ${vscode.env.remoteName}`);
+	logger.info(`vscode.env.uriScheme: ${vscode.env.uriScheme}`);
+	logger.info(`vscode.env.appHost: ${vscode.env.appHost}`);
+	logger.info(`vscode.env.appHost: ${vscode.env.remoteName}`);
 	
 	SSH_Tasks.context = context;
 	OBITools.ext_context = context;

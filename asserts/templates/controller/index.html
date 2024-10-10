@@ -9,10 +9,18 @@
     
     <table>
       <tr>
+        <td colspan="3">{{ global_stuff['get_text']('Run build') | safe }}</td>
+      </tr>
+      <tr>
+        <td>
+          <vscode-button id="run_single_build">
+            <span slot="start" class="codicon codicon-add"><img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/run.svg"></span>
+          </vscode-button>
+        </td>
         <td>
           <vscode-button id="run_build">
-            {{ global_stuff['get_text']('Run build') | safe }}
-            <span slot="start" class="codicon codicon-add"><img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/debug-start.svg"></span>
+            *ALL
+            <span slot="start" class="codicon codicon-add"><img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/run-all.svg"></span>
           </vscode-button>
         </td>
         <td>
@@ -20,10 +28,18 @@
         </td>
       </tr>
       <tr>
+        <td colspan="3"> {{ global_stuff['get_text']('Show changes') | safe }}</td>
+      </tr>
+      <tr>
+        <td>
+          <vscode-button id="show_single_changes">
+            <span slot="start" class="codicon codicon-add"><img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/check.svg"></span>
+          </vscode-button>
+        </td>
         <td>
           <vscode-button id="show_changes">
-            {{ global_stuff['get_text']('Show changes') | safe }}
-            <span slot="start" class="codicon codicon-add"><img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/telescope.svg"></span>
+            *ALL
+            <span slot="start" class="codicon codicon-add"><img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/checklist.svg"></span>
           </vscode-button>
         </td>
         <td>

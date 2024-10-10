@@ -2,6 +2,7 @@
 
 import * as vscode from 'vscode';
 import { Uri } from "vscode";
+import { logger } from './Logger';
 import { AppConfig } from "../webview/controller/AppConfig";
 import path from "path";
 import * as source from "../obi/Source";
@@ -272,7 +273,7 @@ export class DirTool {
 
   public static write_file(file: string, content: string): void {
 
-    console.log(`Write data to ${file}`);
+    logger.info(`Write data to ${file}`);
     
     try{
       if (!DirTool.dir_exists(path.dirname(file)))

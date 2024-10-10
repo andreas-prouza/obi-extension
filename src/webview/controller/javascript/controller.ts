@@ -28,9 +28,15 @@ function main() {
 
   const run_build_button = document.getElementById("run_build") as Button;
   run_build_button?.addEventListener("click", run_build);
+
+  const run_single_build_button = document.getElementById("run_single_build") as Button;
+  run_single_build_button?.addEventListener("click", run_single_build);
   
   const show_changes_button = document.getElementById("show_changes") as Button;
   show_changes_button?.addEventListener("click", show_changes);
+  
+  const show_single_changes_button = document.getElementById("show_single_changes") as Button;
+  show_single_changes_button?.addEventListener("click", show_single_changes);
   
   window.addEventListener('message', receive_message);
 
@@ -48,6 +54,17 @@ function run_build() {
   });
 }
 
+function run_single_build() {
+
+  const run_build_ring = document.getElementById("run_build_ring");
+  if (run_build_ring)
+    run_build_ring.style.visibility='visible';
+
+  vscode.postMessage({
+    command: "run_single_build"
+  });
+}
+
 
 function show_changes() {
 
@@ -57,6 +74,17 @@ function show_changes() {
   
   vscode.postMessage({
     command: "show_changes"
+  });
+}
+
+function show_single_changes() {
+
+  const show_changes_ring = document.getElementById("show_changes_ring");
+  if (show_changes_ring)
+    show_changes_ring.style.visibility='visible';
+  
+  vscode.postMessage({
+    command: "show_single_changes"
   });
 }
 

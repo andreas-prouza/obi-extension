@@ -13,7 +13,6 @@ import * as fs from 'fs-extra';
 import { logger } from './Logger';
 import { OBICommands } from '../obi/OBICommands';
 import { LocaleText } from './LocaleText';
-import { platform } from 'os';
 
 
 
@@ -95,7 +94,7 @@ export class OBITools {
 
     const local_obi_python: string = path.join(config.general['local-obi-dir'], venv_bin);
 
-    console.log(`Check OBI path ${local_obi_python}: ${DirTool.file_exists(local_obi_python)}`);
+    logger.info(`Check OBI path ${local_obi_python}: ${DirTool.file_exists(local_obi_python)}`);
     if (! DirTool.file_exists(local_obi_python))
       return undefined;
 
@@ -401,12 +400,12 @@ export class OBITools {
     const t0 = performance.now();
     const current_hash_list = await OBITools.retrieve_current_source_hashes();
     const t1 = performance.now();
-    console.log(`1. It took ${t1 - t0} milliseconds.`);
+    logger.info(`1. It took ${t1 - t0} milliseconds.`);
     
     const t2 = performance.now();
     const changed_sources: source.ISourceList = await OBITools.compare_source_change(current_hash_list);
     const t3 = performance.now();
-    console.log(`2. It took ${t3 - t2} milliseconds.`);
+    logger.info(`2. It took ${t3 - t2} milliseconds.`);
 
     return changed_sources;
   }
@@ -441,12 +440,12 @@ export class OBITools {
     DirTool.clean_dir(path.join(ws, '.obi', 'tmp'));
     DirTool.clean_dir(path.join(ws, '.obi', 'build-output'));
 
-    console.log('Get changed sources');
+    logger.info('Get changed sources');
     const changed_sources: source.ISourceList = await OBITools.get_changed_sources();
-    console.log('Get dependend sources');
+    logger.info('Get dependend sources');
     const dependend_sources: string[] = await OBITools.get_dependend_sources(changed_sources);
 
-    console.log('Clean dir');
+    logger.info('Clean dir');
     DirTool.clean_dir(path.join(Workspace.get_workspace(), '.obi', 'tmp'));
     DirTool.write_file(path.join(Workspace.get_workspace(), Constants.CHANGED_OBJECT_LIST), JSON.stringify(changed_sources, undefined, 2));
     DirTool.write_file(path.join(Workspace.get_workspace(), Constants.DEPENDEND_OBJECT_LIST), JSON.stringify(dependend_sources, undefined, 2));
@@ -467,7 +466,7 @@ export class OBITools {
     let new_sources: string[] = [];
     let old_sources: string[] = [];
 
-    console.log(`Check ${results.length} sources`);
+    logger.info(`Check ${results.length} sources`);
 
     //----------------------------------------
     // First start all processes
@@ -481,7 +480,7 @@ export class OBITools {
       promise_list.push(OBITools.check_source_change_item(source_item, last_source_hashes));
     });
     const t7 = performance.now();
-    console.log(`Start check_source_change_item: It took ${t7 - t6} milliseconds.`);
+    logger.info(`Start check_source_change_item: It took ${t7 - t6} milliseconds.`);
 
     //----
 /*
@@ -495,7 +494,7 @@ export class OBITools {
     };
 
     const t5 = performance.now();
-    console.log(`Start check_old_source_item: It took ${t5 - t4} milliseconds.`);
+    logger.info(`Start check_old_source_item: It took ${t5 - t4} milliseconds.`);
   */
 
     //----------------------------------------
@@ -504,7 +503,7 @@ export class OBITools {
     const t0 = performance.now();
     const all_promises = await Promise.all(promise_list);
     const t1 = performance.now();
-    console.log(`Change check: It took ${t1 - t0} milliseconds.`);
+    logger.info(`Change check: It took ${t1 - t0} milliseconds.`);
     
     all_promises.map((source_item_list: source.ISourceList) => {
       if (source_item_list['changed-sources'].length > 0)
@@ -518,7 +517,7 @@ export class OBITools {
     const t2 = performance.now();
     const all_promises2 = await Promise.all(promise_list2);
     const t3 = performance.now();
-    console.log(`Old check: It took ${t3 - t2} milliseconds.`);
+    logger.info(`Old check: It took ${t3 - t2} milliseconds.`);
 
     all_promises2.map((source_item: string|undefined) => {
       if (source_item)
@@ -526,7 +525,7 @@ export class OBITools {
     });
 */
 
-    console.log(`new_sources: ${new_sources.length}, changed-sources: ${changed_sources.length}`);
+    logger.info(`new_sources: ${new_sources.length}, changed-sources: ${changed_sources.length}`);
 
     return {
       "new-objects": new_sources,
@@ -586,7 +585,7 @@ export class OBITools {
 
   public static async retrieve_current_source_hashes(): Promise<source.ISource[]> {
 
-    console.log('Start retrieve_current_source_hashes');
+    logger.info('Start retrieve_current_source_hashes');
     let p1 = performance.now();
 
     const config = AppConfig.get_app_confg();
@@ -600,9 +599,9 @@ export class OBITools {
     );
 
     let p2 = performance.now();
-    console.log(`Duration: ${p2-p1} milliseconds`);
+    logger.info(`Duration: ${p2-p1} milliseconds`);
 
-    console.log(`Get checksum of sources`);
+    logger.info(`Get checksum of sources`);
 
     let checksum_calls = [];
     let counter = 0;
@@ -631,7 +630,7 @@ export class OBITools {
     }
     
     p2 = performance.now();
-    console.log(`In total ${hash_values.length} hash values. Duration: ${p2-p1}`);
+    logger.info(`In total ${hash_values.length} hash values. Duration: ${p2-p1}`);
     return hash_values;
   }
 

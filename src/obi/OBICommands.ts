@@ -42,7 +42,7 @@ export class OBICommands {
 
     await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
-      title: `Transfer project`,
+      title: `Run build`,
     }, 
     async progress => {
       
@@ -86,8 +86,8 @@ export class OBICommands {
         });
         let cmd = `${OBITools.get_local_obi_python_path()} -X utf8 ${path.join(config.general['local-obi-dir'], 'main.py')} -a create -p .`;
         if (source)
-          cmd = `${cmd} --source '${source}'`;
-        console.log(`CMD: ${cmd}`);
+          cmd = `${cmd} --source "${source}"`;
+        logger.info(`CMD: ${cmd}`);
         const child = await OBICommands.run_system_cmd(Workspace.get_workspace(), cmd);
 
         progress.report({
@@ -104,7 +104,7 @@ export class OBICommands {
         });
         ssh_cmd = `source .profile; cd '${remote_base_dir}' || exit 1; rm log/* .obi/log/* 2> /dev/null || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a create -p .`;
         if (source)
-          ssh_cmd = `${ssh_cmd} --source '${source}'`;
+          ssh_cmd = `${ssh_cmd} --source "${source}"`;
         await SSH_Tasks.executeCommand(ssh_cmd);
 
       }
@@ -145,8 +145,11 @@ export class OBICommands {
     }
 
     let source = vscode.window.activeTextEditor.document.fileName.replace(path.join(Workspace.get_workspace(), AppConfig.get_app_confg().general['source-dir']||'src'), '');
-    if (['/', '\\'].includes(source.charAt(0)))
+    source = source.replaceAll('\\', '/');
+    if (source.charAt(0) == '/')
       source = source.substring(1);
+
+    logger.info(`Source: ${source}`);
 
     return source
   }
@@ -226,11 +229,11 @@ export class OBICommands {
     if (OBITools.without_local_obi())
       await OBITools.generate_source_change_lists();
     else {
-      console.log(`WS: ${Workspace.get_workspace()}`);
+      logger.info(`WS: ${Workspace.get_workspace()}`);
       let cmd = `${OBITools.get_local_obi_python_path()} -X utf8 ${path.join(config.general['local-obi-dir'], 'main.py')} -a create -p .`;
       if (source)
-        cmd = `${cmd} --source '${source}'`;
-      console.log(`CMD: ${cmd}`);
+        cmd = `${cmd} --source "${source}"`;
+      logger.info(`CMD: ${cmd}`);
       child = await OBICommands.run_system_cmd(Workspace.get_workspace(), cmd);
     }
 

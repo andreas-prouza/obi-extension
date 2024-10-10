@@ -155,11 +155,19 @@ export class OBIController implements vscode.WebviewViewProvider {
           vscode.commands.executeCommand('obi.run_build');
           break;
 
+        case 'run_single_build': // command:obi.run_build
+          OBIController.current_run_type = data.command;
+          vscode.commands.executeCommand('obi.run_single_build');
+          break;
+
         case 'show_changes': // command:obi.show_changes
           OBIController.current_run_type = data.command;
           vscode.commands.executeCommand('obi.show_changes');
-          webviewView.webview.postMessage({command: 'test'});
+          break;
 
+        case 'show_single_changes': // command:obi.show_changes
+          OBIController.current_run_type = data.command;
+          vscode.commands.executeCommand('obi.show_single_changes');
           break;
 			}
 		});

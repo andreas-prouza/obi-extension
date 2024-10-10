@@ -1,3 +1,14 @@
+## [0.2.18]
+
+* Improve logging
+* Buttons for single source processing
+
+
+## [0.2.17]
+
+* Windows bugfix
+
+
 ## [0.2.16]
 
 * Run build & show changes for a single source
