@@ -161,7 +161,7 @@ export class SSH_Tasks {
 
 
 
-  public static async check_remote_path(file: string, again?: boolean): Promise<boolean> {
+  public static async check_remote_paths(files: string[], again?: boolean): Promise<boolean> {
 
     if (!SSH_Tasks.ssh.isConnected()){
       if (again) {
@@ -169,10 +169,18 @@ export class SSH_Tasks {
         return false;
       }
       await SSH_Tasks.connect();
-      return SSH_Tasks.check_remote_path(file, true);
+      return SSH_Tasks.check_remote_paths(files, true);
     }
 
-    const cmd = `ls "${file}"`;
+    let cmd = '';
+    let first = true;
+    files.forEach((file) => {
+      if (! first)
+        cmd = `${cmd} && `;
+      cmd = `${cmd} ls "${file}"`;
+      first = false;
+    })
+
     logger.info(`Check path: ${cmd}`);
     const result = await SSH_Tasks.ssh.execCommand(cmd);
 
@@ -323,7 +331,7 @@ export class SSH_Tasks {
     });
 
     logger.info('Transfer files:');
-    logger.info(transfer_list.join(', '));
+    logger.info(transfer_list.toString());
 
     await SSH_Tasks.ssh.putFiles(transfer_list, {concurrency: config.connection['ssh-concurrency'] ?? 5 });
 

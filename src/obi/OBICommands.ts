@@ -68,16 +68,13 @@ export class OBICommands {
       let check: boolean = await OBITools.check_remote();
 
       if (!check) {
-        vscode.window.showErrorMessage('Missing OBI project on remote system.');
-        OBITools.transfer_all(false);
+        return false;
       }
 
-      if (check) {
-        progress.report({
-          message: `Count of source transfer: ${source_list.length}`
-        });
-        const result = await SSH_Tasks.transferSources(source_list);
-      }
+      progress.report({
+        message: `Count of source transfer: ${source_list.length}`
+      });
+      const result = await SSH_Tasks.transferSources(source_list);
 
       if (!OBITools.without_local_obi()) {
 
@@ -266,15 +263,15 @@ export class OBICommands {
       throw Error(`Invalid config for config.general['compiled-object-list']: ${config.general['compiled-object-list']}`);
 
     const object_list_file: string = config.general['compiled-object-list'];
-    let toml_dict: {} = {};
+    let json_dict: {} = {};
 
     const source_hashes: source.ISource[] = await OBITools.retrieve_current_source_hashes();
 
     source_hashes.map((source: source.ISource) => {
       const source_name: string = Object.keys(source)[0];
-      toml_dict[source_name.replaceAll('\\', '/')] = {hash: source[source_name].hash};
+      json_dict[source_name.replaceAll('\\', '/')] = source[source_name];
     });
-    DirTool.write_toml(join(Workspace.get_workspace(), object_list_file), toml_dict);
+    DirTool.write_json(join(Workspace.get_workspace(), object_list_file), json_dict);
 
     vscode.window.showInformationMessage(`Object list created`);
     return;

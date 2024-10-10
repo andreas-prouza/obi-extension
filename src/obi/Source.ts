@@ -17,14 +17,9 @@ export interface ISourceInfos {
 }
 
 
-export interface ISourceItem {
-  hash: string,
-  created: Date
-}
-
 
 export interface ISource {
-  [source: string]: ISourceItem
+  [source: string]: string
 }
 
 export interface IChangedSources {

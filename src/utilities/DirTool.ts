@@ -161,6 +161,7 @@ export class DirTool {
   }
 
 
+
   public static get_json(path: string): any|undefined {
 
     if (!DirTool.file_exists(path)) {
@@ -180,6 +181,25 @@ export class DirTool {
     const { mtime, ctime } = fs.statSync(file);
     return mtime;
   }
+
+
+
+
+  public static write_json(file: string, data: {}): any|undefined {
+
+    try{
+      
+      // Read the TOML file into a string
+      const text = JSON.stringify(data);
+
+      fs.writeFileSync(file, text, 'utf8');
+    }
+    catch (e: any) {
+      console.error(`Error in json file: ${file}`);
+    }
+    return;
+  }
+
 
 
   public static get_file_URI(file: string) : {} {
@@ -389,12 +409,12 @@ export class DirTool {
 
   public static async checksumFile(root: string, file_path: string): Promise<source.ISource> {
     return new Promise((resolve, reject) => {
-      const hash = crypto.createHash('sha256');
+      const hash = crypto.createHash('md5');
       const stream = fs.createReadStream(path.join(root, file_path));
       stream.on('error', err => reject(err));
       stream.on('data', chunk => hash.update(chunk));
       stream.on('end', () => {
-        resolve({[file_path] : {hash: String(hash.digest('hex'))}});
+        resolve({[file_path] : String(hash.digest('hex'))});
       });
     });
   }

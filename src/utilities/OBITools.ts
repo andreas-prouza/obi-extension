@@ -49,11 +49,11 @@ export class OBITools {
     if (!DirTool.file_exists(path.join(ws, config.general['source-infos']||'source-infos.json'))){
       DirTool.write_file(path.join(ws, config.general['source-infos']||'source-infos.json'), '[]');
     }
-    if (!DirTool.file_exists(path.join(ws, config.general['dependency-list']||'dependency.toml'))){
-      DirTool.write_file(path.join(ws, config.general['dependency-list']||'dependency.toml'), '');
+    if (!DirTool.file_exists(path.join(ws, config.general['dependency-list']||'dependency.json'))){
+      DirTool.write_file(path.join(ws, config.general['dependency-list']||'dependency.json'), '');
     }
-    if (!DirTool.file_exists(path.join(ws, config.general['compiled-object-list']||'object-build.toml'))){
-      DirTool.write_file(path.join(ws, config.general['compiled-object-list']||'object-build.toml'), '');
+    if (!DirTool.file_exists(path.join(ws, config.general['compiled-object-list']||'object-build.json'))){
+      DirTool.write_file(path.join(ws, config.general['compiled-object-list']||'object-build.json'), '');
     }
     
     switch (previous_version) {
@@ -65,6 +65,16 @@ export class OBITools {
       case '0.2.8':
         fs.copyFileSync(path.join(ext_ws, 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
         fs.copyFileSync(path.join(ext_ws, 'etc', 'logger_config.py'), path.join(ws, '.obi', 'etc', 'logger_config.py'));
+      case '0.2.9':
+      case '0.2.10':
+      case '0.2.11':
+      case '0.2.12':
+      case '0.2.13':
+      case '0.2.14':
+      case '0.2.15':
+      case '0.2.16':
+      case '0.2.17':
+      case '0.2.18':
     }
 
     OBITools.ext_context.workspaceState.update('obi.version', current_version);
@@ -113,9 +123,6 @@ export class OBITools {
     
     const remote_obi_python: string = `${config.general['remote-obi-dir']}/venv/bin/python`;
 
-    if (! await SSH_Tasks.check_remote_path(remote_obi_python))
-      return undefined;
-
     return remote_obi_python;
   }
 
@@ -145,19 +152,21 @@ export class OBITools {
     const config = AppConfig.get_app_confg();
     const remote_base_dir: string|undefined = config.general['remote-base-dir'];
     const remote_obi_dir: string|undefined = config.general['remote-obi-dir'];
+    const remote_obi_python: string = `${config.general['remote-obi-dir']}/venv/bin/python`;
+
     let check: boolean;
 
     if (!remote_base_dir || ! remote_obi_dir)
       throw Error(`Missing 'remote_base_dir' or 'remote_obi_dir'`);
 
-    check = await SSH_Tasks.check_remote_path(`${remote_base_dir}/${Constants.OBI_APP_CONFIG_FILE}`);
-    if (!check)
-      return false;
-
     if (!config.general['source-dir'])
       return false;
 
-    check = await SSH_Tasks.check_remote_path(`${remote_base_dir}/${config.general['source-dir']}`);
+    check = await SSH_Tasks.check_remote_paths([
+      `${remote_base_dir}/${config.general['source-dir']}`, 
+      `${remote_base_dir}/${Constants.OBI_APP_CONFIG_FILE}`,
+      remote_obi_python
+      ]);
     if (!check)
       return false;
 
@@ -194,7 +203,7 @@ export class OBITools {
       });
 
       await OBICommands.get_remote_source_list();
-      const remote_source_list: source.ISource = DirTool.get_toml(path.join(ws, config.general['remote-source-list']));
+      const remote_source_list: source.ISource = DirTool.get_json(path.join(ws, config.general['remote-source-list']));
       
       progress.report({
         message: `Get local source hashes`
@@ -389,7 +398,7 @@ export class OBITools {
     
     const file:string = path.join(workspace, config.general['compiled-object-list'])
 
-    return DirTool.get_toml(file)
+    return DirTool.get_json(file)
 
   }
 
@@ -419,7 +428,7 @@ export class OBITools {
 
     const all_sources: string[] = Object.assign([], changed_sources['changed-sources'], changed_sources['new-objects']);
 
-    const dependency_list: {['source']: string[]} = DirTool.get_toml(path.join(Workspace.get_workspace(), config.general['dependency-list']));
+    const dependency_list: {['source']: string[]} = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['dependency-list']));
     for (const [k, v] of Object.entries(dependency_list)) {
       for (let i=0; i<all_sources.length; i++) {
         if (v.includes(all_sources[i]) && !all_sources.includes(k)) {
@@ -558,7 +567,7 @@ export class OBITools {
     
     const source_name: string = Object.keys(source_item)[0];
     const k_source: string = source_name.replaceAll('\\', '/');
-    const v_hash: string = source_item[source_name]['hash'];
+    const v_hash: string = source_item[source_name];
     let source_changed = true;
 
     if (!(k_source in last_source_hashes)) {
@@ -567,7 +576,7 @@ export class OBITools {
 
     if (k_source in last_source_hashes) {
 
-      if (last_source_hashes[k_source]['hash'] == v_hash) {
+      if (last_source_hashes[k_source] == v_hash) {
         source_changed = false;
         return {"changed-sources": [], "new-objects": []};
       }

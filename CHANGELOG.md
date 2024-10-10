@@ -1,3 +1,8 @@
+## [0.2.19]
+
+* Change object list from TOML to JSON due to performance issues
+
+
 ## [0.2.18]
 
 * Improve logging
