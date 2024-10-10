@@ -110,7 +110,7 @@ export class OBICommands {
         message: `Run build on IBM i`
       });
 
-      ssh_cmd = `source .profile; cd '${remote_base_dir}' || exit 1; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p .`;
+      ssh_cmd = `source .profile; cd '${remote_base_dir}' || exit 1; rm log/* .obi/log/* 2> /dev/null || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p .`;
       await SSH_Tasks.executeCommand(ssh_cmd);
 
       progress.report({

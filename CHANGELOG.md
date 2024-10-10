@@ -1,3 +1,8 @@
+## [0.2.20]
+
+* Clean up logs on IBM i
+
+
 ## [0.2.19]
 
 * Change object list from TOML to JSON due to performance issues
