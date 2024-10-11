@@ -23,6 +23,7 @@ export class OBICommands {
   public static run_build_status: OBIStatus = OBIStatus.READY;
   public static show_changes_status: OBIStatus = OBIStatus.READY;
   public static remote_source_list_status: OBIStatus = OBIStatus.READY;
+  public static reset_compiled_object_list_status: OBIStatus = OBIStatus.READY;
 
 
 
@@ -257,6 +258,13 @@ export class OBICommands {
 
   public static async reset_compiled_object_list() {
 
+    if (OBICommands.reset_compiled_object_list_status != OBIStatus.READY) {
+      vscode.window.showErrorMessage('OBI process is already running');
+      return;
+    }
+
+    OBICommands.reset_compiled_object_list_status = OBIStatus.IN_PROCESS;
+
     const config = AppConfig.get_app_confg();
 
     if (!config.general['compiled-object-list'])
@@ -272,8 +280,12 @@ export class OBICommands {
       json_dict[source_name.replaceAll('\\', '/')] = source[source_name];
     });
     DirTool.write_json(join(Workspace.get_workspace(), object_list_file), json_dict);
-
     vscode.window.showInformationMessage(`Object list created`);
+    
+    await SSH_Tasks.transfer_files([object_list_file]);
+    vscode.window.showInformationMessage(`Object list transfered to IBM i`);
+
+    OBICommands.reset_compiled_object_list_status = OBIStatus.READY;
     return;
   }
 

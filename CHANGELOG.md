@@ -1,3 +1,9 @@
+## [0.2.21]
+
+* On object list reset: transfer it also to IBM i
+* Checks for duplicate processing
+
+
 ## [0.2.20]
 
 * Clean up logs on IBM i

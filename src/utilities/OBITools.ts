@@ -13,6 +13,7 @@ import * as fs from 'fs-extra';
 import { logger } from './Logger';
 import { OBICommands } from '../obi/OBICommands';
 import { LocaleText } from './LocaleText';
+import { OBIStatus } from '../obi/OBIStatus';
 
 
 
@@ -20,6 +21,9 @@ export class OBITools {
 
   public static ext_context?: vscode.ExtensionContext;
   public static lang: LocaleText|undefined = undefined;
+
+  public static check_remote_sources_status: OBIStatus = OBIStatus.READY;
+  public static transfer_all_status: OBIStatus = OBIStatus.READY;
 
 
   /**
@@ -177,6 +181,30 @@ export class OBITools {
 
 
   public static async check_remote_sources(): Promise<boolean> {
+
+    if (OBITools.check_remote_sources_status != OBIStatus.READY) {
+      vscode.window.showErrorMessage('Remote check is already running');
+      return false;
+    }
+
+    OBITools.check_remote_sources_status = OBIStatus.IN_PROCESS;
+    let result:boolean = false;
+
+    try {
+      result = await OBITools.process_check_remote_sources();
+    }
+    catch(e: any) {
+      logger.error(e);
+      vscode.window.showErrorMessage('Error occured during remote source check');
+    }
+    
+    OBITools.check_remote_sources_status = OBIStatus.READY;
+
+    return result;
+  }
+
+
+  public static async process_check_remote_sources(): Promise<boolean> {
 
     const config = AppConfig.get_app_confg();
     const ws: string = Workspace.get_workspace();
@@ -673,6 +701,31 @@ export class OBITools {
 
 
   public static async transfer_all(silent: boolean|undefined) {
+    
+    if (OBITools.transfer_all_status != OBIStatus.READY) {
+      vscode.window.showErrorMessage('Transfer is already running');
+      return;
+    }
+
+    OBITools.transfer_all_status = OBIStatus.IN_PROCESS;
+    let result:boolean = false;
+
+    try {
+      await OBITools.process_transfer_all(silent);
+    }
+    catch(e: any) {
+      logger.error(e);
+      vscode.window.showErrorMessage('Error occured during transfer to remote');
+    }
+    
+    OBITools.transfer_all_status = OBIStatus.READY;
+
+    return;
+  }
+
+
+  
+  public static async process_transfer_all(silent: boolean|undefined) {
 
     const config = AppConfig.get_app_confg();
 
