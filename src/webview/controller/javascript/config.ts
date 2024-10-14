@@ -1,8 +1,10 @@
 import {
   allComponents,
   provideVSCodeDesignSystem,
-  Button
+  Button,
+  TextField
 } from "@vscode/webview-ui-toolkit";
+import { InputBox } from "vscode";
 
 const deepmerge = require('deepmerge');
 
@@ -28,6 +30,9 @@ function main() {
 
   const save_button = document.getElementById("save_config") as Button;
   save_button?.addEventListener("click", save_configs);
+
+  const add_global_cmd_button = document.getElementById("add_global_cmd") as Button;
+  add_global_cmd_button?.addEventListener("click", () => {add_global_cmd(add_global_cmd_button)});
 
   // Add new attributes for language settings
   const new_language_button = document.getElementById('add_language_settings');
@@ -74,6 +79,26 @@ function main() {
   }
 
   window.addEventListener('message', receive_message);
+
+}
+
+
+
+
+function add_global_cmd(e: HTMLElement) {
+  
+  const config: string = e.getAttribute('config') ?? '';
+
+  const key = document.getElementById("new_global_cmd_key") as TextField;
+  const value = document.getElementById("new_global_cmd_value") as TextField;
+  console.log(`New command ${key.value}, ${value.value}`);
+
+  vscode.postMessage({
+    command: "add_global_cmd",
+    user_project: config,
+    key: key.value,
+    value: value.value
+  });
 
 }
 
@@ -272,10 +297,35 @@ function set_element_missing_value(element: Element) {
 
 
 
+function save_global_cmds(class_prefix:string) {
+
+  const app_elements = document.getElementsByClassName(`${class_prefix}_save_app_cmds`);
+  for (let i = 0; i < app_elements.length; i++) {
+    
+    const el2: string[] = app_elements[i].id.split('|');
+    const key = el2[3];
+    console.log(`Key!! ${key}`);
+    const value = (document.getElementById(`${class_prefix}|global|cmds|${key}|value`) as TextField).value;
+    console.log(`value!! ${value}`);
+
+    vscode.postMessage({
+      command: `save_global_cmd`,
+      user_project: class_prefix,
+      key: key,
+      value: value
+    });
+
+  }
+}
+
+
+
+
 function save_config(class_prefix:string) {
 
   let app_config:{} = {};
 
+  save_global_cmds(class_prefix);
 
   const app_elements = document.getElementsByClassName(`${class_prefix}_save_app`);
   let json_string: string = '';

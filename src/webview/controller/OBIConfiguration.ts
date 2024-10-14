@@ -196,6 +196,16 @@ export class OBIConfiguration {
         OBIConfiguration.update();
         break;
 
+      case "add_global_cmd":
+      case "save_global_cmd":
+
+        if(message.user_project == 'user')
+          config = AppConfig.get_user_app_config(workspaceUri);
+        else
+          config = AppConfig.get_project_app_config(workspaceUri);
+        config.global.cmds[message.key]=message.value.split('\n');
+        OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
+        //OBIConfiguration.update();
     }
     return;
   }
@@ -205,19 +215,30 @@ export class OBIConfiguration {
   private static save_config(isUser: boolean, workspaceUri: Uri, data: {}) {
 
     vscode.window.showInformationMessage('Configuration saved');
-    const old_config: AppConfig = AppConfig.get_app_confg();
+    const app_config: AppConfig = AppConfig.get_app_confg();
+    const missing_configs = app_config.attributes_missing();
+    let new_config: AppConfig;
 
-    const app_config = new AppConfig(data['connection'], data['general'], data['global']);
+    if (isUser) {
+      new_config = AppConfig.get_user_app_config(Workspace.get_workspace_uri());
+    }
+    else {
+      new_config = AppConfig.get_project_app_config(Workspace.get_workspace_uri());
+    }
+
+    new_config.connection = data['connection'];
+    new_config.general = data['general'];
+    new_config.global.settings = data['global']['settings'];
 
     // App config
     let toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_FILE);
     if (isUser)
       toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_USER_FILE);
     
-    DirTool.write_toml(toml_file, app_config);
+    DirTool.write_toml(toml_file, new_config);
     AppConfig.reset();
 
-    if (old_config.attributes_missing() && !AppConfig.get_app_confg().attributes_missing())
+    if (missing_configs && !AppConfig.get_app_confg().attributes_missing())
       vscode.commands.executeCommand('workbench.action.reloadWindow');
 
     AppConfig.self_check();
