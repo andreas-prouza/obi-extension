@@ -5,10 +5,10 @@
 
 <vscode-panels activeid="tab-1" aria-label="Default">
 
-  <vscode-panel-tab id="tab-1"><h3>{{ global_stuff['get_text']('Configuration') | safe }}</h3></vscode-panel-tab>
-  <vscode-panel-tab id="tab-2"><h3>{{ global_stuff['get_text']('Compile settings') | safe }}</h3></vscode-panel-tab>
-  <vscode-panel-tab id="tab-3"><h3>{{ global_stuff['get_text']('System settings') | safe }}</h3></vscode-panel-tab>
-  <vscode-panel-tab id="tab-4"><h3>{{ global_stuff['get_text']('Constants') | safe }}</h3></vscode-panel-tab>
+  <vscode-panel-tab class="panel_tab" id="tab-1"><h3>{{ global_stuff['get_text']('Configuration') | safe }}</h3></vscode-panel-tab>
+  <vscode-panel-tab class="panel_tab" id="tab-2"><h3>{{ global_stuff['get_text']('Compile settings') | safe }}</h3></vscode-panel-tab>
+  <vscode-panel-tab class="panel_tab" id="tab-3"><h3>{{ global_stuff['get_text']('System settings') | safe }}</h3></vscode-panel-tab>
+  <vscode-panel-tab class="panel_tab" id="tab-4"><h3>{{ global_stuff['get_text']('Constants') | safe }}</h3></vscode-panel-tab>
 
   <vscode-panel-view id="view-1">
     <section>
@@ -221,7 +221,7 @@
             </vscode-text-area>
           </td>
           <td>
-            <vscode-button class="delete_cmd" project_user="{{ class_prefix }}" key="global|cmds|{{ key }}" list_index="{{ loop.index0 }}" id="delete_filter_{{ loop.index0 }}">
+            <vscode-button class="delete_global_cmd" project_user="{{ class_prefix }}" key="global|cmds|{{ key }}" id="delete_global_cmd_{{ loop.index0 }}">
               <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
             </vscode-button>
           </td>

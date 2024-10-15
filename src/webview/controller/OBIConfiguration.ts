@@ -100,7 +100,9 @@ export class OBIConfiguration {
         project_config: project_config,
         SSH_PASSWORD: pwd,
         project_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_FILE),
-        user_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_USER_FILE)
+        user_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_USER_FILE),
+        panel: OBIConfiguration._context.secrets.get('obi|config|panel'),
+        panel_tab: OBIConfiguration._context.secrets.get('obi|config|panel_tab')
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         //object_list: this.get_object_list(workspaceUri),
         //compile_list: this.get_compile_list(workspaceUri)
@@ -142,6 +144,9 @@ export class OBIConfiguration {
     if (!workspaceUri)
       return;
 
+    OBIConfiguration._context.secrets.store('obi|config|panel', message.panel);
+    OBIConfiguration._context.secrets.store('obi|config|panel_tab', message.panel_tab);
+
     const command = message.command;
 
     switch (command) {
@@ -154,7 +159,7 @@ export class OBIConfiguration {
         OBIConfiguration.save_config(is_project, workspaceUri, message.data);
         break;
 
-        case "save_ssh_password":
+      case "save_ssh_password":
         config = AppConfig.get_app_confg();
         const host = config['connection']['remote-host'];
         const user = config['connection']['ssh-user'];
@@ -164,7 +169,6 @@ export class OBIConfiguration {
         break;
 
       case "add_language_attribute":
-        config: AppConfig;
         lang = message.language;
         attr = message.attribute;
 
@@ -206,6 +210,19 @@ export class OBIConfiguration {
         config.global.cmds[message.key]=message.value.split('\n');
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
         OBIConfiguration.update();
+        break;
+
+      case "delete_global_cmd":
+
+        if(message.user_project == 'user')
+          config = AppConfig.get_user_app_config(workspaceUri);
+        else
+          config = AppConfig.get_project_app_config(workspaceUri);
+        delete config.global.cmds[message.key];
+        OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
+        OBIConfiguration.update();
+        break;
+
     }
     return;
   }

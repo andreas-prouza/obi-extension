@@ -164,8 +164,9 @@ export class DirTool {
 
   public static get_json(path: string): any|undefined {
 
+    logger.debug(`Read json ${path}`);
     if (!DirTool.file_exists(path)) {
-      console.warn(`File does not exist: ${path}`);
+      logger.warn(`File does not exist: ${path}`);
       return undefined
     }
 
@@ -173,7 +174,15 @@ export class DirTool {
     
     let json_string = fs.readFileSync(path);
     // Converting to JSON 
-    return JSON.parse(json_string);
+    try {
+      return JSON.parse(json_string);
+    }
+    catch (e: any) {
+      logger.error(`JSON parse error for ${path}`);
+      logger.debug(`JSON content: ${json_string}`);
+      logger.error(`Parsing JSON content on line ${e.line}, column ${e.column}: ${e.message}`);
+    }
+    
   }
 
   
@@ -195,7 +204,7 @@ export class DirTool {
       fs.writeFileSync(file, text, 'utf8');
     }
     catch (e: any) {
-      console.error(`Error in json file: ${file}`);
+      logger.error(`Error in json file: ${file}`);
     }
     return;
   }
@@ -251,7 +260,7 @@ export class DirTool {
   public static get_toml(file: string): any|undefined {
 
     if (!DirTool.file_exists(file)) {
-      console.warn(`File does not exist: ${file}`);
+      logger.warn(`File does not exist: ${file}`);
       return undefined
     }
 
@@ -265,8 +274,8 @@ export class DirTool {
       return result;
     }
     catch (e: any) {
-      console.error(`Error in toml file: ${file}`);
-      console.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
+      logger.error(`Error in toml file: ${file}`);
+      logger.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
     }
     return undefined;
   }
@@ -283,8 +292,8 @@ export class DirTool {
       fs.writeFileSync(file, text, 'utf8');
     }
     catch (e: any) {
-      console.error(`Error in toml file: ${file}`);
-      console.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
+      logger.error(`Error in toml file: ${file}`);
+      logger.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
     }
     return;
   }
@@ -302,9 +311,9 @@ export class DirTool {
       fs.writeFileSync(file, content, 'utf8');
     }
     catch (e: any) {
-      console.error(`Error write file: ${file}: ${e.message}`);
+      logger.error(`Error write file: ${file}: ${e.message}`);
       if (e.line)
-        console.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
+        logger.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
     }
     return;
   }
@@ -324,8 +333,8 @@ export class DirTool {
       return data.toString().split('\n');
     }
     catch (e: any) {
-      console.error(`Error in toml file: ${file}`);
-      console.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
+      logger.error(`Error in toml file: ${file}`);
+      logger.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
     }
     return undefined;
   }
@@ -343,7 +352,7 @@ export class DirTool {
       return data.toString();
     }
     catch (e: any) {
-      console.error(`Error on reading ${file}`);
+      logger.error(`Error on reading ${file}`);
     }
     return undefined;
   }

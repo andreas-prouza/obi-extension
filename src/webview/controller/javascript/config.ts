@@ -17,7 +17,8 @@ const vscode = acquireVsCodeApi();
 
 window.addEventListener("load", main);
 
-
+let panel: string = 'project';
+let panel_tab: string = 'tab-1';
 
 function main() {
   // To get improved type annotations/IntelliSense the associated class for
@@ -31,8 +32,26 @@ function main() {
   const save_button = document.getElementById("save_config") as Button;
   save_button?.addEventListener("click", save_configs);
 
+  const project_cfg_button = document.getElementById("project_cfg");
+  project_cfg_button?.addEventListener("click", () => {panel = 'project'});
+  const user_cfg_button = document.getElementById("user_cfg");
+  user_cfg_button?.addEventListener("click", () => {panel = 'user'});
+
+  const panel_tab_buttons = document.getElementsByClassName('panel_tab');
+  for (let i = 0; i < panel_tab_buttons.length; i++) {
+    panel_tab_buttons[i].addEventListener("click", () => {panel_tab=panel_tab_buttons[i].id});
+  }
+
   const add_global_cmd_button = document.getElementById("add_global_cmd") as Button;
   add_global_cmd_button?.addEventListener("click", () => {add_global_cmd(add_global_cmd_button)});
+
+  const delete_global_cmd_buttons = document.getElementsByClassName('delete_global_cmd');
+  for (let i = 0; i < delete_global_cmd_buttons.length; i++) {
+    const el = delete_global_cmd_buttons[i];
+    el.addEventListener("click", () => {delete_global_cmd(el.getAttribute('project_user'), el.getAttribute('key')?.split('|')[2])});
+  }
+
+
 
   // Add new attributes for language settings
   const new_language_button = document.getElementById('add_language_settings');
@@ -85,6 +104,23 @@ function main() {
 
 
 
+function delete_global_cmd(config: string, key: string) {
+  
+  save_config(config);
+
+  console.log(`Delete command ${key} for ${config}`);
+
+  vscode.postMessage({
+    command: "delete_global_cmd",
+    panel: panel,
+    panel_tab: panel_tab,
+    user_project: config,
+    key: key
+  });
+
+}
+
+
 function add_global_cmd(e: HTMLElement) {
   
   const config: string = e.getAttribute('config') ?? '';
@@ -97,6 +133,8 @@ function add_global_cmd(e: HTMLElement) {
 
   vscode.postMessage({
     command: "add_global_cmd",
+    panel: panel,
+    panel_tab: panel_tab,
     user_project: config,
     key: key.value,
     value: value.value
@@ -114,6 +152,8 @@ function add_language_attribute(class_prefix: string, language: string, attribut
 
   vscode.postMessage({
     command: "add_language_attribute",
+    panel: panel,
+    panel_tab: panel_tab,
     user_project: class_prefix,
     language: language,
     attribute: attribute
@@ -130,6 +170,8 @@ function add_language_settings(class_prefix: string, language: string) {
 
   vscode.postMessage({
     command: "add_language_settings",
+    panel: panel,
+    panel_tab: panel_tab,
     user_project: class_prefix,
     language: language
   });
@@ -167,6 +209,8 @@ function save_configs() {
   if (ssh_password.value.length > 0)
     vscode.postMessage({
       command: `save_ssh_password`,
+      panel: panel,
+      panel_tab: panel_tab,
       password: ssh_password.value
     });
 
@@ -310,6 +354,8 @@ function save_global_cmds(class_prefix:string) {
 
     vscode.postMessage({
       command: `save_global_cmd`,
+      panel: panel,
+      panel_tab: panel_tab,
       user_project: class_prefix,
       key: key,
       value: value
@@ -410,6 +456,8 @@ function save_config(class_prefix:string) {
 
   vscode.postMessage({
     command: `${class_prefix}_save`,
+    panel: panel,
+    panel_tab: panel_tab,
     data: app_config
   });
 }
