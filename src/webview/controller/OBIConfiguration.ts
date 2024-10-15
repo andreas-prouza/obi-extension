@@ -205,7 +205,7 @@ export class OBIConfiguration {
           config = AppConfig.get_project_app_config(workspaceUri);
         config.global.cmds[message.key]=message.value.split('\n');
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
-        //OBIConfiguration.update();
+        OBIConfiguration.update();
     }
     return;
   }
@@ -229,6 +229,8 @@ export class OBIConfiguration {
     new_config.connection = data['connection'];
     new_config.general = data['general'];
     new_config.global.settings = data['global']['settings'];
+    if (data['global']['cmds'])
+      new_config.global.cmds = data['global']['cmds'];
 
     // App config
     let toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_FILE);

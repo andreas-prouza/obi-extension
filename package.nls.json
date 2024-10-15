@@ -106,5 +106,8 @@
   "Add new": "Add new",
   "Cloud workspace host (ℹ️ only when using remote workspaces)": "Cloud workspace host (ℹ️ only when using remote workspaces)",
   "Run single build": "Run single build",
-  "Show single changes": "Show single changes"
+  "Show single changes": "Show single changes",
+  "Command id": "Command id",
+  "Command": "Command",
+  "Commands (separated by new line)": "Commands (separated by new line)"
 }

@@ -89,6 +89,8 @@ function add_global_cmd(e: HTMLElement) {
   
   const config: string = e.getAttribute('config') ?? '';
 
+  save_config(config);
+
   const key = document.getElementById("new_global_cmd_key") as TextField;
   const value = document.getElementById("new_global_cmd_value") as TextField;
   console.log(`New command ${key.value}, ${value.value}`);
@@ -304,9 +306,7 @@ function save_global_cmds(class_prefix:string) {
     
     const el2: string[] = app_elements[i].id.split('|');
     const key = el2[3];
-    console.log(`Key!! ${key}`);
     const value = (document.getElementById(`${class_prefix}|global|cmds|${key}|value`) as TextField).value;
-    console.log(`value!! ${value}`);
 
     vscode.postMessage({
       command: `save_global_cmd`,
