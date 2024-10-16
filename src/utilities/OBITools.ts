@@ -59,7 +59,9 @@ export class OBITools {
     if (!DirTool.file_exists(path.join(ws, config.general['compiled-object-list']||'object-build.json'))){
       DirTool.write_file(path.join(ws, config.general['compiled-object-list']||'object-build.json'), '');
     }
-    
+
+    AppConfig.self_check();
+
     switch (previous_version) {
       case undefined:
       case '0.2.4':
@@ -79,11 +81,21 @@ export class OBITools {
       case '0.2.16':
       case '0.2.17':
       case '0.2.18':
+      case '0.2.19':
+      case '0.2.20':
+      case '0.2.21':
+        let config = AppConfig.get_project_app_config(Workspace.get_workspace_uri());
+        config.general['compiled-object-list'] = '.obi/etc/object-builds.json';
+        config.general['remote-source-list'] = '.obi/etc/source-list-remote.json';
+        config.general['source-list'] = '.obi/etc/source-list.json';
+        config.general['dependency-list'] = '.obi/etc/dependency.json';
+        const toml_file = path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_FILE);
+        DirTool.write_toml(toml_file, config);
+        AppConfig.reset();
     }
 
     OBITools.ext_context.workspaceState.update('obi.version', current_version);
 
-    AppConfig.self_check();
 
   }
 
@@ -456,7 +468,7 @@ export class OBITools {
 
     const all_sources: string[] = Object.assign([], changed_sources['changed-sources'], changed_sources['new-objects']);
 
-    const dependency_list: {['source']: string[]} = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['dependency-list']));
+    const dependency_list: {['source']: string[]} = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['dependency-list'])) || {};
     for (const [k, v] of Object.entries(dependency_list)) {
       for (let i=0; i<all_sources.length; i++) {
         if (v.includes(all_sources[i]) && !all_sources.includes(k)) {
@@ -471,14 +483,21 @@ export class OBITools {
 
 
 
-  public static async generate_source_change_lists(): Promise<string[]> {
+  public static async generate_source_change_lists(source?: string): Promise<string[]> {
     const ws = Workspace.get_workspace();
 
     DirTool.clean_dir(path.join(ws, '.obi', 'tmp'));
     DirTool.clean_dir(path.join(ws, '.obi', 'build-output'));
 
     logger.info('Get changed sources');
-    const changed_sources: source.ISourceList = await OBITools.get_changed_sources();
+    let changed_sources: source.ISourceList = {
+        "new-objects": [],
+        "changed-sources": [source||''],
+        "old-sources": []
+      }
+    if (!source)
+      changed_sources = await OBITools.get_changed_sources();
+      
     logger.info('Get dependend sources');
     const dependend_sources: string[] = await OBITools.get_dependend_sources(changed_sources);
 

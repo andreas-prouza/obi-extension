@@ -15,6 +15,7 @@ import path, { join } from 'path';
 import { DirTool } from '../utilities/DirTool';
 import { Constants } from '../Constants';
 import { logger } from '../utilities/Logger';
+import { config } from 'winston';
 
 
 export class OBICommands {
@@ -142,10 +143,22 @@ export class OBICommands {
       return undefined;
     }
 
+    const config = AppConfig.get_app_confg();
+
     let source = vscode.window.activeTextEditor.document.fileName.replace(path.join(Workspace.get_workspace(), AppConfig.get_app_confg().general['source-dir']||'src'), '');
     source = source.replaceAll('\\', '/');
     if (source.charAt(0) == '/')
       source = source.substring(1);
+
+    if (!config.general['supported-object-types'].includes(source.split('.').pop())) {
+      vscode.window.showWarningMessage(`${source} is not a supported source type`);
+      return undefined;
+    }
+
+    if (!DirTool.file_exists(path.join(Workspace.get_workspace(), config.general['source-dir'], source))) {
+      vscode.window.showWarningMessage(`${source} does not exist in current source directory (${path.join(Workspace.get_workspace(), config.general['source-dir'])})`);
+      return undefined;
+    }
 
     logger.info(`Source: ${source}`);
 
@@ -159,7 +172,7 @@ export class OBICommands {
     const source = OBICommands.get_current_active_source();
 
     if (!source)
-      return;
+      return OBIController.run_finished();
 
     OBICommands.run_build(context, source);
   }
@@ -202,7 +215,7 @@ export class OBICommands {
     const source = OBICommands.get_current_active_source();
 
     if (!source)
-      return;
+      return OBIController.run_finished();
 
     OBICommands.show_changes(context, source);
   }
@@ -224,18 +237,23 @@ export class OBICommands {
 
     let child;
 
-    if (OBITools.without_local_obi())
-      await OBITools.generate_source_change_lists();
-    else {
-      logger.info(`WS: ${Workspace.get_workspace()}`);
-      let cmd = `${OBITools.get_local_obi_python_path()} -X utf8 ${path.join(config.general['local-obi-dir'], 'main.py')} -a create -p .`;
-      if (source)
-        cmd = `${cmd} --source "${source}"`;
-      logger.info(`CMD: ${cmd}`);
-      child = await OBICommands.run_system_cmd(Workspace.get_workspace(), cmd);
-    }
+    try {
+      if (OBITools.without_local_obi())
+        await OBITools.generate_source_change_lists(source);
+      else {
+        logger.info(`WS: ${Workspace.get_workspace()}`);
+        let cmd = `${OBITools.get_local_obi_python_path()} -X utf8 ${path.join(config.general['local-obi-dir'], 'main.py')} -a create -p .`;
+        if (source)
+          cmd = `${cmd} --source "${source}"`;
+        logger.info(`CMD: ${cmd}`);
+        child = await OBICommands.run_system_cmd(Workspace.get_workspace(), cmd);
+      }
 
-    BuildSummary.render(context.extensionUri, Workspace.get_workspace_uri());
+      BuildSummary.render(context.extensionUri, Workspace.get_workspace_uri());
+    }
+    catch(e: any) {
+      vscode.window.showErrorMessage(e.message);
+    }
 
     OBICommands.show_changes_status = OBIStatus.READY;
     OBIController.run_finished();
@@ -267,23 +285,28 @@ export class OBICommands {
 
     const config = AppConfig.get_app_confg();
 
-    if (!config.general['compiled-object-list'])
-      throw Error(`Invalid config for config.general['compiled-object-list']: ${config.general['compiled-object-list']}`);
+    try {
+      if (!config.general['compiled-object-list'])
+        throw Error(`Invalid config for config.general['compiled-object-list']: ${config.general['compiled-object-list']}`);
 
-    const object_list_file: string = config.general['compiled-object-list'];
-    let json_dict: {} = {};
+      const object_list_file: string = config.general['compiled-object-list'];
+      let json_dict: {} = {};
 
-    const source_hashes: source.ISource[] = await OBITools.retrieve_current_source_hashes();
+      const source_hashes: source.ISource[] = await OBITools.retrieve_current_source_hashes();
 
-    source_hashes.map((source: source.ISource) => {
-      const source_name: string = Object.keys(source)[0];
-      json_dict[source_name.replaceAll('\\', '/')] = source[source_name];
-    });
-    DirTool.write_json(join(Workspace.get_workspace(), object_list_file), json_dict);
-    vscode.window.showInformationMessage(`Object list created`);
-    
-    await SSH_Tasks.transfer_files([object_list_file]);
-    vscode.window.showInformationMessage(`Object list transfered to IBM i`);
+      source_hashes.map((source: source.ISource) => {
+        const source_name: string = Object.keys(source)[0];
+        json_dict[source_name.replaceAll('\\', '/')] = source[source_name];
+      });
+      DirTool.write_json(join(Workspace.get_workspace(), object_list_file), json_dict);
+      vscode.window.showInformationMessage(`Object list created`);
+      
+      await SSH_Tasks.transfer_files([object_list_file]);
+      vscode.window.showInformationMessage(`Object list transfered to IBM i`);
+    }
+    catch(e: any) {
+      vscode.window.showErrorMessage(e.message);
+    }
 
     OBICommands.reset_compiled_object_list_status = OBIStatus.READY;
     return;

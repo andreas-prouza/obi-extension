@@ -1,3 +1,11 @@
+## [0.2.22]
+
+* Better maintain of compile commands
+* Remember config window position
+* Bugfixes
+* Remove uneccessary icons in controller view
+* NPM fixes
+
 ## [0.2.21]
 
 * On object list reset: transfer it also to IBM i

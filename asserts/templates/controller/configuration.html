@@ -17,7 +17,7 @@
     <vscode-button class="save-button" id="save_config">{{  global_stuff['get_text']('Save') | safe }}</vscode-button>
   </div>
 
-  <vscode-panels activeid="project_cfg" aria-label="Default">
+  <vscode-panels activeid="{{ panel or 'project_cfg' }}" aria-label="Default">
 
     <vscode-panel-tab id="project_cfg"><h2>{{  global_stuff['get_text']('Project configuration') | safe }}</h2></vscode-panel-tab>
     <vscode-panel-tab id="user_cfg"><h2>{{  global_stuff['get_text']('User configuration') | safe }}</h2></vscode-panel-tab>
@@ -68,8 +68,8 @@
   
   <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
   <script>
-    panel = '{{ panel }}';
-    panel_tab = '{{ panel_tab }}';
+    panel = "{{ panel or 'project_cfg' }}";
+    panel_tab = "{{ panel_tab or 'tab-1' }}";
   </script>
 
 </body>

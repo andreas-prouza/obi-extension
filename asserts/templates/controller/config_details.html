@@ -3,7 +3,7 @@
 {% set app_general=app_config['general'] %}
 {% set general_settings=app_config['global']['settings']['general'] %}
 
-<vscode-panels activeid="tab-1" aria-label="Default">
+<vscode-panels activeid="{{ panel_tab or 'tab-1' }}" aria-label="Default">
 
   <vscode-panel-tab class="panel_tab" id="tab-1"><h3>{{ global_stuff['get_text']('Configuration') | safe }}</h3></vscode-panel-tab>
   <vscode-panel-tab class="panel_tab" id="tab-2"><h3>{{ global_stuff['get_text']('Compile settings') | safe }}</h3></vscode-panel-tab>
@@ -211,7 +211,7 @@
       {% for key, value in cmds %}
         <tr>
           <td>
-            <vscode-text-field size="20" class="{{ class_prefix }}_save_app_cmds" panel="tab-2" id="{{ class_prefix }}|global|cmds|{{ key }}"
+            <vscode-text-field size="20" class="{{ class_prefix }}_save_app_global_cmds" panel="tab-2" id="{{ class_prefix }}|global|cmds|{{ key }}"
               value="{{ key }}">
             </vscode-text-field>
           </td>
@@ -264,18 +264,36 @@
           </td>
           <td>
             <vscode-text-area cols="100" rows="4" resize="both" panel="tab-2" id="{{ class_prefix }}|global|compile-cmds|{{ key }}|value"
-              value="{{ value }}">{{ key }}
+              value="{{ value }}">
             </vscode-text-area>
+          </td>
+          <td>
+            <vscode-button class="delete_compile_cmd" project_user="{{ class_prefix }}" key="global|compile-cmds|{{ key }}" id="delete_compile_cmd_{{ loop.index0 }}">
+              <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
+            </vscode-button>
           </td>
         </tr>
         {% endfor %}
+        <tr>
+          <td>
+            <vscode-text-field id="new_compile_cmd_key" panel="tab-2" placeholder="command id"></vscode-text-field>
+          </td>
+          <td>
+            <vscode-text-area id="new_compile_cmd_value" cols="100" rows="2" panel="tab-2" placeholder="command"></vscode-text-area>
+          </td>
+          <td>
+            <vscode-button id="add_compile_cmd" config="{{ class_prefix }}">
+              <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
+            </vscode-button>
+          </td>
+        </tr>
       </table>
 
       <br />
       <hr />
       <br />
       
-      <h2>{{ global_stuff['get_text']('Compile steps') | safe }}</h2>
+      <h2>{{ global_stuff['get_text']('Compile steps') | safe }} (<code>global.steps</code>)</h2>
       {% set compile_steps = app_global['steps'] %}
 
       <table style="width: 100%">
@@ -286,7 +304,7 @@
         {% for key, value in compile_steps %}
         <tr>
           <td>
-            <vscode-text-field  class="{{ class_prefix }}_save_app_steps" panel="tab-2" id="{{ class_prefix }}|global|steps|{{ key }}"
+            <vscode-text-field  class="{{ class_prefix }}_save_app_global_step" panel="tab-2" id="{{ class_prefix }}|global|steps|{{ key }}"
               value="{{ key }}">
             </vscode-text-field>
           </td>
@@ -295,8 +313,26 @@
               value="{{ value | join('\n') }}">
             </vscode-text-area>
           </td>
+          <td>
+            <vscode-button class="delete_global_step" project_user="{{ class_prefix }}" key="global|steps|{{ key }}" id="delete_global_step_{{ loop.index0 }}">
+              <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
+            </vscode-button>
+          </td>
         </tr>
         {% endfor %}
+        <tr>
+          <td>
+            <vscode-text-field id="new_global_step_key" panel="tab-2" placeholder="command id"></vscode-text-field>
+          </td>
+          <td>
+            <vscode-text-area id="new_global_step_value" cols="100" rows="2" panel="tab-2" placeholder="command"></vscode-text-area>
+          </td>
+          <td>
+            <vscode-button id="add_global_step" config="{{ class_prefix }}">
+              <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
+            </vscode-button>
+          </td>
+        </tr>
       </table>
 
     </section>

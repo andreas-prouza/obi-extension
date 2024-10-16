@@ -17,8 +17,10 @@ const vscode = acquireVsCodeApi();
 
 window.addEventListener("load", main);
 
-let panel: string = 'project';
-let panel_tab: string = 'tab-1';
+let panel: string|null = null;
+let panel_tab: string|null = null;
+
+
 
 function main() {
   // To get improved type annotations/IntelliSense the associated class for
@@ -42,13 +44,35 @@ function main() {
     panel_tab_buttons[i].addEventListener("click", () => {panel_tab=panel_tab_buttons[i].id});
   }
 
-  const add_global_cmd_button = document.getElementById("add_global_cmd") as Button;
-  add_global_cmd_button?.addEventListener("click", () => {add_global_cmd(add_global_cmd_button)});
+  let button = document.getElementById("add_global_cmd") as Button;
+  button?.addEventListener("click", () => {add_global_cmd(button)});
 
-  const delete_global_cmd_buttons = document.getElementsByClassName('delete_global_cmd');
-  for (let i = 0; i < delete_global_cmd_buttons.length; i++) {
-    const el = delete_global_cmd_buttons[i];
+  let buttons = document.getElementsByClassName('delete_global_cmd');
+  for (let i = 0; i < buttons.length; i++) {
+    const el = buttons[i];
     el.addEventListener("click", () => {delete_global_cmd(el.getAttribute('project_user'), el.getAttribute('key')?.split('|')[2])});
+  }
+
+
+
+  button = document.getElementById("add_compile_cmd") as Button;
+  button?.addEventListener("click", () => {add_compile_cmd(button)});
+
+  buttons = document.getElementsByClassName('delete_compile_cmd');
+  for (let i = 0; i < buttons.length; i++) {
+    const el = buttons[i];
+    el.addEventListener("click", () => {delete_compile_cmd(el.getAttribute('project_user'), el.getAttribute('key')?.split('|')[2])});
+  }
+
+
+
+  button = document.getElementById("add_global_step") as Button;
+  button?.addEventListener("click", () => {add_global_step(button)});
+
+  buttons = document.getElementsByClassName('delete_global_step');
+  for (let i = 0; i < buttons.length; i++) {
+    const el = buttons[i];
+    el.addEventListener("click", () => {delete_global_step(el.getAttribute('project_user'), el.getAttribute('key')?.split('|')[2])});
   }
 
 
@@ -121,6 +145,42 @@ function delete_global_cmd(config: string, key: string) {
 }
 
 
+
+function delete_compile_cmd(config: string, key: string) {
+  
+  save_config(config);
+
+  console.log(`Delete command ${key} for ${config}`);
+
+  vscode.postMessage({
+    command: "delete_compile_cmd",
+    panel: panel,
+    panel_tab: panel_tab,
+    user_project: config,
+    key: key
+  });
+
+}
+
+
+
+function delete_global_step(config: string, key: string) {
+  
+  save_config(config);
+
+  console.log(`Delete command ${key} for ${config}`);
+
+  vscode.postMessage({
+    command: "delete_global_step",
+    panel: panel,
+    panel_tab: panel_tab,
+    user_project: config,
+    key: key
+  });
+
+}
+
+
 function add_global_cmd(e: HTMLElement) {
   
   const config: string = e.getAttribute('config') ?? '';
@@ -133,6 +193,51 @@ function add_global_cmd(e: HTMLElement) {
 
   vscode.postMessage({
     command: "add_global_cmd",
+    panel: panel,
+    panel_tab: panel_tab,
+    user_project: config,
+    key: key.value,
+    value: value.value
+  });
+
+}
+
+
+
+function add_compile_cmd(e: HTMLElement) {
+  
+  const config: string = e.getAttribute('config') ?? '';
+
+  save_config(config);
+
+  const key = document.getElementById("new_compile_cmd_key") as TextField;
+  const value = document.getElementById("new_compile_cmd_value") as TextField;
+  console.log(`New command ${key.value}, ${value.value}`);
+
+  vscode.postMessage({
+    command: "add_compile_cmd",
+    panel: panel,
+    panel_tab: panel_tab,
+    user_project: config,
+    key: key.value,
+    value: value.value
+  });
+
+}
+
+
+function add_global_step(e: HTMLElement) {
+  
+  const config: string = e.getAttribute('config') ?? '';
+
+  save_config(config);
+
+  const key = document.getElementById("new_global_step_key") as TextField;
+  const value = document.getElementById("new_global_step_value") as TextField;
+  console.log(`New command ${key.value}, ${value.value}`);
+
+  vscode.postMessage({
+    command: "add_global_step",
     panel: panel,
     panel_tab: panel_tab,
     user_project: config,
@@ -345,7 +450,7 @@ function set_element_missing_value(element: Element) {
 
 function save_global_cmds(class_prefix:string) {
 
-  const app_elements = document.getElementsByClassName(`${class_prefix}_save_app_cmds`);
+  const app_elements = document.getElementsByClassName(`${class_prefix}_save_app_global_cmds`);
   for (let i = 0; i < app_elements.length; i++) {
     
     const el2: string[] = app_elements[i].id.split('|');
@@ -367,11 +472,60 @@ function save_global_cmds(class_prefix:string) {
 
 
 
+function save_global_step(class_prefix:string) {
+
+  const app_elements = document.getElementsByClassName(`${class_prefix}_save_app_global_step`);
+  for (let i = 0; i < app_elements.length; i++) {
+    
+    const el2: string[] = app_elements[i].id.split('|');
+    const key = el2[3];
+    const value = (document.getElementById(`${class_prefix}|global|steps|${key}|value`) as TextField).value;
+
+    vscode.postMessage({
+      command: `save_global_step`,
+      panel: panel,
+      panel_tab: panel_tab,
+      user_project: class_prefix,
+      key: key,
+      value: value
+    });
+
+  }
+}
+
+
+
+function save_compile_cmds(class_prefix:string) {
+
+  const app_elements = document.getElementsByClassName(`${class_prefix}_save_app_compile_cmd`);
+  for (let i = 0; i < app_elements.length; i++) {
+    
+    const el2: string[] = app_elements[i].id.split('|');
+    const key = el2[3];
+    const value = (document.getElementById(`${class_prefix}|global|compile-cmds|${key}|value`) as TextField).value;
+
+    vscode.postMessage({
+      command: `save_compile_cmd`,
+      panel: panel,
+      panel_tab: panel_tab,
+      user_project: class_prefix,
+      key: key,
+      value: value
+    });
+
+  }
+}
+
+
+
+
 function save_config(class_prefix:string) {
 
   let app_config:{} = {};
 
   save_global_cmds(class_prefix);
+  save_global_step(class_prefix);
+  save_compile_cmds(class_prefix);
 
   const app_elements = document.getElementsByClassName(`${class_prefix}_save_app`);
   let json_string: string = '';

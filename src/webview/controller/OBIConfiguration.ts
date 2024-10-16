@@ -8,6 +8,7 @@ import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
 import { AppConfig, ConfigCompileSettings } from './AppConfig';
 import { Workspace } from '../../utilities/Workspace';
+import { logger } from '../../utilities/Logger';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -101,8 +102,8 @@ export class OBIConfiguration {
         SSH_PASSWORD: pwd,
         project_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_FILE),
         user_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_USER_FILE),
-        panel: OBIConfiguration._context.secrets.get('obi|config|panel'),
-        panel_tab: OBIConfiguration._context.secrets.get('obi|config|panel_tab')
+        panel: await context.secrets.get('obi|config|panel'),
+        panel_tab: await context.secrets.get('obi|config|panel_tab')
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         //object_list: this.get_object_list(workspaceUri),
         //compile_list: this.get_compile_list(workspaceUri)
@@ -144,8 +145,10 @@ export class OBIConfiguration {
     if (!workspaceUri)
       return;
 
-    OBIConfiguration._context.secrets.store('obi|config|panel', message.panel);
-    OBIConfiguration._context.secrets.store('obi|config|panel_tab', message.panel_tab);
+    if (message.panel)
+      OBIConfiguration._context.secrets.store('obi|config|panel', message.panel);
+    if (message.panel_tab)
+      OBIConfiguration._context.secrets.store('obi|config|panel_tab', message.panel_tab);
 
     const command = message.command;
 
@@ -207,7 +210,31 @@ export class OBIConfiguration {
           config = AppConfig.get_user_app_config(workspaceUri);
         else
           config = AppConfig.get_project_app_config(workspaceUri);
-        config.global.cmds[message.key]=message.value.split('\n');
+        config.global.cmds[message.key]=message.value;
+        OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
+        OBIConfiguration.update();
+        break;
+
+      case "add_compile_cmd":
+      case "save_compile_cmd":
+
+        if(message.user_project == 'user')
+          config = AppConfig.get_user_app_config(workspaceUri);
+        else
+          config = AppConfig.get_project_app_config(workspaceUri);
+        config.global['compile-cmds'][message.key]=message.value;
+        OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
+        OBIConfiguration.update();
+        break;
+
+      case "add_global_step":
+      case "save_global_step":
+
+        if(message.user_project == 'user')
+          config = AppConfig.get_user_app_config(workspaceUri);
+        else
+          config = AppConfig.get_project_app_config(workspaceUri);
+        config.global.steps[message.key]=message.value.split('\n');
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
         OBIConfiguration.update();
         break;
@@ -219,6 +246,28 @@ export class OBIConfiguration {
         else
           config = AppConfig.get_project_app_config(workspaceUri);
         delete config.global.cmds[message.key];
+        OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
+        OBIConfiguration.update();
+        break;
+
+      case "delete_compile_cmd":
+
+        if(message.user_project == 'user')
+          config = AppConfig.get_user_app_config(workspaceUri);
+        else
+          config = AppConfig.get_project_app_config(workspaceUri);
+        delete config.global['compile-cmds'][message.key];
+        OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
+        OBIConfiguration.update();
+        break;
+
+      case "delete_global_step":
+
+        if(message.user_project == 'user')
+          config = AppConfig.get_user_app_config(workspaceUri);
+        else
+          config = AppConfig.get_project_app_config(workspaceUri);
+        delete config.global.steps[message.key];
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
         OBIConfiguration.update();
         break;
@@ -248,6 +297,10 @@ export class OBIConfiguration {
     new_config.global.settings = data['global']['settings'];
     if (data['global']['cmds'])
       new_config.global.cmds = data['global']['cmds'];
+    if (data['global']['steps'])
+      new_config.global.steps = data['global']['steps'];
+    if (data['global']['compile-cmds'])
+      new_config.global['compile-cmds'] = data['global']['compile-cmds'];
 
     // App config
     let toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_FILE);
