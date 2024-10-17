@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 import * as winston from "winston";
 import Transport, {TransportStreamOptions} from 'winston-transport';
-import { Workspace } from './Workspace';
 import path from 'path';
+import { Constants } from '../Constants';
+import * as fs from 'fs';
 
 
 const outputChannel = vscode.window.createOutputChannel(`OBI`);
@@ -45,12 +46,16 @@ export const logger = winston.createLogger({
     // - Write all logs with importance level of `error` or less to `error.log`
     // - Write all logs with importance level of `info` or less to `combined.log`
     //
-    new winston.transports.File({ dirname: path.join(ws, '.obi', 'log'), filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ dirname: path.join(ws, '.obi', 'log'), filename: 'combined.log' }),
     new winston.transports.Console(),
     myCustomTransport
   ],
 });
+
+
+if (fs.existsSync(path.join(ws, Constants.OBI_APP_CONFIG_FILE))) {
+  logger.add(new winston.transports.File({ dirname: path.join(ws, '.obi', 'log'), filename: 'error.log', level: 'error' }));
+  logger.add(new winston.transports.File({ dirname: path.join(ws, '.obi', 'log'), filename: 'combined.log' }));
+}
 
 //
 // If we're not in production then log to the `console` with the format:

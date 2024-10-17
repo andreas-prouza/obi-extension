@@ -1,3 +1,8 @@
+## [0.2.23]
+
+* Bugfixes
+
+
 ## [0.2.22]
 
 * Better maintain of compile commands

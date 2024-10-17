@@ -17,8 +17,8 @@ const vscode = acquireVsCodeApi();
 
 window.addEventListener("load", main);
 
-let panel: string|null = null;
-let panel_tab: string|null = null;
+let panel: string|null;
+let panel_tab: string|null;
 
 
 
@@ -39,40 +39,58 @@ function main() {
   const user_cfg_button = document.getElementById("user_cfg");
   user_cfg_button?.addEventListener("click", () => {panel = 'user'});
 
+  console.log(`Panel: ${panel}, panel_tab: ${panel_tab}`);
   const panel_tab_buttons = document.getElementsByClassName('panel_tab');
   for (let i = 0; i < panel_tab_buttons.length; i++) {
-    panel_tab_buttons[i].addEventListener("click", () => {panel_tab=panel_tab_buttons[i].id});
+    panel_tab_buttons[i].addEventListener("click", () => {panel_tab=panel_tab_buttons[i].id.replace('project_', '').replace('user_', '')});
   }
 
   let button = document.getElementById("add_global_cmd") as Button;
-  button?.addEventListener("click", () => {add_global_cmd(button)});
+  button?.addEventListener("click", () => {
+    add_global_cmd(button);
+    reload();
+  });
 
   let buttons = document.getElementsByClassName('delete_global_cmd');
   for (let i = 0; i < buttons.length; i++) {
     const el = buttons[i];
-    el.addEventListener("click", () => {delete_global_cmd(el.getAttribute('project_user'), el.getAttribute('key')?.split('|')[2])});
+    el.addEventListener("click", () => {
+      delete_global_cmd(el.getAttribute('project_user'), el.getAttribute('key')?.split('|')[2]); 
+      reload();
+    });
   }
 
 
-
   button = document.getElementById("add_compile_cmd") as Button;
-  button?.addEventListener("click", () => {add_compile_cmd(button)});
+  button?.addEventListener("click", () => {
+    add_compile_cmd(button);
+    reload();
+  });
+
 
   buttons = document.getElementsByClassName('delete_compile_cmd');
   for (let i = 0; i < buttons.length; i++) {
     const el = buttons[i];
-    el.addEventListener("click", () => {delete_compile_cmd(el.getAttribute('project_user'), el.getAttribute('key')?.split('|')[2])});
+    el.addEventListener("click", () => {
+      delete_compile_cmd(el.getAttribute('project_user'), el.getAttribute('key')?.split('|')[2]); 
+      reload();
+    });
   }
 
 
-
   button = document.getElementById("add_global_step") as Button;
-  button?.addEventListener("click", () => {add_global_step(button)});
+  button?.addEventListener("click", () => {
+    add_global_step(button);
+    reload();
+  });
 
   buttons = document.getElementsByClassName('delete_global_step');
   for (let i = 0; i < buttons.length; i++) {
     const el = buttons[i];
-    el.addEventListener("click", () => {delete_global_step(el.getAttribute('project_user'), el.getAttribute('key')?.split('|')[2])});
+    el.addEventListener("click", () => {
+      delete_global_step(el.getAttribute('project_user'), el.getAttribute('key')?.split('|')[2]); 
+      reload();
+    });
   }
 
 
@@ -83,6 +101,7 @@ function main() {
     const lang: string = document.getElementById('add_language_settings_name')?.value;
     const config: string = new_language_button.getAttribute('config') ?? '';
     add_language_settings(config, lang);
+    reload();
   });
 
   const new_property_buttons = document.getElementsByName(`language-settings-add-property`);
@@ -93,6 +112,7 @@ function main() {
       const config: string = e.getAttribute('config') ?? '';
       const attr_arr = attr.split('|');
       add_language_attribute(config, attr_arr[0], value);
+      reload();
     });
   });
 
@@ -319,6 +339,8 @@ function save_configs() {
       password: ssh_password.value
     });
 
+  reload();
+
 }
 
 
@@ -516,6 +538,12 @@ function save_compile_cmds(class_prefix:string) {
   }
 }
 
+
+function reload() {
+  vscode.postMessage({
+    command: `reload`
+  });
+}
 
 
 

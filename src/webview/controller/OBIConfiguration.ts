@@ -184,7 +184,6 @@ export class OBIConfiguration {
           config.global.settings.language[lang][attr] = '';
 
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
-        OBIConfiguration.update();
         break;
 
       case "add_language_settings":
@@ -200,7 +199,6 @@ export class OBIConfiguration {
           config.global.settings.language[lang] = new ConfigCompileSettings();
 
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
-        OBIConfiguration.update();
         break;
 
       case "add_global_cmd":
@@ -212,7 +210,6 @@ export class OBIConfiguration {
           config = AppConfig.get_project_app_config(workspaceUri);
         config.global.cmds[message.key]=message.value;
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
-        OBIConfiguration.update();
         break;
 
       case "add_compile_cmd":
@@ -224,7 +221,6 @@ export class OBIConfiguration {
           config = AppConfig.get_project_app_config(workspaceUri);
         config.global['compile-cmds'][message.key]=message.value;
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
-        OBIConfiguration.update();
         break;
 
       case "add_global_step":
@@ -236,7 +232,6 @@ export class OBIConfiguration {
           config = AppConfig.get_project_app_config(workspaceUri);
         config.global.steps[message.key]=message.value.split('\n');
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
-        OBIConfiguration.update();
         break;
 
       case "delete_global_cmd":
@@ -247,7 +242,6 @@ export class OBIConfiguration {
           config = AppConfig.get_project_app_config(workspaceUri);
         delete config.global.cmds[message.key];
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
-        OBIConfiguration.update();
         break;
 
       case "delete_compile_cmd":
@@ -258,7 +252,6 @@ export class OBIConfiguration {
           config = AppConfig.get_project_app_config(workspaceUri);
         delete config.global['compile-cmds'][message.key];
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
-        OBIConfiguration.update();
         break;
 
       case "delete_global_step":
@@ -269,9 +262,11 @@ export class OBIConfiguration {
           config = AppConfig.get_project_app_config(workspaceUri);
         delete config.global.steps[message.key];
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
-        OBIConfiguration.update();
         break;
 
+      case "reload":
+        
+        OBIConfiguration.update();
     }
     return;
   }

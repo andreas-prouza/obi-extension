@@ -390,8 +390,10 @@ export class AppConfig {
     }
 
     let app_config = new AppConfig(con_obj, gen_obj, glob_obj);
-    this._last_loading_time = Date.now();
-    this._config = app_config;
+    if (!config_dict) {
+      this._last_loading_time = Date.now();
+      this._config = app_config;
+    }
 
     return app_config;
   }
@@ -445,7 +447,6 @@ export class AppConfig {
     
     const ws_uri = Workspace.get_workspace_uri();
 
-    this._config?.general['local-obi-dir']
     const project_app_config: {} = AppConfig.get_project_app_config(ws_uri);
     const user_app_config: {} = AppConfig.get_user_app_config(ws_uri);
 

@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "0.2.22",
+  "version": "0.2.23",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
