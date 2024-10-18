@@ -330,8 +330,7 @@ export class SSH_Tasks {
       })
     });
 
-    logger.info('Transfer files:');
-    logger.info(transfer_list.toString());
+    logger.info(`Transfer files: ${source_list}`);
 
     await SSH_Tasks.ssh.putFiles(transfer_list, {concurrency: config.connection['ssh-concurrency'] ?? 5 });
 
@@ -361,6 +360,8 @@ export class SSH_Tasks {
       throw Error(`Config attribute 'config.general.remote_base_dir' missing`);
     const local_base_dir: string = path.join(Workspace.get_workspace(), config.general['local-base-dir']);
     const remote_base_dir: string = config.general['remote-base-dir'];
+
+    logger.info(`Transfer: ${file_list}`);
 
     let transfer_list: FileTransfer[] = [];
 

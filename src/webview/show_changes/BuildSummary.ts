@@ -9,6 +9,7 @@ import { LogOutput } from './LogOutput';
 import { AppConfig } from '../controller/AppConfig';
 import { Workspace } from '../../utilities/Workspace';
 import { logger } from '../../utilities/Logger';
+import { OBICommands } from '../../obi/OBICommands';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -33,6 +34,7 @@ export class BuildSummary {
   public static currentPanel: BuildSummary | undefined;
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
+  private static _extensionUri: Uri;
 
 
   /**
@@ -60,12 +62,14 @@ export class BuildSummary {
   public static render(extensionUri: Uri, workspaceUri: Uri|undefined) {
 
     logger.info('Render BuildSummary');
+    BuildSummary._extensionUri = extensionUri;
+
     if (BuildSummary.currentPanel) {
       // If the webview panel already exists reveal it
-      BuildSummary.currentPanel.dispose();
-      //BuildSummary.currentPanel._panel.reveal(ViewColumn.One);
-      //return;
+      BuildSummary.currentPanel._panel.reveal(ViewColumn.One);
+      return;
     }
+
 
     if (!workspaceUri){
       vscode.window.showErrorMessage("No workspace opened");
@@ -77,39 +81,69 @@ export class BuildSummary {
     // If a webview panel does not already exist create and show a new one
     const panel = BuildSummary.createNewPanel(extensionUri);
 
-
-    nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-    const html = nunjucks.render('show_changes/index.html', 
-      {
-        global_stuff: OBITools.get_global_stuff(panel.webview, extensionUri),
-        main_java_script: getUri(panel.webview, extensionUri, ["out", "show_changes.js"]),
-        //filex: encodeURIComponent(JSON.stringify(fileUri)),
-        object_list: BuildSummary.get_object_list(workspaceUri),
-        compile_list: OBITools.get_compile_list(workspaceUri),
-        compile_file: DirTool.get_encoded_file_URI(config.general['compile-list'])
-      }
-    );
-    panel.webview.html = html;
+    panel.webview.html = BuildSummary.generate_html(extensionUri, panel.webview);
     //panel.webview.html = index_html.html;
 
     panel.webview.onDidReceiveMessage(
       (message: any) => {
-        const command = message.command;
-        //const text = message.text;
+        const command: string|undefined = message.command;
 
         switch (command) {
           case "hello":
             vscode.window.showInformationMessage(message.text);
             return;
+
           case "show_log":
             LogOutput.render(workspaceUri, message.type, message.level, message.source, message.cmd_index);
             return;
+
+          case "run_build":
+            OBICommands.rerun_build();
         }
       }
     );
 
     BuildSummary.currentPanel = new BuildSummary(panel, extensionUri);
   
+  }
+
+
+
+  private static generate_html(extensionUri: Uri, webview: Webview): string {
+
+    const ws: Uri = Workspace.get_workspace_uri();
+    const config = AppConfig.get_app_confg();
+
+    nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
+
+    const html = nunjucks.render('show_changes/index.html', 
+      {
+        global_stuff: OBITools.get_global_stuff(webview, extensionUri),
+        main_java_script: getUri(webview, extensionUri, ["out", "show_changes.js"]),
+        //filex: encodeURIComponent(JSON.stringify(fileUri)),
+        object_list: BuildSummary.get_object_list(ws),
+        compile_list: OBITools.get_compile_list(ws),
+        compile_file: DirTool.get_encoded_file_URI(config.general['compile-list']),
+        run_build: !OBITools.is_compile_list_completed(ws)
+      }
+    );
+
+    return html;
+
+  }
+
+
+
+
+  public static async update(): Promise<void> {
+
+    const panel = BuildSummary.currentPanel;
+    
+    if (!panel)
+      return;
+
+    panel._panel.webview.html = BuildSummary.generate_html(BuildSummary._extensionUri, BuildSummary.currentPanel?._panel.webview);
+    
   }
 
 

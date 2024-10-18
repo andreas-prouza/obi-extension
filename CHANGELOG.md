@@ -1,3 +1,8 @@
+## [0.2.24]
+
+* Rerun build button in summary
+
+
 ## [0.2.23]
 
 * Bugfixes

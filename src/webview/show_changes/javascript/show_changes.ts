@@ -26,6 +26,10 @@ function main() {
     return;
   loaded = true;
   
+  const run_button = document.getElementById('run_build') as Button;
+  run_button.addEventListener('click', run_build);
+
+
   const joblogButton = document.getElementsByClassName("joblog");
 
   for (let i = 0; i < joblogButton.length; i++) {
@@ -45,6 +49,12 @@ function main() {
 
 }
 
+
+function run_build() {
+  vscode.postMessage({
+    command: "run_build"
+  });
+}
 
 
 //--function handleHowdyClick() {

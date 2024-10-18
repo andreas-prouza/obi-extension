@@ -430,6 +430,59 @@ export class OBITools {
 
 
 
+
+  public static get_sources_2_build_from_compile_list(): string[] {
+
+    let sources: string[] = [];
+    let need_2_build: boolean = false;
+
+    const compile_list: {}|undefined = OBITools.get_compile_list(Workspace.get_workspace_uri());
+
+    if (!compile_list || !('compiles' in compile_list))
+      return sources;
+
+    for (const level_item of (compile_list['compiles'] as any) ) {
+      for (const source of level_item['sources']) {
+        need_2_build = false;
+        for (const cmd of source['cmds']) {
+          if (cmd['status'] != 'success') {
+            need_2_build = true;
+            break;
+          }
+        }
+        if (need_2_build)
+          sources.push(source['source']);
+      }
+    }
+
+    return sources;
+  }
+
+
+
+
+  public static is_compile_list_completed(workspaceUri: vscode.Uri): boolean {
+    
+    const compile_list: {}|undefined = OBITools.get_compile_list(workspaceUri);
+
+    if (!compile_list || !('compiles' in compile_list))
+      return false;
+
+    for (const level_item of (compile_list['compiles'] as any) ) {
+      for (const source of level_item['sources']) {
+        for (const cmd of source['cmds']) {
+          if (cmd['status'] != 'success')
+            return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+
+
+
   public static get_source_hash_list(workspace:string): source.ISource | undefined {
 
     const config = AppConfig.get_app_confg();
@@ -499,7 +552,7 @@ export class OBITools {
       changed_sources = await OBITools.get_changed_sources();
       
     logger.info('Get dependend sources');
-    const dependend_sources: string[] = await OBITools.get_dependend_sources(changed_sources);
+    const dependend_sources: string[] = OBITools.get_dependend_sources(changed_sources);
 
     logger.info('Clean dir');
     DirTool.clean_dir(path.join(Workspace.get_workspace(), '.obi', 'tmp'));

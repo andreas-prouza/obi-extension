@@ -71,7 +71,9 @@ srvpgm-crt = "$(SET_LIBL); cl -v \"CRTSRVPGM SRVPGM(\"'$(TARGET_LIB)/$(OBJ_NAME)
 "clp.pgm" = "cl -v \"CRTSRCPF FILE(QTEMP/QSRC) RCDLEN(112)\" 2> /dev/null; cl -v \"CPYFRMSTMF FROMSTMF('\"'$(SOURCE_FILE_NAME)'\"') TOMBR('/QSYS.LIB/QTEMP.LIB/QSRC.FILE/\"'$(OBJ_NAME)'\".MBR') MBROPT(*replace)\"; cl -v \"CRTCLPGM PGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCFILE(QTEMP/QSRC) REPLACE(*YES)\" "
 "rpg.pgm" = "cl -v \"CRTSRCPF FILE(QTEMP/QSRC) RCDLEN(112)\" 2> /dev/null; cl -v \"CPYFRMSTMF FROMSTMF('\"'$(SOURCE_FILE_NAME)'\"') TOMBR('/QSYS.LIB/QTEMP.LIB/QSRC.FILE/\"'$(OBJ_NAME)'\".MBR') MBROPT(*replace)\"; cl -v \"CRTRPGPGM PGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCFILE(QTEMP/QSRC) REPLACE(*YES)\" "
 "rpgle.mod" = "$(SET_LIBL); cl -v \"CRTRPGMOD MODULE(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') DBGVIEW($(DBGVIEW)) REPLACE(*YES) TGTCCSID($(TGTCCSID)) INCDIR($(INCDIR_RPGLE))\""
+"rpgle.pgm" = "$(SET_LIBL); cl -v \"CRTBNDRPG PGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') DBGVIEW($(DBGVIEW)) REPLACE(*YES) TGTCCSID($(TGTCCSID)) INCDIR($(INCDIR_RPGLE))\""
 "sqlrpgle.mod" = "$(SET_LIBL); cl -v \"CRTSQLRPGI OBJ(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') OBJTYPE(*MODULE) RPGPPOPT($(RPGPPOPT)) TGTRLS($(TGTRLS)) DBGVIEW($(DBGVIEW)) REPLACE(*YES) COMPILEOPT('TGTCCSID($(TGTCCSID)) INCDIR($(INCDIR_SQLRPGLE))')\""
+"sqlrpgle.pgm" = "$(SET_LIBL); cl -v \"CRTSQLRPGI OBJ(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') OBJTYPE(*PGM) RPGPPOPT($(RPGPPOPT)) TGTRLS($(TGTRLS)) DBGVIEW($(DBGVIEW)) REPLACE(*YES) COMPILEOPT('TGTCCSID($(TGTCCSID)) INCDIR($(INCDIR_SQLRPGLE))')\""
 pgm = "$(SET_LIBL); cl -v \"CRTPGM PGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") ACTGRP($(ACTGRP)) REPLACE(*YES) TGTRLS($(TGTRLS)) STGMDL($(STGMDL)) DETAIL(*BASIC) BNDDIR($(INCLUDE_BNDDIR))\""
 "sqltable.file" = "cl -v \"RUNSQLSTM SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') DFTRDBCOL($(TARGET_LIB)) COMMIT(*NONE) ERRLVL(21)\""
 "sqlview.file" = "cl -v \"RUNSQLSTM SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') DFTRDBCOL($(TARGET_LIB)) COMMIT(*NONE) ERRLVL(21)\""
@@ -84,11 +86,11 @@ pgm = "$(SET_LIBL); cl -v \"CRTPGM PGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") ACTGRP($
 
 [global.steps]
 "sqlrpgle.srvpgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"sqlrpgle.mod\"", "global.compile-cmds.bnddir-rmv", "global.compile-cmds.srvpgm-crt", "global.compile-cmds.bnddir-add", "global.cmds.check-error" ]
-"sqlrpgle.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"sqlrpgle.mod\"", "global.compile-cmds.\"pgm\"", "global.cmds.check-error" ]
+"sqlrpgle.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"sqlrpgle.pgm\"", "global.cmds.check-error" ]
 "clle.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"clle.pgm\"", "global.cmds.check-error" ]
 "clp.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"clp.pgm\"", "global.cmds.check-error" ]
 "rpg.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"rpg.pgm\"", "global.cmds.check-error" ]
-"rpgle.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"rpgle.mod\"", "global.compile-cmds.\"pgm\"", "global.cmds.check-error" ]
+"rpgle.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"rpgle.pgm\"", "global.cmds.check-error" ]
 "rpgle.srvpgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"rpgle.mod\"", "global.compile-cmds.bnddir-rmv", "global.compile-cmds.srvpgm-crt", "global.compile-cmds.bnddir-add", "global.cmds.check-error" ]
 "sqltable.file" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"sqltable.file\"", "global.cmds.check-error" ]
 "sqlview.file" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"sqlview.file\"", "global.cmds.check-error" ]
