@@ -109,5 +109,8 @@
   "Show single changes": "Show single changes",
   "Command id": "Command id",
   "Command": "Command",
-  "Commands (separated by new line)": "Commands (separated by new line)"
+  "Commands (separated by new line)": "Commands (separated by new line)",
+  "Source configuration": "Source configuration",
+  "Source list config": "Source list config",
+  "Source config": "Source config"
 }

@@ -4,6 +4,7 @@ import { DirTool } from '../../utilities/DirTool';
 import path from 'path';
 import { Constants } from '../../Constants';
 import { Workspace } from '../../utilities/Workspace';
+import { SourceListConfig } from '../source_list/SourceListConfig';
 
 
 
@@ -291,6 +292,19 @@ export class ConfigGlobal {
 
 
 
+export type SourceConfig = {
+  settings: {}|undefined,
+  "compile-cmds": string[]|undefined,
+  steps: string[]|undefined
+}
+
+
+export type SourceConfigList = {
+  [source: string]: SourceConfig
+}
+
+
+
 
 export class AppConfig {
 
@@ -426,6 +440,16 @@ export class AppConfig {
     return app_config;
 
   }
+
+
+
+  public static get_source_configs(): SourceConfigList|undefined {
+
+    const source_config: SourceConfigList|undefined = DirTool.get_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE));
+    
+    return source_config;
+  }
+
 
 
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="{{ global_stuff['theme_mode'] }}">
 
 <head>
   <meta charset="UTF-8">
@@ -10,6 +10,11 @@
 
 
 <body>
+
+  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
+
   
   <div id="still_missing"><br/><b>⚠️ {{ global_stuff['get_text']('There are still missing values ...') | safe }}</b><br/></div>
 
@@ -19,8 +24,9 @@
 
   <vscode-panels activeid="{{ panel or 'project_cfg' }}" aria-label="Default">
 
-    <vscode-panel-tab id="project_cfg"><h2>{{  global_stuff['get_text']('Project configuration') | safe }}</h2></vscode-panel-tab>
-    <vscode-panel-tab id="user_cfg"><h2>{{  global_stuff['get_text']('User configuration') | safe }}</h2></vscode-panel-tab>
+    <vscode-panel-tab id="project_cfg">{{  global_stuff['get_text']('Project configuration') | safe }}</vscode-panel-tab>
+    <vscode-panel-tab id="user_cfg">{{  global_stuff['get_text']('User configuration') | safe }}</vscode-panel-tab>
+    <vscode-panel-tab id="source_cfg">{{  global_stuff['get_text']('Source configuration') | safe }}</vscode-panel-tab>
 
     
     <vscode-panel-view id="project_cfg-view">
@@ -59,6 +65,23 @@
     </vscode-panel-view>
 
 
+    <vscode-panel-view id="source_cfg-view">
+
+      <section>
+        
+        <br/>
+        <br/>
+
+        {% set class_prefix = 'source' %}
+
+        {% set app_config = user_config %}
+
+        {% include "controller/config_source_list.html" %}
+
+      </section>
+    </vscode-panel-view>
+
+
   </vscode-panels>
 
 
@@ -66,6 +89,15 @@
   <br />
 
   
+  <script src="{{ global_stuff['asserts_uri'] }}/js/jquery.min.js"></script>
+  <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table.min.js"></script>
+  <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-de.js"></script>
+  <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-en.js"></script>
+  <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-resizable.min.js"></script>
+  <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-filter-control.min.js"></script>
+
+  <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap.bundle.min.js"></script>
+
   <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
   <script>
     panel = "{{ panel or 'project_cfg' }}";

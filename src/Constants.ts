@@ -7,6 +7,7 @@ export class Constants {
   public static readonly BUILD_OUTPUT_DIR: string = ".obi/build-output";
   public static readonly OBI_APP_CONFIG_FILE: string = ".obi/etc/app-config.toml";
   public static readonly OBI_APP_CONFIG_USER_FILE: string = ".obi/etc/.user-app-config.toml";
+  public static readonly OBI_SOURCE_CONFIG_FILE: string = ".obi/etc/source-config.toml";
   public static readonly OBI_TMP_DIR: string = ".obi/tmp";
   public static readonly DEPENDEND_OBJECT_LIST: string = ".obi/tmp/dependend-object-list.json";
   public static readonly CHANGED_OBJECT_LIST: string = ".obi/tmp/changed-object-list.json";

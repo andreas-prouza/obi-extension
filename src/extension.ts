@@ -178,6 +178,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	*/
 
+
 	if (config.general['check-remote-source-on-startup'] && config.general['check-remote-source-on-startup'] === true) {
 		OBITools.check_remote_sources().then((success)=> {
 			if (success)

@@ -9,6 +9,7 @@ import { OBITools } from '../../utilities/OBITools';
 import { AppConfig, ConfigCompileSettings } from './AppConfig';
 import { Workspace } from '../../utilities/Workspace';
 import { logger } from '../../utilities/Logger';
+import { OBISourceConfiguration } from './OBISourceConfiguration';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -103,7 +104,8 @@ export class OBIConfiguration {
         project_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_FILE),
         user_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_USER_FILE),
         panel: await context.secrets.get('obi|config|panel'),
-        panel_tab: await context.secrets.get('obi|config|panel_tab')
+        panel_tab: await context.secrets.get('obi|config|panel_tab'),
+        config_source_list: AppConfig.get_source_configs()
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         //object_list: this.get_object_list(workspaceUri),
         //compile_list: this.get_compile_list(workspaceUri)
@@ -264,8 +266,13 @@ export class OBIConfiguration {
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
         break;
 
+      case "edit_source_config":
+
+        OBISourceConfiguration.render(OBIConfiguration._context, OBIConfiguration._extensionUri, message.source);
+        break;
+
       case "reload":
-        
+
         OBIConfiguration.update();
     }
     return;

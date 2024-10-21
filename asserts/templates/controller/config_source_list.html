@@ -1,0 +1,66 @@
+  <table id="config_source_list"
+    class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
+    data-locale="{{ global_stuff['locale'] }}"
+    data-toggle="table"
+    data-filter-control="true"
+    data-show-search-clear-button="true" 
+    data-show-columns="true"
+    data-pagination="true" 
+    data-page-list="[5, 10, 20, 50, 100, all]"
+    data-page-size="10"
+    data-pagination-h-align="left"
+    data-pagination-detail-h-align="left"
+    data-buttons-align="left"
+    data-search-align="left">
+    <thead>
+      <tr>
+        <th data-field="lib" data-sortable="true" data-filter-control="select" data-filter-control-container="#filter">{{ global_stuff['get_text']('Lib') | safe }}</th>
+        <th data-field="file" data-sortable="true" data-filter-control="input" data-filter-control-container="#filter">{{ global_stuff['get_text']('File') | safe }}</th>
+        <th data-field="member" data-sortable="true" data-filter-control="input" data-filter-control-container="#filter">{{ global_stuff['get_text']('Member') | safe }}</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for key, value in config_source_list %}
+      {% set lib = key.split('/')[0] %}
+      {% set file = key.split('/')[1] %}
+      {% set member = key.split('/')[2] %}
+      <tr>
+        <td style="white-space: nowrap;">{{ lib }}</td>
+        <td style="white-space: nowrap;">{{ file }}</td>
+        <td style="white-space: nowrap;">{{ member }}</td>
+        <td>
+          <vscode-button class="edit_source_config" key="{{ key }}" id="edit_source_config_{{ loop.index0 }}">
+            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/edit.svg">
+          </vscode-button>
+          <vscode-button class="delete_source_config" key="{{ key }}" id="delete_source_config_{{ loop.index0 }}">
+            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
+          </vscode-button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <table>
+    <tbody>
+      <tr><td>&nbsp;</td></tr>
+      <tr><td>{{ global_stuff['get_text']('Add new') | safe }}</td></tr>
+      <tr>
+        <td>
+          <vscode-text-field id="new_lib" placeholder="prouzalib"></vscode-text-field>
+        </td>
+        <td>
+          <vscode-text-field id="new_file" placeholder="qrpglesrc"></vscode-text-field>
+        </td>
+        <td>
+          <vscode-text-field id="new_member" placeholder="source.rpgle.pgm"></vscode-text-field>
+        </td>
+        <td>
+          <vscode-button id="add_source_config">
+            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
+          </vscode-button>
+        </td>
+      </tr>
+    </tbody>
+  </table>

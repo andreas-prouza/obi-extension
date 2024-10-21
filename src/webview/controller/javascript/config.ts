@@ -16,6 +16,8 @@ provideVSCodeDesignSystem().register(allComponents);
 const vscode = acquireVsCodeApi();
 
 window.addEventListener("load", main);
+//document.addEventListener('DOMContentLoaded', main, false);
+
 
 let panel: string|null;
 let panel_tab: string|null;
@@ -94,7 +96,6 @@ function main() {
   }
 
 
-
   // Add new attributes for language settings
   const new_language_button = document.getElementById('add_language_settings');
   new_language_button?.addEventListener('click', () => {
@@ -141,10 +142,64 @@ function main() {
 
   }
 
+  $('#config_source_list').on('post-body.bs.table', function (name, args) {
+    let buttons = document.getElementsByClassName('edit_source_config');
+    console.log(`source configs: ${buttons.length}`);
+    for (let i = 0; i < buttons.length; i++) {
+      const el = buttons[i] as Button;
+      console.log(`Add click source config2: ${el.id}`);
+      el.addEventListener("click", () => {
+        edit_source_config(el.getAttribute('key'));
+      });
+    }
+
+    buttons = document.getElementsByClassName('delete_source_config');
+    for (let i = 0; i < buttons.length; i++) {
+      const el = buttons[i];
+      el.addEventListener("click", () => {
+        delete_source_config(el.getAttribute('key')); 
+        reload();
+      });
+    }
+  
+  });
+
+
+  const add_source_config_button = document.getElementById('add_source_config') as Button;
+  console.log(`add_source_config: ${buttons.length}`);
+  add_source_config_button.addEventListener("click", () => {
+      console.log("add_source_config(el.getAttribute('key')");
+  });
+
+
   window.addEventListener('message', receive_message);
 
 }
 
+
+
+
+function edit_source_config(key: string|null) {
+
+  console.log(`Edit source config: ${key}`);
+  vscode.postMessage({
+    command: "edit_source_config",
+    source: key
+  });
+
+}
+
+
+
+function delete_source_config(key: string|null) {
+
+  console.log(`delete_source_config: ${key}`);
+  vscode.postMessage({
+    command: "delete_source_config",
+    source: key
+  });
+
+}
 
 
 
