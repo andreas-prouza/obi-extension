@@ -1,3 +1,9 @@
+## [0.2.25]
+
+* Bugfixes
+* Support for individual source config (Beta)
+
+
 ## [0.2.24]
 
 * Rerun build button in summary
