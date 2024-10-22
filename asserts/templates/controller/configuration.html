@@ -4,17 +4,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
+
   <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
   <link rel="stylesheet" href="{{ config_css }}">
 </head>
 
 
 <body>
-
-  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
-
   
   <div id="still_missing"><br/><b>⚠️ {{ global_stuff['get_text']('There are still missing values ...') | safe }}</b><br/></div>
 
@@ -24,9 +24,9 @@
 
   <vscode-panels activeid="{{ panel or 'project_cfg' }}" aria-label="Default">
 
-    <vscode-panel-tab id="project_cfg">{{  global_stuff['get_text']('Project configuration') | safe }}</vscode-panel-tab>
-    <vscode-panel-tab id="user_cfg">{{  global_stuff['get_text']('User configuration') | safe }}</vscode-panel-tab>
-    <vscode-panel-tab id="source_cfg">{{  global_stuff['get_text']('Source configuration') | safe }}</vscode-panel-tab>
+    <vscode-panel-tab id="project_cfg"><h1>{{  global_stuff['get_text']('Project configuration') | safe }}</h1></vscode-panel-tab>
+    <vscode-panel-tab id="user_cfg"><h1>{{  global_stuff['get_text']('User configuration') | safe }}</h1></vscode-panel-tab>
+    <vscode-panel-tab id="source_cfg"><h1>{{  global_stuff['get_text']('Source configuration') | safe }}</h1></vscode-panel-tab>
 
     
     <vscode-panel-view id="project_cfg-view">

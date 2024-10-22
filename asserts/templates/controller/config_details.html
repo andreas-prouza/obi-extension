@@ -5,10 +5,10 @@
 
 <vscode-panels activeid="{{ class_prefix }}_{{ panel_tab or 'tab-1' }}" aria-label="Default">
 
-  <vscode-panel-tab class="panel_tab" id="{{ class_prefix }}_tab-1">{{ global_stuff['get_text']('Configuration') | safe }}</vscode-panel-tab>
-  <vscode-panel-tab class="panel_tab" id="{{ class_prefix }}_tab-2">{{ global_stuff['get_text']('Compile settings') | safe }}</vscode-panel-tab>
-  <vscode-panel-tab class="panel_tab" id="{{ class_prefix }}_tab-3">{{ global_stuff['get_text']('System settings') | safe }}</vscode-panel-tab>
-  <vscode-panel-tab class="panel_tab" id="{{ class_prefix }}_tab-4">{{ global_stuff['get_text']('Constants') | safe }}</vscode-panel-tab>
+  <vscode-panel-tab class="panel_tab" id="{{ class_prefix }}_tab-1"><h2>{{ global_stuff['get_text']('Configuration') | safe }}</h2></vscode-panel-tab>
+  <vscode-panel-tab class="panel_tab" id="{{ class_prefix }}_tab-2"><h2>{{ global_stuff['get_text']('Compile settings') | safe }}</h2></vscode-panel-tab>
+  <vscode-panel-tab class="panel_tab" id="{{ class_prefix }}_tab-3"><h2>{{ global_stuff['get_text']('System settings') | safe }}</h2></vscode-panel-tab>
+  <vscode-panel-tab class="panel_tab" id="{{ class_prefix }}_tab-4"><h2>{{ global_stuff['get_text']('Constants') | safe }}</h2></vscode-panel-tab>
 
   <vscode-panel-view id="view-1">
     <section>

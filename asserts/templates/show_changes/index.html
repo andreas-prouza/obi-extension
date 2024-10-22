@@ -3,14 +3,13 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
+    <link rel="stylesheet" href="{{ config_css }}">
+
   </head>
   <body>
 
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
-    
     <h1>{{ global_stuff['get_text']('Summary') | safe }}</h1>
     {% if compile_list %}
     <br/><br/>
@@ -23,20 +22,7 @@
     <hr />
     <br/>
     
-    <table id="source_list"
-    class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
-    data-locale="{{ global_stuff['locale'] }}"
-    data-toggle="table" 
-    data-filter-control="true"
-    data-show-search-clear-button="true" 
-    data-show-columns="true"
-    data-pagination="true" 
-    data-page-list="[5, 10, 20, 50, 100, all]"
-    data-page-size="10"
-    data-pagination-h-align="left"
-    data-pagination-detail-h-align="left"
-    data-buttons-align="left"
-    data-search-align="left">
+    <table id="source_list">
       <tr><th>{{ global_stuff['get_text']('New sources') | safe }}</th><th>{{ global_stuff['get_text']('Changed sources') | safe }}</th><th>{{ global_stuff['get_text']('Dependend objects') | safe }}</th></tr>
       <tr>
         <td>
@@ -65,27 +51,12 @@
 
     {% if compile_list %}
 
-    <vscode-divider role="separator"></vscode-divider>
-    
     <hr />
 
     <h2>{{ global_stuff['get_text']('Details') | safe }}</h2>
     <vscode-divider role="presentation"></vscode-divider>
 
-    <table id="details"
-    class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
-    data-locale="{{ global_stuff['locale'] }}"
-    data-toggle="table" 
-    data-filter-control="true"
-    data-show-search-clear-button="true" 
-    data-show-columns="true"
-    data-pagination="true" 
-    data-page-list="[5, 10, 20, 50, 100, all]"
-    data-page-size="10"
-    data-pagination-h-align="left"
-    data-pagination-detail-h-align="left"
-    data-buttons-align="left"
-    data-search-align="left">
+    <table id="details">
     <thead>
       <tr>
         <th>{{ global_stuff['get_text']('level') | safe }}</th>
@@ -126,17 +97,17 @@
                   <td><details><summary><code>{{ cmd_entry.cmd | truncate(15) }}</code></summary><code>{{ cmd_entry.cmd }}</code></details></td>
                   {% if 'joblog' in cmd_entry and cmd_entry['joblog']|length %}
                     <td>
-                      <vscode-button onclick="document.getElementById('source').value ='{{ source_item['source'] }}'; document.getElementById('level').value ='{{ level_item['level'] }}'; document.getElementById('cmd_index').value ='{{ loop.index0 }}'" class="joblog" appearance="primary">Joblog</vscode-button>
+                      <vscode-button class="joblog" appearance="primary">Joblog</vscode-button>
                     </td>
                   {% endif %}
                   {% if 'stdout' in cmd_entry and cmd_entry['stdout']|length %}
                    <td>
-                      <vscode-button onclick="document.getElementById('source').value ='{{ source_item['source'] }}'; document.getElementById('level').value ='{{ level_item['level'] }}'; document.getElementById('cmd_index').value ='{{ loop.index0 }}'" class="stdout" appearance="primary">Spool file</vscode-button>
+                      <vscode-button class="stdout" appearance="primary">Spool file</vscode-button>
                     </td>
                   {% endif %}
                   {% if 'stderr' in cmd_entry and cmd_entry['stderr']|length %}
                     <td>
-                      <vscode-button onclick="document.getElementById('source').value ='{{ source_item['source'] }}'; document.getElementById('level').value ='{{ level_item['level'] }}'; document.getElementById('cmd_index').value ='{{ loop.index0 }}'" class="stderr" appearance="primary">Error</vscode-button>
+                      <vscode-button  class="stderr" appearance="primary">Error</vscode-button>
                     </td>
                   {% endif %}
                 </tr>
@@ -159,13 +130,6 @@
     <input type="hidden" id="source"\>
     <input type="hidden" id="cmd_index"\>
 
-
-    <script src="{{ global_stuff['asserts_uri'] }}/js/jquery.min.js"></script>
-    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table.min.js"></script>
-    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-resizable.min.js"></script>
-    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-filter-control.min.js"></script>
-  
-    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
 
   </body>
