@@ -66,6 +66,8 @@ export class OBIController implements vscode.WebviewViewProvider {
 
   public static run_finished() {
     OBIController.view_object._view?.webview.postMessage({command: 'run_finished'});
+    OBIController.update_build_summary_timestamp();
+    BuildSummary.update();
     //webviewView.webview.postMessage();
   }
   

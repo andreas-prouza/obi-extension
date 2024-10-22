@@ -94,7 +94,7 @@ export class OBISourceConfiguration {
     const html = nunjucks.render('controller/config_source_details.html', 
       {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),
-        config_css: getUri(webview, extensionUri, ["asserts/css", "source_config.css"]),
+        config_css: getUri(webview, extensionUri, ["asserts/css", "config.css"]),
         main_java_script: getUri(webview, extensionUri, ["out", "source_config.js"]),
         icons: {debug_start: '$(preview)'},
         source: OBISourceConfiguration.source_config,

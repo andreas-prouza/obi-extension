@@ -68,6 +68,15 @@ const configInvalidViewConfig = {
 };
 
 
+const source_config_ViewConfig = {
+  ...baseConfig,
+  target: "es2020",
+  format: "esm",
+  entryPoints: ["./src/webview/controller/javascript/source_config.ts"],
+  outfile: "./out/source_config.js",
+};
+
+
 const sourceListConfigViewConfig = {
   ...baseConfig,
   target: "es2020",
@@ -95,6 +104,7 @@ const sourceInfosViewConfig = {
     await build(configInvalidViewConfig);
     await build(sourceListConfigViewConfig);
     await build(sourceInfosViewConfig);
+    await build(source_config_ViewConfig);
     console.log("build complete");
   } catch (err) {
     process.stderr.write(err.stderr);

@@ -51,11 +51,11 @@
     <br/>
 
     <br/>
-    <a id="open_build_summary" href='command:obi.open_build_summary' style="visibility: hidden;">
+    <a id="open_build_summary" href='command:obi.open_build_summary' style="visibility: {% if builds_exist == 0 %}hidden{% else %}visible{% endif %};">
       <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/file.svg">{{ global_stuff['get_text']('Open build summary') | safe }}
     </a> 
     <br/>
-    <label id="build_summary_timestamp"  style="visibility: hidden;"> 
+    <label id="build_summary_timestamp"  style="visibility: {% if builds_exist == 0 %}hidden{% else %}visible{% endif %};"> 
       ({{ build_summary_timestamp }})
     </label>
 

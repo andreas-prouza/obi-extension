@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="{{ global_stuff['theme_mode'] }}">
+<html lang="en">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -71,8 +71,12 @@
           <th>{{ level_item['level'] }}. {{ global_stuff['get_text']('level') | safe }}</th>
         </tr>
         {% for source_item in level_item['sources'] %}
+        {% set source_splitted=source_item['source'].split('/') %}
+        {% set lib = source_splitted[0] %}
+        {% set file = source_splitted[1] %}
+        {% set member = source_splitted[2] %}
         <tr>
-          <td></td><td>{{ source_item['source'] }}</td>
+          <td></td><td>{{ lib }} / {{ file }} / {{ member }}</td>
           <td>
             {% set last_cmd = source_item['cmds'][0] %}
             {% for cmd_entry in source_item['cmds'] %}
@@ -97,17 +101,17 @@
                   <td><details><summary><code>{{ cmd_entry.cmd | truncate(15) }}</code></summary><code>{{ cmd_entry.cmd }}</code></details></td>
                   {% if 'joblog' in cmd_entry and cmd_entry['joblog']|length %}
                     <td>
-                      <vscode-button class="joblog" appearance="primary">Joblog</vscode-button>
+                      <vscode-button class="joblog" source="{{ source_item['source'] }}" level="{{ level_item['level'] }}" cmd_index="{{ loop.index0 }}" appearance="primary">Joblog</vscode-button>
                     </td>
                   {% endif %}
                   {% if 'stdout' in cmd_entry and cmd_entry['stdout']|length %}
-                   <td>
-                      <vscode-button class="stdout" appearance="primary">Spool file</vscode-button>
+                    <td>
+                      <vscode-button class="stdout" source="{{ source_item['source'] }}" level="{{ level_item['level'] }}" cmd_index="{{ loop.index0 }}" appearance="primary">Spool file</vscode-button>
                     </td>
                   {% endif %}
                   {% if 'stderr' in cmd_entry and cmd_entry['stderr']|length %}
                     <td>
-                      <vscode-button  class="stderr" appearance="primary">Error</vscode-button>
+                      <vscode-button  class="stderr" source="{{ source_item['source'] }}" level="{{ level_item['level'] }}" cmd_index="{{ loop.index0 }}" appearance="primary">Error</vscode-button>
                     </td>
                   {% endif %}
                 </tr>

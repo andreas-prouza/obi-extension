@@ -296,12 +296,13 @@ export class OBIConfiguration {
 
     new_config.connection = data['connection'];
     new_config.general = data['general'];
-    new_config.global.settings = data['global']['settings'];
-    if (data['global']['cmds'])
+    if (data['global'] && data['global']['settings'])
+      new_config.global.settings = data['global']['settings'];
+    if (data['global'] && data['global']['cmds'])
       new_config.global.cmds = data['global']['cmds'];
-    if (data['global']['steps'])
+    if (data['global'] && data['global']['steps'])
       new_config.global.steps = data['global']['steps'];
-    if (data['global']['compile-cmds'])
+    if (data['global'] && data['global']['compile-cmds'])
       new_config.global['compile-cmds'] = data['global']['compile-cmds'];
 
     // App config

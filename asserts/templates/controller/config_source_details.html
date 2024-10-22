@@ -1,91 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<h2>{{ global_stuff['get_text']('Source config') | safe }}<code>{{ source }}</code></h2>
+    <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
+    <link rel="stylesheet" href="{{ config_css }}">
 
+  </head>
+  <body>
 
-<h2>{{ global_stuff['get_text']('Compile commands') | safe }} (<code>global.compile-cmds</code>)</h2>
-{% set compile_cmds = source_config['compile-cmds'] %}
+    <h1>{{ global_stuff['get_text']('Source config') | safe }} <code>{{ source }}</code></h1>
 
-<table style="width: 100%">
-  <tr>
-    <th>{{ global_stuff['get_text']('Command id') | safe }}</th>
-    <th>{{ global_stuff['get_text']('Command') | safe }}</th>
-  </tr>
-  {% for key, value in compile_cmds %}
-  <tr>
-    <td>
-      <vscode-text-field class="{{ class_prefix }}_save_app_compile_cmd" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|compile-cmds|{{ key }}"
-        value="{{ key }}">
-      </vscode-text-field>
-    </td>
-    <td>
-      <vscode-text-area cols="100" rows="4" resize="both" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|compile-cmds|{{ key }}|value"
-        value="{{ value }}">
-      </vscode-text-area>
-    </td>
-    <td>
-      <vscode-button class="delete_compile_cmd" project_user="{{ class_prefix }}" key="global|compile-cmds|{{ key }}" id="delete_compile_cmd_{{ loop.index0 }}">
-        <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
-      </vscode-button>
-    </td>
-  </tr>
-  {% endfor %}
-  <tr>
-    <td>
-      <vscode-text-field id="new_compile_cmd_key" panel="{{ class_prefix }}_tab-2" placeholder="command id"></vscode-text-field>
-    </td>
-    <td>
-      <vscode-text-area id="new_compile_cmd_value" cols="100" rows="2" panel="{{ class_prefix }}_tab-2" placeholder="command"></vscode-text-area>
-    </td>
-    <td>
-      <vscode-button id="add_compile_cmd" config="{{ class_prefix }}">
-        <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
-      </vscode-button>
-    </td>
-  </tr>
-</table>
+    <div class="save-button-wrapper">
+      <vscode-button class="save-button" id="save_config">{{ global_stuff['get_text']('Save') | safe }}</vscode-button>
+    </div>
+    
+  
+    <h2>{{ global_stuff['get_text']('Compile commands') | safe }} (<code>global.compile-cmds</code>)</h2>
+    {% set compile_cmds = source_config['compile-cmds'] %}
 
-<br />
-<hr />
-<br />
+    <table style="width: 100%">
+      <tr>
+        <th>{{ global_stuff['get_text']('Command id') | safe }}</th>
+        <th>{{ global_stuff['get_text']('Command') | safe }}</th>
+      </tr>
+      {% for key, value in compile_cmds %}
+      <tr>
+        <td>
+          <vscode-text-field class="{{ class_prefix }}_save_app_compile_cmd"  id="{{ class_prefix }}|global|compile-cmds|{{ key }}"
+            value="{{ key }}">
+          </vscode-text-field>
+        </td>
+        <td>
+          <vscode-text-area cols="100" rows="4" resize="both"  id="{{ class_prefix }}|global|compile-cmds|{{ key }}|value"
+            value="{{ value }}">
+          </vscode-text-area>
+        </td>
+        <td>
+          <vscode-button class="delete_compile_cmd" project_user="{{ class_prefix }}" key="global|compile-cmds|{{ key }}" id="delete_compile_cmd_{{ loop.index0 }}">
+            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
+          </vscode-button>
+        </td>
+      </tr>
+      {% endfor %}
+      <tr>
+        <td>
+          <vscode-text-field id="new_compile_cmd_key" placeholder="command id"></vscode-text-field>
+        </td>
+        <td>
+          <vscode-text-area id="new_compile_cmd_value" cols="100" rows="2" placeholder="command"></vscode-text-area>
+        </td>
+        <td>
+          <vscode-button id="add_compile_cmd" config="{{ class_prefix }}">
+            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
+          </vscode-button>
+        </td>
+      </tr>
+    </table>
 
-<h2>{{ global_stuff['get_text']('Compile steps') | safe }}</h2>
-{% set compile_steps = source_config['steps'] %}
+    <br />
+    <hr />
+    <br />
 
-<table style="width: 100%">
-  <tr>
-    <th>{{ global_stuff['get_text']('Command id') | safe }}</th>
-    <th>{{ global_stuff['get_text']('Commands (separated by new line)') | safe }}</th>
-  </tr>
-  {% for key, value in compile_steps %}
-  <tr>
-    <td>
-      <vscode-text-field  class="{{ class_prefix }}_save_app_global_step" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|steps|{{ key }}"
-        value="{{ key }}">
-      </vscode-text-field>
-    </td>
-    <td>
-      <vscode-text-area cols="100" rows="4" resize="both" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|steps|{{ key }}|value"
-        value="{{ value | join('\n') }}">
-      </vscode-text-area>
-    </td>
-    <td>
-      <vscode-button class="delete_global_step" project_user="{{ class_prefix }}" key="global|steps|{{ key }}" id="delete_global_step_{{ loop.index0 }}">
-        <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
-      </vscode-button>
-    </td>
-  </tr>
-  {% endfor %}
-  <tr>
-    <td>
-      <vscode-text-field id="new_global_step_key" panel="{{ class_prefix }}_tab-2" placeholder="command id"></vscode-text-field>
-    </td>
-    <td>
-      <vscode-text-area id="new_global_step_value" cols="100" rows="2" panel="{{ class_prefix }}_tab-2" placeholder="command"></vscode-text-area>
-    </td>
-    <td>
-      <vscode-button id="add_global_step" config="{{ class_prefix }}">
-        <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
-      </vscode-button>
-    </td>
-  </tr>
-</table>
+    <h2>{{ global_stuff['get_text']('Compile steps') | safe }}</h2>
+    {% set compile_steps = source_config['steps'] %}
+
+    <table style="width: 100%">
+      <tr>
+        <th>{{ global_stuff['get_text']('Command id') | safe }}</th>
+        <th>{{ global_stuff['get_text']('Commands (separated by new line)') | safe }}</th>
+      </tr>
+      {% for key, value in compile_steps %}
+      <tr>
+        <td>
+          <vscode-text-field  class="{{ class_prefix }}_save_app_global_step"  id="{{ class_prefix }}|global|steps|{{ key }}"
+            value="{{ key }}">
+          </vscode-text-field>
+        </td>
+        <td>
+          <vscode-text-area cols="100" rows="4" resize="both" id="{{ class_prefix }}|global|steps|{{ key }}|value"
+            value="{{ value | join('\n') }}">
+          </vscode-text-area>
+        </td>
+        <td>
+          <vscode-button class="delete_global_step" project_user="{{ class_prefix }}" key="global|steps|{{ key }}" id="delete_global_step_{{ loop.index0 }}">
+            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
+          </vscode-button>
+        </td>
+      </tr>
+      {% endfor %}
+      <tr>
+        <td>
+          <vscode-text-field id="new_global_step_key" placeholder="command id"></vscode-text-field>
+        </td>
+        <td>
+          <vscode-text-area id="new_global_step_value" cols="100" rows="2"  placeholder="command"></vscode-text-area>
+        </td>
+        <td>
+          <vscode-button id="add_global_step" config="{{ class_prefix }}">
+            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
+          </vscode-button>
+        </td>
+      </tr>
+    </table>
+
+    <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
+
+  </body>
+</html>

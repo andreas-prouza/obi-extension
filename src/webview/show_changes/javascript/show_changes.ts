@@ -22,29 +22,33 @@ function main() {
   // a given toolkit component can be imported and used to type cast a reference
   // to the element (i.e. the `as Button` syntax)
 
+  console.log(`Load main ${loaded}`);
   if (loaded)
     return;
   loaded = true;
   
   const run_button = document.getElementById('run_build') as Button;
-  run_button.addEventListener('click', run_build);
-
-
+  console.log(`run_button.addEventListener ${run_button}`);
+  if (run_button)
+    run_button.addEventListener('click', run_build);
+  
+  
   const joblogButton = document.getElementsByClassName("joblog");
-
+  
+  console.log(`joblog.addEventListener ${joblogButton.length}`);
   for (let i = 0; i < joblogButton.length; i++) {
-    joblogButton[i].addEventListener("click", function () {show_log('joblog');});
+    joblogButton[i].addEventListener("click", function (e) {show_log('joblog', joblogButton[i]);});
   }
   
   const splfButton = document.getElementsByClassName("stdout");
 
   for (let i = 0; i < splfButton.length; i++) {
-    splfButton[i].addEventListener("click", function () {show_log('stdout');});
+    splfButton[i].addEventListener("click", function (e) {show_log('stdout', splfButton[i]);});
   }
   const errorButton = document.getElementsByClassName("stderr");
 
   for (let i = 0; i < errorButton.length; i++) {
-    errorButton[i].addEventListener("click", function () {show_log('stderr');});
+    errorButton[i].addEventListener("click", function (e) {show_log('stderr', errorButton[i]);});
   }
 
 }
@@ -58,10 +62,10 @@ function run_build() {
 
 
 //--function handleHowdyClick() {
-function show_log(log_type: string) {
-  const level: string = (document.getElementById('level') as HTMLInputElement).value;
-  const source: string = (document.getElementById('source') as HTMLInputElement).value;
-  const cmd_index: number = Number((document.getElementById('cmd_index') as HTMLInputElement).value);
+function show_log(log_type: string, e: Element) {
+  const level: string = e.getAttribute('level') || '';
+  const source: string = e.getAttribute('source') || '';
+  const cmd_index: number = Number(e.getAttribute('cmd_index'));
 
   vscode.postMessage({
     command: "show_log",
