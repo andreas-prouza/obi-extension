@@ -1,3 +1,11 @@
+## [0.2.26]
+
+* Bugfixes
+* Extend compile-list
+* Skip update to compiled object list on IBM i (performance)
+* Download of compiled object list not necessary anymore
+
+
 ## [0.2.25]
 
 * Bugfixes

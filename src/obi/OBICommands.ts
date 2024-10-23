@@ -180,10 +180,19 @@ export class OBICommands {
       SSH_Tasks.getRemoteDir(path.join(ws, '.obi', 'log'), `${remote_base_dir}/.obi/log`)
     ];
 
-    if (config.general['compiled-object-list'])
-      promise_list.push(SSH_Tasks.getRemoteFile(path.join(ws, config.general['compiled-object-list']), `${remote_base_dir}/${config.general['compiled-object-list']}`));
-
     await Promise.all(promise_list);
+
+    if (DirTool.file_exists(path.join(ws, config.general['compile-list']))) {
+      const sources: source.SourceCompileList[] = OBITools.get_sources_info_from_compile_list();
+      const source_hashes: source.ISource = OBITools.get_source_hash_list(Workspace.get_workspace()) || {};
+
+      for (const source of sources) {
+        if (source.status == 'success') {
+          source_hashes[source.source] = source.hash;
+        }
+      }
+      DirTool.write_json(path.join(ws, config.general['compiled-object-list']), source_hashes);
+    }
   }
 
 

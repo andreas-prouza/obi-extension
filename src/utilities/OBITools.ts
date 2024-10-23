@@ -92,6 +92,11 @@ export class OBITools {
         const toml_file = path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_FILE);
         DirTool.write_toml(toml_file, config);
         AppConfig.reset();
+      case '0.2.22':
+      case '0.2.23':
+      case '0.2.24':
+        fs.copyFileSync(path.join(ext_ws, 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
+
     }
 
     OBITools.ext_context.workspaceState.update('obi.version', current_version);
@@ -428,6 +433,26 @@ export class OBITools {
     return compile_list
   }
 
+
+
+
+  public static get_sources_info_from_compile_list(): source.SourceCompileList[] {
+
+    let sources: source.SourceCompileList[] = [];
+
+    const compile_list: {}|undefined = OBITools.get_compile_list(Workspace.get_workspace_uri());
+
+    if (!compile_list || !('compiles' in compile_list))
+      return sources;
+
+    for (const level_item of (compile_list['compiles'] as any) ) {
+      for (const source of level_item['sources']) {
+        sources.push(source);
+      }
+    }
+
+    return sources;
+  }
 
 
 

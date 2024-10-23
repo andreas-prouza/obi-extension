@@ -33,3 +33,22 @@ export interface ISourceList {
   "dependencies"?: string[],
   "old-sources"?: string[]
 }
+
+
+export type SourceCmd = {
+  "cmd": string,
+  "status": string,
+  "updated": string,
+  "exit-code": number,
+  "stdout": string,
+  "stderr": string,
+  "joblog": string,
+}
+
+
+export type SourceCompileList = {
+  "source": string,
+  "cmds": SourceCmd[],
+  "hash": string,
+  "status": string
+}
