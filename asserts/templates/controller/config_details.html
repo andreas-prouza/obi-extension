@@ -205,7 +205,7 @@
 
       <table style="width: 100%">
         <tr>
-          <th>{{ global_stuff['get_text']('Command id') | safe }}</th>
+          <th>{{ global_stuff['get_text']('Command ID') | safe }}</th>
           <th>{{ global_stuff['get_text']('Command') | safe }}</th>
         </tr>
       {% for key, value in cmds %}
@@ -252,7 +252,7 @@
 
       <table style="width: 100%">
         <tr>
-          <th>{{ global_stuff['get_text']('Command id') | safe }}</th>
+          <th>{{ global_stuff['get_text']('Command ID') | safe }}</th>
           <th>{{ global_stuff['get_text']('Command') | safe }}</th>
         </tr>
         {% for key, value in compile_cmds %}
@@ -298,8 +298,8 @@
 
       <table style="width: 100%">
         <tr>
-          <th>{{ global_stuff['get_text']('Command id') | safe }}</th>
-          <th>{{ global_stuff['get_text']('Commands (separated by new line)') | safe }}</th>
+          <th>{{ global_stuff['get_text']('Source type') | safe }}</th>
+          <th>{{ global_stuff['get_text']('Command IDs (separated by new line)') | safe }}</th>
         </tr>
         {% for key, value in compile_steps %}
         <tr>
@@ -322,10 +322,10 @@
         {% endfor %}
         <tr>
           <td>
-            <vscode-text-field id="new_global_step_key" panel="{{ class_prefix }}_tab-2" placeholder="command id"></vscode-text-field>
+            <vscode-text-field id="new_global_step_key" panel="{{ class_prefix }}_tab-2" placeholder="sqlrpgle.pgm"></vscode-text-field>
           </td>
           <td>
-            <vscode-text-area id="new_global_step_value" cols="100" rows="2" panel="{{ class_prefix }}_tab-2" placeholder="command"></vscode-text-area>
+            <vscode-text-area id="new_global_step_value" cols="100" rows="2" panel="{{ class_prefix }}_tab-2" placeholder='global.cmds.chg-src-ccsid&#10;global.compile-cmds."sqlrpgle.pgm"&#10;global.cmds.check-error'></vscode-text-area>
           </td>
           <td>
             <vscode-button id="add_global_step" config="{{ class_prefix }}">

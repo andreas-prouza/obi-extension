@@ -1,7 +1,8 @@
+import path from 'path';
 import * as vscode from 'vscode';
 import { BuildSummary } from './webview/show_changes/BuildSummary';
 import { OBIController } from './webview/controller/OBIController';
-import { SourceListProvider } from './webview/controller/SourceListProvider';
+import { SourceListItem, SourceListProvider } from './webview/controller/SourceListProvider';
 import { OBICommands } from './obi/OBICommands';
 import { Welcome } from './webview/controller/Welcome';
 import { OBITools } from './utilities/OBITools';
@@ -13,6 +14,9 @@ import { logger } from './utilities/Logger';
 import { SourceInfos } from './webview/source_list/SourceInfos';
 import { LocaleText } from './utilities/LocaleText';
 import { Workspace } from './utilities/Workspace';
+import { SourceList } from './webview/source_list/SourceList';
+import { OBISourceConfiguration } from './webview/controller/OBISourceConfiguration';
+import { DirTool } from './utilities/DirTool';
 
 const nunjucks = require('nunjucks');
 
@@ -194,5 +198,31 @@ export function activate(context: vscode.ExtensionContext) {
 			SourceInfos.render(context);
 		})
 	);
+
+
+	vscode.commands.registerCommand('obi.source.edit-compile-config', async (item: SourceListItem|vscode.Uri) => {
+		
+		if (item instanceof SourceListItem)
+			OBISourceConfiguration.render(context, context.extensionUri, `${item.src_lib}/${item.src_file}/${item.src_member}`);
+
+		if (item instanceof vscode.Uri) {
+
+			const config:AppConfig = AppConfig.get_app_confg();
+			const src_dir: string = config.general['source-dir']||'src';
+			let source_path: string = item.fsPath.replace(Workspace.get_workspace(), '')
+			source_path = source_path.replace(src_dir, '');
+			source_path = source_path.replace('\\', '/');
+			source_path = source_path.replace(/^\/+/, '');
+
+			if (!DirTool.file_exists(path.join(Workspace.get_workspace(), src_dir, source_path))){
+				vscode.window.showErrorMessage(`Source ${source_path} not found in OBI project`);
+				return;
+			}
+
+			OBISourceConfiguration.render(context, context.extensionUri, `${source_path}`);
+		}
+
+	});
+
 }
 

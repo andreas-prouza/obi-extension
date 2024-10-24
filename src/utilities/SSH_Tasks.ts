@@ -56,7 +56,8 @@ export class SSH_Tasks {
       host: host,
       username: user,
       password: pwd,
-      privateKeyPath: ssh_key
+      privateKeyPath: ssh_key,
+      keepaliveInterval: 3600
     }).catch((reason) => {
       vscode.window.showErrorMessage(reason.message);
       logger.error(`Connection error: ${reason.message}`);

@@ -116,14 +116,23 @@ export class BuildSummary {
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
 
+    let compile_list: {}|undefined = OBITools.get_compile_list(ws);
+    for (let level_item of (compile_list['compiles'] as any) ) {
+      for (let source of level_item['sources']) {
+        source['file'] = DirTool.get_encoded_file_URI(path.join(config.general['source-dir'], source['source']));
+      }
+    }
+
+
     const html = nunjucks.render('show_changes/index.html', 
       {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),
         main_java_script: getUri(webview, extensionUri, ["out", "show_changes.js"]),
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         object_list: BuildSummary.get_object_list(ws),
-        compile_list: OBITools.get_compile_list(ws),
+        compile_list: compile_list,
         compile_file: DirTool.get_encoded_file_URI(config.general['compile-list']),
+        log_file: DirTool.get_encoded_file_URI(Constants.OBI_LOG_FILE),
         run_build: !OBITools.is_compile_list_completed(ws)
       }
     );

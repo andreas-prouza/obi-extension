@@ -14,7 +14,9 @@
     {% if compile_list %}
     <br/><br/>
     <div>
-      {{ global_stuff['get_text']('Created at') | safe }} <b><u>{{ compile_list['timestamp'] }}</u></b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='command:vscode.open?{{ compile_file }}'>{{ global_stuff['get_text']('open JSON file') | safe }}</a>
+      {{ global_stuff['get_text']('Created at') | safe }} <b><u>{{ compile_list['timestamp'] }}</u></b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <a href='command:vscode.open?{{ compile_file }}'>{{ global_stuff['get_text']('open JSON file') | safe }}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <a href='command:vscode.open?{{ log_file }}'>{{ global_stuff['get_text']('open OBI log') | safe }}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       {% if run_build %}&nbsp;&nbsp;&nbsp;<vscode-button onclick="run_build()" style="vertical-align: super;" id="run_build" appearance="primary">{{ global_stuff['get_text']('Run build') | safe }}</vscode-button>{% endif %}
     </div>
     <br/>
@@ -76,7 +78,7 @@
         {% set file = source_splitted[1] %}
         {% set member = source_splitted[2] %}
         <tr>
-          <td></td><td>{{ lib }} / {{ file }} / {{ member }}</td>
+          <td></td><td><a href='command:vscode.open?{{ source_item["file"] }}'>{{ lib }} / {{ file }} / {{ member }}</a></td>
           <td>
             {% set last_cmd = source_item['cmds'][0] %}
             {% for cmd_entry in source_item['cmds'] %}

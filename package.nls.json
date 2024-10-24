@@ -15,6 +15,7 @@
   "obi.source-filter.edit-config": "OBI: Edit source filter config",
   "obi.source-filter.delete-config": "OBI: Delete source filter config",
   "obi.source-filter.maintain-source-infos": "OBI: Maintain source infos",
+  "obi.source.edit-compile-config": "OBI: Individual build settings",
   "Welcome": "Welcome",
   "Source filters": "Source filters",
   "Source filter": "Source filters",
@@ -112,5 +113,12 @@
   "Commands (separated by new line)": "Commands (separated by new line)",
   "Source configuration": "Source configuration",
   "Source list config": "Source list config",
-  "Source config": "Source config"
+  "Source config": "Source config",
+  "open OBI log": "open OBI log",
+  "Open source config file": "Open source config file",
+  "Command ID": "Command ID",
+  "Source type": "Source type",
+  "Command IDs (separated by new line)": "Command IDs (separated by new line)",
+  "Variable": "Variable",
+  "Value": "Value"
 }

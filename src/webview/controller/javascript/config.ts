@@ -25,9 +25,6 @@ let panel_tab: string|null;
 
 
 function main() {
-  // To get improved type annotations/IntelliSense the associated class for
-  // a given toolkit component can be imported and used to type cast a reference
-  // to the element (i.e. the `as Button` syntax)
 
   console.log('Main ...');
 
@@ -37,9 +34,11 @@ function main() {
   save_button?.addEventListener("click", save_configs);
 
   const project_cfg_button = document.getElementById("project_cfg");
-  project_cfg_button?.addEventListener("click", () => {panel = 'project'});
+  project_cfg_button?.addEventListener("click", () => {panel = 'project_cfg'});
   const user_cfg_button = document.getElementById("user_cfg");
-  user_cfg_button?.addEventListener("click", () => {panel = 'user'});
+  user_cfg_button?.addEventListener("click", () => {panel = 'user_cfg'});
+  const source_cfg_button = document.getElementById("source_cfg");
+  source_cfg_button?.addEventListener("click", () => {panel = 'source_cfg'});
 
   console.log(`Panel: ${panel}, panel_tab: ${panel_tab}`);
   const panel_tab_buttons = document.getElementsByClassName('panel_tab');
@@ -166,10 +165,7 @@ function main() {
 
 
   const add_source_config_button = document.getElementById('add_source_config') as Button;
-  console.log(`add_source_config: ${buttons.length}`);
-  add_source_config_button.addEventListener("click", () => {
-      console.log("add_source_config(el.getAttribute('key')");
-  });
+  add_source_config_button.addEventListener("click", add_source_config);
 
 
   window.addEventListener('message', receive_message);
@@ -189,6 +185,21 @@ function edit_source_config(key: string|null) {
 
 }
 
+function add_source_config() {
+  const lib:string = (document.getElementById("new_lib") as TextField).value;
+  const file:string = (document.getElementById("new_file") as TextField).value;
+  const member:string = (document.getElementById("new_member") as TextField).value;
+
+  console.log(`Add source config: ${lib} / ${file} / ${member}`);
+  vscode.postMessage({
+    command: "add_source_config",
+    panel: panel,
+    panel_tab: panel_tab,
+    source: `${lib}/${file}/${member}`
+  });
+
+}
+
 
 
 function delete_source_config(key: string|null) {
@@ -196,6 +207,8 @@ function delete_source_config(key: string|null) {
   console.log(`delete_source_config: ${key}`);
   vscode.postMessage({
     command: "delete_source_config",
+    panel: panel,
+    panel_tab: panel_tab,
     source: key
   });
 

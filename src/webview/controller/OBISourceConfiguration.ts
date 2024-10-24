@@ -60,11 +60,8 @@ export class OBISourceConfiguration {
     OBISourceConfiguration.source_config = source_config;
 
     if (OBISourceConfiguration.currentPanel) {
-      // If the webview panel already exists reveal it
-      OBISourceConfiguration.currentPanel._panel.reveal(ViewColumn.One);
-      return;
+      OBISourceConfiguration.currentPanel.dispose();
     }
-
     // If a webview panel does not already exist create and show a new one
     const panel = this.createNewPanel(extensionUri);
 
@@ -85,6 +82,7 @@ export class OBISourceConfiguration {
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
 
     const source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
+    const config: AppConfig = AppConfig.get_app_confg();
 
     let source_config: SourceConfig|undefined;
     
@@ -98,7 +96,9 @@ export class OBISourceConfiguration {
         main_java_script: getUri(webview, extensionUri, ["out", "source_config.js"]),
         icons: {debug_start: '$(preview)'},
         source: OBISourceConfiguration.source_config,
-        config_source_list: source_config
+        source_file: DirTool.get_encoded_file_URI(path.join(config.general['source-dir']||'src', OBISourceConfiguration.source_config)),
+        source_config_file: DirTool.get_encoded_file_URI(Constants.OBI_SOURCE_CONFIG_FILE),
+        source_config: source_config
       }
     );
 
@@ -115,7 +115,7 @@ export class OBISourceConfiguration {
     if (!panel)
       return;
 
-    panel._panel.webview.html = await OBISourceConfiguration.generate_html(OBISourceConfiguration._context, OBISourceConfiguration._extensionUri, OBISourceConfiguration.currentPanel?._panel.webview);
+    panel._panel.webview.html = await OBISourceConfiguration.generate_html(OBISourceConfiguration._extensionUri, OBISourceConfiguration.currentPanel?._panel.webview);
     
   }
 
@@ -135,24 +135,121 @@ export class OBISourceConfiguration {
 
     switch (command) {
 
-      case "user_save":
+      case "add_source_cmd":
+        OBISourceConfiguration.add_source_cmd(message.key, message.value);
+        break;
+
+      case "delete_source_cmd":
+        OBISourceConfiguration.delete_source_cmd(message.key);
+        break;
+
+      case "add_source_setting":
+        OBISourceConfiguration.add_source_setting(message.key, message.value);
+        break;
+
+      case "delete_source_setting":
+        OBISourceConfiguration.delete_source_setting(message.key);
+        break;
+
+      case "save_config":
+        OBISourceConfiguration.save_config(message.settings, message.source_cmds, message.steps);
         break;
 
       case "reload":
-        
         OBISourceConfiguration.update();
+        break;
     }
     return;
   }
 
 
 
-  private static save_config(isUser: boolean, workspaceUri: Uri, data: {}) {
+  private static delete_source_setting(key:string) {
+    let source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
+    const source_name:string = OBISourceConfiguration.source_config;
 
-    vscode.window.showInformationMessage('Configuration saved');
+    if (source_configs && source_configs[source_name] && source_configs[source_name].settings){
+      delete source_configs[source_name].settings[key];
+    }
+
+    DirTool.write_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs || {});
+  }
+
+
+
+  private static delete_source_cmd(key:string) {
+    let source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
+    const source_name:string = OBISourceConfiguration.source_config;
+
+    if (source_configs && source_configs[source_name] && source_configs[source_name]['source-cmds']){
+      delete source_configs[source_name]['source-cmds'][key];
+    }
+
+    DirTool.write_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs || {});
+  }
+
+
+
+  private static add_source_cmd(key:string, value:string) {
+    let source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
+    let source_config: SourceConfig = {"source-cmds": {key: value}, settings: {}, steps: []};
+    const source_name:string = OBISourceConfiguration.source_config;
+
+    if (!source_configs || !source_configs[source_name]){
+      source_configs = {source_name : source_config};
+    }
+    else {
+      if (!source_configs[source_name]['source-cmds']) {
+        source_configs[source_name]['source-cmds'] = {};
+      }
+
+      source_configs[source_name]['source-cmds'][key] = value;
+    }
+
+    DirTool.write_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs);
+  }
+
+
+
+  private static add_source_setting(key:string, value:string) {
+    let source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
+    let source_config: SourceConfig = {"source-cmds": {}, settings: {key: value}, steps: []};
+    const source_name:string = OBISourceConfiguration.source_config;
+
+    if (!source_configs || !source_configs[source_name]){
+      source_configs = {source_name : source_config};
+    }
+    else {
+      if (!source_configs[source_name].settings) {
+        source_configs[source_name].settings = {};
+      }
+
+      source_configs[source_name].settings[key] = value;
+    }
+
+    DirTool.write_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs);
+  }
+
+
+
+  private static save_config(settings:{}, source_cmds:{}, steps:string[]) {
+
+    let source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
+    let source_config: SourceConfig = {"source-cmds": source_cmds, settings: settings, steps: steps};
+    const source_name:string = OBISourceConfiguration.source_config;
+
+    if (!source_configs)
+      source_configs = {source_name : source_config};
+    else
+      source_configs[source_name] = source_config;
+
+    DirTool.write_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs);
+
+    vscode.window.showInformationMessage('Source configuration saved');
 
 }
-  
+
+
 
   private static createNewPanel(extensionUri : Uri) {
     return window.createWebviewPanel(

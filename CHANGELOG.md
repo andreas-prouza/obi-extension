@@ -1,3 +1,8 @@
+## [0.3.0]
+
+* Finalize source maintenance
+
+
 ## [0.2.26]
 
 * Bugfixes

@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "0.2.26",
+  "version": "0.3.0",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -101,6 +101,12 @@
         "when": "obi.contains_obi_project"
       },
       {
+        "command": "obi.source.edit-compile-config",
+        "title": "%obi.source.edit-compile-config%",
+        "icon": "$(settings-gear)",
+        "when": "obi.contains_obi_project"
+      },
+      {
         "command": "obi.transfer-all",
         "title": "%obi.transfer-all%",
         "icon": "$(cloud-upload)",
@@ -179,6 +185,18 @@
           "group": "navigation@70"
         }
       ],
+      "editor/title/context": [
+        {
+          "command": "obi.source.edit-compile-config",
+          "when": "obi.contains_obi_project"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "obi.source.edit-compile-config",
+          "when": "obi.contains_obi_project"
+        }
+      ],
       "view/item/context": [
         {
           "command": "obi.source-filter.show-view",
@@ -194,6 +212,11 @@
           "command": "obi.source-filter.delete-config",
           "when": "obi.contains_obi_project && view == obi.source-filter && viewItem == source-list",
           "group": "inline@3"
+        },
+        {
+          "command": "obi.source.edit-compile-config",
+          "when": "obi.contains_obi_project && view == obi.source-filter && viewItem == obi-source",
+          "group": "inline@0"
         }
       ]
     },
@@ -212,14 +235,12 @@
           "type": "webview",
           "id": "obi.controller",
           "name": "OBI",
-          "initialSize": 1,
           "when": "obi.contains_obi_project && obi.valid-config"
         },
         {
           "type": "tree",
           "id": "obi.source-filter",
           "name": "%Source filters%",
-          "initialSize": 1,
           "when": "obi.contains_obi_project && obi.valid-config"
         },
         {

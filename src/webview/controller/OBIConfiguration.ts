@@ -6,7 +6,7 @@ import { DirTool } from '../../utilities/DirTool';
 import path from 'path';
 import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
-import { AppConfig, ConfigCompileSettings } from './AppConfig';
+import { AppConfig, ConfigCompileSettings, SourceConfigList } from './AppConfig';
 import { Workspace } from '../../utilities/Workspace';
 import { logger } from '../../utilities/Logger';
 import { OBISourceConfiguration } from './OBISourceConfiguration';
@@ -103,6 +103,7 @@ export class OBIConfiguration {
         SSH_PASSWORD: pwd,
         project_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_FILE),
         user_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_USER_FILE),
+        source_config_file: DirTool.get_encoded_file_URI(Constants.OBI_SOURCE_CONFIG_FILE),
         panel: await context.secrets.get('obi|config|panel'),
         panel_tab: await context.secrets.get('obi|config|panel_tab'),
         config_source_list: AppConfig.get_source_configs()
@@ -271,12 +272,41 @@ export class OBIConfiguration {
         OBISourceConfiguration.render(OBIConfiguration._context, OBIConfiguration._extensionUri, message.source);
         break;
 
-      case "reload":
-
+      case "delete_source_config":
+        OBIConfiguration.delete_source_config(message.source);
         OBIConfiguration.update();
+        break;
+
+      case "add_source_config":
+        OBIConfiguration.add_source_config(message.source);
+        OBIConfiguration.update();
+        break;
+
+      case "reload":
+        OBIConfiguration.update();
+        break;
+
     }
     return;
   }
+
+
+
+  private static add_source_config(source: string) {
+    let source_configs: SourceConfigList = AppConfig.get_source_configs() || {};
+    source_configs[source] = {"compile-cmds": [], settings: {}, steps: []};
+    DirTool.write_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs);
+  }
+
+
+
+
+  private static delete_source_config(source: string) {
+    let source_configs: SourceConfigList = AppConfig.get_source_configs() || {};
+    delete source_configs[source];
+    DirTool.write_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs);
+  }
+
 
 
 

@@ -293,8 +293,12 @@ export class ConfigGlobal {
 
 
 export type SourceConfig = {
-  settings: {}|undefined,
-  "compile-cmds": string[]|undefined,
+  settings: {
+    [key: string]: string
+  }|undefined,
+  "source-cmds": {
+    [key: string]: string
+  }|undefined,
   steps: string[]|undefined
 }
 

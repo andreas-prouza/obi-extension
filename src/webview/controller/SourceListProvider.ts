@@ -253,7 +253,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
 
 
-class SourceListItem extends vscode.TreeItem {
+export class SourceListItem extends vscode.TreeItem {
 
   public readonly label: string;
   public readonly collapsibleState: vscode.TreeItemCollapsibleState;
@@ -320,6 +320,8 @@ class SourceListItem extends vscode.TreeItem {
 
     if (list_level != 'source-member')
       return;
+
+    this.contextValue = 'obi-source';
 
     this.command = {
       command: 'vscode.open',
