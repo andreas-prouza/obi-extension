@@ -120,5 +120,11 @@
   "Source type": "Source type",
   "Command IDs (separated by new line)": "Command IDs (separated by new line)",
   "Variable": "Variable",
-  "Value": "Value"
+  "Value": "Value",
+  "Available Variables:": "Available Variables:",
+  "Source name and path starting from project directory": "Source name and path starting from project directory",
+  "Generated target library": "Generated target library",
+  "Will be used for SQL sources (table, views, ...) to replace the placeholder <code>$(SQL_TARGET_LIB)</code> with the generated target library (<code>$(TARGET_LIB)</code>)": "Will be used for SQL sources (table, views, ...) to replace the placeholder <code>$(SQL_TARGET_LIB)</code> with the generated target library (<code>$(TARGET_LIB)</code>)",
+  "Object name": "Object name",
+  "Available standard variables:": "Available standard variables:"
 }

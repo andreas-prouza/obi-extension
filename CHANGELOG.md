@@ -1,3 +1,9 @@
+## [0.3.1]
+
+* SQL target lib replacement (`$(SOURCE_FILE_NAME)`)
+* Documentation in config menu
+
+
 ## [0.3.0]
 
 * Finalize source maintenance

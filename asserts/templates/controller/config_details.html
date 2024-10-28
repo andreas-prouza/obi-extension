@@ -108,7 +108,31 @@
   <vscode-panel-view id="view-2">
     <section>
 
-      <h1>{{ global_stuff['get_text']('General') | safe }}</h1>
+      <h2>💡 {{ global_stuff['get_text']('Available standard variables:') | safe }}</h2>
+      <table>
+        <tr>
+          <th>{{ global_stuff['get_text']('Variable') | safe }}</th>
+          <th>{{ global_stuff['get_text']('Description') | safe }}</th>
+        </tr>
+        <tr>
+          <td><code>$(SOURCE_FILE_NAME)</code></td>
+          <td>{{ global_stuff['get_text']('Source name and path starting from project directory') | safe }}</td>
+        </tr>
+        <tr>
+          <td><code>$(TARGET_LIB)</code></td>
+          <td>{{ global_stuff['get_text']('Generated target library') | safe }}</td>
+        </tr>
+        <tr>
+          <td><code>$(SQL_TARGET_LIB)</code></td>
+          <td>{{ global_stuff['get_text']('Will be used for SQL sources (table, views, ...) to replace the library placeholder <code>$(SQL_TARGET_LIB)</code> in the source, with the generated target library (<code>$(TARGET_LIB)</code>)') | safe }}</td>
+        </tr>
+        <tr>
+          <td><code>$(OBJ_NAME)</code></td>
+          <td>{{ global_stuff['get_text']('Object name') | safe }}</td>
+        </tr>
+      </table>
+
+      <h2>{{ global_stuff['get_text']('General') | safe }}</h2>
 
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|TGTRLS" placeholder="*CURRENT"
         value="{{ general_settings['TGTRLS'] }}">TGTRLS</vscode-text-field>
