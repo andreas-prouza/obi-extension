@@ -34,10 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
 	: undefined;
 
 	logger.info('Start app');
-
-
-	logger.info(`URI: ${Workspace.get_workspace_uri()}`);
-	logger.info(`Path: ${Workspace.get_workspace()}`);
+	
 	logger.info(`vscode.env.remoteName: ${vscode.env.remoteName}`);
 	logger.info(`vscode.env.uriScheme: ${vscode.env.uriScheme}`);
 	logger.info(`vscode.env.appHost: ${vscode.env.appHost}`);

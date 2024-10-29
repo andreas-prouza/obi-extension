@@ -1,3 +1,8 @@
+## [0.3.2]
+
+* Bugfix if no workspace available
+
+
 ## [0.3.1]
 
 * SQL target lib replacement (`$(SOURCE_FILE_NAME)`)
