@@ -2,6 +2,10 @@
 
 Object builder for i (OBI) is an automatic build tool.
 
+<p align="center">
+  <a href="https://www.buymeacoffee.com/prouza"><img src="https://img.shields.io/badge/%F0%9F%8D%BA-Buy%20me%20a%20beer-red?style=flat" alt="Buy me a beer"></a>
+</p>
+
 > Notice:
 Currently only the Beta version is available.
 Final release will be available soon.
