@@ -32,6 +32,11 @@
     <vscode-panel-view id="project_cfg-view">
       
       <section>
+        <br/>
+      
+        💡 {{  global_stuff['get_text']('This config will contains definitions for the whole project team (remote host, remote obi path, ...)') | safe }}
+        <br/>
+        <br/>
       
         📝 <a href='command:vscode.open?{{ project_config_file }}'>{{  global_stuff['get_text']('Open project config file') | safe }}</a>
         <br/>
@@ -50,7 +55,12 @@
     <vscode-panel-view id="user_cfg-view">
 
       <section>
-        
+        <br/>
+      
+        💡 {{  global_stuff['get_text']('This config will override the project config and should contain user specific definitions (target lib mapping, local obi path, ...)') | safe }}
+        <br/>
+        <br/>
+      
         📝 <a href='command:vscode.open?{{ user_config_file }}'>{{  global_stuff['get_text']('Open user config file') | safe }}</a>
         <br/>
         <br/>

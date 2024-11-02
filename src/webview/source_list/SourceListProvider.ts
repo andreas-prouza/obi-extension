@@ -2,13 +2,13 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { DirTool } from '../../utilities/DirTool';
-import { SourceList } from '../source_list/SourceList';
+import { SourceList } from './SourceList';
 import { Constants } from '../../Constants';
 import { logger } from '../../utilities/Logger';
 import * as source from '../../obi/Source';
-import { AppConfig } from './AppConfig';
+import { AppConfig } from '../controller/AppConfig';
 import { Workspace } from '../../utilities/Workspace';
-import { SourceListConfig } from '../source_list/SourceListConfig';
+import { SourceListConfig } from './SourceListConfig';
 import { OBITools } from '../../utilities/OBITools';
 
 
@@ -151,7 +151,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       throw new Error('Canceled by user. No source filter name provided');
 
 
-    const data: source.IQualifiedSource[] = [{ "source-lib": '.*', "source-file": '.*', 'source-member': '.*' }];
+    const data: source.IQualifiedSource[] = [{ "source-lib": '*', "source-file": '*', 'source-member': '*', "use-regex": false }];
 
     DirTool.write_file(path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, `${source_list}.json`), JSON.stringify(data, undefined, 2));
 

@@ -9,7 +9,7 @@ import { OBITools } from '../../utilities/OBITools';
 import { AppConfig, ConfigCompileSettings } from '../controller/AppConfig';
 import { Workspace } from '../../utilities/Workspace';
 import * as source from '../../obi/Source';
-import { SourceListProvider } from '../controller/SourceListProvider';
+import { SourceListProvider } from './SourceListProvider';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc

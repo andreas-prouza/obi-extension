@@ -4,6 +4,7 @@ export interface IQualifiedSource {
   "source-lib": string,
   "source-file": string,
   "source-member": string,
+  "use-regex": boolean,
   path?: string,
   description?: string
 }

@@ -2,7 +2,7 @@ import path from 'path';
 import * as vscode from 'vscode';
 import { BuildSummary } from './webview/show_changes/BuildSummary';
 import { OBIController } from './webview/controller/OBIController';
-import { SourceListItem, SourceListProvider } from './webview/controller/SourceListProvider';
+import { SourceListItem, SourceListProvider } from './webview/source_list/SourceListProvider';
 import { OBICommands } from './obi/OBICommands';
 import { Welcome } from './webview/controller/Welcome';
 import { OBITools } from './utilities/OBITools';

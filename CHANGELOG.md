@@ -1,3 +1,9 @@
+## [0.3.3]
+
+* Changed default config for new projects
+* Source filter config: Now you can choose to use regex or not
+
+
 ## [0.3.2]
 
 * Bugfix if no workspace available

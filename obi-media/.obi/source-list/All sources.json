@@ -1,0 +1,8 @@
+[
+  {
+    "source-lib": ".*",
+    "source-file": ".*",
+    "source-member": ".*",
+    "use-regex": true
+  }
+]

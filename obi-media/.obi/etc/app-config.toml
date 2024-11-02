@@ -1,13 +1,13 @@
 [connection]
-remote-host = "my.ibmi.host"
+#remote-host = "my.ibmi.host"
 
 [general]
 local-base-dir = "."
-remote-base-dir = "ibm-i-build-obi"
+#remote-base-dir = "ibm-i-build-obi"
 source-dir = "src"
 check-remote-source-on-startup = false
 use-remote-obi = false
-remote-obi-dir = "/home/prouzat1/obi"
+#remote-obi-dir = "/home/prouzat1/obi"
 supported-object-types = [ "pgm", "file", "srvpgm", "obj", "cpy" ]
 file-system-encoding = "utf-8"
 console-output-encoding = "utf-8"
@@ -31,13 +31,13 @@ TGTCCSID = "*JOB"
 STGMDL = "*SNGLVL"
 ACTGRP = "*CALLER"
 LIBL = [ "$(TARGET_LIB)", "QGPL" ]
-INCLUDE_BNDDIR = "prouzadir"
-INCDIR_RPGLE = "'./src/prouzalib' './src/prouzalib2'"
-INCDIR_SQLRPGLE = "''./src/prouzalib'' ''./src/prouzalib2''"
+#INCLUDE_BNDDIR = "prouzadir"
+#INCDIR_RPGLE = "'./src/prouzalib' './src/prouzalib2'"
+#INCDIR_SQLRPGLE = "''./src/prouzalib'' ''./src/prouzalib2''"
 
 [global.settings.general.TARGET_LIB_MAPPING]
-prouzalib = "prouzat1"
-prouzalib2 = "prouzat2"
+#prouzalib = "prouzat1"
+#prouzalib2 = "prouzat2"
 
 [global.settings.language]
 [global.settings.language."sqlrpgle.srvpgm"]

@@ -65,9 +65,14 @@ Because you work locally, you need to sync your changes with other developers.
 ## Following steps you need to do
 
 1. Get your Sources to IFS (to your project folder)
-2. Create a git repository
-3. Add the project folder to this git repository
-4. Open the OBI extension in vscode
+   You can use my RPG program to get this job done: 
+   https://github.com/andreas-prouza/ibm-i-build-obi/blob/main/src/prouzalib/qrpglesrc/cpysrc2ifs.sqlrpgle.pgm
+2. If you are working in a Team you should use git
+   1. Create a git repository (on your IBM i, gitlab, github, gitea, ...)
+   2. Add the project folder to this git repository
+   3. Clone the git repo on your PC
+3. In vscode open the project folder
+4. Switch to the OBI view
    
    You will see the welcome screen
 
@@ -75,9 +80,9 @@ Because you work locally, you need to sync your changes with other developers.
 
 5. Initialize the project with OBI
    
-   A new folder ```.obi``` will be created including some initial config files.
+   A new folder ```.obi``` will be created including some initial config files
 
-6. Take a look into the config (server, user, ifs locations, ...)
+6. Take a look into the config to define some mandatory settings (server, user, ifs locations, ...)
    
      <img src="asserts/img/ext/config-2.png" style="width: 300px">
 
@@ -94,14 +99,21 @@ Because you work locally, you need to sync your changes with other developers.
      You should see a list of sources, ready to compile.
 
 8. Reset the compiled object list
+   OBI can check which sources have changed and need to be built.  
+   Therefore, a hash value is stored for each source.
    
    <img src="asserts/img/ext/compiled-obj-list.png" style="width: 300px">
 
    From now, the ```Show changes``` action only shows changed sources.
 
-9.  On your IBM i clone OBI from GitHub somewhere in the IFS.
+9.  On your IBM i
+    Clone OBI from GitHub somewhere in the IFS and run the setup script.
     
-    ```git clone https://github.com/andreas-prouza/obi /ifs/path/obi```
+    ```sh
+    git clone https://github.com/andreas-prouza/obi /ifs/path/obi
+    cd /ifs/path/obi
+    ./setup.sh
+    ```
 
     (Remember the path. You need to set it in your project config)
 
@@ -109,8 +121,8 @@ Because you work locally, you need to sync your changes with other developers.
 
 10.  When you are motivated, you can create a dependency list.
     
-    With a dependency OBI creates the correct build order and includes all dependend objects. (E.g. for SRVPGM, files, ...)
-    (See [dependency list](https://github.com/andreas-prouza/ibm-i-build-obi/blob/main/docs/pages/configuration.md#etcdependencytoml))
+     With a dependency list OBI creates the correct build order and includes all dependend objects. (E.g. for SRVPGM, files, ...)
+     (See [dependency list](https://github.com/andreas-prouza/ibm-i-build-obi/blob/main/docs/pages/configuration.md#etcdependencytoml))
     
 11. Sync all changes to your git repo
 

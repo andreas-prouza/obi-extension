@@ -16,7 +16,6 @@ import { LocaleText } from './LocaleText';
 import { OBIStatus } from '../obi/OBIStatus';
 
 
-
 export class OBITools {
 
   public static ext_context?: vscode.ExtensionContext;
@@ -60,6 +59,11 @@ export class OBITools {
       DirTool.write_file(path.join(ws, config.general['compiled-object-list']||'object-build.json'), '');
     }
 
+    if (!DirTool.dir_exists(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME))){
+      fs.mkdirSync(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME), { recursive: true});
+      fs.copyFileSync(path.join(ext_ws, Constants.SOURCE_FILTER_FOLDER_NAME, 'All sources.json'), path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME, 'All sources.json'));
+    }
+
     AppConfig.self_check();
 
     switch (previous_version) {
@@ -69,8 +73,8 @@ export class OBITools {
       case '0.2.6':
       case '0.2.7':
       case '0.2.8':
-        fs.copyFileSync(path.join(ext_ws, 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
-        fs.copyFileSync(path.join(ext_ws, 'etc', 'logger_config.py'), path.join(ws, '.obi', 'etc', 'logger_config.py'));
+        fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
+        fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'logger_config.py'), path.join(ws, '.obi', 'etc', 'logger_config.py'));
       case '0.2.9':
       case '0.2.10':
       case '0.2.11':
@@ -95,7 +99,7 @@ export class OBITools {
       case '0.2.22':
       case '0.2.23':
       case '0.2.24':
-        fs.copyFileSync(path.join(ext_ws, 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
+        fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
 
     }
 
@@ -922,7 +926,13 @@ export class OBITools {
     if (!sources)
       return;
 
+    const wcmatch = require('wildcard-match');
     let filtered_sources: source.IQualifiedSource[] = [];
+    let use_regex;
+    let lib: string;
+    let file: string;
+    let mbr: string;
+    let isMatch: boolean = false;
 
     for (let source of sources) {
       
@@ -932,12 +942,26 @@ export class OBITools {
 
       for (const source_filter of source_filters) {
         
-        const re_lib = new RegExp(source_filter['source-lib']);
-        const re_file = new RegExp(source_filter['source-file']);
-        const re_mbr = new RegExp(source_filter['source-member']);
+        use_regex = source_filter['use-regex'];
+        lib = (source_filter['source-lib'] || '').toLowerCase();
+        file = (source_filter['source-file'] || '').toLowerCase();
+        mbr = (source_filter['source-member'] || '').toLowerCase();
+        isMatch = false;
 
-        if (src_lib.match(re_lib) && src_file.match(re_file) && src_mbr.match(re_mbr))
-          filtered_sources.push({"source-lib": src_lib, "source-file": src_file, "source-member": src_mbr});
+        if (use_regex) {
+          const re_lib = new RegExp(`^${lib}$`);
+          const re_file = new RegExp(`^${file}$`);
+          const re_mbr = new RegExp(`^${mbr}$`);  
+          isMatch = (src_lib.toLowerCase().match(re_lib) != null && src_file.toLowerCase().match(re_file) != null && src_mbr.toLowerCase().match(re_mbr) != null);
+        }
+        else {
+          const wc_lib = wcmatch(lib);
+          const wc_file = wcmatch(file);
+          const wc_mbr = wcmatch(mbr);
+          isMatch = wc_lib(src_lib.toLowerCase()) && wc_file(src_file.toLowerCase()) && wc_mbr(src_mbr.toLowerCase());
+        }
+        if (isMatch)
+          filtered_sources.push({"source-lib": src_lib, "source-file": src_file, "source-member": src_mbr, "use-regex": source_filter['use-regex']});
       }
     }
 

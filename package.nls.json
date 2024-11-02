@@ -126,5 +126,14 @@
   "Generated target library": "Generated target library",
   "Will be used for SQL sources (table, views, ...) to replace the placeholder <code>$(SQL_TARGET_LIB)</code> with the generated target library (<code>$(TARGET_LIB)</code>)": "Will be used for SQL sources (table, views, ...) to replace the placeholder <code>$(SQL_TARGET_LIB)</code> with the generated target library (<code>$(TARGET_LIB)</code>)",
   "Object name": "Object name",
-  "Available standard variables:": "Available standard variables:"
+  "Available standard variables:": "Available standard variables:",
+  "Will be used for SQL sources (table, views, ...) to replace the library placeholder <code>$(SQL_TARGET_LIB)</code> in the source, with the generated target library (<code>$(TARGET_LIB)</code>)": "Will be used for SQL sources (table, views, ...) to replace the library placeholder <code>$(SQL_TARGET_LIB)</code> in the source, with the generated target library (<code>$(TARGET_LIB)</code>)",
+  "Supported object types (logger.sqlrpgle.<b>srvpgm</b>)": "Supported object types (logger.sqlrpgle.<b>srvpgm</b>)",
+  "Supported object types (logger.sqlrpgle.srvpgm --> <code>srvpgm</code>)": "Supported object types (logger.sqlrpgle.srvpgm --> <code>srvpgm</code>)",
+  "This config will contains definitions for the whole project team (remote host, remote obi path, ...)": "This config will contains definitions for the whole project team (remote host, remote obi path, ...)",
+  "Global variables": "Global variables",
+  "General commands declaration": "General commands declaration",
+  "This config will override the project config and should contain user specific definitions (target lib mapping, local obi path, ...)": "This config will override the project config and should contain user specific definitions (target lib mapping, local obi path, ...)",
+  "Use regex": "Use regex",
+  "Regex": "Regex"
 }

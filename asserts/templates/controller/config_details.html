@@ -73,7 +73,8 @@
         value="{{ app_config['general']['local-base-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Local path') | safe }}</vscode-text-field>
       <br />
       <br />
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|general|remote-base-dir" size="80"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-1" 
+        id="{{ class_prefix }}|general|remote-base-dir" size="80" placeholder="path-in-ifs"
         value="{{ app_config['general']['remote-base-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Remote ifs path') | safe }}</vscode-text-field>
       <br />
       <br />
@@ -108,7 +109,7 @@
   <vscode-panel-view id="view-2">
     <section>
 
-      <h2>💡 {{ global_stuff['get_text']('Available standard variables:') | safe }}</h2>
+      <h2>{{ global_stuff['get_text']('Available standard variables:') | safe }}</h2>
       <table>
         <tr>
           <th>{{ global_stuff['get_text']('Variable') | safe }}</th>
@@ -132,7 +133,11 @@
         </tr>
       </table>
 
-      <h2>{{ global_stuff['get_text']('General') | safe }}</h2>
+      <br />
+      <hr />
+      <br />
+
+      <h2>{{ global_stuff['get_text']('Global variables') | safe }}</h2>
 
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|TGTRLS" placeholder="*CURRENT"
         value="{{ general_settings['TGTRLS'] }}">TGTRLS</vscode-text-field>
@@ -155,12 +160,12 @@
       <br />
       <br />
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|INCDIR_RPGLE" size="80"
-        placeholder="$HOME/project-dir/src/prouzalib $HOME/project-dir/src/prouzalib2"
+        placeholder="'./src/prouzalib' './src/prouzalib2'"
         value="{{ general_settings['INCDIR_RPGLE'] | replace('"$HOME"', '$HOME' ) }}">INCDIR RPGLE</vscode-text-field>
       <br />
       <br />
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|INCDIR_SQLRPGLE" size="80"
-        placeholder="$HOME/project-dir/src/prouzalib $HOME/project-dir/src/prouzalib2"
+        placeholder="''./src/prouzalib'' ''./src/prouzalib2''"
         value="{{ general_settings['INCDIR_SQLRPGLE'] | replace('"$HOME"', '$HOME' ) }}">INCDIR SQLRPGLE</vscode-text-field>
       <br />
       <br />
@@ -224,7 +229,11 @@
       <hr />
       <br />
       
-      <h2>{{ global_stuff['get_text']('General commands') | safe }} (<code>global.cmds</code>)</h2>
+      <h2>{{ global_stuff['get_text']('General commands declaration') | safe }} (<code>global.cmds</code>)</h2>
+      Define your global commands. The command ID will be used to assign the command later.
+      <br/>
+      <br/>
+
       {% set cmds = app_global['cmds'] %}
 
       <table style="width: 100%">
@@ -272,6 +281,10 @@
       
       
       <h2>{{ global_stuff['get_text']('Compile commands') | safe }} (<code>global.compile-cmds</code>)</h2>
+      Define your global compile commands. The command ID will be used to assign the command later.
+      <br/>
+      <br/>
+      
       {% set compile_cmds = app_global['compile-cmds'] %}
 
       <table style="width: 100%">
@@ -318,6 +331,12 @@
       <br />
       
       <h2>{{ global_stuff['get_text']('Compile steps') | safe }} (<code>global.steps</code>)</h2>
+      For each source type, you can define the commands (IDs) to get executed for each source.<br/>
+      This can be a mix of compile command IDs and global command IDs.
+
+      <br/>
+      <br/>
+      
       {% set compile_steps = app_global['steps'] %}
 
       <table style="width: 100%">
@@ -367,7 +386,8 @@
     <section>
       
       <vscode-text-area rows="4" class="{{ class_prefix }}_save_app type_array {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-3" id="{{ class_prefix }}|general|supported-object-types" 
-        placeholder="pgm&#10;file&#10;srvpgm" value="{% if app_general['supported-object-types'] %}{{ app_general['supported-object-types'] | join('\n') }}{% endif %}">{{ global_stuff['get_text']('Supported object types') | safe }}</vscode-text-area>
+        placeholder="pgm&#10;file&#10;srvpgm&#10;cpy" value="{% if app_general['supported-object-types'] %}{{ app_general['supported-object-types'] | join('\n') }}{% endif %}">
+        {{ global_stuff['get_text']('Supported object types (logger.sqlrpgle.srvpgm --> <code>srvpgm</code>)') | safe }}</vscode-text-area>
 
       <br/>
       <br/>

@@ -9,7 +9,7 @@ import { OBITools } from '../../utilities/OBITools';
 import { AppConfig, ConfigCompileSettings } from '../controller/AppConfig';
 import { Workspace } from '../../utilities/Workspace';
 import * as source from '../../obi/Source';
-import { SourceListProvider } from '../controller/SourceListProvider';
+import { SourceListProvider } from './SourceListProvider';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -142,7 +142,7 @@ export class SourceListConfig {
         break;
 
       case "add_filter":
-        SourceListConfig.add_filter(message.lib, message.file, message.member);
+        SourceListConfig.add_filter(message.lib, message.file, message.member, message.regex);
         SourceListConfig.update();
         break;
     }
@@ -167,7 +167,7 @@ export class SourceListConfig {
   }
 
 
-  private static add_filter(lib: string, file: string, member: string) {
+  private static add_filter(lib: string, file: string, member: string, regex: boolean) {
 
     const json_file: string = path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, SourceListConfig.source_list_file);
     const sl: source.IQualifiedSource[] = DirTool.get_json(json_file) || [];
@@ -179,7 +179,7 @@ export class SourceListConfig {
       }
     }
 
-    sl.push({"source-lib": lib, "source-file": file, "source-member": member});
+    sl.push({"source-lib": lib, "source-file": file, "source-member": member, 'use-regex': regex});
 
     DirTool.write_file(json_file, JSON.stringify(sl, undefined, 2));
   }
@@ -193,21 +193,6 @@ export class SourceListConfig {
   }
 
 
-
-  private static save_config(isUser: boolean, workspaceUri: Uri, data: {}) {
-
-    vscode.window.showInformationMessage('Configuration saved');
-
-    const app_config = new AppConfig(data['connection'], data['general'], data['global']);
-
-    // App config
-    let toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_FILE);
-    if (isUser)
-      toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_USER_FILE);
-    
-    DirTool.write_toml(toml_file, app_config);
-}
-  
 
   private static createNewPanel(extensionUri : Uri) {
     return window.createWebviewPanel(

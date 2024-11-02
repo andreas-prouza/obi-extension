@@ -21,8 +21,6 @@
   <hr />
   <br/>
 
-  💡 {{ global_stuff['get_text']('Search patterns are regex based.') | safe }}<br/>
-  {{ global_stuff['get_text']('So, instead of <code>*</code> please use <code>.*</code>.') | safe }}<br/><br/>
   {{ global_stuff['get_text']('You can define multiple patterns separated by comma (<code>,</code>)') | safe }}.
 
   <br/>
@@ -43,6 +41,7 @@
         <th>{{ global_stuff['get_text']('Lib') | safe }}</th>
         <th>{{ global_stuff['get_text']('File') | safe }}</th>
         <th>{{ global_stuff['get_text']('Member') | safe }}</th>
+        <th>{{ global_stuff['get_text']('Regex') | safe }}</th>
       </tr>
     </thead>
     <tbody>
@@ -59,6 +58,9 @@
         <td style="white-space: nowrap;">
           <vscode-text-field class="source_filter_{{ loop.index0 }}" id="member_{{ loop.index0 }}" name="member" lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}"
           value="{{ row['source-member'] }}"></vscode-text-field>
+        </td>
+        <td>
+          <vscode-checkbox class="source_filter_{{ loop.index0 }}" id="regex_{{ loop.index0 }}" name="regex" lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}" {% if row['use-regex'] %}checked{% endif %} />
         </td>
         <td>
           <vscode-button class="delete_filter" lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}" list_index="{{ loop.index0 }}" id="delete_filter_{{ loop.index0 }}">
@@ -78,6 +80,9 @@
         </td>
         <td>
           <vscode-text-field id="new_member" placeholder="source.rpgle.pgm"></vscode-text-field>
+        </td>
+        <td>
+          <vscode-checkbox id="new_regex" />
         </td>
         <td>
           <vscode-button id="add_filter">

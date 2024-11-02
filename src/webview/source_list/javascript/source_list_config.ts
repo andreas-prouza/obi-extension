@@ -72,24 +72,26 @@ function add_filter() {
   const new_libs: string[] = document.getElementById("new_lib").value.split(',');
   const new_files: string[] = document.getElementById("new_file").value.split(',');
   const new_members: string[] = document.getElementById("new_member").value.split(',');
+  const regex: boolean = document.getElementById("new_regex").checked;
 
-  console.log(`Add filter ${new_libs}, ${new_files}, ${new_members}`);
+  console.log(`Add filter ${new_libs}, ${new_files}, ${new_members}, regex: ${regex}`);
 
   for (let new_lib of new_libs) {
     for (let new_file of new_files) {
       for (let new_member of new_members) {
-        if (new_lib == '')
-          new_lib = '.*';
+        if (new_lib == '') 
+          new_lib = regex? '.*' : '*';
         if (new_file == '')
-          new_file = '.*';
+          new_file = regex? '.*' : '*';
         if (new_member == '')
-          new_member = '.*';
+          new_member = regex? '.*' : '*';
     
         vscode.postMessage({
           command: "add_filter",
           lib: new_lib.trim(),
           file: new_file.trim(),
-          member: new_member.trim()
+          member: new_member.trim(),
+          regex: regex
         });
       }
     }
@@ -111,21 +113,23 @@ function save_config() {
     const libs = document.getElementById(`lib_${counter}`).value.split(',');
     const files = document.getElementById(`file_${counter}`).value.split(',');
     const members = document.getElementById(`member_${counter}`).value.split(',');
+    const regex = document.getElementById(`regex_${counter}`).checked;
     
     for (let lib of libs) {
       for (let file of files) {
         for (let member of members) {
           if (lib == '')
-            lib = '.*';
+            lib = regex? '.*' : '*';
           if (file == '')
-            file = '.*';
+            file = regex? '.*' : '*';
           if (member == '')
-            member = '.*';
+            member = regex? '.*' : '*';
       
           filter.push({
             "source-file":file.trim(), 
             "source-lib":lib.trim(), 
-            "source-member":member.trim()
+            "source-member":member.trim(),
+            "use-regex":regex
           });
         }
       }

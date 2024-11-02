@@ -48,16 +48,8 @@ function save_config() {
     const el = els[i];
 
     lib = el.getAttribute('lib');
-    if (lib == '')
-      lib = '.*';
-    
     file = el.getAttribute('file');
-    if (file == '')
-      file = '.*';
-    
     member = el.getAttribute('member');
-    if (member == '')
-      member = '.*';
 
     const full_name = `${lib||'UNKNOWN'}/${file||'UNKNOWN'}/${member||'UNKNOWN'}`;
     sources[full_name] = {description: (el as TextField).value};
