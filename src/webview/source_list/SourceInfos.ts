@@ -28,6 +28,7 @@ export class SourceInfos {
   private _disposables: Disposable[] = [];
   private static _context: vscode.ExtensionContext;
   private static _extensionUri: Uri;
+  private static _edit_infos: boolean;
   public static source_list_file: string;
 
 
@@ -55,9 +56,10 @@ export class SourceInfos {
    *
    * @param extensionUri The URI of the directory containing the extension.
    */
-  public static async render(context: vscode.ExtensionContext) {
+  public static async render(context: vscode.ExtensionContext, edit_infos: boolean) {
 
     SourceInfos._context = context;
+    SourceInfos._edit_infos = edit_infos;
 
     if (SourceInfos.currentPanel) {
       // If the webview panel already exists reveal it
@@ -79,12 +81,16 @@ export class SourceInfos {
   private static async generate_html(extensionUri: Uri, webview: Webview): Promise<string> {
 
     const config = AppConfig.get_app_confg();
+    let html_template = 'source_list/source-infos-view.html';
+    if (SourceInfos._edit_infos) {
+      html_template = 'source_list/source-infos-config.html';
+    }
 
     const sources = await OBITools.get_local_sources();
     const source_list: source.IQualifiedSource[] = OBITools.get_extended_source_infos(sources)||[];
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-    const html = nunjucks.render('source_list/source-infos.html', 
+    const html = nunjucks.render(html_template, 
       {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),
         config_css: getUri(webview, extensionUri, ["asserts/css", "config.css"]),

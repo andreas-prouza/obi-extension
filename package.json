@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -131,6 +131,12 @@
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
+        "command": "obi.source-filter.view-source-infos",
+        "title": "%obi.source-filter.view-source-infos%",
+        "icon": "$(preview)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
         "command": "obi.source-filter.maintain-source-infos",
         "title": "%obi.source-filter.maintain-source-infos%",
         "icon": "$(settings-gear)",
@@ -145,9 +151,14 @@
           "group": "navigation@1"
         },
         {
-          "command": "obi.source-filter.maintain-source-infos",
+          "command": "obi.source-filter.view-source-infos",
           "when": "obi.contains_obi_project && obi.valid-config && view == obi.source-filter",
           "group": "navigation@2"
+        },
+        {
+          "command": "obi.source-filter.maintain-source-infos",
+          "when": "obi.contains_obi_project && obi.valid-config && view == obi.source-filter",
+          "group": "navigation@3"
         },
         {
           "command": "obi.source-filter.update",

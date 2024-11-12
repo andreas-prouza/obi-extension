@@ -326,14 +326,14 @@ export class OBITools {
       return;
     }
 
-    const ws = Workspace.get_workspace();
-    const ext_ws = path.join(OBITools.ext_context.asAbsolutePath('.'), 'obi-media');
+    const ws = path.join(Workspace.get_workspace(), '.obi');
+    const ext_ws = path.join(OBITools.ext_context.asAbsolutePath('.'), 'obi-media', '.obi');
 
-    if (!DirTool.dir_exists(path.join(ws, '.obi', 'etc'))){
-      fs.mkdirSync(path.join(ws, '.obi', 'etc'), { recursive: true});
+    if (!DirTool.dir_exists(path.join(ws, 'etc'))){
+      fs.mkdirSync(path.join(ws, 'etc'), { recursive: true});
     }
-    if (!DirTool.dir_exists(path.join(ws, '.obi', 'log'))){
-      fs.mkdirSync(path.join(ws, '.obi', 'log'), { recursive: true});
+    if (!DirTool.dir_exists(path.join(ws, 'log'))){
+      fs.mkdirSync(path.join(ws, 'log'), { recursive: true});
     }
 
     const files = await DirTool.get_all_files_in_dir2(ext_ws, 'etc', ['toml', '.py']);
@@ -342,7 +342,7 @@ export class OBITools {
 
     let copies: Promise<void>[] = [];
     for (const file of files) {
-      copies.push(fs.copy(path.join(ext_ws, file), path.join(ws, '.obi', file)));
+      copies.push(fs.copy(path.join(ext_ws, file), path.join(ws, file)));
     }
 
     Promise.all(copies).then(() => {
@@ -894,7 +894,7 @@ export class OBITools {
 
 
 
-  private static get_extended_source_infos(sources: source.IQualifiedSource[]|undefined): source.IQualifiedSource[] | undefined {
+  public static get_extended_source_infos(sources: source.IQualifiedSource[]|undefined): source.IQualifiedSource[] | undefined {
 
     if (!sources)
       return;

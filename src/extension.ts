@@ -14,11 +14,8 @@ import { logger } from './utilities/Logger';
 import { SourceInfos } from './webview/source_list/SourceInfos';
 import { LocaleText } from './utilities/LocaleText';
 import { Workspace } from './utilities/Workspace';
-import { SourceList } from './webview/source_list/SourceList';
 import { OBISourceConfiguration } from './webview/controller/OBISourceConfiguration';
 import { DirTool } from './utilities/DirTool';
-
-const nunjucks = require('nunjucks');
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -192,7 +189,14 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('obi.source-filter.maintain-source-infos', () => {
 			// Only available with workspaces
-			SourceInfos.render(context);
+			SourceInfos.render(context, true);
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.source-filter.view-source-infos', () => {
+			// Only available with workspaces
+			SourceInfos.render(context, false);
 		})
 	);
 

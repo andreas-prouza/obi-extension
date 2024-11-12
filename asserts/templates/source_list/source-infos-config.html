@@ -47,15 +47,15 @@
         <th data-field="lib" data-sortable="true" data-filter-control="select" data-filter-control-container="#lib">{{ global_stuff['get_text']('Lib') | safe }}</th>
         <th data-field="file" data-sortable="true" data-filter-control="select" data-filter-control-container="#file">{{ global_stuff['get_text']('File') | safe }}</th>
         <th data-field="member" data-sortable="true" data-filter-control="input" data-filter-control-container="#member">{{ global_stuff['get_text']('Member') | safe }}</th>
-        <th>{{ global_stuff['get_text']('Description') | safe }}</th>
+        <th data-field="description" data-sortable="true" data-filter-control="input" data-filter-control-container="#description">{{ global_stuff['get_text']('Description') | safe }}</th>
       </tr>
     </thead>
     <tbody>
       {% for row in source_list %}
       <tr>
-        <td id="lib" style="white-space: nowrap;">{{ row['source-lib'] }}</td>
-        <td id="file" style="white-space: nowrap;">{{ row['source-file'] }}</td>
-        <td id="member" style="white-space: nowrap;">{{ row['source-member'] }}</td>
+        <td style="white-space: nowrap;">{{ row['source-lib'] }}</td>
+        <td style="white-space: nowrap;">{{ row['source-file'] }}</td>
+        <td style="white-space: nowrap;">{{ row['source-member'] }}</td>
         <td style="white-space: nowrap;">
           <vscode-text-field class="source_description" size="80" placeholder="{{ global_stuff['get_text']('description') | safe }}" lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}"
             value="{{ row['description'] }}"></vscode-text-field>

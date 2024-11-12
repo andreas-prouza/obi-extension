@@ -1,3 +1,8 @@
+## [0.3.4]
+
+* Separate source view
+
+
 ## [0.3.3]
 
 * Changed default config for new projects
