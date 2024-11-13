@@ -16,6 +16,8 @@ import { LocaleText } from './utilities/LocaleText';
 import { Workspace } from './utilities/Workspace';
 import { OBISourceConfiguration } from './webview/controller/OBISourceConfiguration';
 import { DirTool } from './utilities/DirTool';
+import { I_Releaser } from './webview/deployment/I_Releaser';
+import { DeploymentConfig } from './webview/deployment/DeploymentConfig';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -78,6 +80,24 @@ export function activate(context: vscode.ExtensionContext) {
 		return;
 
 
+	//--------------------------------------------------------
+	// i-Releaser
+	//--------------------------------------------------------
+	const i_releaser = new I_Releaser(context.extensionUri);
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(I_Releaser.viewType, i_releaser)
+	);
+	
+	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.deployment.maintain', () => {
+			DeploymentConfig.render(context)
+		})
+	);
+
+	
+	//--------------------------------------------------------
+	// Controller OBI
+	//--------------------------------------------------------
 	context.subscriptions.push(
 		vscode.commands.registerCommand('obi.get-remote-source-list', () => {
 			// Only available with workspaces
@@ -166,15 +186,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 
 	new SourceListProvider(rootPath).register(context);
-	/*
-	vscode.window.registerTreeDataProvider(
-		'obi.source-filter',
-		new SourceListProvider(rootPath)
-	);
-	vscode.window.createTreeView('obi.source-filter', {
-		treeDataProvider: new SourceListProvider(rootPath)
-	});
-	*/
 
 
 	if (config.general['check-remote-source-on-startup'] && config.general['check-remote-source-on-startup'] === true) {

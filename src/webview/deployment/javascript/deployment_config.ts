@@ -1,0 +1,57 @@
+import {
+  allComponents,
+  provideVSCodeDesignSystem,
+  Button
+} from "@vscode/webview-ui-toolkit";
+
+// In order to use all the Webview UI Toolkit web components they
+// must be registered with the browser (i.e. webview) using the
+// syntax below.
+provideVSCodeDesignSystem().register(allComponents);
+
+const vscode = acquireVsCodeApi();
+
+window.addEventListener("load", main);
+
+
+function main() {
+  // To get improved type annotations/IntelliSense the associated class for
+  // a given toolkit component can be imported and used to type cast a reference
+  // to the element (i.e. the `as Button` syntax)
+
+  const btn_initialize_folder = document.getElementById("save_config") as Button;
+  btn_initialize_folder?.addEventListener("click", save_config);
+  
+  window.addEventListener('message', receive_message);
+
+}
+
+
+function save_config() {
+
+  let data = {};
+
+  data['i-releaser']['hostname'] = (document.getElementById('i-releaser|hostname') as HTMLInputElement).value;
+  data['i-releaser']['default-workflow'] = (document.getElementById('i-releaser|default-workflow') as HTMLInputElement).value;
+  data['i-releaser']['main-branch'] = (document.getElementById('i-releaser|main-branch') as HTMLInputElement).value;
+  data['i-releaser']['auth_token'] = (document.getElementById('i-releaser|auth_token') as HTMLInputElement).value;
+
+  vscode.postMessage({
+    command: "save",
+    data: data
+  });
+}
+
+
+function receive_message(e: MessageEvent) {
+
+  switch (e.data.command) {
+
+    case '':
+      
+      break;
+
+  }
+}
+
+

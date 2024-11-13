@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="{{ global_stuff['theme_mode'] }}">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
+    <link rel="stylesheet" href="{{ config_css }}">
+  </head>
+  <body>
+
+    
+    <div class="save-button-wrapper">
+      <vscode-button class="save-button" id="save_config">{{  global_stuff['get_text']('Save') | safe }}</vscode-button>
+    </div>
+    
+    <h2>i-Releaser</h2>
+
+    <vscode-text-field id="i-releaser|hostname" placeholder="hostname" value="{{ deploy_config['i-releaser']['URL'] }}">{{ global_stuff['get_text']('Hostname') | safe }}</vscode-text-field>
+    <br/>
+    <br/>
+    <vscode-text-field id="i-releaser|default-workflow" placeholder="UAT-workflow" value="{{ deploy_config['i-releaser']['default-workflow'] }}">{{ global_stuff['get_text']('Default workflow') | safe }}</vscode-text-field>
+    <br/>
+    <br/>
+    <vscode-text-field id="i-releaser|main-branch" placeholder="main" value="{{ deploy_config['i-releaser']['main-branch'] }}">{{ global_stuff['get_text']('Main branch') | safe }}</vscode-text-field>
+    <br/>
+    <br/>
+    <vscode-text-field id="i-releaser|auth_token" type="password" value="{{ auth_token }}">🔑 {{ global_stuff['get_text']('HTTP Auth-Token') | safe }}</vscode-text-field>
+
+    <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
+    
+  </body>
+</html>

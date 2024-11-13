@@ -15,8 +15,11 @@
   "obi.source-filter.edit-config": "OBI: Edit source filter config",
   "obi.source-filter.delete-config": "OBI: Delete source filter config",
   "obi.source-filter.maintain-source-infos": "OBI: Maintain source infos",
+  "obi.source-filter.view-source-infos": "OBI: Show source infos",
   "obi.source.edit-compile-config": "OBI: Individual build settings",
+  "obi.deployment.maintain": "OBI: deployment config",
   "Welcome": "Welcome",
+  "deployment": "Deployment",
   "Source filters": "Source filters",
   "Source filter": "Source filters",
   "Invalid config": "Invalid config",
@@ -135,5 +138,10 @@
   "General commands declaration": "General commands declaration",
   "This config will override the project config and should contain user specific definitions (target lib mapping, local obi path, ...)": "This config will override the project config and should contain user specific definitions (target lib mapping, local obi path, ...)",
   "Use regex": "Use regex",
-  "Regex": "Regex"
+  "Regex": "Regex",
+  "Open in web": "Open in web",
+  "Hostname": "Hostname",
+  "Default workflow": "Default workflow",
+  "Main branch": "Main branch",
+  "HTTP Auth-Token": "HTTP Auth-Token"
 }

@@ -93,6 +93,23 @@ const sourceInfosViewConfig = {
   outfile: "./out/source_infos.js",
 };
 
+const i_releaser_ViewConfig = {
+  ...baseConfig,
+  target: "es2020",
+  format: "esm",
+  entryPoints: ["./src/webview/deployment/javascript/i_releaser.ts"],
+  outfile: "./out/i_releaser.js",
+};
+
+const deployment_config_ViewConfig = {
+  ...baseConfig,
+  target: "es2020",
+  format: "esm",
+  entryPoints: ["./src/webview/deployment/javascript/deployment_config.ts"],
+  outfile: "./out/deployment_config.js",
+};
+
+
 (async () => {
   try {
     await build(extensionConfig);
@@ -105,6 +122,8 @@ const sourceInfosViewConfig = {
     await build(sourceListConfigViewConfig);
     await build(sourceInfosViewConfig);
     await build(source_config_ViewConfig);
+    await build(i_releaser_ViewConfig);
+    await build(deployment_config_ViewConfig);
     console.log("build complete");
   } catch (err) {
     process.stderr.write(err.stderr);

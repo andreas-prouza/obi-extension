@@ -141,6 +141,12 @@
         "title": "%obi.source-filter.maintain-source-infos%",
         "icon": "$(settings-gear)",
         "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.deployment.maintain",
+        "title": "%obi.deployment.maintain%",
+        "icon": "$(settings-gear)",
+        "when": "obi.contains_obi_project && obi.valid-config"
       }
     ],
     "menus": {
@@ -194,6 +200,11 @@
           "command": "obi.controller.config",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
           "group": "navigation@70"
+        },
+        {
+          "command": "obi.deployment.maintain",
+          "when": "obi.contains_obi_project && obi.valid-config && view == obi.deployment",
+          "group": "navigation@1"
         }
       ],
       "editor/title/context": [
@@ -246,6 +257,12 @@
           "type": "webview",
           "id": "obi.controller",
           "name": "OBI",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "type": "webview",
+          "id": "obi.deployment",
+          "name": "%deployment%",
           "when": "obi.contains_obi_project && obi.valid-config"
         },
         {

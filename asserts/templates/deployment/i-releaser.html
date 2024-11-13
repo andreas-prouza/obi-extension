@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="{{ global_stuff['theme_mode'] }}">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
+  </head>
+  <body>
+    
+    <vscode-button id="open_web_app">{{ global_stuff['get_text']('Open in web') | safe }}</vscode-button>
+    
+
+    <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
+    
+  </body>
+</html>
