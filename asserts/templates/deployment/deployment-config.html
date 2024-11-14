@@ -15,7 +15,7 @@
     
     <h2>i-Releaser</h2>
 
-    <vscode-text-field id="i-releaser|hostname" placeholder="hostname" value="{{ deploy_config['i-releaser']['URL'] }}">{{ global_stuff['get_text']('Hostname') | safe }}</vscode-text-field>
+    <vscode-text-field id="i-releaser|hostname" placeholder="hostname" value="{{ deploy_config['i-releaser']['hostname'] }}">{{ global_stuff['get_text']('Hostname') | safe }}</vscode-text-field>
     <br/>
     <br/>
     <vscode-text-field id="i-releaser|default-workflow" placeholder="UAT-workflow" value="{{ deploy_config['i-releaser']['default-workflow'] }}">{{ global_stuff['get_text']('Default workflow') | safe }}</vscode-text-field>

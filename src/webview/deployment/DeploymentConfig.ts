@@ -81,8 +81,8 @@ export class DeploymentConfig {
 
   private static async generate_html(context: vscode.ExtensionContext, extensionUri: Uri, webview: Webview): Promise<string> {
 
-    const workspaceUri = Workspace.get_workspace_uri();
-    const config = AppConfig.get_app_confg();
+    const toml_file: string = path.join(Workspace.get_workspace(), Constants.DEPLOYMENT_CONFIG_FILE);
+    const config = DirTool.get_toml(toml_file);
 
     const auth_token = await context.secrets.get(`obi|deployment|http_auth_token`);
 
@@ -92,8 +92,9 @@ export class DeploymentConfig {
       {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),
         config_css: getUri(webview, extensionUri, ["asserts/css", "config.css"]),
-        main_java_script: getUri(webview, extensionUri, ["out", "config.js"]),
-        auth_token: auth_token
+        main_java_script: getUri(webview, extensionUri, ["out", "deployment_config.js"]),
+        auth_token: auth_token,
+        deploy_config: config
       }
     );
 
@@ -145,6 +146,13 @@ export class DeploymentConfig {
 
 
   private static save_config(data : {}) {
+
+    const toml_file: string = path.join(Workspace.get_workspace(), Constants.DEPLOYMENT_CONFIG_FILE);
+    const config = DirTool.get_toml(toml_file);
+    config['i-releaser'] = data;
+
+    DirTool.write_toml(toml_file, config);
+
   }
 
 
