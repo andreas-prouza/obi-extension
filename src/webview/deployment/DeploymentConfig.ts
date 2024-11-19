@@ -1,15 +1,12 @@
 import * as vscode from 'vscode';
 import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
 import { getUri } from "../../utilities/getUri";
-import { getNonce } from "../../utilities/getNonce";
 import { DirTool } from '../../utilities/DirTool';
 import path from 'path';
 import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
-import { AppConfig, ConfigCompileSettings, SourceConfigList } from '../controller/AppConfig';
 import { Workspace } from '../../utilities/Workspace';
-import { logger } from '../../utilities/Logger';
-import { OBISourceConfiguration } from '../controller/OBISourceConfiguration';
+import { I_Releaser } from './I_Releaser';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -17,6 +14,18 @@ https://mozilla.github.io/nunjucks/api.html
 https://www.11ty.dev/docs/languages/nunjucks/
 */
 const nunjucks = require('nunjucks');
+
+
+
+export type Config = {
+  "i-releaser": {
+    url?: string,
+    "default-workflow"?: string,
+    "main-branch"?: string,
+    "auth-token"?: string
+  } 
+}
+
 
 
 
@@ -77,12 +86,21 @@ export class DeploymentConfig {
 
 
 
+  public static get_deployment_config() : Config {
+    const toml_file: string = path.join(Workspace.get_workspace(), Constants.DEPLOYMENT_CONFIG_FILE);
+    const config: Config|undefined = DirTool.get_toml(toml_file);
+    if (!config) {
+      return {"i-releaser": {}};
+    }
+    return config;
+  }
+
+
 
 
   private static async generate_html(context: vscode.ExtensionContext, extensionUri: Uri, webview: Webview): Promise<string> {
 
-    const toml_file: string = path.join(Workspace.get_workspace(), Constants.DEPLOYMENT_CONFIG_FILE);
-    const config = DirTool.get_toml(toml_file);
+    const config = DeploymentConfig.get_deployment_config();
 
     const auth_token = await context.secrets.get(`obi|deployment|http_auth_token`);
 
@@ -145,13 +163,14 @@ export class DeploymentConfig {
 
 
 
-  private static save_config(data : {}) {
+  private static save_config(data : Config) {
 
     const toml_file: string = path.join(Workspace.get_workspace(), Constants.DEPLOYMENT_CONFIG_FILE);
-    const config = DirTool.get_toml(toml_file);
-    config['i-releaser'] = data;
-
-    DirTool.write_toml(toml_file, config);
+    data['i-releaser']['auth-token']
+    OBITools.ext_context.secrets.store('obi|deployment|http_auth_token', data['i-releaser']['auth-token'] || '');
+    delete data['i-releaser']['auth-token'];
+    DirTool.write_toml(toml_file, data);
+    I_Releaser.refresh();
 
   }
 

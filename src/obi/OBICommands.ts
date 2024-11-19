@@ -63,6 +63,18 @@ export class OBICommands {
         return;
       }
 
+      // Ask if they should be build
+      if (source_list.length > 0) {
+        const source = `source${source_list.length > 1 ? 's':''}`;
+        const answer = await vscode.window.showInformationMessage(`${source_list.length} ${source} will be build. Do you want to proceed?`, { modal: true }, ...['Yes', 'No']);
+        switch (answer) {
+          case 'No':
+            return;
+          case undefined: // Canceled
+            return;
+        }
+      }
+
       progress.report({
         message: `Check remote project folder`
       });

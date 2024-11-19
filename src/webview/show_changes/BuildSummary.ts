@@ -117,9 +117,11 @@ export class BuildSummary {
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
 
     let compile_list: {}|undefined = OBITools.get_compile_list(ws);
-    for (let level_item of (compile_list['compiles'] as any) ) {
-      for (let source of level_item['sources']) {
-        source['file'] = DirTool.get_encoded_file_URI(path.join(config.general['source-dir'], source['source']));
+    if (compile_list) {
+      for (let level_item of (compile_list['compiles'] as any) ) {
+        for (let source of level_item['sources']) {
+          source['file'] = DirTool.get_encoded_file_URI(path.join(config.general['source-dir'], source['source']));
+        }
       }
     }
 

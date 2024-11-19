@@ -11,6 +11,23 @@
     
 
     <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
-    
+
+    <br/>
+
+    {{ global_stuff['get_text']('Current branch:') | safe }} {{ current_branch }}
+
+    <vscode-dropdown id="commits">
+      {% for k,v in branches %}
+        <vscode-option {% if k=='main' %} selected{% endif %}>{{ k }} - {{ v.label }}</vscode-option>
+      {% endfor %}
+    </vscode-dropdown>
+
+    <br/>
+
+    <vscode-dropdown id="workflows">
+      {% for wf in workflows %}
+        <vscode-option>{{ wf.name }}</vscode-option>
+      {% endfor %}
+    </vscode-dropdown>
   </body>
 </html>

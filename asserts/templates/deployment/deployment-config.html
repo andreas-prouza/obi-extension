@@ -15,7 +15,7 @@
     
     <h2>i-Releaser</h2>
 
-    <vscode-text-field id="i-releaser|hostname" placeholder="hostname" value="{{ deploy_config['i-releaser']['hostname'] }}">{{ global_stuff['get_text']('Hostname') | safe }}</vscode-text-field>
+    <vscode-text-field id="i-releaser|url" placeholder="https://your-domain" value="{{ deploy_config['i-releaser']['url'] }}">{{ global_stuff['get_text']('URL') | safe }}</vscode-text-field>
     <br/>
     <br/>
     <vscode-text-field id="i-releaser|default-workflow" placeholder="UAT-workflow" value="{{ deploy_config['i-releaser']['default-workflow'] }}">{{ global_stuff['get_text']('Default workflow') | safe }}</vscode-text-field>
@@ -24,7 +24,7 @@
     <vscode-text-field id="i-releaser|main-branch" placeholder="main" value="{{ deploy_config['i-releaser']['main-branch'] }}">{{ global_stuff['get_text']('Main branch') | safe }}</vscode-text-field>
     <br/>
     <br/>
-    <vscode-text-field id="i-releaser|auth_token" type="password" value="{{ auth_token }}">🔑 {{ global_stuff['get_text']('HTTP Auth-Token') | safe }}</vscode-text-field>
+    <vscode-text-field id="i-releaser|auth-token" type="password" value="{{ auth_token }}">🔑 {{ global_stuff['get_text']('HTTP Auth-Token') | safe }}</vscode-text-field>
 
     <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
     

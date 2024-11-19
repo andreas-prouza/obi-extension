@@ -89,10 +89,10 @@ export class OBITools {
       case '0.2.20':
       case '0.2.21':
         let config = AppConfig.get_project_app_config(Workspace.get_workspace_uri());
-        config.general['compiled-object-list'] = '.obi/etc/object-builds.json';
-        config.general['remote-source-list'] = '.obi/etc/source-list-remote.json';
-        config.general['source-list'] = '.obi/etc/source-list.json';
-        config.general['dependency-list'] = '.obi/etc/dependency.json';
+        config.general['compiled-object-list'] = Constants.COMPILED_OBJECT_LIST;
+        config.general['remote-source-list'] = Constants.REMOTE_SOURCE_LIST;
+        config.general['source-list'] = Constants.SOURCE_LIST;
+        config.general['dependency-list'] = Constants.DEPENDENCY_LIST;
         const toml_file = path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_FILE);
         DirTool.write_toml(toml_file, config);
         AppConfig.reset();
@@ -104,6 +104,11 @@ export class OBITools {
     }
 
     OBITools.ext_context.workspaceState.update('obi.version', current_version);
+
+    const content: string|undefined = DirTool.get_file_content(config.general['dependency-list'] || Constants.DEPENDENCY_LIST)
+    if (!content || content.length == 0) {
+      vscode.window.showWarningMessage('Missing source dependencies');
+    }
 
 
   }

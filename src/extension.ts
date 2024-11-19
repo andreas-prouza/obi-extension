@@ -17,7 +17,7 @@ import { Workspace } from './utilities/Workspace';
 import { OBISourceConfiguration } from './webview/controller/OBISourceConfiguration';
 import { DirTool } from './utilities/DirTool';
 import { I_Releaser } from './webview/deployment/I_Releaser';
-import { DeploymentConfig } from './webview/deployment/DeploymentConfig';
+import { Constants } from './Constants';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -41,6 +41,7 @@ export function activate(context: vscode.ExtensionContext) {
 	
 	SSH_Tasks.context = context;
 	OBITools.ext_context = context;
+
 
 	// Add support for multi language
 	LocaleText.init(vscode.env.language, context);
@@ -79,6 +80,12 @@ export function activate(context: vscode.ExtensionContext) {
 	if (config.attributes_missing())
 		return;
 
+	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.controller.dependency-list', ()  => {
+			const fileUri = vscode.Uri.file(path.join(Workspace.get_workspace(), config.general['dependency-list'] || Constants.DEPENDENCY_LIST));
+			vscode.commands.executeCommand('vscode.open', fileUri);
+		})
+	)
 
 	//--------------------------------------------------------
 	// i-Releaser
@@ -88,11 +95,12 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider(I_Releaser.viewType, i_releaser)
 	);
 	
-	context.subscriptions.push(
+	/*context.subscriptions.push(
 		vscode.commands.registerCommand('obi.deployment.maintain', () => {
 			DeploymentConfig.render(context)
 		})
 	);
+	*/
 
 	
 	//--------------------------------------------------------

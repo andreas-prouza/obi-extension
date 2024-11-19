@@ -10,6 +10,7 @@
   "obi.get-remote-source-list": "OBI: Source Liste von IBM i holen",
   "obi.check-remote-sources": "OBI: Sourcen auf IBM i prüfen",
   "obi.controller.config": "OBI: Konfiguration",
+  "obi.controller.dependency-list": "OBI: Abhängigkeits-Liste",
   "obi.transfer-all": "OBI: Gesamtes Projekt an IBM i übertragen",
   "obi.source-filter.show-view": "OBI: Source Filter anzeigen",
   "obi.source-filter.edit-config": "OBI: Source Filter bearbeiten",

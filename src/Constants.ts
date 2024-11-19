@@ -15,4 +15,9 @@ export class Constants {
   public static readonly REMOTE_OBI_PYTHON_PATH: string = "venv/bin/python";
   public static readonly DEPLOYMENT_CONFIG_FILE: string = ".obi/etc/deployment.toml";
 
+  public static readonly DEPENDENCY_LIST: string = ".obi/etc/dependency.json";
+  public static readonly SOURCE_LIST: string = ".obi/etc/source-list.json";
+  public static readonly REMOTE_SOURCE_LIST: string = '.obi/etc/source-list-remote.json';
+  public static readonly COMPILED_OBJECT_LIST: string = '.obi/etc/object-builds.json';
+
 }

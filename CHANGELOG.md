@@ -1,3 +1,9 @@
+## [0.3.5]
+
+* Bugfixes
+* Improvements
+
+
 ## [0.3.4]
 
 * Separate source view

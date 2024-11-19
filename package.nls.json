@@ -10,6 +10,7 @@
   "obi.get-remote-source-list": "OBI: Get remote source list",
   "obi.check-remote-sources": "OBI: Check remote sources",
   "obi.controller.config": "OBI: Configuration",
+  "obi.controller.dependency-list": "OBI: Dependency list",
   "obi.transfer-all": "OBI: Transfer all to remote",
   "obi.source-filter.show-view": "OBI: Show source filter",
   "obi.source-filter.edit-config": "OBI: Edit source filter config",
@@ -143,5 +144,7 @@
   "Hostname": "Hostname",
   "Default workflow": "Default workflow",
   "Main branch": "Main branch",
-  "HTTP Auth-Token": "HTTP Auth-Token"
+  "HTTP Auth-Token": "HTTP Auth-Token",
+  "URL": "URL",
+  "Current branch:": "Current branch:"
 }
