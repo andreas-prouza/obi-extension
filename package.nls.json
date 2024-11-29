@@ -146,5 +146,6 @@
   "Main branch": "Main branch",
   "HTTP Auth-Token": "HTTP Auth-Token",
   "URL": "URL",
-  "Current branch:": "Current branch:"
+  "Current branch:": "Current branch:",
+  "use-regex": "use-regex"
 }

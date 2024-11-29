@@ -1,3 +1,9 @@
+## [0.3.6]
+
+* Maintain of source infos will be saved automatically
+* Fixed problem with bootstrap tables
+
+
 ## [0.3.5]
 
 * Bugfixes

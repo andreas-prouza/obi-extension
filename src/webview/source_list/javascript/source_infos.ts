@@ -7,6 +7,7 @@ import {
 
 import * as source from '../../../obi/Source';
 
+
 // In order to use all the Webview UI Toolkit web components they
 // must be registered with the browser (i.e. webview) using the
 // syntax below.
@@ -15,7 +16,6 @@ provideVSCodeDesignSystem().register(allComponents);
 const vscode = acquireVsCodeApi();
 
 window.addEventListener("load", main);
-
 
 
 function main() {
@@ -28,10 +28,9 @@ function main() {
   const save_button = document.getElementById("save_config") as Button;
   save_button?.addEventListener("click", save_config);
 
-  window.addEventListener('message', receive_message);
+   window.addEventListener('message', receive_message);
 
 }
-
 
 
 
@@ -50,6 +49,7 @@ function save_config() {
     lib = el.getAttribute('lib');
     file = el.getAttribute('file');
     member = el.getAttribute('member');
+    console.log(`${lib} - ${file} - ${member}: ${(el as TextField).value}`);
 
     const full_name = `${lib||'UNKNOWN'}/${file||'UNKNOWN'}/${member||'UNKNOWN'}`;
     sources[full_name] = {description: (el as TextField).value};

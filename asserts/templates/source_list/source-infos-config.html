@@ -5,6 +5,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  
+  <script src="{{ global_stuff['asserts_uri'] }}/js/jquery.min.js"></script>
+
   <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/font/bootstrap-icons.css">
   <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
@@ -22,7 +25,7 @@
   <a href='command:vscode.open?{{ source_info_file }}'>{{ global_stuff['get_text']('open JSON file') | safe }}</a>
   
   <div class="save-button-wrapper">
-    <vscode-button class="save-button" id="save_config">{{ global_stuff['get_text']('Save') | safe }}</vscode-button>
+    <vscode-button class="save-button" style="display: none;" id="save_config">{{ global_stuff['get_text']('Save') | safe }}</vscode-button>
   </div>
   
   <hr />
@@ -52,12 +55,16 @@
     </thead>
     <tbody>
       {% for row in source_list %}
-      <tr>
+      <tr id="row_{{ loop.index0 }}">
         <td style="white-space: nowrap;">{{ row['source-lib'] }}</td>
         <td style="white-space: nowrap;">{{ row['source-file'] }}</td>
         <td style="white-space: nowrap;">{{ row['source-member'] }}</td>
         <td style="white-space: nowrap;">
-          <vscode-text-field class="source_description" size="80" placeholder="{{ global_stuff['get_text']('description') | safe }}" lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}"
+          <vscode-text-field id="{{ row['source-lib'] }}|{{ row['source-file'] }}|{{ row['source-member'] }}" 
+            onfocusout="update_cell({{ loop.index0 }}, '{{ row['description'] }}', this, event)" 
+            class="source_description" size="80" 
+            placeholder="{{ global_stuff['get_text']('description') | safe }}" 
+            lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}"
             value="{{ row['description'] }}"></vscode-text-field>
         </td>
       </tr>
@@ -68,15 +75,46 @@
 
   <br />
 
-  <script src="{{ global_stuff['asserts_uri'] }}/js/jquery.min.js"></script>
+
+
   <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table.min.js"></script>
   <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-resizable.min.js"></script>
   <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-filter-control.min.js"></script>
 
   <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap.bundle.min.js"></script>
 
+
   <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
 
+  <script>
+
+  function update_cell(row_index, old_value, element, event) {
+
+    if (old_value == element.value)
+      return;
+
+    console.log(event);
+    const data_index = document.getElementById(`row_${row_index}`).getAttribute('data-index');
+    const lib = element.getAttribute('lib');
+    const file = element.getAttribute('file');
+    const member = element.getAttribute('member');
+    const onfocusout = element.getAttribute('onfocusout');
+    const class_name = element.getAttribute('class');
+    var $table = $('#source_list');
+              $table.bootstrapTable('updateCell', {
+                index: data_index,
+                field: 'description',
+                value: `<vscode-text-field id="${element.id}" class="${class_name}" lib="${lib}" file="${file}" member="${member}" size="${element.size}" value="${element.value}" 
+                        onfocusout="update_cell(${row_index}, '${element.value}', this, event)" placeholder="${element.placeholder}"></vscode-text-field>`,
+                reinit: false
+              });
+    document.getElementById('save_config').click();
+    console.log(`event.relatedTarget: ${event.relatedTarget.id}`);
+    document.getElementById(event.relatedTarget.id).focus();
+  }
+
+
+  </script>
 </body>
 
 </html>

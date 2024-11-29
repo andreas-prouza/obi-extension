@@ -146,11 +146,16 @@ export class SourceInfos {
 
 
 
-  private static save_infos(sources: source.IQualifiedSource[]) {
+  private static save_infos(sources: source.ISourceInfos) {
 
     const json_file: string = path.join(Workspace.get_workspace(), AppConfig.get_app_confg().general['source-infos']||'.obi/etc/source-infos.json');
+    let source_infos: source.ISourceInfos = DirTool.get_json(json_file) || [];
 
-    DirTool.write_file(json_file, JSON.stringify(sources, undefined, 2));
+    for (const [k, v] of Object.entries(sources)) {
+      source_infos[k] = v;
+    }
+
+    DirTool.write_file(json_file, JSON.stringify(source_infos, undefined, 2));
   }
 
 
