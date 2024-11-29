@@ -97,10 +97,11 @@
                   <th>{{ global_stuff['get_text']('command') | safe }}</th>
                 </tr>
               {% for cmd_entry in source_item['cmds'] %}
+                {% set cmds = cmd_entry.cmd.split(';') %}
                 <tr>
-                  <td>{{ cmd_entry.timestamp }}</td>
+                  <td>{{ cmd_entry.updated }}</td>
                   <td><span class="{{ cmd_entry.status }}">{{ cmd_entry.status }}</span></td>
-                  <td><details><summary><code>{{ cmd_entry.cmd | truncate(15) }}</code></summary><code>{{ cmd_entry.cmd }}</code></details></td>
+                  <td><details><summary><code>{{ cmd_entry.cmd | truncate(15) }}</code></summary><div style="border: 1px solid">{% for cmd in cmds %}<pre style="white-space: pre-wrap;">{{ cmd | trim }}</pre>{% endfor %}</div></details></td>
                   {% if 'joblog' in cmd_entry and cmd_entry['joblog']|length %}
                     <td>
                       <vscode-button class="joblog" source="{{ source_item['source'] }}" level="{{ level_item['level'] }}" cmd_index="{{ loop.index0 }}" appearance="primary">Joblog</vscode-button>

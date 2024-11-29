@@ -1,3 +1,8 @@
+## [0.3.7]
+
+* Improve style in summary list
+
+
 ## [0.3.6]
 
 * Maintain of source infos will be saved automatically
