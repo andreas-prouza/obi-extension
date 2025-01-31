@@ -1,3 +1,8 @@
+## [0.3.8]
+
+* npm update
+
+
 ## [0.3.7]
 
 * Improve style in summary list
