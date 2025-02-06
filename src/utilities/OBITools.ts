@@ -40,6 +40,19 @@ export class OBITools {
     const previous_version: string|undefined = OBITools.ext_context.workspaceState.get('obi.version');
     const config: AppConfig = AppConfig.get_app_confg();
 
+    if (config.general['local-base-dir'] == '/')
+      throw Error("Root for 'local-base-dir' is not allowed!");
+    
+    if (config.general['remote-base-dir'] == '/')
+      throw Error("Root for 'remote-base-dir' is not allowed!");
+    
+    if (config.general['local-obi-dir'] == '/')
+      throw Error("Root for 'local-obi-dir' is not allowed!");
+    
+    if (config.general['remote-obi-dir'] == '/')
+      throw Error("Root for 'remote-obi-dir' is not allowed!");
+
+
     if (!DirTool.dir_exists(path.join(ws, '.obi', 'log'))){
       fs.mkdirSync(path.join(ws, '.obi', 'log'), { recursive: true});
     }
@@ -852,6 +865,7 @@ export class OBITools {
           break;
         }
     }
+    
 
     vscode.window.showInformationMessage('Start transfer');
 

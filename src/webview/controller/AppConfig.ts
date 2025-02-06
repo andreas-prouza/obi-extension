@@ -110,25 +110,13 @@ export class ConfigGeneral {
     console_output_encoding?: string, compiled_object_list?: string, dependency_list?: string, deployment_object_list?: string, 
     build_output_dir?: string, compile_list?: string, compiled_object_list_md?: string, remote_source_list?: string, 
     check_remote_source_on_startup?: boolean, source_infos?: string, max_threads?: number, local_source_list?: string, cloud_ws_ssh_remote_host?: string) {
-
-    if (local_base_dir == '/')
-      throw Error("Root for 'local-base-dir' is not allowed!");
+      
     this['local-base-dir'] = local_base_dir;
-
-    if (remote_base_dir == '/')
-      throw Error("Root for 'remote-base-dir' is not allowed!");
     this['remote-base-dir'] = remote_base_dir;
-
+    this['local-obi-dir'] = local_obi_dir;
+    this['remote-obi-dir'] = remote_obi_dir;
     this['source-dir'] = source_dir;
     
-    if (local_obi_dir == '/')
-      throw Error("Root for 'local-obi-dir' is not allowed!");
-    this['local-obi-dir'] = local_obi_dir;
-
-    if (remote_obi_dir == '/')
-      throw Error("Root for 'remote-obi-dir' is not allowed!");
-    this['remote-obi-dir'] = remote_obi_dir;
-
     this['supported-object-types'] = supported_object_types;
     this['file-system-encoding'] = file_system_encoding;
     this['console-output-encoding'] = console_output_encoding;

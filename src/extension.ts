@@ -24,21 +24,21 @@ export function activate(context: vscode.ExtensionContext) {
 
 	logger.info('Congratulations, your extension "obi" is now active!');
 	const rootPath =
-	vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-	? vscode.workspace.workspaceFolders[0].uri.fsPath
-	: undefined;
+		vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+			? vscode.workspace.workspaceFolders[0].uri.fsPath
+			: undefined;
 	const ws_uri =
-	vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-	? vscode.workspace.workspaceFolders[0].uri
-	: undefined;
+		vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+			? vscode.workspace.workspaceFolders[0].uri
+			: undefined;
 
 	logger.info('Start app');
-	
+
 	logger.info(`vscode.env.remoteName: ${vscode.env.remoteName}`);
 	logger.info(`vscode.env.uriScheme: ${vscode.env.uriScheme}`);
 	logger.info(`vscode.env.appHost: ${vscode.env.appHost}`);
 	logger.info(`vscode.env.appHost: ${vscode.env.remoteName}`);
-	
+
 	SSH_Tasks.context = context;
 	OBITools.ext_context = context;
 
@@ -51,17 +51,14 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const contains_obi_project: boolean = OBITools.contains_obi_project();
 	vscode.commands.executeCommand('setContext', 'obi.contains_obi_project', contains_obi_project);
-	
+
 	const obi_welcome_provider = new Welcome(context.extensionUri);
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(Welcome.viewType, obi_welcome_provider)
 	);
-	
+
 	if (!contains_obi_project)
 		return;
-	
-	OBITools.self_check();
-	
 
 	const obi_config_invalid_provider = new ConfigInvalid(context.extensionUri);
 	context.subscriptions.push(
@@ -69,19 +66,33 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.controller.config', ()  => {
+		vscode.commands.registerCommand('obi.controller.config', () => {
 			OBIConfiguration.render(context, context.extensionUri)
 		})
 	)
 
-	const config = AppConfig.get_app_confg();
-	vscode.commands.executeCommand('setContext', 'obi.valid-config', !config.attributes_missing());
+	vscode.commands.executeCommand('setContext', 'obi.valid-config', false);
 
-	if (config.attributes_missing())
+	var self_check_ok: boolean = true;
+	try {
+		OBITools.self_check();
+	}
+	catch (e: any) {
+		self_check_ok = false;
+		vscode.window.showErrorMessage(e.message);
 		return;
+	}
+
+	const config = AppConfig.get_app_confg();
+	if (config.attributes_missing()) {
+		vscode.window.showErrorMessage("Config is not valid!");
+		return;
+	}
+
+	vscode.commands.executeCommand('setContext', 'obi.valid-config', true);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.controller.dependency-list', ()  => {
+		vscode.commands.registerCommand('obi.controller.dependency-list', () => {
 			const fileUri = vscode.Uri.file(path.join(Workspace.get_workspace(), config.general['dependency-list'] || Constants.DEPENDENCY_LIST));
 			vscode.commands.executeCommand('vscode.open', fileUri);
 		})
@@ -94,7 +105,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(I_Releaser.viewType, i_releaser)
 	);
-	
+
 	/*context.subscriptions.push(
 		vscode.commands.registerCommand('obi.deployment.maintain', () => {
 			DeploymentConfig.render(context)
@@ -102,7 +113,7 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 	*/
 
-	
+
 	//--------------------------------------------------------
 	// Controller OBI
 	//--------------------------------------------------------
@@ -116,7 +127,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('obi.check-remote-sources', () => {
 			// Only available with workspaces
-			OBITools.check_remote_sources().then((success)=> {
+			OBITools.check_remote_sources().then((success) => {
 				if (success)
 					vscode.window.showInformationMessage('Remote source check succeeded');
 				else
@@ -127,7 +138,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const run_native: boolean = OBITools.without_local_obi();
 	vscode.commands.executeCommand('setContext', 'obi.run_native', run_native);
-	
+
 	//SSH_Tasks.connect();
 
 
@@ -197,7 +208,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 
 	if (config.general['check-remote-source-on-startup'] && config.general['check-remote-source-on-startup'] === true) {
-		OBITools.check_remote_sources().then((success)=> {
+		OBITools.check_remote_sources().then((success) => {
 			if (success)
 				vscode.window.showInformationMessage('Remote source check succeeded');
 			else
@@ -220,21 +231,21 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 
-	vscode.commands.registerCommand('obi.source.edit-compile-config', async (item: SourceListItem|vscode.Uri) => {
-		
+	vscode.commands.registerCommand('obi.source.edit-compile-config', async (item: SourceListItem | vscode.Uri) => {
+
 		if (item instanceof SourceListItem)
 			OBISourceConfiguration.render(context, context.extensionUri, `${item.src_lib}/${item.src_file}/${item.src_member}`);
 
 		if (item instanceof vscode.Uri) {
 
-			const config:AppConfig = AppConfig.get_app_confg();
-			const src_dir: string = config.general['source-dir']||'src';
+			const config: AppConfig = AppConfig.get_app_confg();
+			const src_dir: string = config.general['source-dir'] || 'src';
 			let source_path: string = item.fsPath.replace(Workspace.get_workspace(), '')
 			source_path = source_path.replace(src_dir, '');
 			source_path = source_path.replace('\\', '/');
 			source_path = source_path.replace(/^\/+/, '');
 
-			if (!DirTool.file_exists(path.join(Workspace.get_workspace(), src_dir, source_path))){
+			if (!DirTool.file_exists(path.join(Workspace.get_workspace(), src_dir, source_path))) {
 				vscode.window.showErrorMessage(`Source ${source_path} not found in OBI project`);
 				return;
 			}
