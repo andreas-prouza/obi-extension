@@ -1,3 +1,4 @@
+/*
 import { simpleGit, SimpleGit, CleanOptions, BranchSummary } from 'simple-git';
 import { Workspace } from './Workspace';
 
@@ -23,3 +24,5 @@ export class GitTool {
 
 
 }
+
+*/

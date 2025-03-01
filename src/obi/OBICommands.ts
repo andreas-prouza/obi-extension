@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
 
 import { exec, execSync } from "child_process";
 import { BuildSummary } from '../webview/show_changes/BuildSummary';
@@ -15,7 +14,7 @@ import path, { join } from 'path';
 import { DirTool } from '../utilities/DirTool';
 import { Constants } from '../Constants';
 import { logger } from '../utilities/Logger';
-import { config } from 'winston';
+
 
 
 export class OBICommands {

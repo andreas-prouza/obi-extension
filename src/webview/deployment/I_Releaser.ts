@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { getUri } from "../../utilities/getUri";
 import { OBITools } from '../../utilities/OBITools';
 import { Constants } from '../../Constants';
-import { GitTool } from '../../utilities/GitTool';
 import * as DeploymentConfig from './DeploymentConfig';
 import { logger } from '../../utilities/Logger';
 

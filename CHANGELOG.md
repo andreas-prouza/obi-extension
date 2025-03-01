@@ -1,3 +1,8 @@
+## [0.3.10]
+
+* npm update
+
+
 ## [0.3.9]
 
 * Changed error handling for choosing Root in a configs path

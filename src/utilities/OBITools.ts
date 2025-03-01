@@ -118,7 +118,7 @@ export class OBITools {
 
     OBITools.ext_context.workspaceState.update('obi.version', current_version);
 
-    const content: string|undefined = DirTool.get_file_content(config.general['dependency-list'] || Constants.DEPENDENCY_LIST)
+    const content: string|undefined = DirTool.get_file_content(path.join(Workspace.get_workspace(), config.general['dependency-list'] || Constants.DEPENDENCY_LIST))
     if (!content || content.length == 0) {
       vscode.window.showWarningMessage('Missing source dependencies');
     }
