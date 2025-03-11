@@ -11,6 +11,7 @@ import { BuildSummary } from '../show_changes/BuildSummary';
 import * as fs from 'fs';
 import { AppConfig } from './AppConfig';
 import { Workspace } from '../../utilities/Workspace';
+import { SystemCmdExecution } from '../../utilities/SystemCmdExecution';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -170,6 +171,10 @@ export class OBIController implements vscode.WebviewViewProvider {
         case 'show_single_changes': // command:obi.show_changes
           OBIController.current_run_type = data.command;
           vscode.commands.executeCommand('obi.show_single_changes');
+          break;
+
+        case 'cancel_show_changes': // command:obi.show_changes
+          SystemCmdExecution.abort_system_cmd('show_changes');
           break;
 			}
 		});

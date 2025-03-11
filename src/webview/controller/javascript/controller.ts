@@ -38,6 +38,9 @@ function main() {
   const show_single_changes_button = document.getElementById("show_single_changes") as Button;
   show_single_changes_button?.addEventListener("click", show_single_changes);
   
+  const cancel_show_changes_button = document.getElementById("cancel_show_changes") as Button;
+  cancel_show_changes_button?.addEventListener("click", cancel_show_changes);
+  
   window.addEventListener('message', receive_message);
 
 }
@@ -89,6 +92,13 @@ function show_single_changes() {
 }
 
 //--function handleHowdyClick() {
+function cancel_show_changes() {
+
+  vscode.postMessage({
+    command: "cancel_show_changes"
+  });
+}
+
 function controller_refresh() {
 
   vscode.postMessage({

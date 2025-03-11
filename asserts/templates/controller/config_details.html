@@ -65,10 +65,6 @@
       <br />
       <br />
 
-      💡 {{ global_stuff['get_text']('Tilde (~) and env vars (e.g. $HOME) are not supported for paths.') | safe }}
-      <br />
-      <br />
-
       <vscode-text-field class="{{ class_prefix }}_save_app type_text {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|general|local-base-dir" size="80"
         value="{{ app_config['general']['local-base-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Local path') | safe }}</vscode-text-field>
       <br />
@@ -90,10 +86,6 @@
       <br />
       <br />
       <hr />
-      <br />
-
-      💡 {{ global_stuff['get_text']('Tilde (~) and env vars (e.g. $HOME) are not supported for paths.') | safe }}
-      <br />
       <br />
 
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|general|local-obi-dir" size="80" placeholder="/home/prouza/project/obi"

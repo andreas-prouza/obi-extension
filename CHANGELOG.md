@@ -1,3 +1,9 @@
+## [0.3.11]
+
+* New button to cancel process "show changes" or "run build"
+* Support system env variables in path
+
+
 ## [0.3.10]
 
 * npm update

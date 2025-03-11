@@ -17,6 +17,17 @@ export class DirTool {
 
 
 
+  public static resolve_env_in_path(path: string): string {
+    const envPatternUnix = /\$(\w+)/g;
+    const envPatternWindows = /%(\w+)%/g;
+
+    path = path.replace(envPatternUnix, (_, envVar) => process.env[envVar] || '');
+    path = path.replace(envPatternWindows, (_, envVar) => process.env[envVar] || '');
+
+    return path;
+  }
+
+
 
   public static *get_all_files_in_dir(rootdir:string, dir: string, file_extensions: string[]): Generator<string> | undefined {
     
@@ -123,6 +134,8 @@ export class DirTool {
 
 
   public static list_dir(dir: string): string[] {
+
+    dir = DirTool.resolve_env_in_path(dir);
     const files = fs.readdirSync(dir);
 
     return files;
@@ -130,8 +143,11 @@ export class DirTool {
 
 
 
+
   public static file_exists(path: string): boolean {
-    
+            
+    path = DirTool.resolve_env_in_path(path);
+
     if (!fs.existsSync(path))
       return false;
 
@@ -145,6 +161,8 @@ export class DirTool {
 
   public static dir_exists(path: string): boolean {
     
+    path = DirTool.resolve_env_in_path(path);
+    
     if (!fs.existsSync(path))
       return false;
 
@@ -155,7 +173,9 @@ export class DirTool {
   }
 
 
+
   public static is_file(path: string): boolean {
+    path = DirTool.resolve_env_in_path(path);
     const stats = fs.statSync(path);
     return stats.isFile()
   }
@@ -163,7 +183,9 @@ export class DirTool {
 
 
   public static get_json(path: string): any|undefined {
-
+    
+    path = DirTool.resolve_env_in_path(path);
+    
     logger.debug(`Read json ${path}`);
     if (!DirTool.file_exists(path)) {
       logger.warn(`File does not exist: ${path}`);
@@ -185,8 +207,12 @@ export class DirTool {
     
   }
 
+
   
   public static get_file_changed_date(file: string) {
+
+    file = DirTool.resolve_env_in_path(file);
+
     const { mtime, ctime } = fs.statSync(file);
     return mtime;
   }
@@ -195,7 +221,9 @@ export class DirTool {
 
 
   public static write_json(file: string, data: {}): any|undefined {
-
+    
+    file = DirTool.resolve_env_in_path(file);
+    
     try{
       
       // Read the TOML file into a string
@@ -259,6 +287,8 @@ export class DirTool {
 
   public static get_toml(file: string): any|undefined {
 
+    file = DirTool.resolve_env_in_path(file);
+
     if (!DirTool.file_exists(file)) {
       logger.warn(`File does not exist: ${file}`);
       return undefined
@@ -283,6 +313,8 @@ export class DirTool {
 
   public static write_toml(file: string, data: {}): any|undefined {
 
+    file = DirTool.resolve_env_in_path(file);
+
     const toml = require('smol-toml');
     try{
       
@@ -301,6 +333,8 @@ export class DirTool {
 
 
   public static write_file(file: string, content: string): void {
+
+    file = DirTool.resolve_env_in_path(file);
 
     logger.info(`Write data to ${file}`);
     
@@ -321,6 +355,8 @@ export class DirTool {
 
 
   public static get_key_value_file(file: string): string[]|undefined {
+
+    file = DirTool.resolve_env_in_path(file);
 
     let key_values: {}= {};
     if (!DirTool.file_exists(file))
@@ -343,6 +379,8 @@ export class DirTool {
 
   public static get_file_content(file: string): string|undefined {
 
+    file = DirTool.resolve_env_in_path(file);
+
     if (!DirTool.file_exists(file))
       return undefined;
     
@@ -361,12 +399,16 @@ export class DirTool {
 
   public static clean_dir(file: string): void {
 
+    file = DirTool.resolve_env_in_path(file);
+
     fs.rmSync(file, { recursive: true, force: true });
     fs.mkdirSync(file);
   }
 
 
   public static get_shell_config(file: string): {}|undefined {
+
+    file = DirTool.resolve_env_in_path(file);
 
     const content_list: string[]|undefined = DirTool.get_key_value_file(file);
     if (!content_list)
@@ -417,6 +459,10 @@ export class DirTool {
     */
 
   public static async checksumFile(root: string, file_path: string): Promise<source.ISource> {
+
+    root = DirTool.resolve_env_in_path(root);
+    file_path = DirTool.resolve_env_in_path(file_path);
+
     return new Promise((resolve, reject) => {
       const hash = crypto.createHash('md5');
       const stream = fs.createReadStream(path.join(root, file_path));
