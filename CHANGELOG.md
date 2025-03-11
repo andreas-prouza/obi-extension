@@ -1,3 +1,8 @@
+## [0.3.12]
+
+* Remove support for Theia due to security vulnerbilities
+
+
 ## [0.3.11]
 
 * New button to cancel process "show changes" or "run build"
