@@ -4,7 +4,6 @@ import {
   Button,
   TextField
 } from "@vscode/webview-ui-toolkit";
-import { InputBox } from "vscode";
 
 const deepmerge = require('deepmerge');
 
@@ -567,8 +566,7 @@ function save_global_step(class_prefix:string) {
   const app_elements = document.getElementsByClassName(`${class_prefix}_save_app_global_step`);
   for (let i = 0; i < app_elements.length; i++) {
     
-    const el2: string[] = app_elements[i].id.split('|');
-    const key = el2[3];
+    const key = (document.getElementById(app_elements[i].id) as TextField).value;
     const value = (document.getElementById(`${class_prefix}|global|steps|${key}|value`) as TextField).value;
 
     vscode.postMessage({

@@ -1,3 +1,8 @@
+## [0.3.13]
+
+* Bugfix when save config
+
+
 ## [0.3.12]
 
 * Remove support for Theia due to security vulnerbilities

@@ -1,8 +1,6 @@
 import {
   allComponents,
   provideVSCodeDesignSystem,
-  Checkbox,
-  DataGrid,
   Button,
   TextField
 } from "@vscode/webview-ui-toolkit";
