@@ -194,7 +194,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('obi.transfer-all', () => {
 			// Only available with workspaces
-			OBITools.transfer_all(false);
+			OBITools.transfer_project_folder(false);
 		})
 	);
 

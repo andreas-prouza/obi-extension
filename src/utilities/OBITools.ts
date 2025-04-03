@@ -177,7 +177,7 @@ export class OBITools {
     if (! await OBITools.check_remote_basics()) {
       vscode.window.showWarningMessage('Missing OBI project on remote system.');
       try {
-        await OBITools.transfer_all(false);
+        await OBITools.transfer_project_folder(false);
       }
       catch {
         return false;
@@ -819,7 +819,7 @@ export class OBITools {
 
 
 
-  public static async transfer_all(silent: boolean|undefined) {
+  public static async transfer_project_folder(silent: boolean|undefined) {
     
     if (OBITools.transfer_all_status != OBIStatus.READY) {
       vscode.window.showErrorMessage('Transfer is already running');
@@ -830,7 +830,7 @@ export class OBITools {
     let result:boolean = false;
 
     try {
-      await OBITools.process_transfer_all(silent);
+      await OBITools.process_transfer_project_folder(silent);
     }
     catch(e: any) {
       logger.error(e);
@@ -844,7 +844,7 @@ export class OBITools {
 
 
   
-  public static async process_transfer_all(silent: boolean|undefined) {
+  public static async process_transfer_project_folder(silent: boolean|undefined) {
 
     const config = AppConfig.get_app_confg();
 
@@ -858,15 +858,32 @@ export class OBITools {
       const answer = await vscode.window.showErrorMessage(`Do you want to transfer all?\nThis can take several minutes.\n\nRemote folder: ${remote_dir}`, { modal: true }, ...['Yes', 'No']);
       switch (answer) {
         case 'No':
+          const answer = await vscode.window.showErrorMessage(`Do you want to transfer minimum setup?\n\nRemote folder: ${remote_dir}`, { modal: true }, ...['Yes', 'No']);
+          switch (answer) {
+            case 'No':
+              return;
+            case undefined:
+              vscode.window.showErrorMessage('Transfer canceled by user');
+              throw new Error('Transfer canceled by user');
+            case 'Yes':
+              //Transfer minimum setup;
+              await OBITools.transfer_minimum_now(local_dir, remote_dir);
+            }
+            break;
         case undefined:
           vscode.window.showErrorMessage('Transfer canceled by user');
           throw new Error('Transfer canceled by user');
         case 'Yes':
-          break;
+          await OBITools.transfer_all_now(local_dir, remote_dir);
         }
     }
     
+  }
 
+
+  
+
+  private static async transfer_all_now(local_dir: string, remote_dir: string) {
     vscode.window.showInformationMessage('Start transfer');
 
     const result = await SSH_Tasks.cleanup_directory();
@@ -880,6 +897,22 @@ export class OBITools {
     await SSH_Tasks.transfer_dir(local_dir, remote_dir);
   }
 
+
+
+  private static async transfer_minimum_now(local_dir: string, remote_dir: string) {
+    vscode.window.showInformationMessage('Start transfer');
+
+    const result = await SSH_Tasks.cleanup_directory();
+    if (!result) {
+      vscode.window.showErrorMessage('Cleanup of remote directory failed!');
+      throw Error('Cleanup of remote directory failed!');
+      return;
+    }
+
+    logger.info(`Transer local dir ${local_dir}/.obi to ${remote_dir}/.obi`);
+    await SSH_Tasks.transfer_dir(`${local_dir}/.obi/etc`, `${remote_dir}/.obi/etc`);
+    await SSH_Tasks.transfer_dir(`${local_dir}/${Constants.BUILD_OUTPUT_DIR}`, `${remote_dir}/${Constants.BUILD_OUTPUT_DIR}`);
+  }
 
 
 

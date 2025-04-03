@@ -453,6 +453,7 @@ export class SSH_Tasks {
                baseName !== '.vscode' &&
                baseName !== '.theia' &&
                baseName !== '.project' &&
+               baseName.slice(-4) !== '.pyc' && // Python cache
                baseName !== '.gitignore'
       },
       tick: function(localPath, remotePath, error) { // Remember transfer status

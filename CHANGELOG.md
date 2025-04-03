@@ -1,3 +1,9 @@
+## [0.3.14]
+
+* Log output if local OBI failed
+* Now you can just transfer a minimum setup to remote IBM i, when if remote IFS directory doesn't exist yet
+
+
 ## [0.3.13]
 
 * Bugfix when save config

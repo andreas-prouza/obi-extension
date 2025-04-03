@@ -13,6 +13,16 @@ export class SystemCmdExecution {
         SystemCmdExecution.processes[id] = child;
 
         return new Promise<void>((resolve, reject) => {
+
+            child.stdout.on('data', (data) => {
+                const cmd_info = `${id} | cmd: '${cmd}' | stdout: ${data}`;
+                logger.debug(cmd_info);
+            });
+            child.stderr.on('data', (data) => {
+                const cmd_info = `${id} | cmd: '${cmd}' | stderr: ${data}`;
+                logger.error(cmd_info);
+            });
+
             child.on('exit', (code, signal) => {
                 const cmd_info = `${id} | exit-code: ${code} | signal: ${signal} | cmd: '${cmd}'`;
                 if (code !== 0) {

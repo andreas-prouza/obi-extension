@@ -3,6 +3,7 @@ import path from "path";
 export class Constants {
 
   public static readonly HTML_TEMPLATE_DIR: string = path.join(__dirname, '..', 'asserts', 'templates');
+  public static readonly OBI_DIR: string = ".obi";
   public static readonly SOURCE_FILTER_FOLDER_NAME: string = '.obi/source-list';
   public static readonly BUILD_OUTPUT_DIR: string = ".obi/build-output";
   public static readonly OBI_APP_CONFIG_FILE: string = ".obi/etc/app-config.toml";
