@@ -1,3 +1,8 @@
+## [0.3.15]
+
+* npm update
+
+
 ## [0.3.14]
 
 * Log output if local OBI failed
