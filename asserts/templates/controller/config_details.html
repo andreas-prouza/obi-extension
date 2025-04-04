@@ -131,6 +131,25 @@
 
       <h2>{{ global_stuff['get_text']('Global variables') | safe }}</h2>
 
+      The target library will be generated in the following order:
+      <ul>
+        <li>
+          1. <code>*source</code> ... target lib = source folder
+        </li>
+        <li>
+          2. Name of library (e.g. <code>prouzalib</code>) ... target lib = prouzalib
+        </li>
+        <li>
+          3. Empty ... target lib = source folder + lib mapping
+        </li>
+      </ul>
+        
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|TARGET_LIB" placeholder="*SOURCE"
+        value="{{ general_settings['TARGET_LIB'] }}">TARGET_LIB</vscode-text-field>
+      
+      <br />
+      <br />
+
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|TGTRLS" placeholder="*CURRENT"
         value="{{ general_settings['TGTRLS'] }}">TGTRLS</vscode-text-field>
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|DBGVIEW" placeholder="*ALL"
