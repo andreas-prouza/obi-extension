@@ -130,23 +130,53 @@
       <br />
 
       <h2>{{ global_stuff['get_text']('Global variables') | safe }}</h2>
+      <table border="1">
+        <tr><td>&nbsp;</td><td>
+          <br />
+          <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|TARGET_LIB" placeholder="*SOURCE"
+      value="{{ general_settings['TARGET_LIB'] }}">TARGET_LIB (⚠️ this overrules target lib generation)</vscode-text-field>
+
+      <br />
+      <br />
 
       The target library will be generated in the following order:
-      <ol type="1">
-        <li>
-          1. <code>*source</code> ... target lib = source folder
-        </li>
-        <li>
-          2. Name of library (e.g. <code>prouzalib</code>) ... target lib = prouzalib
-        </li>
-        <li>
-          3. Empty ... target lib = source folder + lib mapping
-        </li>
-      </ol>
-        
-      <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|TARGET_LIB" placeholder="*SOURCE"
-        value="{{ general_settings['TARGET_LIB'] }}">TARGET_LIB</vscode-text-field>
-      
+      <br/>
+      <br/>
+      <table>
+        <tr>
+          <td>&nbsp;</td>
+          <td>1.</td>
+          <td><code>*source</code></td>
+          <td>&nbsp;</td>
+          <td>target lib = source folder</td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td>
+          <td>2.</td>
+          <td>{libname}</td>
+          <td>&nbsp;</td>
+          <td>Name of library <br/>e.g. <code>prouzalib</code> ... target lib = prouzalib</td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td>
+          <td>3.</td>
+          <td>Empty + lib mapping</td>
+          <td>&nbsp;</td>
+          <td>target lib = lib mapping (TARGET_LIB_MAPPING) of source folder</td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td>
+          <td>4.</td>
+          <td>Empty</td>
+          <td>&nbsp;</td>
+          <td>target lib = source folder</td>
+        </tr>
+      </table>
+      <br />
+    </td>
+    <td>&nbsp;</td>
+  </tr>
+    </table>
       <br />
       <br />
 
@@ -181,7 +211,7 @@
         value="{{ general_settings['INCDIR_SQLRPGLE'] | replace('"$HOME"', '$HOME' ) }}">INCDIR SQLRPGLE</vscode-text-field>
       <br />
       <br />
-      <vscode-text-area class="{{ class_prefix }}_save_app type_dict" resize="both"  panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|TARGET_LIB_MAPPING" size="50"
+      <vscode-text-area class="{{ class_prefix }}_save_app type_dict" cols="20" rows="{{ general_settings['TARGET_LIB_MAPPING']|length }}" resize="both"  panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|TARGET_LIB_MAPPING"
         placeholder="prouzalib=prouzat1&#10;prouzalib2=prouzat2"
         value="{% for k, v in general_settings['TARGET_LIB_MAPPING'] %}{% if loop.index0 > 0 %}{{ '\n' }}{% endif %}{{ k }}={{ v }}{% endfor %}">TARGET_LIB_MAPPING</vscode-text-area>
       <br />

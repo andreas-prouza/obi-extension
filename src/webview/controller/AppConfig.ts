@@ -173,8 +173,9 @@ export class ConfigCompileSettings {
   public TARGET_LIB_MAPPING?: {};
   public INCLUDE_BNDDIR?: string;
   public ACTGRP?: string;
+  public TARGET_LIB?: string;
 
-  constructor(TGTRLS?: string, DBGVIEW?: string, TGTCCSID?: string, STGMDL?: string, LIBL?: string[], INCDIR_RPGLE?: string, INCDIR_SQLRPGLE?: string, TARGET_LIB_MAPPING?: {}, RPGPPOPT?: string, INCLUDE_BNDDIR?: string, ACTGRP?: string) {
+  constructor(TGTRLS?: string, DBGVIEW?: string, TGTCCSID?: string, STGMDL?: string, LIBL?: string[], INCDIR_RPGLE?: string, INCDIR_SQLRPGLE?: string, TARGET_LIB_MAPPING?: {}, RPGPPOPT?: string, INCLUDE_BNDDIR?: string, ACTGRP?: string, TARGET_LIB?: string) {
     this.TGTRLS = TGTRLS; 
     this.DBGVIEW = DBGVIEW; 
     this.TGTCCSID = TGTCCSID; 
@@ -186,6 +187,7 @@ export class ConfigCompileSettings {
     this.RPGPPOPT = RPGPPOPT;
     this.INCLUDE_BNDDIR = INCLUDE_BNDDIR;
     this.ACTGRP = ACTGRP;
+    this.TARGET_LIB = TARGET_LIB;
   }
 
   public attributes_missing(): boolean {
@@ -226,7 +228,8 @@ export class ConfigSettings {
         general.TARGET_LIB_MAPPING,
         general.RPGPPOPT,
         general.INCLUDE_BNDDIR,
-        general.ACTGRP
+        general.ACTGRP,
+        general.TARGET_LIB
       );
     }
 
