@@ -3,7 +3,7 @@ import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vsco
 import { getUri } from "../../utilities/getUri";
 import { getNonce } from "../../utilities/getNonce";
 import { DirTool } from '../../utilities/DirTool';
-import path from 'path';
+import * as path from 'path';
 import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
 import { AppConfig } from '../controller/AppConfig';

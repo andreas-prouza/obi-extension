@@ -10,7 +10,7 @@ import { Workspace } from '../utilities/Workspace';
 import * as source from '../obi/Source';
 import { SSH_Tasks } from '../utilities/SSH_Tasks';
 import { AppConfig } from '../webview/controller/AppConfig';
-import path, { join } from 'path';
+import * as path from 'path';
 import { DirTool } from '../utilities/DirTool';
 import { Constants } from '../Constants';
 import { logger } from '../utilities/Logger';
@@ -123,7 +123,7 @@ export class OBICommands {
     const remote_obi_dir: string | undefined = config.general['remote-obi-dir'];
     const remote_obi: string | undefined = await OBITools.get_remote_obi_python_path();
 
-    if (!OBITools.without_local_obi()) {
+    if (!OBITools.without_local_obi() && config.general['local-obi-dir']) {
 
       progress.report({
         message: `Generate build script by local OBI.`

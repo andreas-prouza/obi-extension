@@ -1,3 +1,8 @@
+## [0.3.17]
+
+* npm update
+
+
 ## [0.3.16]
 
 * Added TARGET_LIB in config panel

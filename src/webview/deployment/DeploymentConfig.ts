@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
 import { getUri } from "../../utilities/getUri";
 import { DirTool } from '../../utilities/DirTool';
-import path from 'path';
+import * as path from 'path';
 import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
 import { Workspace } from '../../utilities/Workspace';

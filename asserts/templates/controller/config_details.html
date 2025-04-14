@@ -7,6 +7,7 @@
 
   <vscode-panel-tab class="panel_tab" id="{{ class_prefix }}_tab-1"><h2>{{ global_stuff['get_text']('Configuration') | safe }}</h2></vscode-panel-tab>
   <vscode-panel-tab class="panel_tab" id="{{ class_prefix }}_tab-2"><h2>{{ global_stuff['get_text']('Compile settings') | safe }}</h2></vscode-panel-tab>
+  <vscode-panel-tab class="panel_tab" id="{{ class_prefix }}_tab-2.1"><h2>{{ global_stuff['get_text']('Extended compile') | safe }}</h2></vscode-panel-tab>
   <vscode-panel-tab class="panel_tab" id="{{ class_prefix }}_tab-3"><h2>{{ global_stuff['get_text']('System settings') | safe }}</h2></vscode-panel-tab>
   <vscode-panel-tab class="panel_tab" id="{{ class_prefix }}_tab-4"><h2>{{ global_stuff['get_text']('Constants') | safe }}</h2></vscode-panel-tab>
 
@@ -419,6 +420,36 @@
           </td>
         </tr>
       </table>
+
+    </section>
+  </vscode-panel-view>
+
+
+  <vscode-panel-view id="view-esp">
+    <section>
+      
+      {{ global_stuff['get_text']('List of steps') | safe }}
+      <br/>
+      <vscode-text-field class="{{ class_prefix }}_save_app"  panel="{{ class_prefix }}_tab-2.1" id="{{ class_prefix }}|steps|{ { loop.index0 } }" placeholder="global.cmds.chg-src-ccsid"
+      value="{{ cmd_id }}">{{ global_stuff['get_text']('Command ID') | safe }}</vscode-text-field>
+
+      <br/>
+      <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox" panel="{{ class_prefix }}_tab-2.1" id="{{ class_prefix }}|use_regex" 
+      {% if use_regex == true %}checked{% endif %}>{{ global_stuff['get_text']('Use regex') | safe }}</vscode-checkbox>
+      <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox" panel="{{ class_prefix }}_tab-2.1" id="{{ class_prefix }}|allow_multiple_matches" 
+      {% if allow_multiple_matches == true %}checked{% endif %}>{{ global_stuff['get_text']('Allow multiple matches') | safe }}</vscode-checkbox>
+      
+      <br/>
+      <vscode-text-field class="{{ class_prefix }}_save_app " panel="{{ class_prefix }}_tab-2.1" id="{{ class_prefix }}|use_shell" placeholder="ls -la $(SOURCE_FILE_NAME)" size="80"
+      value="{{ use_shell }}">{{ global_stuff['get_text']('Use shell command') | safe }}</vscode-text-field>
+      <br/>
+      <br/>
+      {{ global_stuff['get_text']('Conditions') | safe }}
+      <vscode-text-field class="{{ class_prefix }}_save_app"  panel="{{ class_prefix }}_tab-2.1" id="{{ class_prefix }}|conditions|{ { condition_key } }" placeholder="targetlib"
+      value="{{ condition_value }}">{{ condition_key }}</vscode-text-field>
+      <br />
+      <hr />
+      <br />
 
     </section>
   </vscode-panel-view>

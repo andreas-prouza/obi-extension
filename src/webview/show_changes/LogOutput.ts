@@ -5,7 +5,7 @@ import { getNonce } from "../../utilities/getNonce";
 import { DirTool } from '../../utilities/DirTool';
 import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
-import path from 'path';
+import * as path from 'path';
 import { AppConfig } from '../controller/AppConfig';
 
 /*

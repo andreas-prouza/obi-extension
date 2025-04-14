@@ -1,6 +1,6 @@
 import { ExtensionContext } from "vscode";
 import { DirTool } from "./DirTool";
-import path from "path";
+import * as path from 'path';
 
 
 export interface ILanguageText {

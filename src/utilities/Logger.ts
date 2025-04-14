@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as winston from "winston";
-import Transport, {TransportStreamOptions} from 'winston-transport';
-import path from 'path';
+import TransportStream, { TransportStreamOptions } from 'winston-transport';
+import * as path from 'path';
 import { Constants } from '../Constants';
 import * as fs from 'fs';
 
@@ -14,7 +14,7 @@ if (vscode.workspace.workspaceFolders)
 
 //const winston = require('winston');
 
-class CustomTransport extends Transport {
+class CustomTransport extends TransportStream {
   constructor(opts: TransportStreamOptions) {
     super(opts);
   }

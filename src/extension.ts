@@ -1,4 +1,4 @@
-import path from 'path';
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { BuildSummary } from './webview/show_changes/BuildSummary';
 import { OBIController } from './webview/controller/OBIController';

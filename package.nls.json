@@ -147,5 +147,10 @@
   "HTTP Auth-Token": "HTTP Auth-Token",
   "URL": "URL",
   "Current branch:": "Current branch:",
-  "use-regex": "use-regex"
+  "use-regex": "use-regex",
+  "Extended compile": "Extended compile",
+  "Allow multiple matches": "Allow multiple matches",
+  "Use shell command": "Use shell command",
+  "List of steps": "List of steps",
+  "Conditions": "Conditions"
 }

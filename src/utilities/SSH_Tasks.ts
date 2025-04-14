@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import {NodeSSH, SSHExecCommandResponse} from 'node-ssh';
 import { Workspace } from './Workspace';
-import path from 'path';
+import * as path from 'path';
 import { AppConfig } from '../webview/controller/AppConfig';
 import { fail } from 'assert';
 import { Constants } from '../Constants';

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { OBITools } from '../../utilities/OBITools';
 import { DirTool } from '../../utilities/DirTool';
-import path from 'path';
+import * as path from 'path';
 import { Constants } from '../../Constants';
 import { Workspace } from '../../utilities/Workspace';
 import { SourceListConfig } from '../source_list/SourceListConfig';

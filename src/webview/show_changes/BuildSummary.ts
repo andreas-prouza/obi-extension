@@ -4,7 +4,7 @@ import { getUri } from "../../utilities/getUri";
 import { DirTool } from '../../utilities/DirTool';
 import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
-import path from 'path';
+import * as path from 'path';
 import { LogOutput } from './LogOutput';
 import { AppConfig } from '../controller/AppConfig';
 import { Workspace } from '../../utilities/Workspace';

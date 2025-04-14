@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { DirTool } from './DirTool';
-import path from 'path';
+import * as path from 'path';
 import { getUri } from './getUri';
 import { getNonce } from './getNonce';
 import { Constants } from '../Constants';
