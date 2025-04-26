@@ -1,3 +1,8 @@
+## [0.3.18]
+
+* npm update
+  
+
 ## [0.3.17]
 
 * npm update
