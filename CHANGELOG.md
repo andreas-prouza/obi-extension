@@ -1,3 +1,8 @@
+## [0.3.20]
+
+* npm update
+
+
 ## [0.3.19]
 
 * Scipt support in ESP
