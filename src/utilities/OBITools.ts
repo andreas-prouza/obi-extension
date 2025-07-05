@@ -190,6 +190,32 @@ export class OBITools {
 
 
 
+  public static async check_remote_pase(): Promise<boolean> {
+
+    let check: boolean;
+
+    check = await SSH_Tasks.check_remote_paths(['~']);
+    if (check)
+      return true;
+
+    const answer = await vscode.window.showErrorMessage(`Missing home directory. Run setup?`, { modal: true }, ...['Yes', 'No']);
+    switch (answer) {
+      case 'No':
+        return false;
+      case undefined: // Canceled
+        return false;
+      case 'Yes':
+        await SSH_Tasks.executeCommand(`mkdir -p ~/.ssh && chmod 755 ~ && chmod 700 ~/.ssh && echo 'export PATH="/QOpenSys/pkgs/bin:$PATH"' > ~/.profile`);
+        vscode.window.showInformationMessage(`Home directory created.`);
+        return true;
+    }
+
+    return false;
+
+  }
+
+
+
   public static async check_remote_basics(): Promise<boolean> {
 
     const config = AppConfig.get_app_confg();
@@ -241,6 +267,7 @@ export class OBITools {
 
     return result;
   }
+
 
 
   public static async process_check_remote_sources(): Promise<boolean> {

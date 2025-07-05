@@ -1,3 +1,10 @@
+## [0.3.21]
+
+* Create home directory if missing
+* Use bash if not set
+* npm update
+
+
 ## [0.3.20]
 
 * npm update

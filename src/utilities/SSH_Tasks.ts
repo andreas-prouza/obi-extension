@@ -270,7 +270,7 @@ export class SSH_Tasks {
         break;
     }
 
-    const cmd = `source .profile; cd ${remote_base_dir} 2> /dev/null || mkdir -p ${remote_base_dir} && cd ${remote_base_dir} && echo "pwd: $(pwd)" || exit 1; [ \`echo $(pwd) | wc -c\` -ge 3 ] &&  echo "Current dir: $(pwd)" ||  exit 1  ;  echo "Change back from $(pwd)" &&  cd  && echo "pwd 2: $(pwd)" && rm -rf ${remote_base_dir}`;
+    const cmd = `/QOpenSys/pkgs/bin/bash; source .profile; cd ${remote_base_dir} 2> /dev/null || mkdir -p ${remote_base_dir} && cd ${remote_base_dir} && echo "pwd: $(pwd)" || exit 1; [ \`echo $(pwd) | wc -c\` -ge 3 ] &&  echo "Current dir: $(pwd)" ||  exit 1  ;  echo "Change back from $(pwd)" &&  cd  && echo "pwd 2: $(pwd)" && rm -rf ${remote_base_dir}`;
     logger.info(`Execute cmd: ${cmd}`);
     const result = await SSH_Tasks.ssh.execCommand(cmd);
 
