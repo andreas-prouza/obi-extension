@@ -173,7 +173,7 @@ export class SSH_Tasks {
       return SSH_Tasks.check_remote_paths(files, true);
     }
 
-    let cmd = '';
+    let cmd = 'bash; ';
     let first = true;
     files.forEach((file) => {
       if (! first)

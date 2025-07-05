@@ -194,7 +194,7 @@ export class OBITools {
 
     let check: boolean;
 
-    check = await SSH_Tasks.check_remote_paths(['~']);
+    check = await SSH_Tasks.check_remote_paths(['/home/$USER']);
     if (check)
       return true;
 

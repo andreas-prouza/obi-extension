@@ -1,3 +1,8 @@
+## [0.3.22]
+
+* Change '~' to '/home/$USER' for compatibility
+
+
 ## [0.3.21]
 
 * Create home directory if missing
