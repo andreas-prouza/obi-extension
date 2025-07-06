@@ -1,6 +1,12 @@
+## [0.3.23]
+
+* Added support for `~` and `$USER` in path
+* Generate `~/.bashrc` if missing
+
+
 ## [0.3.22]
 
-* Change '~' to '/home/$USER' for compatibility
+* Change `~` to `/home/$USER` for compatibility
 
 
 ## [0.3.21]

@@ -194,6 +194,44 @@ export class OBITools {
 
     let check: boolean;
 
+    check = await OBITools.check_remote_home_dir();
+    if (!check)
+      return false;
+
+    check = await SSH_Tasks.check_remote_paths(['/home/$USER/.bashrc']);
+    if (check)
+      return true;
+
+    const answer = await vscode.window.showErrorMessage(`Missing /home/$USER.bashrc. Run setup?`, { modal: true }, ...['Yes', 'No']);
+    switch (answer) {
+      case 'No':
+        return false;
+      case undefined: // Canceled
+        return false;
+      case 'Yes':
+        try {
+          await SSH_Tasks.executeCommand(`echo 'export PATH="/QOpenSys/pkgs/bin:$PATH"' > /home/$USER/.bashrc`);
+        }
+        catch (e: any) {
+          logger.error(e);
+          vscode.window.showErrorMessage(`Error creating /home/$USER.bashrc: ${e.message}`);
+          return false;
+        }
+        vscode.window.showInformationMessage(`/home/$USER.bashrc created.`);
+        return true;
+      }
+
+    return false;
+
+  }
+
+
+
+
+  public static async check_remote_home_dir(): Promise<boolean> {
+
+    let check: boolean;
+
     check = await SSH_Tasks.check_remote_paths(['/home/$USER']);
     if (check)
       return true;
@@ -205,13 +243,21 @@ export class OBITools {
       case undefined: // Canceled
         return false;
       case 'Yes':
-        await SSH_Tasks.executeCommand(`mkdir -p ~/.ssh && chmod 755 ~ && chmod 700 ~/.ssh && echo 'export PATH="/QOpenSys/pkgs/bin:$PATH"' > ~/.profile`);
+        try {
+          await SSH_Tasks.executeCommand(`mkdir -p /home/$USER/.ssh && chmod 755 /home/$USER && chmod 700 /home/$USER/.ssh && echo 'export PATH="/QOpenSys/pkgs/bin:$PATH"' > /home/$USER/.bashrc`);
+        }
+        catch (e: any) {
+          logger.error(e);
+          if (!e.message.includes('No such file or directory')) {
+            vscode.window.showErrorMessage(`Error creating home directory: ${e.message}`);
+            return false;
+          }
+        }
         vscode.window.showInformationMessage(`Home directory created.`);
         return true;
     }
 
     return false;
-
   }
 
 
@@ -882,26 +928,26 @@ export class OBITools {
     const remote_dir: string = config.general['remote-base-dir'];
     
     if (!silent) {
-      const answer = await vscode.window.showErrorMessage(`Do you want to transfer all?\nThis can take several minutes.\n\nRemote folder: ${remote_dir}`, { modal: true }, ...['Yes', 'No']);
+      const answer = await vscode.window.showErrorMessage(`Do you want to transfer all?\nThis can take several minutes.\n\nRemote folder: ${remote_dir}`, { modal: true }, ...['Only minimum', 'Yes', 'No']);
+      
       switch (answer) {
+
         case 'No':
-          const answer = await vscode.window.showErrorMessage(`Do you want to transfer minimum setup?\n\nRemote folder: ${remote_dir}`, { modal: true }, ...['Yes', 'No']);
-          switch (answer) {
-            case 'No':
-              return;
-            case undefined:
-              vscode.window.showErrorMessage('Transfer canceled by user');
-              throw new Error('Transfer canceled by user');
-            case 'Yes':
-              //Transfer minimum setup;
-              await OBITools.transfer_minimum_now(local_dir, remote_dir);
-            }
-            break;
+          vscode.window.showErrorMessage('Transfer canceled by user');
+          throw new Error('Transfer canceled by user');
+
         case undefined:
           vscode.window.showErrorMessage('Transfer canceled by user');
           throw new Error('Transfer canceled by user');
+      
+        case 'Only minimum':
+          //Transfer minimum setup;
+          await OBITools.transfer_minimum_now(local_dir, remote_dir);
+          break;
+          
         case 'Yes':
           await OBITools.transfer_all_now(local_dir, remote_dir);
+          break;
         }
     }
     

@@ -16,17 +16,46 @@ interface FileTransfer {
 }
 
 
+
+
 export class SSH_Tasks {
 
   private static ssh = new NodeSSH();
   public static context: vscode.ExtensionContext;
+
+  private static ssh_user: string | undefined = undefined;
+
+
+  public static get_ssh_user(): string | undefined {
+    // Execute command in bash shell
+    if (!SSH_Tasks.ssh_user || SSH_Tasks.ssh_user.length == 0) {
+      const config = AppConfig.get_app_confg();
+      SSH_Tasks.ssh_user = config.connection['ssh-user'];
+    }
+
+    return SSH_Tasks.ssh_user;
+  }
+
+
+  public static get_finalized_command(cmd: string): string {
+    // Execute command in bash shell
+    return `bash -c '${cmd.replace(/'/g, "''")}'`;
+  }
+
+
+  public static get_finalized_remote_path(path: string): string {
+    // Execute command in bash shell
+    const ssh_user = SSH_Tasks.get_ssh_user() || 'UNKNOWN';
+    return path.replace(/\$USER/g, ssh_user).replace(/~/g, `/home/${ssh_user}`); // Replace ~ with /home/$USER
+  }
+
 
 
   public static async connect(callback?: Function) {
 
     const config = AppConfig.get_app_confg();
     let host = config.connection['remote-host'];
-    let user = config.connection['ssh-user'];
+    let ssh_user = SSH_Tasks.get_ssh_user();
     const ssh_key = config.connection['ssh-key'];
 
 
@@ -36,15 +65,15 @@ export class SSH_Tasks {
         throw new Error('Canceled by user. No host provided');
     }
 
-    if (!user || user.length == 0) {
-      user = await vscode.window.showInputBox({ title: `Enter your user for ${host}`, placeHolder: "usrprf" });
-      if (! user)
+    if (!ssh_user || ssh_user.length == 0) {
+      ssh_user = await vscode.window.showInputBox({ title: `Enter your user for ${host}`, placeHolder: "usrprf" });
+      if (! ssh_user)
         throw new Error('Canceled by user. No user provided');
     }
 
-    let pwd: string | undefined = await SSH_Tasks.context.secrets.get(`obi|${host}|${user}`);
+    let pwd: string | undefined = await SSH_Tasks.context.secrets.get(`obi|${host}|${ssh_user}`);
     if (! pwd && (!ssh_key || ssh_key.length == 0)) {
-      pwd = await vscode.window.showInputBox({ title: `Enter your password for ${user}@${host}`, placeHolder: "password", password: true });
+      pwd = await vscode.window.showInputBox({ title: `Enter your password for ${ssh_user}@${host}`, placeHolder: "password", password: true });
       if (! pwd)
         throw new Error('Canceled by user. No password provided');
     }
@@ -54,7 +83,7 @@ export class SSH_Tasks {
 
     await SSH_Tasks.ssh.connect({
       host: host,
-      username: user,
+      username: ssh_user,
       password: pwd,
       privateKeyPath: ssh_key,
       keepaliveInterval: 3600
@@ -85,6 +114,8 @@ export class SSH_Tasks {
       return;
     }
 
+    cmd = this.get_finalized_command(cmd);
+
     logger.info(`Execute: ${cmd}`);
     const result = await SSH_Tasks.ssh.execCommand(cmd);
     
@@ -112,6 +143,7 @@ export class SSH_Tasks {
       return;
     }
 
+    remote = SSH_Tasks.get_finalized_remote_path(remote);
     logger.info(`Get remote file. LOCAL: ${local}, REMOTE: ${remote}`);
     await SSH_Tasks.ssh.getFile(local, remote);
   }
@@ -132,6 +164,8 @@ export class SSH_Tasks {
 
     let failed: string[]=[];
     let successful: string[]=[];
+    
+    remote = SSH_Tasks.get_finalized_remote_path(remote);
 
     await SSH_Tasks.ssh.getDirectory(local, remote, 
       { recursive: true, 
@@ -173,10 +207,10 @@ export class SSH_Tasks {
       return SSH_Tasks.check_remote_paths(files, true);
     }
 
-    let cmd = 'bash; ';
+    let cmd = '';
     let first = true;
     files.forEach((file) => {
-      if (! first)
+      if (!first)
         cmd = `${cmd} && `;
       cmd = `${cmd} ls "${file}"`;
       first = false;
@@ -227,20 +261,6 @@ export class SSH_Tasks {
 
 
 
-  public static async create_remote_project_dir(): Promise<void> {
-    const config = AppConfig.get_app_confg();
-    if (!config.general['remote-base-dir'] || config.general['remote-base-dir'].length < 4) // to be sure it's not root!
-    throw Error(`Config attribute 'config.general.remote_base_dir' invalid: ${config.general['remote-base-dir']}`);
-  
-    const remote_base_dir: string = config.general['remote-base-dir'];
-    const remote_src_dir: string = `${remote_base_dir}/${config.general['source-dir']||'src'}`;
-    const remote_build_out_dir: string = `${remote_base_dir}/${config.general['build-output-dir'] || Constants.BUILD_OUTPUT_DIR}`;
-    const remote_src_filter_dir: string = `${remote_base_dir}/${Constants.SOURCE_FILTER_FOLDER_NAME}`;
-    const cmd = `mkdir -p ${remote_src_dir} ${remote_build_out_dir} ${remote_src_filter_dir}`;
-
-  }
-
-
 
   public static async cleanup_directory(again?: boolean, return_value?: boolean): Promise<boolean> {
 
@@ -270,7 +290,8 @@ export class SSH_Tasks {
         break;
     }
 
-    const cmd = `/QOpenSys/pkgs/bin/bash; source .profile; cd ${remote_base_dir} 2> /dev/null || mkdir -p ${remote_base_dir} && cd ${remote_base_dir} && echo "pwd: $(pwd)" || exit 1; [ \`echo $(pwd) | wc -c\` -ge 3 ] &&  echo "Current dir: $(pwd)" ||  exit 1  ;  echo "Change back from $(pwd)" &&  cd  && echo "pwd 2: $(pwd)" && rm -rf ${remote_base_dir}`;
+    let cmd = `cd ${remote_base_dir} 2> /dev/null || mkdir -p ${remote_base_dir} && cd ${remote_base_dir} && echo "pwd: $(pwd)" || exit 1; [ \`echo $(pwd) | wc -c\` -ge 3 ] &&  echo "Current dir: $(pwd)" ||  exit 1  ;  echo "Change back from $(pwd)" &&  cd  && echo "pwd 2: $(pwd)" && rm -rf ${remote_base_dir}`;
+    cmd = SSH_Tasks.get_finalized_command(cmd);
     logger.info(`Execute cmd: ${cmd}`);
     const result = await SSH_Tasks.ssh.execCommand(cmd);
 
@@ -306,20 +327,21 @@ export class SSH_Tasks {
     
     const source_dir: string = config.general['source-dir'] ?? 'src';
     const local_source_dir: string = path.join(Workspace.get_workspace(), config.general['local-base-dir'], source_dir);
-    const remote_source_dir: string = `${config.general['remote-base-dir']}/${source_dir}`;
+    let remote_base_dir: string = SSH_Tasks.get_finalized_remote_path(config.general['remote-base-dir']);
+    let remote_source_dir: string = `${remote_base_dir}/${source_dir}`;
     
     let transfer_list: FileTransfer[] = [
       {
         local: path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_FILE),
-        remote: `${config.general['remote-base-dir']}/${Constants.OBI_APP_CONFIG_FILE}`,
+        remote: `${remote_base_dir}/${Constants.OBI_APP_CONFIG_FILE}`,
       },
       {
         local: path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_USER_FILE),
-        remote: `${config.general['remote-base-dir']}/${Constants.OBI_APP_CONFIG_USER_FILE}`,
+        remote: `${remote_base_dir}/${Constants.OBI_APP_CONFIG_USER_FILE}`,
       },
       {
         local: path.join(Workspace.get_workspace(), '.obi', 'etc', 'constants.py'),
-        remote: `${config.general['remote-base-dir']}/.obi/etc/constants.py`,
+        remote: `${remote_base_dir}/.obi/etc/constants.py`,
       }
     ];
 
@@ -360,7 +382,7 @@ export class SSH_Tasks {
     if (!config.general['remote-base-dir'] || !config.general['local-base-dir'])
       throw Error(`Config attribute 'config.general.remote_base_dir' missing`);
     const local_base_dir: string = path.join(Workspace.get_workspace(), config.general['local-base-dir']);
-    const remote_base_dir: string = config.general['remote-base-dir'];
+    let remote_base_dir: string = SSH_Tasks.get_finalized_remote_path(config.general['remote-base-dir']);
 
     logger.info(`Transfer: ${file_list}`);
 
@@ -393,6 +415,8 @@ export class SSH_Tasks {
       await SSH_Tasks.connect(func);
       return;
     }
+
+    remote_dir = SSH_Tasks.get_finalized_remote_path(remote_dir);
 
     let final_message: string = "";
 
@@ -441,6 +465,8 @@ export class SSH_Tasks {
       await SSH_Tasks.connect(func);
       return;
     }
+
+    remote_dir = SSH_Tasks.get_finalized_remote_path(remote_dir);
     
     logger.debug(`Send directory. Local: ${local_dir}, remote: ${remote_dir}`);
 

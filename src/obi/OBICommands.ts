@@ -156,7 +156,7 @@ export class OBICommands {
       progress.report({
         message: `Generate build script on remote. If it takes too long, use OBI localy (see documentation).`
       });
-      let ssh_cmd: string = `/QOpenSys/pkgs/bin/bash; source .profile; cd '${remote_base_dir}' || exit 1; rm log/* .obi/log/* 2> /dev/null || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a create -p .`;
+      let ssh_cmd: string = `cd '${remote_base_dir}' || exit 1; rm log/* .obi/log/* 2> /dev/null || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a create -p .`;
       if (source_list.length == 1)
         ssh_cmd = `${ssh_cmd} --source "${source_list[0]}"`;
       await SSH_Tasks.executeCommand(ssh_cmd);
@@ -191,7 +191,7 @@ export class OBICommands {
     const remote_base_dir: string | undefined = config.general['remote-base-dir'];
     const remote_obi_dir: string | undefined = config.general['remote-obi-dir'];
     const remote_obi: string | undefined = await OBITools.get_remote_obi_python_path();
-    const ssh_cmd: string = `/QOpenSys/pkgs/bin/bash; source .profile; cd '${remote_base_dir}' || exit 1; rm log/* .obi/log/* 2> /dev/null || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p .`;
+    const ssh_cmd: string = `cd '${remote_base_dir}' || exit 1; rm log/* .obi/log/* 2> /dev/null || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a run -p .`;
     await SSH_Tasks.executeCommand(ssh_cmd);
   }
 
@@ -468,7 +468,7 @@ export class OBICommands {
 
       await SSH_Tasks.transfer_files([Constants.OBI_APP_CONFIG_FILE, Constants.OBI_APP_CONFIG_USER_FILE]);
 
-      let ssh_cmd: string = `/QOpenSys/pkgs/bin/bash; source .profile; cd '${remote_base_dir}' || exit 1; rm log/* .obi/log/* 2>/dev/null || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a gen_src_list -p .`;
+      let ssh_cmd: string = `cd '${remote_base_dir}' || exit 1; rm log/* .obi/log/* 2>/dev/null || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a gen_src_list -p .`;
       await SSH_Tasks.executeCommand(ssh_cmd);
 
       if (config.general['remote-source-list'] && config.general['source-list'])
