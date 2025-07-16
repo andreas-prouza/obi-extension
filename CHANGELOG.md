@@ -1,3 +1,9 @@
+## [0.3.24]
+
+* Also transfer `logger_config.py`
+* npm update
+
+
 ## [0.3.23]
 
 * Added support for `~` and `$USER` in path

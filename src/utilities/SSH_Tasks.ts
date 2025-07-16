@@ -342,6 +342,10 @@ export class SSH_Tasks {
       {
         local: path.join(Workspace.get_workspace(), '.obi', 'etc', 'constants.py'),
         remote: `${remote_base_dir}/.obi/etc/constants.py`,
+      },
+      {
+        local: path.join(Workspace.get_workspace(), '.obi', 'etc', 'logger_config.py'),
+        remote: `${remote_base_dir}/.obi/etc/logger_config.py`,
       }
     ];
 
