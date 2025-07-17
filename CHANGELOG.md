@@ -1,3 +1,9 @@
+## [0.3.25]
+
+* more checks after extension update
+* npm update
+
+
 ## [0.3.24]
 
 * Also transfer `logger_config.py`

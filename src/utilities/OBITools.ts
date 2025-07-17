@@ -37,7 +37,7 @@ export class OBITools {
     const ws = Workspace.get_workspace();
     const ext_ws = path.join(OBITools.ext_context.asAbsolutePath('.'), 'obi-media');
     const current_version: string = vscode.extensions.getExtension('andreas-prouza.obi')?.packageJSON['version'];
-    const previous_version: string|undefined = OBITools.ext_context.workspaceState.get('obi.version');
+    let previous_version: string|undefined = OBITools.ext_context.workspaceState.get('obi.version');
     const config: AppConfig = AppConfig.get_app_confg();
 
     if (config.general['local-base-dir'] == '/')
@@ -77,30 +77,33 @@ export class OBITools {
       fs.copyFileSync(path.join(ext_ws, Constants.SOURCE_FILTER_FOLDER_NAME, 'All sources.json'), path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME, 'All sources.json'));
     }
 
+    if (!DirTool.file_exists(path.join(ws, '.obi', 'etc', 'logger_config.py'))){
+      fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'logger_config.py'), path.join(ws, '.obi', 'etc', 'logger_config.py'));
+    }
+    
+    if (!DirTool.file_exists(path.join(ws, '.obi', 'etc', 'constants.py'))){
+      fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
+    }
+
     AppConfig.self_check();
 
-    switch (previous_version) {
-      case undefined:
-      case '0.2.4':
-      case '0.2.5':
-      case '0.2.6':
-      case '0.2.7':
-      case '0.2.8':
+    let previous_version_int = 0;
+    if (previous_version) {
+      const match = previous_version.match(/^(\d+)\.(\d+)\.(\d+)$/);
+      if (match) {
+        // Pad each group to 2 digits
+        const major = match[1].padStart(2, '0');
+        const minor = match[2].padStart(2, '0');
+        const patch = match[3].padStart(2, '0');
+        previous_version_int = parseInt(major + minor + patch);
+      }
+    }
+    
+    if (previous_version_int <= 208) {
         fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
         fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'logger_config.py'), path.join(ws, '.obi', 'etc', 'logger_config.py'));
-      case '0.2.9':
-      case '0.2.10':
-      case '0.2.11':
-      case '0.2.12':
-      case '0.2.13':
-      case '0.2.14':
-      case '0.2.15':
-      case '0.2.16':
-      case '0.2.17':
-      case '0.2.18':
-      case '0.2.19':
-      case '0.2.20':
-      case '0.2.21':
+    }
+    if (previous_version_int <= 221) {
         let config = AppConfig.get_project_app_config(Workspace.get_workspace_uri());
         config.general['compiled-object-list'] = Constants.COMPILED_OBJECT_LIST;
         config.general['remote-source-list'] = Constants.REMOTE_SOURCE_LIST;
@@ -109,11 +112,9 @@ export class OBITools {
         const toml_file = path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_FILE);
         DirTool.write_toml(toml_file, config);
         AppConfig.reset();
-      case '0.2.22':
-      case '0.2.23':
-      case '0.2.24':
+    }
+    if (previous_version_int <= 324) {
         fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
-
     }
 
     OBITools.ext_context.workspaceState.update('obi.version', current_version);
