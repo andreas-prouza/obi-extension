@@ -374,7 +374,35 @@ export class OBICommands {
       BuildSummary.render(context.extensionUri, Workspace.get_workspace_uri());
     }
     catch (error: any) {
-      vscode.window.showErrorMessage(error.message);
+
+      logger.error(error);
+
+      const obi_status_file = path.join(ws, Constants.OBI_STATUS_FILE);
+      if (DirTool.file_exists(obi_status_file)) {
+        const status = DirTool.get_json(obi_status_file);
+
+        if (status) {
+
+          logger.info(`Status: ${JSON.stringify(status)}`);
+
+          vscode.window.showErrorMessage(
+            status['message'],
+            'Open Details'
+          ).then(selection => {
+
+            if (selection === 'Open Details') {
+              vscode.window.showInformationMessage(
+                status['details'] || error.message,
+                { modal: true }
+              );
+            }
+
+          });
+        }
+      }
+      //vscode.window.showErrorMessage("Status file exists: .obi/build-output/status.json");
+
+      //vscode.window.showErrorMessage(error.message);
     }
 
     OBICommands.show_changes_status = OBIStatus.READY;

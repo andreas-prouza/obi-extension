@@ -6,6 +6,7 @@ export class Constants {
   public static readonly OBI_DIR: string = ".obi";
   public static readonly SOURCE_FILTER_FOLDER_NAME: string = '.obi/source-list';
   public static readonly BUILD_OUTPUT_DIR: string = ".obi/build-output";
+  public static readonly OBI_STATUS_FILE: string = `${Constants.BUILD_OUTPUT_DIR}/status.json`;
   public static readonly OBI_APP_CONFIG_FILE: string = ".obi/etc/app-config.toml";
   public static readonly OBI_APP_CONFIG_USER_FILE: string = ".obi/etc/.user-app-config.toml";
   public static readonly OBI_SOURCE_CONFIG_FILE: string = ".obi/etc/source-config.toml";

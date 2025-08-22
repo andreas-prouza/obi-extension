@@ -1,3 +1,9 @@
+## [0.3.26]
+
+* Prints error message from OBI
+* npm update
+
+
 ## [0.3.25]
 
 * more checks after extension update
