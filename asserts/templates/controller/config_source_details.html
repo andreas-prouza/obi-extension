@@ -33,11 +33,17 @@
       </tr>
       {% for key, value in settings %}
       <tr>
-        <td>{{ key }}</td>
+        <td>{{ key }}{% if value | typename == "Array" %} (<code>List</code>){% endif %}</td>
         <td>
-          <vscode-text-field class="save_source_setting" key="{{ key }}" id="{{ key }}|value"
-            value="{{ value }}">
-          </vscode-text-field>
+          {% if value | typename == "Array" %}
+            <vscode-text-area class="save_source_setting" key="{{ key }}" id="{{ key }}|value"
+              value='{{ value | join("\n") }}' rows="{{ value | length }}" resize="both">
+            </vscode-text-area>
+          {% else %}
+            <vscode-text-field class="save_source_setting" key="{{ key }}" id="{{ key }}|value"
+              value="{{ value }}">
+            </vscode-text-field>
+          {% endif %}
         </td>
         <td>
           <vscode-button class="delete_source_setting" key="{{ key }}" id="delete_source_setting_{{ loop.index0 }}">
@@ -51,7 +57,15 @@
           <vscode-text-field id="new_source_setting_key" placeholder="TARGET_LIB"></vscode-text-field>
         </td>
         <td>
-          <vscode-text-field id="new_source_setting_value" placeholder="PROUZALIB"></vscode-text-field>
+          <!--vscode-text-field id="new_source_setting_value" placeholder="PROUZALIB"></vscode-text-field-->
+          <vscode-text-area id="new_source_setting_value" placeholder="PROUZALIB" rows="4" resize="both">
+          </vscode-text-area>
+        </td>
+        <td>
+          <select id="new_source_setting_type" class="form-select">
+            <option selected value="string">String</option>
+            <option value="list">List (separated by new line)</option>
+          </select>
         </td>
         <td>
           <vscode-button id="add_source_setting" config="{{ class_prefix }}">

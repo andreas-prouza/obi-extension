@@ -16,7 +16,22 @@ https://mozilla.github.io/nunjucks/api.html
 https://www.11ty.dev/docs/languages/nunjucks/
 */
 const nunjucks = require('nunjucks');
+// configure() returns an Environment
+const env = nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
 
+// Register "typename" filter on the environment
+env.addFilter("typename", (obj: any) => {
+  if (obj === null) return "null";
+  if (obj === undefined) return "undefined";
+
+  // If it's a class instance or built-in
+  if (obj.constructor && obj.constructor.name) {
+    return obj.constructor.name;
+  }
+
+  // Fallback
+  return typeof obj;
+});
 
 
 
@@ -79,8 +94,6 @@ export class OBISourceConfiguration {
 
   private static async generate_html(extensionUri: Uri, webview: Webview): Promise<string> {
 
-    nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-
     const source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
     const config: AppConfig = AppConfig.get_app_confg();
 
@@ -89,7 +102,7 @@ export class OBISourceConfiguration {
     if (source_configs)
       source_config = source_configs[OBISourceConfiguration.source_config];
     
-    const html = nunjucks.render('controller/config_source_details.html', 
+    const html = env.render('controller/config_source_details.html', 
       {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),
         config_css: getUri(webview, extensionUri, ["asserts/css", "config.css"]),
@@ -144,6 +157,12 @@ export class OBISourceConfiguration {
         break;
 
       case "add_source_setting":
+
+        switch(message.type) {
+          case "list":
+            message.value = message.value.split(/\r?\n/);
+            break;
+        }
         OBISourceConfiguration.add_source_setting(message.key, message.value);
         break;
 

@@ -51,13 +51,15 @@ function add_source_setting() {
 
   const key:string = (document.getElementById("new_source_setting_key") as TextField).value;
   const value:string = (document.getElementById("new_source_setting_value") as TextField).value;
+  const type:string = (document.getElementById("new_source_setting_type") as HTMLSelectElement).value;
 
 
-  console.log(`add_source_setting: ${key} : ${value}`);
+  console.log(`add_source_setting: ${key} : ${value} : ${type}`);
   vscode.postMessage({
     command: "add_source_setting",
     key: key,
-    value: value
+    value: value,
+    type: type
   });
 
   reload();
@@ -154,9 +156,22 @@ function save_config() {
   let source_settings: SourceSettings = {};
 
   console.log(`save_source_setting: ${app_elements.length}`);
+  let key = '';
+  let value = '';
+
   for (let i = 0; i < app_elements.length; i++) {
-    const key = app_elements[i].getAttribute('key') || 'undefined';
-    const value = (app_elements[i] as TextField).value;
+    key = app_elements[i].getAttribute('key') || 'undefined';
+
+    switch (app_elements[i].constructor.name) {
+
+      case 'TextArea2':
+        value = Array.from((app_elements[i] as HTMLTextAreaElement).value.split('\n'));
+        break;
+
+      default:
+        value = (app_elements[i] as TextField).value;
+        break;
+    }
     source_settings[key] = value;
   }
 

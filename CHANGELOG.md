@@ -1,3 +1,8 @@
+## [0.3.28]
+
+* Add list type in source config
+
+
 ## [0.3.27]
 
 * npm update
