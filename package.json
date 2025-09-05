@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "0.3.26",
+  "version": "0.3.27",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -304,7 +304,8 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "postinstall": "rm -rf node_modules/ssh2/test"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

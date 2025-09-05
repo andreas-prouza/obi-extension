@@ -1,3 +1,9 @@
+## [0.3.27]
+
+* npm update
+* Remove test folder from ssh2 package
+
+
 ## [0.3.26]
 
 * Prints error message from OBI
