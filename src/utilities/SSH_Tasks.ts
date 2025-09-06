@@ -29,7 +29,7 @@ export class SSH_Tasks {
   public static get_ssh_user(): string | undefined {
     // Execute command in bash shell
     if (!SSH_Tasks.ssh_user || SSH_Tasks.ssh_user.length == 0) {
-      const config = AppConfig.get_app_confg();
+      const config = AppConfig.get_app_config();
       SSH_Tasks.ssh_user = config.connection['ssh-user'];
     }
 
@@ -53,7 +53,7 @@ export class SSH_Tasks {
 
   public static async connect(callback?: Function) {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     let host = config.connection['remote-host'];
     let ssh_user = SSH_Tasks.get_ssh_user();
     const ssh_key = config.connection['ssh-key'];
@@ -169,7 +169,7 @@ export class SSH_Tasks {
 
     await SSH_Tasks.ssh.getDirectory(local, remote, 
       { recursive: true, 
-        concurrency: AppConfig.get_app_confg().connection['ssh-concurrency'] ?? 5,
+        concurrency: AppConfig.get_app_config().connection['ssh-concurrency'] ?? 5,
         validate: function(itemPath) {
           const baseName = path.basename(itemPath)
           return baseName !== '.git' && // Don't send git directory
@@ -242,7 +242,7 @@ export class SSH_Tasks {
       return;
     }
     
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     if (!config.general['remote-base-dir'] || !config.general['local-base-dir'])
       throw Error(`Config attribute 'config.general.remote_base_dir' or 'config.general.local-base-dir' missing`);
     
@@ -275,7 +275,7 @@ export class SSH_Tasks {
       return return_value2;
     }
     
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     if (!config.general['remote-base-dir'] || config.general['remote-base-dir'].length < 4) // to be sure it's not root!
       throw Error(`Config attribute 'config.general.remote_base_dir' invalid: ${config.general['remote-base-dir']}`);
     
@@ -321,7 +321,7 @@ export class SSH_Tasks {
       return;
     }
     
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     if (!config.general['remote-base-dir'] || !config.general['local-base-dir'])
       throw Error(`Config attribute 'config.general.remote_base_dir' or 'config.general.local-base-dir' missing`);
     
@@ -382,7 +382,7 @@ export class SSH_Tasks {
       return;
     }
     
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     if (!config.general['remote-base-dir'] || !config.general['local-base-dir'])
       throw Error(`Config attribute 'config.general.remote_base_dir' missing`);
     const local_base_dir: string = path.join(Workspace.get_workspace(), config.general['local-base-dir']);
@@ -476,7 +476,7 @@ export class SSH_Tasks {
 
     const result: boolean = await SSH_Tasks.ssh.putDirectory(local_dir, remote_dir, {
       recursive: true,
-      concurrency: AppConfig.get_app_confg().connection['ssh-concurrency'] ?? 5,
+      concurrency: AppConfig.get_app_config().connection['ssh-concurrency'] ?? 5,
       validate: function(itemPath) {
         const baseName = path.basename(itemPath)
         return baseName !== '.git' && // Don't send git directory

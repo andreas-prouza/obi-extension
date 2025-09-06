@@ -159,6 +159,88 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
   }
 
 
+  // obi.source-filter.add-source-file
+  async add_new_source_member(item: SourceListItem): Promise<string|undefined> {
+
+    const app_config = AppConfig.get_app_config();
+
+    const source_member: string | undefined = await vscode.window.showInputBox({ title: `Name of source member for ${item.src_lib}/${item.label}`, placeHolder: "source member name", validateInput(value) {
+      if (value.replace(/[\/|\\:*?"<>]/g, " ") != value)
+        return "Not allowed characters: \\, /, |, :, *, ?, \", <, >";
+      const ext = path.extname(value).replace('.', '').toLowerCase();
+      if (app_config.general['supported-object-types'] && !app_config.general['supported-object-types'].includes(ext)) {
+        return `Extension ".${ext}" is not supported (supported: ${app_config.general['supported-object-types'].join(', ')})`;
+      }
+      return null;
+    },});
+    if (!source_member || !item.src_lib)
+      throw new Error('Canceled by user. No source member name provided');
+
+    const src_folder = app_config.general['source-dir']||'src';
+    const new_file = path.join(Workspace.get_workspace(), src_folder, item.src_lib, item.label, source_member);
+    DirTool.write_file(new_file, '');
+    vscode.window.showTextDocument(vscode.Uri.file(new_file));
+
+    return source_member;
+  }
+
+
+
+  // obi.source-filter.add-source-file
+  async change_source_description(item: SourceListItem | vscode.Uri): Promise<void> {
+
+    let lib: String = '';
+    let file: String = '';
+    let member: String = '';
+    let source_path: string = '';
+    let description: string = '';
+
+    if (item instanceof SourceListItem) {
+      if (!item.src_lib || !item.src_file || !item.src_member) {
+        throw new Error('Source member information missing');
+      }
+      source_path = `${item.src_lib}/${item.src_file}(${item.label})`;
+      description = typeof item.description === 'string' ? item.description : '';
+    }
+
+    if (item instanceof vscode.Uri) {
+      
+      const config: AppConfig = AppConfig.get_app_config();
+      const src_dir: string = config.general['source-dir'] || 'src';
+      source_path = item.fsPath.replace(Workspace.get_workspace(), '')
+      source_path = source_path.replace(src_dir, '');
+      source_path = source_path.replace('\\', '/');
+      source_path = source_path.replace(/^\/+/, '');
+
+      const match = source_path.match(/^([^\/]+)\/([^\/]+)\/(.+)$/);
+      if (!match) {
+        throw new Error(`Source path ${source_path} is not valid`);
+      }
+      lib = match[1];
+      file = match[2];
+      member = match[3];
+
+      const source_infos: source.ISourceInfos = await OBITools.get_source_infos();
+      if (source_infos[`${lib}/${file}/${member}`]) {
+        description = typeof source_infos[`${lib}/${file}/${member}`].description === 'string' ? source_infos[`${lib}/${file}/${member}`].description : '';
+      }
+    }
+
+    const new_description: string | undefined = await vscode.window.showInputBox({ 
+      title: `Description of source member for ${source_path}`, 
+      placeHolder: "Source description", 
+      value: description,
+    });
+    if (!new_description) {
+      throw new Error('Canceled by user. No source description provided');
+    }
+
+    OBITools.update_source_infos(lib, file, member, new_description);
+
+    return;
+  }
+
+
 
   public register(context: vscode.ExtensionContext): any {
     // setup
@@ -184,24 +266,37 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
           SourceListConfig.render(context, source_list);
       });
     });
-
+    
     vscode.commands.registerCommand('obi.source-filter.show-view', async (item: SourceListItem) => {
       SourceList.render(context.extensionUri, Workspace.get_workspace_uri(), item.source_list);
     });
-
+    
     vscode.commands.registerCommand('obi.source-filter.edit-config', async (item: SourceListItem) => {
       SourceListConfig.render(context, item.source_list);
     });
-
+    
     vscode.commands.registerCommand('obi.source-filter.delete-config', async (item: SourceListItem) => {
-
+      
       if (SourceListConfig.currentPanel && SourceListConfig.source_list_file == item.source_list)
         SourceListConfig.currentPanel.dispose();
       fs.rmSync(path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, item.source_list));
       this.refresh();
     });
+    
+    vscode.commands.registerCommand('obi.source-filter.add-source-member', async (item: SourceListItem) => {
+      const source_member = await this.add_new_source_member(item);
+      this.refresh();
+      if (source_member)
+        SourceListConfig.render(context, source_member);
+    });
 
-
+    
+    vscode.commands.registerCommand('obi.source-filter.change-source-description', async (item: SourceListItem) => {
+      await this.change_source_description(item);
+      this.refresh();
+    });
+    
+    
     // setup: events
     tree.onDidChangeSelection(e => {
       logger.info(`onDidChangeSelection: ${e}`); // breakpoint here for debug
@@ -280,12 +375,20 @@ export class SourceListItem extends vscode.TreeItem {
     this.collapsibleState = collapsibleState;
     this.tooltip = source_list;
 
-    if (src_lib && list_level == 'source-lib')
-      this.tooltip = `${source_list}: ${src_lib}`;
-    if (src_file && list_level == 'source-file')
-      this.tooltip = `${source_list}: ${src_lib}/${src_file}`;
-    if (description && list_level == 'source-member')
-      this.tooltip = `${source_list}: ${src_lib}/${src_file}(${src_member}) - ${description}`;
+    switch (list_level) {
+      case 'source-lib':
+      this.tooltip = `${source_list}: ${label}`;
+      break;
+      case 'source-file':
+      this.tooltip = `${source_list}: ${src_lib}/${label}`;
+      break;
+      case 'source-member':
+      this.tooltip = `${source_list}: ${src_lib}/${src_file}(${src_member})`;
+      break;
+    }
+
+    if (typeof description !== 'undefined' && description?.length > 0)
+      this.tooltip += ` - ${description}`;
 
     this.description = description;
     this.source_list = source_list;
@@ -308,7 +411,7 @@ export class SourceListItem extends vscode.TreeItem {
       return;
 
     if (list_level == 'source-member') {
-      member_path = path.join(AppConfig.get_app_confg().general['source-dir']||'src', this.src_lib || '', this.src_file || '', this.src_member || '');
+      member_path = path.join(AppConfig.get_app_config().general['source-dir']||'src', this.src_lib || '', this.src_file || '', this.src_member || '');
       if (!DirTool.file_exists(path.join(ws, member_path)))
         icon = 'error.svg';
     }

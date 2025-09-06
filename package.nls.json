@@ -17,6 +17,8 @@
   "obi.source-filter.delete-config": "OBI: Delete source filter config",
   "obi.source-filter.maintain-source-infos": "OBI: Maintain source infos",
   "obi.source-filter.view-source-infos": "OBI: Show source infos",
+  "obi.source-filter.add-source-member": "OBI: Add source member",
+  "obi.source-filter.change-source-description": "OBI: Change source description",
   "obi.source.edit-compile-config": "OBI: Individual build settings",
   "obi.deployment.maintain": "OBI: deployment config",
   "Welcome": "Welcome",

@@ -80,7 +80,7 @@ export class SourceInfos {
 
   private static async generate_html(extensionUri: Uri, webview: Webview): Promise<string> {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     let html_template = 'source_list/source-infos-view.html';
     if (SourceInfos._edit_infos) {
       html_template = 'source_list/source-infos-config.html';
@@ -121,7 +121,7 @@ export class SourceInfos {
 
   private static onReceiveMessage(message: any): void {
 
-    const config: AppConfig = AppConfig.get_app_confg();
+    const config: AppConfig = AppConfig.get_app_config();
 
     const workspaceUri =
     vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
@@ -148,7 +148,7 @@ export class SourceInfos {
 
   private static save_infos(sources: source.ISourceInfos) {
 
-    const json_file: string = path.join(Workspace.get_workspace(), AppConfig.get_app_confg().general['source-infos']||'.obi/etc/source-infos.json');
+    const json_file: string = path.join(Workspace.get_workspace(), AppConfig.get_app_config().general['source-infos']||'.obi/etc/source-infos.json');
     let source_infos: source.ISourceInfos = DirTool.get_json(json_file) || [];
 
     for (const [k, v] of Object.entries(sources)) {

@@ -31,7 +31,7 @@ export class OBICommands {
   public static async run_build_process(sources?: string[], generate_compile_list?: boolean) {
 
     const ws = Workspace.get_workspace();
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     const remote_base_dir: string | undefined = config.general['remote-base-dir'];
     const remote_obi_dir: string | undefined = config.general['remote-obi-dir'];
 
@@ -123,7 +123,7 @@ export class OBICommands {
     increment?: number;
   }>, source_list: string[]) {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     const remote_base_dir: string | undefined = config.general['remote-base-dir'];
     const remote_obi_dir: string | undefined = config.general['remote-obi-dir'];
     const remote_obi: string | undefined = await OBITools.get_remote_obi_python_path();
@@ -171,7 +171,7 @@ export class OBICommands {
     increment?: number;
   }>) {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
 
     progress.report({
       message: `Transfer build list to remote.`
@@ -187,7 +187,7 @@ export class OBICommands {
 
   public static async execute_remote_build() {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     const remote_base_dir: string | undefined = config.general['remote-base-dir'];
     const remote_obi_dir: string | undefined = config.general['remote-obi-dir'];
     const remote_obi: string | undefined = await OBITools.get_remote_obi_python_path();
@@ -199,7 +199,7 @@ export class OBICommands {
 
   public static async get_remote_build_output() {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     const remote_base_dir: string | undefined = config.general['remote-base-dir'];
     const ws: string = Workspace.get_workspace();
 
@@ -233,9 +233,9 @@ export class OBICommands {
       return undefined;
     }
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
 
-    let source = vscode.window.activeTextEditor.document.fileName.replace(path.join(Workspace.get_workspace(), AppConfig.get_app_confg().general['source-dir'] || 'src'), '');
+    let source = vscode.window.activeTextEditor.document.fileName.replace(path.join(Workspace.get_workspace(), AppConfig.get_app_config().general['source-dir'] || 'src'), '');
     source = source.replaceAll('\\', '/');
     if (source.charAt(0) == '/')
       source = source.substring(1);
@@ -356,7 +356,7 @@ export class OBICommands {
     OBICommands.show_changes_status = OBIStatus.IN_PROCESS;
 
     const ws: string = Workspace.get_workspace();
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
 
     try {
       if (OBITools.without_local_obi())
@@ -435,7 +435,7 @@ export class OBICommands {
 
     OBICommands.reset_compiled_object_list_status = OBIStatus.IN_PROCESS;
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
 
     try {
       if (!config.general['compiled-object-list'])
@@ -485,7 +485,7 @@ export class OBICommands {
     try {
 
       const ws = Workspace.get_workspace();
-      const config = AppConfig.get_app_confg();
+      const config = AppConfig.get_app_config();
       const remote_base_dir: string | undefined = config.general['remote-base-dir'];
       const remote_obi_dir: string | undefined = config.general['remote-obi-dir'];
 
@@ -520,7 +520,7 @@ export class OBICommands {
 
   public static async get_remote_compiled_object_list() {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     const remote_base_dir: string | undefined = config.general['remote-base-dir'];
     const remote_obi_dir: string | undefined = config.general['remote-obi-dir'];
 

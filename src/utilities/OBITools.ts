@@ -38,7 +38,7 @@ export class OBITools {
     const ext_ws = path.join(OBITools.ext_context.asAbsolutePath('.'), 'obi-media');
     const current_version: string = vscode.extensions.getExtension('andreas-prouza.obi')?.packageJSON['version'];
     let previous_version: string|undefined = OBITools.ext_context.workspaceState.get('obi.version');
-    const config: AppConfig = AppConfig.get_app_confg();
+    const config: AppConfig = AppConfig.get_app_config();
 
     if (config.general['local-base-dir'] == '/')
       throw Error("Root for 'local-base-dir' is not allowed!");
@@ -137,7 +137,7 @@ export class OBITools {
 
   public static get_local_obi_python_path(): string|undefined {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     
     if (!config.general['local-obi-dir'])
       return undefined;
@@ -160,7 +160,7 @@ export class OBITools {
 
   public static async get_remote_obi_python_path(): Promise<string|undefined> {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     
     if (!config.general['remote-obi-dir'])
       return undefined;
@@ -265,7 +265,7 @@ export class OBITools {
 
   public static async check_remote_basics(): Promise<boolean> {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     const remote_base_dir: string|undefined = config.general['remote-base-dir'];
     const remote_obi_dir: string|undefined = config.general['remote-obi-dir'];
     const remote_obi_python: string = `${config.general['remote-obi-dir']}/venv/bin/python`;
@@ -319,7 +319,7 @@ export class OBITools {
 
   public static async process_check_remote_sources(): Promise<boolean> {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     const ws: string = Workspace.get_workspace();
 
     if (!config.general['remote-source-list'])
@@ -505,7 +505,7 @@ export class OBITools {
     if (AppConfig.attributes_missing())
       return undefined;
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     if (!config.general['compile-list']) {
       vscode.window.showErrorMessage('OBI config is invalid');
       throw Error('OBI config is invalid');
@@ -606,7 +606,7 @@ export class OBITools {
 
   public static get_source_hash_list(workspace:string): source.ISource | undefined {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     if (!config.general['compiled-object-list'])
       return undefined
     
@@ -638,7 +638,7 @@ export class OBITools {
   public static get_dependend_sources(changed_sources: source.ISourceList): string[] {
 
     let dependend_sources: string[] = [];
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
 
     const all_sources: string[] = Object.assign([], changed_sources['changed-sources'], changed_sources['new-objects']);
 
@@ -818,7 +818,7 @@ export class OBITools {
     logger.info('Start retrieve_current_source_hashes');
     let p1 = performance.now();
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     const max_threads = config.general['max-threads'] || 20;
     const source_dir = path.join(Workspace.get_workspace(), config.general['source-dir'] || 'src');
 
@@ -880,7 +880,7 @@ export class OBITools {
 
   public static get_remote_compiled_object_list(){
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
 
     if (!config.general['remote-base-dir'])
       throw Error(`Config attribute 'config.general.remote_base_dir' missing`);
@@ -920,7 +920,7 @@ export class OBITools {
   
   public static async process_transfer_project_folder(silent: boolean|undefined) {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
 
     if (!config.general['remote-base-dir'])
       throw Error(`Config attribute 'config.general.remote_base_dir' missing`);
@@ -1006,7 +1006,7 @@ export class OBITools {
 
   public static async get_local_sources(): Promise<source.IQualifiedSource[]|undefined> {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     const source_dir = path.join(Workspace.get_workspace(), config.general['source-dir'] || 'src');
 
     const sources = await DirTool.get_all_files_in_dir3(
@@ -1020,6 +1020,37 @@ export class OBITools {
 
 
 
+  public static get_source_infos(): source.ISourceInfos {
+
+    const config: AppConfig = AppConfig.get_app_config();
+
+    const source_infos: source.ISourceInfos = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['source-infos'] || '.obi/etc/source-infos.json')) || [];
+
+    return source_infos;
+  }
+
+
+  public static update_source_infos(lib: String, source_file: String, source_member: String, description: String): void {
+
+    const config: AppConfig = AppConfig.get_app_config();
+
+    const source_infos: source.ISourceInfos = OBITools.get_source_infos();
+
+    const full_name: string = `${lib}/${source_file}/${source_member}`;
+
+    if (!(full_name in source_infos)) {
+      source_infos[full_name] = {'description': ''};
+    }
+
+    source_infos[full_name]['description'] = description;
+
+    DirTool.write_file(path.join(Workspace.get_workspace(), config.general['source-infos'] || '.obi/etc/source-infos.json'), JSON.stringify(source_infos, undefined, 2));
+    
+    return;
+  }
+
+
+
   public static get_extended_source_infos(sources: source.IQualifiedSource[]|undefined): source.IQualifiedSource[] | undefined {
 
     if (!sources)
@@ -1027,8 +1058,8 @@ export class OBITools {
 
     let new_list: source.IQualifiedSource[] = [];
 
-    const config: AppConfig = AppConfig.get_app_confg();
-    const source_infos: source.ISourceInfos = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['source-infos'] || '.obi/etc/source-infos.json')) || [];
+    const config: AppConfig = AppConfig.get_app_config();
+    const source_infos: source.ISourceInfos = OBITools.get_source_infos();
 
     for (let source of sources) {
 

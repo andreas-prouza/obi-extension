@@ -6,15 +6,15 @@ export interface IQualifiedSource {
   "source-member": string,
   "use-regex": boolean,
   path?: string,
-  description?: string
+  description?: String
 }
 
 export interface ISourceInfo {
-  description: string
+  description: String
 }
 
 export interface ISourceInfos {
-  [key: string] : ISourceInfo
+  [key: string]: ISourceInfo
 }
 
 

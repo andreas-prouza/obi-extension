@@ -1,3 +1,10 @@
+## [0.3.29]
+
+* Add maintain of source description in source filters
+* Add function to create new source in source filters
+* Update npm
+
+
 ## [0.3.28]
 
 * Add list type in source config

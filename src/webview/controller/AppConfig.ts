@@ -331,7 +331,7 @@ export class AppConfig {
 
   public static self_check() {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     
     if (config.general['local-obi-dir'] && !DirTool.dir_exists(config.general['local-obi-dir']))
       vscode.window.showErrorMessage(`Config error: local OBI location '${config.general['local-obi-dir']}' does not exist`);
@@ -342,7 +342,7 @@ export class AppConfig {
   }
 
 
-  public static get_app_confg(config_dict?: AppConfig): AppConfig {
+  public static get_app_config(config_dict?: AppConfig): AppConfig {
 
     let configs: AppConfig|undefined = config_dict;
 
@@ -487,7 +487,7 @@ export class AppConfig {
 
 
   public static attributes_missing(): boolean {
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     return config.attributes_missing();
   }
 

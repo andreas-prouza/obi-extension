@@ -95,7 +95,7 @@ export class OBISourceConfiguration {
   private static async generate_html(extensionUri: Uri, webview: Webview): Promise<string> {
 
     const source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
-    const config: AppConfig = AppConfig.get_app_confg();
+    const config: AppConfig = AppConfig.get_app_config();
 
     let source_config: SourceConfig|undefined;
     

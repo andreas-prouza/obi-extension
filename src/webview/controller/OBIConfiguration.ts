@@ -81,10 +81,10 @@ export class OBIConfiguration {
 
   private static async generate_html(context: vscode.ExtensionContext, extensionUri: Uri, webview: Webview): Promise<string> {
     const workspaceUri = Workspace.get_workspace_uri();
-    const project_config = AppConfig.get_app_confg(AppConfig.get_project_app_config(workspaceUri));
+    const project_config = AppConfig.get_app_config(AppConfig.get_project_app_config(workspaceUri));
     const user_config = AppConfig.get_user_app_config(workspaceUri);
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
     const host = config.connection['remote-host'];
     const user = config.connection['ssh-user'];
 
@@ -166,7 +166,7 @@ export class OBIConfiguration {
         break;
 
       case "save_ssh_password":
-        config = AppConfig.get_app_confg();
+        config = AppConfig.get_app_config();
         const host = config['connection']['remote-host'];
         const user = config['connection']['ssh-user'];
         OBIConfiguration._context.secrets.delete(`obi|${host}|${user}`);
@@ -313,7 +313,7 @@ export class OBIConfiguration {
   private static save_config(isUser: boolean, workspaceUri: Uri, data: {}) {
 
     vscode.window.showInformationMessage('Configuration saved');
-    const app_config: AppConfig = AppConfig.get_app_confg();
+    const app_config: AppConfig = AppConfig.get_app_config();
     const missing_configs = app_config.attributes_missing();
     let new_config: AppConfig;
 
@@ -343,7 +343,7 @@ export class OBIConfiguration {
     DirTool.write_toml(toml_file, new_config);
     AppConfig.reset();
 
-    if (missing_configs && !AppConfig.get_app_confg().attributes_missing())
+    if (missing_configs && !AppConfig.get_app_config().attributes_missing())
       vscode.commands.executeCommand('workbench.action.reloadWindow');
 
     AppConfig.self_check();

@@ -51,7 +51,7 @@ export class OBIController implements vscode.WebviewViewProvider {
     if (OBIController.is_config_watcher_set || !OBITools.contains_obi_project())
       return;
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
 
     if (AppConfig.attributes_missing())
       return;

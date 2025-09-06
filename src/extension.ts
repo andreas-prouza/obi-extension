@@ -83,7 +83,7 @@ export function activate(context: vscode.ExtensionContext) {
 		return;
 	}
 
-	const config = AppConfig.get_app_confg();
+	const config = AppConfig.get_app_config();
 	if (config.attributes_missing()) {
 		vscode.window.showErrorMessage("Config is not valid!");
 		return;
@@ -238,7 +238,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		if (item instanceof vscode.Uri) {
 
-			const config: AppConfig = AppConfig.get_app_confg();
+			const config: AppConfig = AppConfig.get_app_config();
 			const src_dir: string = config.general['source-dir'] || 'src';
 			let source_path: string = item.fsPath.replace(Workspace.get_workspace(), '')
 			source_path = source_path.replace(src_dir, '');

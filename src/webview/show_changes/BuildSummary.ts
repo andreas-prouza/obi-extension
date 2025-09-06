@@ -76,7 +76,7 @@ export class BuildSummary {
       return
     }
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
 
     // If a webview panel does not already exist create and show a new one
     const panel = BuildSummary.createNewPanel(extensionUri);
@@ -112,7 +112,7 @@ export class BuildSummary {
   private static generate_html(extensionUri: Uri, webview: Webview): string {
 
     const ws: Uri = Workspace.get_workspace_uri();
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
 

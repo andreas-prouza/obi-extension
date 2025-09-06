@@ -80,7 +80,7 @@ export class SourceListConfig {
 
   private static async generate_html(extensionUri: Uri, webview: Webview): Promise<string> {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
 
     const source_list: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, SourceListConfig.source_list_file)) || [];
 
@@ -117,7 +117,7 @@ export class SourceListConfig {
 
   private static onReceiveMessage(message: any): void {
 
-    const config: AppConfig = AppConfig.get_app_confg();
+    const config: AppConfig = AppConfig.get_app_config();
 
     const workspaceUri =
     vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0

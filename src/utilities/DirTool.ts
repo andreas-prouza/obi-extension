@@ -247,7 +247,7 @@ export class DirTool {
 
     if (vscode.env.remoteName) {
       scheme = 'vscode-remote';
-      remote_ws_host = AppConfig.get_app_confg().general['cloud-ws-ssh-remote-host'] || vscode.env.remoteName;
+      remote_ws_host = AppConfig.get_app_config().general['cloud-ws-ssh-remote-host'] || vscode.env.remoteName;
     }
 
     const fileUri = {
@@ -269,7 +269,7 @@ export class DirTool {
 
   public static get_encoded_source_URI(workspaceUri: Uri, file: string) : string {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
 
     return DirTool.get_encoded_file_URI(path.join(config.general["source-dir"], file))
   }
@@ -278,7 +278,7 @@ export class DirTool {
 
   public static get_encoded_build_output_URI(file: string) : string {
 
-    const config = AppConfig.get_app_confg();
+    const config = AppConfig.get_app_config();
 
     return DirTool.get_encoded_file_URI(path.join(config.general["build-output-dir"], file))
 
