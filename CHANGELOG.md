@@ -1,3 +1,8 @@
+## [0.3.30]
+
+* Change package creation (without dev stuff)
+
+
 ## [0.3.29]
 
 * Add maintain of source description in source filters
