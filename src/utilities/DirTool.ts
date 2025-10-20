@@ -22,8 +22,8 @@ export class DirTool {
     const envPatternUnix = /\$(\w+)/g;
     const envPatternWindows = /%(\w+)%/g;
 
-    path = path.replace(envPatternUnix, (_, envVar) => process.env[envVar] || '');
-    path = path.replace(envPatternWindows, (_, envVar) => process.env[envVar] || '');
+    path = path.replace(envPatternUnix, (_, envVar) => process.env[envVar] || _);
+    path = path.replace(envPatternWindows, (_, envVar) => process.env[envVar] || _);
 
     return path;
   }

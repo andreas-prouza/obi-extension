@@ -1,4 +1,13 @@
+## [0.3.32]
+
+* Support special characters in source name
+
+
 ## [0.3.31]
+
+* Fix SSH NPM problems
+
+
 ## [0.3.30]
 
 * Change package creation (without dev stuff)

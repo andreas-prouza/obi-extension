@@ -137,7 +137,7 @@ export class OBICommands {
       let cmd = `${OBITools.get_local_obi_python_path()} -X utf8 ${path.join(config.general['local-obi-dir'], 'main.py')} -a create -p .`;
 
       if (source_list.length == 1)
-        cmd = `${cmd} --source "${source_list[0]}"`;
+        cmd = `${cmd} --source '${source_list[0]}'`;
       logger.info(`CMD: ${cmd}`);
 
       try {
@@ -158,7 +158,7 @@ export class OBICommands {
       });
       let ssh_cmd: string = `cd '${remote_base_dir}' || exit 1; rm log/* .obi/log/* 2> /dev/null || true; ${remote_obi} -X utf8 ${remote_obi_dir}/main.py -a create -p .`;
       if (source_list.length == 1)
-        ssh_cmd = `${ssh_cmd} --source "${source_list[0]}"`;
+        ssh_cmd = `${ssh_cmd} --source '${source_list[0]}'`;
       await SSH_Tasks.executeCommand(ssh_cmd);
 
     }
@@ -365,7 +365,7 @@ export class OBICommands {
         logger.info(`WS: ${Workspace.get_workspace()}`);
         let cmd = `${OBITools.get_local_obi_python_path()} -X utf8 ${path.join(config.general['local-obi-dir'], 'main.py')} -a create -p .`;
         if (source)
-          cmd = `${cmd} --source "${source}"`;
+          cmd = `${cmd} --source '${source}'`;
         logger.info(`CMD: ${cmd}`);
 
         await SystemCmdExecution.run_system_cmd(Workspace.get_workspace(), cmd, 'show_changes');
