@@ -1,3 +1,8 @@
+## [0.3.34]
+
+* Add save notification
+
+
 ## [0.3.33]
 
 * Difference between Windows and other OS

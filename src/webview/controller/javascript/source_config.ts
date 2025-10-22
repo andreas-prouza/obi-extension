@@ -41,6 +41,15 @@ function main() {
 
   window.addEventListener('message', receive_message);
 
+  showAlert('Configuration reloaded.');
+}
+
+
+function showAlert(text: string) {
+  const box = document.getElementById('alertBox');
+  box.textContent = text;
+  box.style.display = 'block';
+  setTimeout(() => box.style.display = 'none', 2000);
 }
 
 
