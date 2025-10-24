@@ -11,14 +11,7 @@
     
     <div class="save-button-wrapper">
       <vscode-button class="save-button" id="save_config">{{  global_stuff['get_text']('Save') | safe }}</vscode-button>
-      <div id="alertBox" style="display:none;
-          position:fixed;
-          top:80px; right:20px;
-          padding:20px;
-          background:#478b32; color:#ffffff;
-          border-radius:4px;
-          box-shadow:0 4px 20px rgba(0,0,0,.3);">
-      </div>
+      {% include "tools/alertBox.html" %}
     </div>
     
     <h2>i-Releaser</h2>

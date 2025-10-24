@@ -6,7 +6,7 @@ import {
 } from "@vscode/webview-ui-toolkit";
 
 import * as source from '../../../obi/Source';
-
+import { showAlert } from "../../tools/javascript/alertBox";
 
 // In order to use all the Webview UI Toolkit web components they
 // must be registered with the browser (i.e. webview) using the
@@ -16,6 +16,7 @@ provideVSCodeDesignSystem().register(allComponents);
 const vscode = acquireVsCodeApi();
 
 window.addEventListener("load", main);
+
 
 
 function main() {
@@ -30,16 +31,9 @@ function main() {
 
    window.addEventListener('message', receive_message);
 
-  showAlert('Configuration reloaded.');
+  showAlert('Configuration reloaded.', 'success');
 }
 
-
-function showAlert(text: string) {
-  const box = document.getElementById('alertBox');
-  box.textContent = text;
-  box.style.display = 'block';
-  setTimeout(() => box.style.display = 'none', 2000);
-}
 
 
 function save_config() {

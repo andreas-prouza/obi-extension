@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "0.3.34",
+  "version": "0.4.1",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -149,6 +149,12 @@
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
+        "command": "obi.source-filter.add-source-file",
+        "title": "%obi.source-filter.add-source-file%",
+        "icon": "$(add)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
         "command": "obi.source-filter.add-source-member",
         "title": "%obi.source-filter.add-source-member%",
         "icon": "$(add)",
@@ -158,6 +164,12 @@
         "command": "obi.source-filter.change-source-description",
         "title": "%obi.source-filter.change-source-description%",
         "icon": "$(preview)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.source.maintain-source-dependency",
+        "title": "%obi.source.maintain-source-dependency%",
+        "icon": "$(combine)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
@@ -238,6 +250,10 @@
         {
           "command": "obi.source-filter.change-source-description",
           "when": "obi.contains_obi_project"
+        },
+        {
+          "command": "obi.source.maintain-source-dependency",
+          "when": "obi.contains_obi_project"
         }
       ],
       "explorer/context": [
@@ -247,6 +263,10 @@
         },
         {
           "command": "obi.source-filter.change-source-description",
+          "when": "obi.contains_obi_project"
+        },
+        {
+          "command": "obi.source.maintain-source-dependency",
           "when": "obi.contains_obi_project"
         }
       ],
@@ -272,6 +292,11 @@
           "group": "inline@0"
         },
         {
+          "command": "obi.source.maintain-source-dependency",
+          "when": "obi.contains_obi_project && view == obi.source-filter && viewItem == obi-source",
+          "group": "inline@1"
+        },
+        {
           "command": "obi.source-filter.change-source-description",
           "when": "obi.contains_obi_project && view == obi.source-filter && viewItem == obi-source",
           "group": "inline@1"
@@ -279,6 +304,11 @@
         {
           "command": "obi.source-filter.add-source-member",
           "when": "obi.contains_obi_project && view == obi.source-filter && viewItem == source-file",
+          "group": "inline@0"
+        },
+        {
+          "command": "obi.source-filter.add-source-file",
+          "when": "obi.contains_obi_project && view == obi.source-filter && viewItem == source-lib",
           "group": "inline@0"
         }
       ]

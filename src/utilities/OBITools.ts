@@ -635,6 +635,23 @@ export class OBITools {
 
 
 
+  public static get_dependency_list(): {['source']: string[]} {
+    
+    const config = AppConfig.get_app_config();
+    const dependency_list: {['source']: string[]} = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['dependency-list'])) || {};
+    return dependency_list;
+  }
+  
+
+
+  public static save_dependency_list(dependency_list: {['source']: string[]}): void {
+    
+    const config = AppConfig.get_app_config();
+    DirTool.write_json(path.join(Workspace.get_workspace(), config.general['dependency-list']), dependency_list);
+  }
+
+  
+
   public static get_dependend_sources(changed_sources: source.ISourceList): string[] {
 
     let dependend_sources: string[] = [];
@@ -642,7 +659,7 @@ export class OBITools {
 
     const all_sources: string[] = Object.assign([], changed_sources['changed-sources'], changed_sources['new-objects']);
 
-    const dependency_list: {['source']: string[]} = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['dependency-list'])) || {};
+    const dependency_list: {['source']: string[]} = OBITools.get_dependency_list();
     for (const [k, v] of Object.entries(dependency_list)) {
       for (let i=0; i<all_sources.length; i++) {
         if (v.includes(all_sources[i]) && !all_sources.includes(k)) {

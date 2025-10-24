@@ -108,6 +108,13 @@ export class DirTool {
     const fs = require('fs');
     const files = fs.readdirSync(path.join(rootdir, dir), { withFileTypes: true });
 
+    if (files.length == 0) {
+      const path_array: string[] = dir.split('/');
+      const src_lib = path_array[0] ?? null;
+      const src_file = path_array[1] ?? null;
+      return [{"source-lib": src_lib, "source-file": src_file, "source-member": ''}];
+    }
+
 
     for (const file of files) {
       if (file.isDirectory()) {
@@ -228,7 +235,7 @@ export class DirTool {
     try{
       
       // Read the TOML file into a string
-      const text = JSON.stringify(data);
+      const text = JSON.stringify(data, null, 2);
 
       fs.writeFileSync(file, text, 'utf8');
     }

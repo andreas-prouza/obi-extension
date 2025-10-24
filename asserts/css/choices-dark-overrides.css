@@ -1,0 +1,21 @@
+/* override file, after choices.min.css */
+.choices {
+  width: auto !important;           /* let it expand */
+  min-width: 100% !important;       /* at least as wide as table cell */
+}
+
+.choices__list--dropdown {
+  width: max-content !important;    /* expand dropdown to fit longest option */
+  white-space: nowrap !important;   /* prevent wrapping */
+}
+
+body.vscode-dark .choices,
+body.vscode-dark .choices__inner,
+body.vscode-dark .choices__list--dropdown,
+body.vscode-dark .choices__input,
+body.vscode-dark .choices__list--dropdown .choices__input,
+body.vscode-dark .choices__list--dropdown .choices__item--selectable.is-highlighted {
+    background: var(--vscode-editor-background) !important;
+    color: var(--vscode-editor-foreground) !important;
+    border-color: var(--vscode-input-border) !important;
+}

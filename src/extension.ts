@@ -18,6 +18,7 @@ import { OBISourceConfiguration } from './webview/controller/OBISourceConfigurat
 import { DirTool } from './utilities/DirTool';
 import { I_Releaser } from './webview/deployment/I_Releaser';
 import { Constants } from './Constants';
+import { OBISourceDependency } from './webview/controller/OBISourceDependency';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -251,6 +252,31 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 
 			OBISourceConfiguration.render(context, context.extensionUri, `${source_path}`);
+		}
+
+	});
+
+
+	vscode.commands.registerCommand('obi.source.maintain-source-dependency', async (item: SourceListItem | vscode.Uri) => {
+
+		if (item instanceof SourceListItem)
+			OBISourceDependency.render(context, context.extensionUri, `${item.src_lib}/${item.src_file}/${item.src_member}`);
+
+		if (item instanceof vscode.Uri) {
+
+			const config: AppConfig = AppConfig.get_app_config();
+			const src_dir: string = config.general['source-dir'] || 'src';
+			let source_path: string = item.fsPath.replace(Workspace.get_workspace(), '')
+			source_path = source_path.replace(src_dir, '');
+			source_path = source_path.replace('\\', '/');
+			source_path = source_path.replace(/^\/+/, '');
+
+			if (!DirTool.file_exists(path.join(Workspace.get_workspace(), src_dir, source_path))) {
+				vscode.window.showErrorMessage(`Source ${source_path} not found in OBI project`);
+				return;
+			}
+
+			OBISourceDependency.render(context, context.extensionUri, `${source_path}`);
 		}
 
 	});

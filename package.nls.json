@@ -19,6 +19,7 @@
   "obi.source-filter.view-source-infos": "OBI: Show source infos",
   "obi.source-filter.add-source-member": "OBI: Add source member",
   "obi.source-filter.change-source-description": "OBI: Change source description",
+  "obi.source.maintain-source-dependency": "OBI: Maintain source dependencies",
   "obi.source.edit-compile-config": "OBI: Individual build settings",
   "obi.deployment.maintain": "OBI: deployment config",
   "Welcome": "Welcome",
@@ -154,5 +155,9 @@
   "Allow multiple matches": "Allow multiple matches",
   "Use shell command": "Use shell command",
   "List of steps": "List of steps",
-  "Conditions": "Conditions"
+  "Conditions": "Conditions",
+  "Maintain source dependency:": "Maintain source dependency:",
+  "depends on:": "depends on:",
+  "Sources depending on:": "Sources depending on:",
+  "Source": "Source"
 }

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
+  <link rel="stylesheet" href="{{ config_css }}">
+  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/css/choices.min.css">
+  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/css/choices-dark-overrides.css">
+
+</head>
+
+<body>
+
+
+  <select id="source_list" style="display:none;">
+    <option value="">Choose a source ...</option>
+  {% for row in source_list %}
+    <option>{{ row }}</option>
+  {% endfor %}
+  </select>
+
+
+  <h1>{{ global_stuff['get_text']('Maintain source dependency:') | safe }} <code>{{ source }}</code></h1>
+
+  
+  <div class="save-button-wrapper">
+    <vscode-button class="save-button" id="save_config">{{ global_stuff['get_text']('Save') | safe }}</vscode-button>
+    {% include "tools/alertBox.html" %}
+  </div>
+  
+
+
+  <hr />
+  <br/>
+
+  <h3><code>{{ source }}</code> {{ global_stuff['get_text']('depends on:') }}</h3>
+  <br/>
+  <br/>
+
+  <table id="source_dependency_list"
+    class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
+    data-locale="{{ global_stuff['locale'] }}"
+    data-toggle="table" 
+    data-filter-control="false"
+    data-show-search-clear-button="false" 
+    data-show-columns="true"
+    data-pagination="false" 
+    data-page-size="10"
+    data-buttons-align="left">
+    <thead>
+      <tr>
+        <th>{{ global_stuff['get_text']('Source') | safe }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in dependency_list_1 %}
+      <tr>
+        <td><a href='command:vscode.open?{{ row["file"] }}'>{{ row["source"] }}</a></td>
+        <td>
+          <vscode-button class="delete_dependency_1" source='{{ row["source"] }}'' list_index="{{ loop.index0 }}" id="delete_dependency_1_{{ loop.index0 }}">
+            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
+          </vscode-button>
+        </td>
+      </tr>
+      {% endfor %}
+      <tr><td>&nbsp;</td></tr>
+      <tr><td>{{ global_stuff['get_text']('Add new') | safe }}</td></tr>
+      <tr>
+        <td>
+          <div class="dropdown-container" id="new_source_container1"></div>
+        </td>
+        <td>
+          <vscode-button id="add_dependency_1">
+            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
+          </vscode-button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+
+
+  <br />
+  <hr />
+  <br/>
+
+  <h3>{{ global_stuff['get_text']('Sources depending on:') }} <code>{{ source }}</code></h3>
+  <br/>
+  <br/>
+
+  <table id="sources_depending_on_it_list"
+    class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
+    data-locale="{{ global_stuff['locale'] }}"
+    data-toggle="table" 
+    data-filter-control="false"
+    data-show-search-clear-button="false" 
+    data-show-columns="true"
+    data-pagination="false" 
+    data-page-size="10"
+    data-buttons-align="left">
+    <thead>
+      <tr>
+        <th>{{ global_stuff['get_text']('Source') | safe }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in dependency_list_2 %}
+      <tr>
+        <td><a href='command:vscode.open?{{ row["file"] }}'>{{ row["source"] }}</a></td>
+        <td>
+          <vscode-button class="delete_dependency_2" source='{{ row["source"] }}' list_index="{{ loop.index0 }}" id="delete_dependency_2_{{ loop.index0 }}">
+            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
+          </vscode-button>
+        </td>
+      </tr>
+      {% endfor %}
+      <tr><td>&nbsp;</td></tr>
+      <tr><td>{{ global_stuff['get_text']('Add new') | safe }}</td></tr>
+      <tr>
+        <td>
+          <div class="dropdown-container" id="new_source_container2"></div>
+        </td>
+        <td>
+          <vscode-button id="add_dependency_2">
+            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
+          </vscode-button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <br />
+
+  <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
+  <script src="{{ global_stuff['asserts_uri'] }}/js/choices.min.js"></script>
+
+  <script>
+
+// 1. Get the original template
+    const templateSelect = document.querySelector('#source_list');
+
+    // --- First Dropdown ---
+    // Clone the template *before* any transformations occur
+    const select1 = templateSelect.cloneNode(true);
+    select1.id = 'new_source_1';
+    select1.style.display = '';
+    document.querySelector('#new_source_container1').appendChild(select1);
+
+    // --- Second Dropdown ---
+    // Clone the template *again* (still the pristine original)
+    const select2 = templateSelect.cloneNode(true);
+    select2.id = 'new_source_2'; // Ensure this ID is unique
+    select2.style.display = '';
+    document.querySelector('#new_source_container2').appendChild(select2);
+
+    // --- Initialize Choices ---
+
+    // 1. Initialize Choices for the first dropdown
+    const choices1 = new Choices('#new_source_1', {
+      searchEnabled: true,
+      searchFloor: 0,
+      placeholder: true,
+      placeholderValue: '' // Use the placeholder option instead of removing the first option
+    });
+    // Remove the placeholder option if Choices doesn't handle it automatically.
+    // If you use the `placeholderValue` option, you often don't need this, 
+    // but keep it if your template *must* have the empty option.
+    choices1.removeActiveItemsByValue(''); 
+
+    // 2. Initialize Choices for the second dropdown
+    const choices2 = new Choices('#new_source_2', {
+      searchEnabled: true,
+      searchFloor: 0,
+      placeholder: true,
+      placeholderValue: ''
+    });
+    // Remove the placeholder option
+    choices2.removeActiveItemsByValue('');
+
+  </script>
+</body>
+
+</html>

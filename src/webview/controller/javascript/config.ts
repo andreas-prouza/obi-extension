@@ -5,6 +5,8 @@ import {
   TextField
 } from "@vscode/webview-ui-toolkit";
 
+import { showAlert } from "../../tools/javascript/alertBox";
+
 const deepmerge = require('deepmerge');
 
 // In order to use all the Webview UI Toolkit web components they
@@ -170,15 +172,7 @@ function main() {
   window.addEventListener('message', receive_message);
 
   // Show configuration loaded message in the UI instead of alert
-  showAlert('Configuration reloaded.');
-}
-
-
-function showAlert(text: string) {
-  const box = document.getElementById('alertBox');
-  box.textContent = text;
-  box.style.display = 'block';
-  setTimeout(() => box.style.display = 'none', 2000);
+  showAlert('Configuration reloaded.', 'success');
 }
 
 

@@ -3,8 +3,13 @@
   color: black
 }
 
+.info {
+  background-color:#2e858b;
+  color: rgb(255, 255, 255)
+}
+
 .success {
-  background-color:#76FF03;
+  background-color:#c2ff90;
   color: black
 }
 

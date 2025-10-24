@@ -77,6 +77,15 @@ const source_config_ViewConfig = {
 };
 
 
+const source_dependency_ViewConfig = {
+  ...baseConfig,
+  target: "es2020",
+  format: "esm",
+  entryPoints: ["./src/webview/source_list/javascript/source_dependency.ts"],
+  outfile: "./out/source_dependency.js",
+};
+
+
 const sourceListConfigViewConfig = {
   ...baseConfig,
   target: "es2020",
@@ -122,6 +131,7 @@ const deployment_config_ViewConfig = {
     await build(sourceListConfigViewConfig);
     await build(sourceInfosViewConfig);
     await build(source_config_ViewConfig);
+    await build(source_dependency_ViewConfig);
     await build(i_releaser_ViewConfig);
     await build(deployment_config_ViewConfig);
     console.log("build complete");

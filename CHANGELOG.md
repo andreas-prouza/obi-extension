@@ -1,3 +1,10 @@
+## [0.4.1]
+
+* Add dependency maintainance
+* Add alerts for changes (e.g. save) in webview
+* Now you can also add new source members
+
+
 ## [0.3.34]
 
 * Add save notification

@@ -120,6 +120,9 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     for (const entry of content_list) {
 
       if (level == 'source-member') {
+        if (entry['source-member'] == '') {
+          continue;
+        }
         description = entry['description'] || undefined;
         member = entry[level];
       }
@@ -160,6 +163,32 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
 
   // obi.source-filter.add-source-file
+  async add_new_source_file(item: SourceListItem): Promise<string|undefined> {
+
+    const app_config = AppConfig.get_app_config();
+
+    const source_file_folder: string | undefined = await vscode.window.showInputBox({ title: `Name of source folder for ${item.src_lib}`, placeHolder: "qrpglesrc", validateInput(value) {
+      if (value.replace(/[\/|\\:*?"<>]/g, " ") != value)
+        return "Not allowed characters: \\, /, |, :, *, ?, \", <, >";
+      return null;
+    },});
+    if (!source_file_folder || !item.label)
+      throw new Error('Canceled by user. No source folder name provided');
+
+    const src_folder = app_config.general['source-dir']||'src';
+    const new_folder = path.join(Workspace.get_workspace(), src_folder, item.src_lib, source_file_folder);
+
+    // Create the new directory if it doesn't exist
+    if (!DirTool.dir_exists(new_folder)) {
+      fs.mkdirSync(new_folder, { recursive: true });
+    }
+    return source_file_folder;
+
+  }
+
+
+
+  // obi.source-filter.add-source-member
   async add_new_source_member(item: SourceListItem): Promise<string|undefined> {
 
     const app_config = AppConfig.get_app_config();
@@ -288,6 +317,11 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       this.refresh();
       if (source_member)
         SourceListConfig.render(context, source_member);
+    });
+
+    vscode.commands.registerCommand('obi.source-filter.add-source-file', async (item: SourceListItem) => {
+      const source_file = await this.add_new_source_file(item);
+      this.refresh();
     });
 
     
