@@ -57,7 +57,7 @@ export class DirTool {
    * @param file_extensions 
    * @returns 
    */
-  public static async get_all_files_in_dir2(rootdir:string, dir: string, file_extensions: string[]): Promise<string[] | undefined> {
+  public static async get_all_files_in_dir2(rootdir:string, dir: string, file_extensions: string[], replace_backslash: boolean = false): Promise<string[] | undefined> {
     
     if (!DirTool.dir_exists(path.join(rootdir, dir)))
       return undefined;
@@ -69,12 +69,22 @@ export class DirTool {
     const files = fs.readdirSync(path.join(rootdir, dir), { withFileTypes: true });
 
 
+    let file_path: string;
+
     for (const file of files) {
+
       if (file.isDirectory()) {
         call_list.push(DirTool.get_all_files_in_dir2(rootdir, path.join(dir, file.name), file_extensions));
       } else {
-        if (file_extensions.includes(file.name.split('.').pop()))
-          file_list.push(path.join(dir, file.name));
+
+        if (file_extensions.includes(file.name.split('.').pop())) {
+
+          file_path = path.join(dir, file.name)
+          
+          if (replace_backslash)
+            file_path = file_path.replaceAll('\\', '/');
+          file_list.push(file_path);
+        }
       }
     }
 

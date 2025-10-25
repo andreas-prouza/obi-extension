@@ -69,7 +69,7 @@ function delete_dependency(type: number, id: string) {
 
 function add_dependency_1() {
   
-  const new_source: string = (document.getElementById("new_source_1") as TextField).value;
+  const new_source: string = (document.getElementById("source_list_1") as TextField).value;
 
   add_dependency(1, new_source);
 }
@@ -77,7 +77,7 @@ function add_dependency_1() {
 
 function add_dependency_2() {
 
-  const new_source: string = (document.getElementById("new_source_2") as TextField).value;
+  const new_source: string = (document.getElementById("source_list_2") as TextField).value;
 
   add_dependency(2, new_source);
 }

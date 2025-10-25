@@ -19,6 +19,7 @@ import { DirTool } from './utilities/DirTool';
 import { I_Releaser } from './webview/deployment/I_Releaser';
 import { Constants } from './Constants';
 import { OBISourceDependency } from './webview/controller/OBISourceDependency';
+import { LocalSourceList } from './utilities/LocalSourceList';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -280,6 +281,8 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 	});
+
+	LocalSourceList.load_source_list();
 
 }
 

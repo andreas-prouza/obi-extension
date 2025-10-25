@@ -1,15 +1,13 @@
 import * as vscode from 'vscode';
 import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
 import { getUri } from "../../utilities/getUri";
-import { getNonce } from "../../utilities/getNonce";
 import { DirTool } from '../../utilities/DirTool';
 import * as path from 'path';
 import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
 import { AppConfig, ConfigCompileSettings, SourceConfig, SourceConfigList } from './AppConfig';
 import { Workspace } from '../../utilities/Workspace';
-import { logger } from '../../utilities/Logger';
-import { json } from 'stream/consumers';
+import { LocalSourceList } from '../../utilities/LocalSourceList';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -78,6 +76,8 @@ export class OBISourceDependency {
     if (OBISourceDependency.currentPanel) {
       OBISourceDependency.currentPanel.dispose();
     }
+
+
     // If a webview panel does not already exist create and show a new one
     const panel = this.createNewPanel(extensionUri);
 
@@ -104,12 +104,7 @@ export class OBISourceDependency {
     if (source_configs)
       source_config = source_configs[OBISourceDependency.source];
 
-    const source_list: string[] = await DirTool.get_all_files_in_dir2(
-      source_dir,
-      '.',
-      config.general['supported-object-types'] || ['pgm', 'file', 'srvpgm']
-    ) || [];
-
+    const local_source_list: string[] = await LocalSourceList.get_source_list();
     const dependencies: {['source']: string[]} = OBITools.get_dependency_list() || {};
     let dependencies_1: string[] = [];
     let dependencies_2: string[] = [];
@@ -132,7 +127,7 @@ export class OBISourceDependency {
         icons: {debug_start: '$(preview)'},
         src_folder: DirTool.get_encoded_file_URI(source_dir),
         source: OBISourceDependency.source,
-        source_list: source_list,
+        source_list: local_source_list,
         dependency_list_1: dependencies_1,
         dependency_list_2: dependencies_2,
         source_file: DirTool.get_encoded_file_URI(path.join(config.general['source-dir']||'src', OBISourceDependency.source)),

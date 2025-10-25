@@ -1,3 +1,9 @@
+## [0.4.2]
+
+* Bugfix when using it under Windows OS
+* Improve performance for source drop down in dependency maintainance
+
+
 ## [0.4.1]
 
 * Add dependency maintainance
