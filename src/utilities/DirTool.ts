@@ -82,7 +82,7 @@ export class DirTool {
           file_path = path.join(dir, file.name)
           
           if (replace_backslash)
-            file_path = file_path.replaceAll('\\', '/');
+            file_path = file_path.replace(/\\/g, '/');
           file_list.push(file_path);
         }
       }

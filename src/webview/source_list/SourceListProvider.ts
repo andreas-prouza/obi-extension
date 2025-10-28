@@ -176,7 +176,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       throw new Error('Canceled by user. No source folder name provided');
 
     const src_folder = app_config.general['source-dir']||'src';
-    const new_folder = path.join(Workspace.get_workspace(), src_folder, item.src_lib, source_file_folder);
+    const new_folder = path.join(Workspace.get_workspace(), src_folder, item.label, source_file_folder);
 
     // Create the new directory if it doesn't exist
     if (!DirTool.dir_exists(new_folder)) {
