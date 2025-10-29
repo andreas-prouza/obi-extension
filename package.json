@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -167,6 +167,16 @@
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
+        "command": "obi.source-filter.rename-source-member",
+        "title": "%obi.source-filter.rename-source-member%",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.source-filter.delete-source-member",
+        "title": "%obi.source-filter.delete-source-member%",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
         "command": "obi.source.maintain-source-dependency",
         "title": "%obi.source.maintain-source-dependency%",
         "icon": "$(combine)",
@@ -300,6 +310,14 @@
           "command": "obi.source-filter.change-source-description",
           "when": "obi.contains_obi_project && view == obi.source-filter && viewItem == obi-source",
           "group": "inline@1"
+        },
+        {
+          "command": "obi.source-filter.rename-source-member",
+          "when": "obi.contains_obi_project && view == obi.source-filter && viewItem == obi-source"
+        },
+        {
+          "command": "obi.source-filter.delete-source-member",
+          "when": "obi.contains_obi_project && view == obi.source-filter && viewItem == obi-source"
         },
         {
           "command": "obi.source-filter.add-source-member",

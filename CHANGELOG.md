@@ -1,3 +1,8 @@
+## [0.4.3]
+
+* New context menu for sources (rename, delete)
+
+
 ## [0.4.2]
 
 * Bugfix when using it under Windows OS

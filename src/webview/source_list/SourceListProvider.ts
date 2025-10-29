@@ -34,6 +34,10 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
 
   getTreeItem(element: SourceListItem): vscode.TreeItem {
+
+    if (element.list_level != 'source-member')
+      return element;
+
     return element;
   }
 
@@ -193,15 +197,19 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
     const app_config = AppConfig.get_app_config();
 
-    const source_member: string | undefined = await vscode.window.showInputBox({ title: `Name of source member for ${item.src_lib}/${item.label}`, placeHolder: "source member name", validateInput(value) {
-      if (value.replace(/[\/|\\:*?"<>]/g, " ") != value)
-        return "Not allowed characters: \\, /, |, :, *, ?, \", <, >";
-      const ext = path.extname(value).replace('.', '').toLowerCase();
-      if (app_config.general['supported-object-types'] && !app_config.general['supported-object-types'].includes(ext)) {
-        return `Extension ".${ext}" is not supported (supported: ${app_config.general['supported-object-types'].join(', ')})`;
-      }
-      return null;
-    },});
+    const source_member: string | undefined = await vscode.window.showInputBox(
+      { title: `Name of source member for ${item.src_lib}/${item.label}`, 
+        placeHolder: "source member name", 
+        validateInput(value) {
+          if (value.replace(/[\/|\\:*?"<>]/g, " ") != value)
+            return "Not allowed characters: \\, /, |, :, *, ?, \", <, >";
+          const ext = path.extname(value).replace('.', '').toLowerCase();
+          if (app_config.general['supported-object-types'] && !app_config.general['supported-object-types'].includes(ext)) {
+            return `Extension ".${ext}" is not supported (supported: ${app_config.general['supported-object-types'].join(', ')})`;
+          }
+          return null;
+        },
+      });
     if (!source_member || !item.src_lib)
       throw new Error('Canceled by user. No source member name provided');
 
@@ -270,6 +278,60 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
   }
 
 
+  // obi.source-filter.add-source-file
+  async rename_source_member(item: SourceListItem | vscode.Uri): Promise<void> {
+    
+    const app_config = AppConfig.get_app_config();
+
+    if (item instanceof SourceListItem) {
+      if (!item.src_lib || !item.src_file || !item.src_member) {
+        throw new Error('Source member information missing');
+      }
+    }
+
+    const new_name: string | undefined = await vscode.window.showInputBox({ 
+      title: `Rename source member for ${item.src_member}`,
+      value: item.src_member,
+      validateInput(value) {
+          if (value.replace(/[\/|\\:*?"<>]/g, " ") != value)
+            return "Not allowed characters: \\, /, |, :, *, ?, \", <, >";
+          const ext = path.extname(value).replace('.', '').toLowerCase();
+          if (app_config.general['supported-object-types'] && !app_config.general['supported-object-types'].includes(ext)) {
+            return `Extension ".${ext}" is not supported (supported: ${app_config.general['supported-object-types'].join(', ')})`;
+          }
+          return null;
+        },
+    });
+    if (!new_name) {
+      throw new Error('Canceled by user. No source name provided');
+    }
+
+    const from_path = path.join(Workspace.get_workspace(), item.member_path, item.src_member);
+    const to_path = path.join(Workspace.get_workspace(),item.member_path, new_name)
+    fs.renameSync(from_path, to_path);
+
+    return;
+  }
+
+
+  // obi.source-filter.add-source-file
+  async delete_source_member(item: SourceListItem | vscode.Uri): Promise<void> {
+    
+    const app_config = AppConfig.get_app_config();
+
+    if (item instanceof SourceListItem) {
+      if (!item.src_lib || !item.src_file || !item.src_member) {
+        throw new Error('Source member information missing');
+      }
+    }
+
+    const from_path = path.join(Workspace.get_workspace(), item.member_path, item.src_member);
+    fs.unlinkSync(from_path);
+
+    return;
+  }
+
+
 
   public register(context: vscode.ExtensionContext): any {
     // setup
@@ -327,6 +389,16 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     
     vscode.commands.registerCommand('obi.source-filter.change-source-description', async (item: SourceListItem) => {
       await this.change_source_description(item);
+      this.refresh();
+    });
+    
+    vscode.commands.registerCommand('obi.source-filter.rename-source-member', async (item: SourceListItem) => {
+      await this.rename_source_member(item);
+      this.refresh();
+    });
+    
+    vscode.commands.registerCommand('obi.source-filter.delete-source-member', async (item: SourceListItem) => {
+      await this.delete_source_member(item);
       this.refresh();
     });
     
@@ -392,6 +464,7 @@ export class SourceListItem extends vscode.TreeItem {
   public readonly src_file: string | undefined;
   public readonly src_member: string | undefined;
   public readonly list_level: string;
+  public readonly member_path: string | undefined;
   //public readonly contextValue?: string | undefined;
 
   constructor(
@@ -427,7 +500,7 @@ export class SourceListItem extends vscode.TreeItem {
     this.description = description;
     this.source_list = source_list;
     this.list_level = list_level;
-    let member_path = '';
+    let member_file_path = '';
     let icon = 'edit.svg';
 
     this.contextValue = list_level;
@@ -445,8 +518,9 @@ export class SourceListItem extends vscode.TreeItem {
       return;
 
     if (list_level == 'source-member') {
-      member_path = path.join(AppConfig.get_app_config().general['source-dir']||'src', this.src_lib || '', this.src_file || '', this.src_member || '');
-      if (!DirTool.file_exists(path.join(ws, member_path)))
+      this.member_path = path.join(AppConfig.get_app_config().general['source-dir']||'src', this.src_lib || '', this.src_file || '');
+      member_file_path = path.join(this.member_path, this.src_member || '');
+      if (!DirTool.file_exists(path.join(ws, member_file_path)))
         icon = 'error.svg';
     }
 
@@ -464,7 +538,7 @@ export class SourceListItem extends vscode.TreeItem {
       command: 'vscode.open',
       title: 'Open source member',
       arguments: [
-        DirTool.get_file_URI(member_path)
+        DirTool.get_file_URI(member_file_path)
       ]
     }
   }
