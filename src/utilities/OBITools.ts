@@ -428,7 +428,7 @@ export class OBITools {
       fs.mkdirSync(path.join(ws, 'log'), { recursive: true});
     }
 
-    const files = await DirTool.get_all_files_in_dir2(ext_ws, 'etc', ['toml', '.py']);
+    const files = await DirTool.get_all_files_in_dir2(ext_ws, 'etc', ['toml', '.py', '.json']);
     if (!files)
       return;
 

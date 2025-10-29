@@ -269,7 +269,7 @@ export function activate(context: vscode.ExtensionContext) {
 			const src_dir: string = config.general['source-dir'] || 'src';
 			let source_path: string = item.fsPath.replace(Workspace.get_workspace(), '')
 			source_path = source_path.replace(src_dir, '');
-			source_path = source_path.replace('\\', '/');
+			source_path = source_path.replace(/\\/g, '/');
 			source_path = source_path.replace(/^\/+/, '');
 
 			if (!DirTool.file_exists(path.join(Workspace.get_workspace(), src_dir, source_path))) {
