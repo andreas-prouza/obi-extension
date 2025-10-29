@@ -1,3 +1,8 @@
+## [0.4.5]
+
+* Refresh source list in background
+
+
 ## [0.4.4]
 
 * Bugfix: Windows FS

@@ -54,6 +54,8 @@ export class OBISourceDependency {
   private constructor(panel: WebviewPanel, extensionUri: Uri) {
     this._panel = panel;
 
+    LocalSourceList.load_source_list();
+    
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
     // the panel or when the panel is closed programmatically)
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
