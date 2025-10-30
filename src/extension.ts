@@ -88,6 +88,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const config = AppConfig.get_app_config();
 	if (config.attributes_missing()) {
 		vscode.window.showErrorMessage("Config is not valid!");
+		vscode.commands.executeCommand('obi.controller.config');
 		return;
 	}
 

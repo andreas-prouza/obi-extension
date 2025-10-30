@@ -14,6 +14,9 @@
   <vscode-panel-view id="view-1">
     <section>
 
+
+      <h3>{{ global_stuff['get_text']('Connection settings') | safe }}</h3>
+
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|connection|remote-host" placeholder="IBM i host (or IP)"
         value="{{ app_config['connection']['remote-host'] }}">{{ global_stuff['get_text']('Remote host') | safe }}</vscode-text-field>
 
@@ -61,6 +64,8 @@
       <hr />
       <br />
 
+      <h3>{{ global_stuff['get_text']('Project locations') | safe }}</h3>
+
       <vscode-text-field class="{{ class_prefix }}_save_app type_text" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|general|cloud-ws-ssh-remote-host" size="80" placeholder="andy-workspace.code.prouza.dev"
         value="{{ app_config['general']['cloud-ws-ssh-remote-host'] }}">{{ global_stuff['get_text']('Cloud workspace host (ℹ️ only when using remote workspaces)') | safe }}</vscode-text-field>
       <br />
@@ -70,9 +75,14 @@
         value="{{ app_config['general']['local-base-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Local path') | safe }}</vscode-text-field>
       <br />
       <br />
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-1" 
+      <vscode-text-field 
+        class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" 
+        panel="{{ class_prefix }}_tab-1" 
         id="{{ class_prefix }}|general|remote-base-dir" size="80" placeholder="path-in-ifs"
-        value="{{ app_config['general']['remote-base-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Remote ifs path') | safe }}</vscode-text-field>
+        title="{{ global_stuff['get_text']('Tip: Remote ifs path') | safe }}"
+        value="{{ app_config['general']['remote-base-dir'] | replace('"$HOME"', '$HOME' ) }}">
+        💡 {{ global_stuff['get_text']('Remote ifs path') | safe }}
+      </vscode-text-field>
       <br />
       <br />
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|general|source-dir" placeholder="src"
@@ -89,12 +99,31 @@
       <hr />
       <br />
 
-      <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|general|local-obi-dir" size="80" placeholder="/home/prouza/project/obi"
-        value="{{ app_config['general']['local-obi-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Local OBI path (if exist)') | safe }}</vscode-text-field>
+      
+      <h3>{{ global_stuff['get_text']('External OBI module') | safe }} <a href="https://github.com/andreas-prouza/obi" target="_blank">🔗</a></h3>
+
+      <vscode-text-field 
+        title="{{ global_stuff['get_text']('Tip: Local OBI path') | safe }}"
+        class="{{ class_prefix }}_save_app" 
+        panel="{{ class_prefix }}_tab-1" 
+        id="{{ class_prefix }}|general|local-obi-dir" 
+        size="80" 
+        placeholder="/home/prouza/project/obi"
+        value="{{ app_config['general']['local-obi-dir'] | replace('"$HOME"', '$HOME' ) }}">
+        💡 {{ global_stuff['get_text']('Local OBI path (if exist)') | safe }}
+      </vscode-text-field>
       <br />
       <br />
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|general|remote-obi-dir" size="80" placeholder="/home/prouza/project/obi"
-        value="{{ app_config['general']['remote-obi-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Remote OBI path') | safe }}</vscode-text-field>
+      <vscode-text-field 
+        title="{{ global_stuff['get_text']('Tip: Remote OBI path') | safe }}" 
+        class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" 
+        panel="{{ class_prefix }}_tab-1" 
+        id="{{ class_prefix }}|general|remote-obi-dir" 
+        size="80" 
+        placeholder="/home/prouza/project/obi"
+        value="{{ app_config['general']['remote-obi-dir'] | replace('"$HOME"', '$HOME' ) }}">
+        💡 {{ global_stuff['get_text']('Remote OBI path') | safe }}
+      </vscode-text-field>
     </section>
   </vscode-panel-view>
 

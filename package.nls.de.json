@@ -34,13 +34,15 @@
   "User (is only available in user config)": "Benutzer (kann nur in der Benutzer Konfiguration gesetzt werden)",
   "Password (is only available in user config)": "Passwort (kann nur in der Benutzer Konfiguration gesetzt werden)",
   "Tilde (~) and env vars (e.g. $HOME) are not supported for paths.": "Tilde (~) und umgebungsvariablen (z.B. $HOME) werden im Pfad nicht unterstützt.",
-  "Local path": "Lokaler Pfad",
-  "Remote ifs path": "Remote IFS Pfad",
+  "Local path": "Lokaler Pfad ('.' = aktueller Workspace)",
+  "Remote ifs path": "Auf IBM i: Remote IFS Pfad",
+  "Tip: Remote ifs path": "Pfad im IFS auf dem Remote IBM i System, wo die Projektquellen gespeichert werden sollen. \nBeispiel: /home/myuser/myproject",
   "Source directory": "Source Verzeichnis",
   "Check remote sources on start up": "Sourcen auf IBM i beim Starten prüfen",
   "Use remote OBI (show changes)": "Verwende OBI auf IBM i (Anzeige Änderungen)",
-  "Local OBI path (if exist)": "OBI Pfad lokal (falls vorhanden)",
+  "Local OBI path (if exist)": "OBI Pfad lokal (optional)",
   "Remote OBI path": "OBI Pfad auf IBM i",
+  "Tip: Remote OBI path": "Pfad im IFS zu OBI auf dem Remote IBM i System. \nOBI wird benötigt, um die Build-Befehle der IBM i auszuführen. \nBeispiel: /apps/obi",
   "General": "General",
   "Individual language settings": "Individuelle Sprach-Einstellungen",
   "Add language": "Sprache hinzufügen",
@@ -124,5 +126,8 @@
   "Source type": "Source Typ",
   "Command IDs (separated by new line)": "Befehl IDs (getrennt mit Zeilenumbruch)",
   "Variable": "Variable",
-  "Value": "Wert"
+  "Value": "Wert",
+  "Connection settings": "Verbindungseinstellungen",
+  "Project locations": "Projekt Pfade",
+  "External OBI module": "Externes OBI Modul"
 }

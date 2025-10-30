@@ -74,7 +74,7 @@ export class DirTool {
     for (const file of files) {
 
       if (file.isDirectory()) {
-        call_list.push(DirTool.get_all_files_in_dir2(rootdir, path.join(dir, file.name), file_extensions));
+        call_list.push(DirTool.get_all_files_in_dir2(rootdir, path.join(dir, file.name), file_extensions, replace_backslash));
       } else {
 
         if (file_extensions.includes(file.name.split('.').pop())) {

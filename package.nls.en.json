@@ -34,13 +34,15 @@
   "User (is only available in user config)": "User (is only available in user config)",
   "Password (is only available in user config)": "Password (is only available in user config)",
   "Tilde (~) and env vars (e.g. $HOME) are not supported for paths.": "Tilde (~) and env vars (e.g. $HOME) are not supported for paths.",
-  "Local path": "Local path",
-  "Remote ifs path": "Remote ifs path",
+  "Local path": "Local path ('.' = current workspace",
+  "Remote ifs path": "On IBM i: remote ifs path",
+  "Tip: Remote ifs path": "Path in the IFS on the remote IBM i system where the project sources should be stored. \nExample: /home/myuser/myproject",
   "Source directory": "Source directory",
   "Check remote sources on start up": "Check remote sources on start up",
   "Use remote OBI (show changes)": "Use remote OBI (show changes)",
-  "Local OBI path (if exist)": "Local OBI path (if exist)",
+  "Local OBI path (if exist)": "Local OBI path (optional)",
   "Remote OBI path": "Remote OBI path",
+  "Tip: Remote OBI path": "Path test in the IFS to OBI on the remote IBM i system. \nWe need OBI on our IBM i to run the build commands. \nExample: /apps/obi",
   "General": "General",
   "Individual language settings": "Individual language settings",
   "Add language": "Add language",
@@ -124,5 +126,8 @@
   "Source type": "Source type",
   "Command IDs (separated by new line)": "Command IDs (separated by new line)",
   "Variable": "Variable",
-  "Value": "Value"
+  "Value": "Value",
+  "Connection settings": "Connection settings",
+  "Project locations": "Project locations",
+  "External OBI module": "External OBI module"
 }

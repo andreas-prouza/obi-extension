@@ -1,3 +1,15 @@
+## [0.4.7]
+
+* Added tooltips in configurations
+* Automatically open config if not valid/completed
+* Bugfix: Windows path
+
+
+## [0.4.6]
+
+* Redeploy because of errors in MS Marketplace
+
+
 ## [0.4.5]
 
 * Refresh source list in background
