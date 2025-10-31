@@ -1,3 +1,8 @@
+## [0.4.8]
+
+* Bugfix: Reset object list
+
+
 ## [0.4.7]
 
 * Added tooltips in configurations

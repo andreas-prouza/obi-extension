@@ -456,11 +456,11 @@ export class OBICommands {
         const source_name: string = Object.keys(source)[0];
         json_dict[source_name.replaceAll('\\', '/')] = source[source_name];
       });
-      DirTool.write_json(join(Workspace.get_workspace(), object_list_file), json_dict);
+      DirTool.write_json(path.join(Workspace.get_workspace(), object_list_file), json_dict);
       vscode.window.showInformationMessage(`Object list created`);
 
-      await SSH_Tasks.transfer_files([object_list_file]);
-      vscode.window.showInformationMessage(`Object list transfered to IBM i`);
+      //await SSH_Tasks.transfer_files([object_list_file]);
+      //vscode.window.showInformationMessage(`Object list transfered to IBM i`);
     }
     catch (e: any) {
       vscode.window.showErrorMessage(e.message);
