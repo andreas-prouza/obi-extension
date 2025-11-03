@@ -107,7 +107,7 @@ export class DirTool {
    * @param file_extensions 
    * @returns 
    */
-  public static async get_all_files_in_dir3(rootdir:string, dir: string, file_extensions: string[]): Promise<source.IQualifiedSource[] | undefined> {
+  public static async get_all_files_in_dir3(rootdir:string, dir: string, file_extensions: string[]|undefined): Promise<source.IQualifiedSource[] | undefined> {
     
     if (!DirTool.dir_exists(path.join(rootdir, dir)))
       return undefined;
@@ -130,7 +130,7 @@ export class DirTool {
       if (file.isDirectory()) {
         call_list.push(DirTool.get_all_files_in_dir3(rootdir, path.join(dir, file.name), file_extensions));
       } else {
-        if (file_extensions.includes(file.name.split('.').pop())) {
+        if (file_extensions == undefined || file_extensions.includes(file.name.split('.').pop())) {
           const source: string = path.join(dir, file.name).replaceAll('\\', '/');
           const source_arr: string[] = source.split('/').reverse();
           const src_mbr = source_arr[0];

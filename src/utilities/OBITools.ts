@@ -1009,7 +1009,7 @@ export class OBITools {
 
   public static async get_filtered_sources_with_details(source_list_file: string): Promise<source.IQualifiedSource[]|undefined> {
 
-    const sources = await OBITools.get_local_sources();
+    const sources = await OBITools.get_local_sources(false);
     
     const source_filters: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, source_list_file)) || [];
 
@@ -1021,15 +1021,16 @@ export class OBITools {
 
 
 
-  public static async get_local_sources(): Promise<source.IQualifiedSource[]|undefined> {
+  public static async get_local_sources(filter_supported_types: boolean = true): Promise<source.IQualifiedSource[]|undefined> {
 
     const config = AppConfig.get_app_config();
     const source_dir = path.join(Workspace.get_workspace(), config.general['source-dir'] || 'src');
+    const supported_types = filter_supported_types ? (config.general['supported-object-types'] || ['pgm', 'file', 'srvpgm']) : undefined;
 
     const sources = await DirTool.get_all_files_in_dir3(
       source_dir,
       '.',
-      config.general['supported-object-types'] || ['pgm', 'file', 'srvpgm']
+      supported_types
     );
 
     return sources;
@@ -1113,6 +1114,9 @@ export class OBITools {
       const src_mbr = source['source-member'];
       const src_file = source['source-file'];
       const src_lib = source['source-lib'];
+
+      if (!src_lib || !src_file || !src_mbr)
+        continue;
 
       for (const source_filter of source_filters) {
         

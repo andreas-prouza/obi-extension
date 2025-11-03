@@ -1,3 +1,10 @@
+## [0.4.9]
+
+* List not supported file extensions
+* Keep source descriptions after rename
+* Bugfixes
+
+
 ## [0.4.8]
 
 * Bugfix: Reset object list
