@@ -23,6 +23,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
   private _onDidChangeTreeData: vscode.EventEmitter<SourceListItem | undefined | null | void> = new vscode.EventEmitter<SourceListItem | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<SourceListItem | undefined | null | void> = this._onDidChangeTreeData.event;
   public static source_lists: ISourceLists = {};
+  private items: SourceListItem[] = [];
 
 
   constructor(workspaceRoot: string | undefined) {
@@ -73,13 +74,16 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       //});
       SourceListProvider.source_lists[element] = OBITools.get_filtered_sources_with_details(element);
 
-      child.push(new SourceListItem(
+      const new_child = new SourceListItem(
         element.replaceAll('.json', ''),
         '',
         vscode.TreeItemCollapsibleState.Collapsed,
         element,
         'source-list'
-      ))
+      )
+
+      this.items.push(new_child);
+      child.push(new_child);
     }
 
     return Promise.resolve(child);
@@ -132,13 +136,12 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       }
 
       item = new SourceListItem(entry[level], description, collapsibleState, element.source_list, level, lib, file, member)
-
+      this.items.push(item);
       results.push(item);
     }
     return results;
 
   }
-
 
 
   refresh(): void {
@@ -226,28 +229,28 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
   // obi.source-filter.add-source-file
   async change_source_description(item: SourceListItem | vscode.Uri): Promise<void> {
 
+    const config: AppConfig = AppConfig.get_app_config();
     let lib: String = '';
     let file: String = '';
     let member: String = '';
     let source_path: string = '';
     let description: string = '';
 
+    const src_dir: string = config.general['source-dir'] || 'src';
+
     if (item instanceof SourceListItem) {
-      if (!item.src_lib || !item.src_file || !item.src_member) {
+      if (!item.member_path || !item.src_member) {
         throw new Error('Source member information missing');
       }
-      source_path = `${item.src_lib}/${item.src_file}(${item.label})`;
+      source_path = `${item.member_path}`;
+      source_path = source_path.replace(`${src_dir}/`, '');
+      member = item.src_member;
       description = typeof item.description === 'string' ? item.description : '';
     }
 
     if (item instanceof vscode.Uri) {
       
-      const config: AppConfig = AppConfig.get_app_config();
-      const src_dir: string = config.general['source-dir'] || 'src';
-      source_path = item.fsPath.replace(Workspace.get_workspace(), '')
-      source_path = source_path.replace(src_dir, '');
-      source_path = source_path.replace('\\', '/');
-      source_path = source_path.replace(/^\/+/, '');
+      source_path = OBITools.convert_local_filepath_2_obi_filepath(item.fsPath, true);
 
       const match = source_path.match(/^([^\/]+)\/([^\/]+)\/(.+)$/);
       if (!match) {
@@ -255,11 +258,12 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       }
       lib = match[1];
       file = match[2];
+      source_path = `${lib}/${file}`;
       member = match[3];
 
       const source_infos: source.ISourceInfos = await OBITools.get_source_infos();
-      if (source_infos[`${lib}/${file}/${member}`]) {
-        description = typeof source_infos[`${lib}/${file}/${member}`].description === 'string' ? source_infos[`${lib}/${file}/${member}`].description : '';
+      if (source_infos[`${source_path}/${member}`]) {
+        description = typeof source_infos[`${source_path}/${member}`].description === 'string' ? source_infos[`${source_path}/${member}`].description : '';
       }
     }
 
@@ -272,7 +276,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       throw new Error('Canceled by user. No source description provided');
     }
 
-    OBITools.update_source_infos(lib, file, member, new_description);
+    OBITools.update_source_infos(source_path, member, new_description);
 
     return;
   }
@@ -309,6 +313,12 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     const from_path = path.join(Workspace.get_workspace(), item.member_path, item.src_member);
     const to_path = path.join(Workspace.get_workspace(),item.member_path, new_name)
     fs.renameSync(from_path, to_path);
+
+    const source_infos: source.ISourceInfos = await OBITools.get_source_infos();
+    if (source_infos[`${item.member_path_obi}/${item.src_member}`]) {
+        const description: string = typeof source_infos[`${item.member_path_obi}/${item.src_member}`].description === 'string' ? source_infos[`${item.member_path_obi}/${item.src_member}`].description : '';
+        OBITools.update_source_infos(item.member_path_obi, new_name, description);
+    }
 
     return;
   }
@@ -422,7 +432,8 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
 
     // subscribe
-    context.subscriptions.push(tree);
+    context.subscriptions.push(tree);    
+
   }
 
 
@@ -465,6 +476,7 @@ export class SourceListItem extends vscode.TreeItem {
   public readonly src_member: string | undefined;
   public readonly list_level: string;
   public readonly member_path: string | undefined;
+  public readonly member_path_obi: string | undefined;
   //public readonly contextValue?: string | undefined;
 
   constructor(
@@ -518,7 +530,8 @@ export class SourceListItem extends vscode.TreeItem {
       return;
 
     if (list_level == 'source-member') {
-      this.member_path = path.join(AppConfig.get_app_config().general['source-dir']||'src', this.src_lib || '', this.src_file || '');
+      this.member_path_obi = path.join(this.src_lib || '', this.src_file || '');
+      this.member_path = path.join(AppConfig.get_app_config().general['source-dir']||'src', this.member_path_obi);
       member_file_path = path.join(this.member_path, this.src_member || '');
       if (!DirTool.file_exists(path.join(ws, member_file_path)))
         icon = 'error.svg';

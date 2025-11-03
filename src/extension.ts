@@ -206,8 +206,9 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider(OBIController.viewType, obi_controller_provider)
 	);
 
-
-	new SourceListProvider(rootPath).register(context);
+	// Register Source List Tree View
+	const sourceListProvider: SourceListProvider = new SourceListProvider(rootPath);
+	sourceListProvider.register(context);
 
 
 	if (config.general['check-remote-source-on-startup'] && config.general['check-remote-source-on-startup'] === true) {

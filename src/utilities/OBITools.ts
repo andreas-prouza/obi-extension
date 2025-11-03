@@ -1047,13 +1047,13 @@ export class OBITools {
   }
 
 
-  public static update_source_infos(lib: String, source_file: String, source_member: String, description: String): void {
+  public static update_source_infos(source_path: String, source_member: String, description: String): void {
 
     const config: AppConfig = AppConfig.get_app_config();
 
     const source_infos: source.ISourceInfos = OBITools.get_source_infos();
 
-    const full_name: string = `${lib}/${source_file}/${source_member}`;
+    const full_name: string = `${source_path}/${source_member}`;
 
     if (!(full_name in source_infos)) {
       source_infos[full_name] = {'description': ''};
@@ -1143,5 +1143,17 @@ export class OBITools {
   }
 
 
+  public static convert_local_filepath_2_obi_filepath(local_file_path: string, remove_src: boolean): string {
 
+    const config = AppConfig.get_app_config();
+    const src_dir: string = config.general['source-dir'] || 'src';
+
+    local_file_path = local_file_path.replace(Workspace.get_workspace(), '')
+    local_file_path = local_file_path.replace('\\', '/');
+    if (remove_src)
+      local_file_path = local_file_path.replace(`${src_dir}/`, '');
+    local_file_path = local_file_path.replace(/^\/+/, '');
+
+    return local_file_path;
+  }
 }
