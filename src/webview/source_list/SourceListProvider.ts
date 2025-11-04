@@ -239,11 +239,10 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     const src_dir: string = config.general['source-dir'] || 'src';
 
     if (item instanceof SourceListItem) {
-      if (!item.member_path || !item.src_member) {
+      if (!item.member_path_obi || !item.src_member) {
         throw new Error('Source member information missing');
       }
-      source_path = `${item.member_path}`;
-      source_path = source_path.replace(`${src_dir}/`, '');
+      source_path = item.member_path_obi;
       member = item.src_member;
       description = typeof item.description === 'string' ? item.description : '';
     }

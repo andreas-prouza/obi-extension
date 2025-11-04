@@ -1,3 +1,9 @@
+## [0.4.10]
+
+* Copy dummy source on init
+* Bugfix
+
+
 ## [0.4.9]
 
 * List not supported file extensions

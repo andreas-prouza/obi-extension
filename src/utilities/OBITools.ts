@@ -418,23 +418,20 @@ export class OBITools {
       return;
     }
 
-    const ws = path.join(Workspace.get_workspace(), '.obi');
-    const ext_ws = path.join(OBITools.ext_context.asAbsolutePath('.'), 'obi-media', '.obi');
-
-    if (!DirTool.dir_exists(path.join(ws, 'etc'))){
-      fs.mkdirSync(path.join(ws, 'etc'), { recursive: true});
-    }
-    if (!DirTool.dir_exists(path.join(ws, 'log'))){
-      fs.mkdirSync(path.join(ws, 'log'), { recursive: true});
-    }
-
-    const files = await DirTool.get_all_files_in_dir2(ext_ws, 'etc', ['toml', '.py', '.json']);
-    if (!files)
-      return;
+    const ws = Workspace.get_workspace();
+    const template_ws = path.join(OBITools.ext_context.asAbsolutePath('.'), 'obi-media');
 
     let copies: Promise<void>[] = [];
-    for (const file of files) {
-      copies.push(fs.copy(path.join(ext_ws, file), path.join(ws, file)));
+
+    const tmpDirs = await fs.readdir(template_ws, { withFileTypes: true });
+    for (const dirent of tmpDirs) {
+      const srcDir = path.join(template_ws, dirent.name);
+      const destDir = path.join(ws, dirent.name);
+      copies.push(fs.cp(srcDir, destDir, {
+        recursive: true,
+        force: false,         // don't overwrite existing files
+        errorOnExist: false,  // don't throw if file exists
+      }));
     }
 
     Promise.all(copies).then(() => {

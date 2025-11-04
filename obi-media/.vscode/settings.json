@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "*.rpg.pgm": "rpg",
+        "*.rpgle.pgm": "rpgle",
+        "*.rpgle.srvpgm": "rpgle",
+        "*.sqlrpgle.pgm": "rpgle",
+        "*.sqlrpgle.srvpgm": "rpgle",
+        "*.clle.srvpgm": "cl",
+        "*.clle.pgm": "cl",
+        "*.clp.pgm": "cl",
+        "*.sqltable.file": "sql",
+        "*.sqlview.file": "sql",
+        "*.sqlproc.file": "sql"
+    }
+}
