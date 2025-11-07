@@ -168,5 +168,6 @@
   "Source": "Source",
   "Connection settings": "Connection settings",
   "Project locations": "Project locations",
-  "External OBI module": "External OBI module"
+  "External OBI module": "External OBI module",
+  "Empty folder": "Show empty folders"
 }

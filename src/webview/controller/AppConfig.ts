@@ -329,16 +329,21 @@ export class AppConfig {
   }
 
 
-  public static self_check() {
+  public static self_check(): string {
 
     const config = AppConfig.get_app_config();
+    let error_messages: string = '';
     
     if (config.general['local-obi-dir'] && !DirTool.dir_exists(config.general['local-obi-dir']))
-      vscode.window.showErrorMessage(`Config error: local OBI location '${config.general['local-obi-dir']}' does not exist`);
-
-    if (config.general['local-obi-dir'] && !OBITools.get_local_obi_python_path())
-      vscode.window.showErrorMessage(`Local OBI error: Virtual environmentd is missing in '${config.general['local-obi-dir']}'. Have you run the setup script?`);
+      error_messages = `Config error: local OBI location '${config.general['local-obi-dir']}' does not exist`
     
+    if (config.general['local-obi-dir'] && DirTool.dir_exists(config.general['local-obi-dir']) && !OBITools.get_local_obi_python_path())
+      error_messages = `Local OBI error: Virtual environmentd is missing in '${config.general['local-obi-dir']}'. Have you run the setup script?`
+
+    if (error_messages.length > 0)
+      vscode.window.showErrorMessage(error_messages);
+
+    return error_messages;
   }
 
 

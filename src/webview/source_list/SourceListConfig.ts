@@ -167,7 +167,7 @@ export class SourceListConfig {
   }
 
 
-  private static add_filter(lib: string, file: string, member: string, regex: boolean) {
+  private static add_filter(lib: string, file: string, member: string, regex: boolean, show_empty_folders: boolean) {
 
     const json_file: string = path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, SourceListConfig.source_list_file);
     const sl: source.IQualifiedSource[] = DirTool.get_json(json_file) || [];
@@ -179,7 +179,7 @@ export class SourceListConfig {
       }
     }
 
-    sl.push({"source-lib": lib, "source-file": file, "source-member": member, 'use-regex': regex});
+    sl.push({"source-lib": lib, "source-file": file, "source-member": member, 'use-regex': regex, "show-empty-folders": show_empty_folders});
 
     DirTool.write_file(json_file, JSON.stringify(sl, undefined, 2));
   }

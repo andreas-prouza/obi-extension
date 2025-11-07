@@ -161,7 +161,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       throw new Error('Canceled by user. No source filter name provided');
 
 
-    const data: source.IQualifiedSource[] = [{ "source-lib": '*', "source-file": '*', 'source-member': '*', "use-regex": false }];
+    const data: source.IQualifiedSource[] = [{ "source-lib": '*', "source-file": '*', 'source-member': '*', "use-regex": false, "show-empty-folders": false }];
 
     DirTool.write_file(path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, `${source_list}.json`), JSON.stringify(data, undefined, 2));
 
@@ -386,8 +386,8 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     vscode.commands.registerCommand('obi.source-filter.add-source-member', async (item: SourceListItem) => {
       const source_member = await this.add_new_source_member(item);
       this.refresh();
-      if (source_member)
-        SourceListConfig.render(context, source_member);
+      //Why ??? if (source_member)
+      //  SourceListConfig.render(context, source_member);
     });
 
     vscode.commands.registerCommand('obi.source-filter.add-source-file', async (item: SourceListItem) => {

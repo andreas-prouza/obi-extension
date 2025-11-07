@@ -171,6 +171,8 @@ function main() {
 
   window.addEventListener('message', receive_message);
 
+  check_error_text();
+  
   // Show configuration loaded message in the UI instead of alert
   showAlert('Configuration reloaded.', 'success');
 }
@@ -423,6 +425,16 @@ function check_missing_hint() {
     missing_el.style.visibility = "visible";
   else
     missing_el.style.visibility = "hidden";
+}
+
+
+function check_error_text() {
+  let error_el: HTMLDivElement = document.getElementById('error_text') as HTMLDivElement;
+
+  if (error_el.getAttribute('show') === 'true')
+    error_el.style.visibility = "visible";
+  else
+    error_el.style.visibility = "hidden";
 }
 
 
@@ -746,6 +758,10 @@ function receive_message(e: MessageEvent) {
         build_summary_timestamp_label.innerHTML = ` (${e.data.build_summary_timestamp})`;
         build_summary_timestamp_label.style.visibility=visibility;
       }
+      break;
+    
+    case 'finished_saving_config':
+      showAlert('Configuration reloaded.', 'success');
       break;
   }
 }

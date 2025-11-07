@@ -17,6 +17,7 @@
 <body>
   
   <div id="still_missing"><br/><b>⚠️ {{ global_stuff['get_text']('There are still missing values ...') | safe }}</b><br/><br/></div>
+  <div id="error_text" class="error config_error" show="{%if error_text | length > 0 %}true{% else %}false{% endif %}"><b>⚠️ {{ error_text | safe }}</b></div>
 
   <div class="save-button-wrapper">
     <vscode-button class="save-button" id="save_config">{{  global_stuff['get_text']('Save') | safe }}</vscode-button>

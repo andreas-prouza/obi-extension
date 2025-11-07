@@ -82,6 +82,7 @@ export function activate(context: vscode.ExtensionContext) {
 	catch (e: any) {
 		self_check_ok = false;
 		vscode.window.showErrorMessage(e.message);
+		OBITools.reload_obi_extension_on_config_change();
 		return;
 	}
 
@@ -89,6 +90,7 @@ export function activate(context: vscode.ExtensionContext) {
 	if (config.attributes_missing()) {
 		vscode.window.showErrorMessage("Config is not valid!");
 		vscode.commands.executeCommand('obi.controller.config');
+		OBITools.reload_obi_extension_on_config_change();
 		return;
 	}
 

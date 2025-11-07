@@ -19,7 +19,7 @@ import { OBIStatus } from '../obi/OBIStatus';
 export class OBITools {
 
   public static ext_context?: vscode.ExtensionContext;
-  public static lang: LocaleText|undefined = undefined;
+  public static lang: LocaleText | undefined = undefined;
 
   public static check_remote_sources_status: OBIStatus = OBIStatus.READY;
   public static transfer_all_status: OBIStatus = OBIStatus.READY;
@@ -29,7 +29,7 @@ export class OBITools {
    * Self check of the extension
    */
   public static self_check() {
-    if (! vscode.workspace.workspaceFolders || !OBITools.ext_context) {
+    if (!vscode.workspace.workspaceFolders || !OBITools.ext_context) {
       vscode.window.showErrorMessage('No workspace is opened!');
       return;
     }
@@ -37,51 +37,51 @@ export class OBITools {
     const ws = Workspace.get_workspace();
     const ext_ws = path.join(OBITools.ext_context.asAbsolutePath('.'), 'obi-media');
     const current_version: string = vscode.extensions.getExtension('andreas-prouza.obi')?.packageJSON['version'];
-    let previous_version: string|undefined = OBITools.ext_context.workspaceState.get('obi.version');
+    let previous_version: string | undefined = OBITools.ext_context.workspaceState.get('obi.version');
     const config: AppConfig = AppConfig.get_app_config();
 
     if (config.general['local-base-dir'] == '/')
       throw Error("Root for 'local-base-dir' is not allowed!");
-    
+
     if (config.general['remote-base-dir'] == '/')
       throw Error("Root for 'remote-base-dir' is not allowed!");
-    
+
     if (config.general['local-obi-dir'] == '/')
       throw Error("Root for 'local-obi-dir' is not allowed!");
-    
+
     if (config.general['remote-obi-dir'] == '/')
       throw Error("Root for 'remote-obi-dir' is not allowed!");
 
 
-    if (!DirTool.dir_exists(path.join(ws, '.obi', 'log'))){
-      fs.mkdirSync(path.join(ws, '.obi', 'log'), { recursive: true});
+    if (!DirTool.dir_exists(path.join(ws, '.obi', 'log'))) {
+      fs.mkdirSync(path.join(ws, '.obi', 'log'), { recursive: true });
     }
-    if (!DirTool.dir_exists(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME))){
-      fs.mkdirSync(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME), { recursive: true});
+    if (!DirTool.dir_exists(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME))) {
+      fs.mkdirSync(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME), { recursive: true });
     }
-    if (!DirTool.dir_exists(path.join(ws, '.obi', 'tmp'))){
-      fs.mkdirSync(path.join(ws, '.obi', 'tmp'), { recursive: true});
+    if (!DirTool.dir_exists(path.join(ws, '.obi', 'tmp'))) {
+      fs.mkdirSync(path.join(ws, '.obi', 'tmp'), { recursive: true });
     }
-    if (!DirTool.file_exists(path.join(ws, config.general['source-infos']||'source-infos.json'))){
-      DirTool.write_file(path.join(ws, config.general['source-infos']||'source-infos.json'), '[]');
+    if (!DirTool.file_exists(path.join(ws, config.general['source-infos'] || 'source-infos.json'))) {
+      DirTool.write_file(path.join(ws, config.general['source-infos'] || 'source-infos.json'), '[]');
     }
-    if (!DirTool.file_exists(path.join(ws, config.general['dependency-list']||'dependency.json'))){
-      DirTool.write_file(path.join(ws, config.general['dependency-list']||'dependency.json'), '');
+    if (!DirTool.file_exists(path.join(ws, config.general['dependency-list'] || 'dependency.json'))) {
+      DirTool.write_file(path.join(ws, config.general['dependency-list'] || 'dependency.json'), '');
     }
-    if (!DirTool.file_exists(path.join(ws, config.general['compiled-object-list']||'object-build.json'))){
-      DirTool.write_file(path.join(ws, config.general['compiled-object-list']||'object-build.json'), '');
+    if (!DirTool.file_exists(path.join(ws, config.general['compiled-object-list'] || 'object-build.json'))) {
+      DirTool.write_file(path.join(ws, config.general['compiled-object-list'] || 'object-build.json'), '');
     }
 
-    if (!DirTool.dir_exists(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME))){
-      fs.mkdirSync(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME), { recursive: true});
+    if (!DirTool.dir_exists(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME))) {
+      fs.mkdirSync(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME), { recursive: true });
       fs.copyFileSync(path.join(ext_ws, Constants.SOURCE_FILTER_FOLDER_NAME, 'All sources.json'), path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME, 'All sources.json'));
     }
 
-    if (!DirTool.file_exists(path.join(ws, '.obi', 'etc', 'logger_config.py'))){
+    if (!DirTool.file_exists(path.join(ws, '.obi', 'etc', 'logger_config.py'))) {
       fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'logger_config.py'), path.join(ws, '.obi', 'etc', 'logger_config.py'));
     }
-    
-    if (!DirTool.file_exists(path.join(ws, '.obi', 'etc', 'constants.py'))){
+
+    if (!DirTool.file_exists(path.join(ws, '.obi', 'etc', 'constants.py'))) {
       fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
     }
 
@@ -98,28 +98,28 @@ export class OBITools {
         previous_version_int = parseInt(major + minor + patch);
       }
     }
-    
+
     if (previous_version_int <= 208) {
-        fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
-        fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'logger_config.py'), path.join(ws, '.obi', 'etc', 'logger_config.py'));
+      fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
+      fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'logger_config.py'), path.join(ws, '.obi', 'etc', 'logger_config.py'));
     }
     if (previous_version_int <= 221) {
-        let config = AppConfig.get_project_app_config(Workspace.get_workspace_uri());
-        config.general['compiled-object-list'] = Constants.COMPILED_OBJECT_LIST;
-        config.general['remote-source-list'] = Constants.REMOTE_SOURCE_LIST;
-        config.general['source-list'] = Constants.SOURCE_LIST;
-        config.general['dependency-list'] = Constants.DEPENDENCY_LIST;
-        const toml_file = path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_FILE);
-        DirTool.write_toml(toml_file, config);
-        AppConfig.reset();
+      let config = AppConfig.get_project_app_config(Workspace.get_workspace_uri());
+      config.general['compiled-object-list'] = Constants.COMPILED_OBJECT_LIST;
+      config.general['remote-source-list'] = Constants.REMOTE_SOURCE_LIST;
+      config.general['source-list'] = Constants.SOURCE_LIST;
+      config.general['dependency-list'] = Constants.DEPENDENCY_LIST;
+      const toml_file = path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_FILE);
+      DirTool.write_toml(toml_file, config);
+      AppConfig.reset();
     }
     if (previous_version_int <= 324) {
-        fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
+      fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
     }
 
     OBITools.ext_context.workspaceState.update('obi.version', current_version);
 
-    const content: string|undefined = DirTool.get_file_content(path.join(Workspace.get_workspace(), config.general['dependency-list'] || Constants.DEPENDENCY_LIST))
+    const content: string | undefined = DirTool.get_file_content(path.join(Workspace.get_workspace(), config.general['dependency-list'] || Constants.DEPENDENCY_LIST))
     if (!content || content.length == 0) {
       vscode.window.showWarningMessage('Missing source dependencies');
     }
@@ -135,13 +135,13 @@ export class OBITools {
 
 
 
-  public static get_local_obi_python_path(): string|undefined {
+  public static get_local_obi_python_path(): string | undefined {
 
     const config = AppConfig.get_app_config();
-    
+
     if (!config.general['local-obi-dir'])
       return undefined;
-    
+
     let venv_bin = path.join('venv', 'bin', 'python');
     if (process.platform == 'win32')
       venv_bin = path.join('venv', 'Scripts', 'python.exe');
@@ -149,7 +149,7 @@ export class OBITools {
     const local_obi_python: string = path.join(config.general['local-obi-dir'], venv_bin);
 
     logger.info(`Check OBI path ${local_obi_python}: ${DirTool.file_exists(local_obi_python)}`);
-    if (! DirTool.file_exists(local_obi_python))
+    if (!DirTool.file_exists(local_obi_python))
       return undefined;
 
     return local_obi_python;
@@ -158,13 +158,13 @@ export class OBITools {
 
 
 
-  public static async get_remote_obi_python_path(): Promise<string|undefined> {
+  public static async get_remote_obi_python_path(): Promise<string | undefined> {
 
     const config = AppConfig.get_app_config();
-    
+
     if (!config.general['remote-obi-dir'])
       return undefined;
-    
+
     const remote_obi_python: string = `${config.general['remote-obi-dir']}/venv/bin/python`;
 
     return remote_obi_python;
@@ -220,7 +220,7 @@ export class OBITools {
         }
         vscode.window.showInformationMessage(`/home/$USER.bashrc created.`);
         return true;
-      }
+    }
 
     return false;
 
@@ -266,23 +266,23 @@ export class OBITools {
   public static async check_remote_basics(): Promise<boolean> {
 
     const config = AppConfig.get_app_config();
-    const remote_base_dir: string|undefined = config.general['remote-base-dir'];
-    const remote_obi_dir: string|undefined = config.general['remote-obi-dir'];
+    const remote_base_dir: string | undefined = config.general['remote-base-dir'];
+    const remote_obi_dir: string | undefined = config.general['remote-obi-dir'];
     const remote_obi_python: string = `${config.general['remote-obi-dir']}/venv/bin/python`;
 
     let check: boolean;
 
-    if (!remote_base_dir || ! remote_obi_dir)
+    if (!remote_base_dir || !remote_obi_dir)
       throw Error(`Missing 'remote_base_dir' or 'remote_obi_dir'`);
 
     if (!config.general['source-dir'])
       return false;
 
     check = await SSH_Tasks.check_remote_paths([
-      `${remote_base_dir}/${config.general['source-dir']}`, 
+      `${remote_base_dir}/${config.general['source-dir']}`,
       `${remote_base_dir}/${Constants.OBI_APP_CONFIG_FILE}`,
       remote_obi_python
-      ]);
+    ]);
     if (!check)
       return false;
 
@@ -300,16 +300,16 @@ export class OBITools {
     }
 
     OBITools.check_remote_sources_status = OBIStatus.IN_PROCESS;
-    let result:boolean = false;
+    let result: boolean = false;
 
     try {
       result = await OBITools.process_check_remote_sources();
     }
-    catch(e: any) {
+    catch (e: any) {
       logger.error(e);
       vscode.window.showErrorMessage('Error occured during remote source check');
     }
-    
+
     OBITools.check_remote_sources_status = OBIStatus.READY;
 
     return result;
@@ -328,70 +328,70 @@ export class OBITools {
     const result = await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
       title: `Remote source check`,
-    }, 
-    async progress => {
+    },
+      async progress => {
 
-      progress.report({
-        message: `Check remote sources`
-      });
+        progress.report({
+          message: `Check remote sources`
+        });
 
-      if (!await OBITools.check_remote()) {
-        return false;
-      }
-
-      progress.report({
-        message: `Get remote source hashes`
-      });
-
-      await OBICommands.get_remote_source_list();
-      const remote_source_list: source.ISource = DirTool.get_json(path.join(ws, config.general['remote-source-list']));
-      
-      progress.report({
-        message: `Get local source hashes`
-      });
-
-      const current_hash_list = await OBITools.retrieve_current_source_hashes();
-
-      progress.report({
-        message: `Compare remote vs. local`
-      });
-
-      const changed_sources: source.ISourceList = await OBITools.compare_source_change(current_hash_list, remote_source_list);
-      const all_sources: string[] = [...changed_sources['changed-sources'], ...changed_sources['new-objects']];
-
-      if (all_sources.length) {
-        const answer = await vscode.window.showErrorMessage(`${all_sources.length} changed sources. Do you want to transfer to remote?\n\n${all_sources.slice(0, 5).join('\n')}`, { modal: true }, ...['Yes', 'No']);
-        switch (answer) {
-          case 'No':
-            return false;
-          case undefined: // Canceled
-            return false;
-          case 'Yes':
-            await SSH_Tasks.transferSources(all_sources);
-            vscode.window.showInformationMessage(`Sources transfered to ${config.connection['remote-host']}`);
+        if (!await OBITools.check_remote()) {
+          return false;
         }
-      }
 
-      if (changed_sources['old-sources'] && changed_sources['old-sources'].length) {
-        const answer = await vscode.window.showErrorMessage(`${changed_sources['old-sources'].length} not needed sources on remote system.\nDo you want to delete them?\n\n${changed_sources['old-sources'].join('\n')}`, { modal: true }, ...['Yes', 'No']);
-        switch (answer) {
-          case 'No':
-            return false;
-          case undefined: // Canceled
-            return false;
-          case 'Yes':
-            await SSH_Tasks.delete_sources(changed_sources['old-sources']);
-            vscode.window.showInformationMessage(`Sources transfered to ${config.connection['remote-host']}`);
+        progress.report({
+          message: `Get remote source hashes`
+        });
+
+        await OBICommands.get_remote_source_list();
+        const remote_source_list: source.ISource = DirTool.get_json(path.join(ws, config.general['remote-source-list']));
+
+        progress.report({
+          message: `Get local source hashes`
+        });
+
+        const current_hash_list = await OBITools.retrieve_current_source_hashes();
+
+        progress.report({
+          message: `Compare remote vs. local`
+        });
+
+        const changed_sources: source.ISourceList = await OBITools.compare_source_change(current_hash_list, remote_source_list);
+        const all_sources: string[] = [...changed_sources['changed-sources'], ...changed_sources['new-objects']];
+
+        if (all_sources.length) {
+          const answer = await vscode.window.showErrorMessage(`${all_sources.length} changed sources. Do you want to transfer to remote?\n\n${all_sources.slice(0, 5).join('\n')}`, { modal: true }, ...['Yes', 'No']);
+          switch (answer) {
+            case 'No':
+              return false;
+            case undefined: // Canceled
+              return false;
+            case 'Yes':
+              await SSH_Tasks.transferSources(all_sources);
+              vscode.window.showInformationMessage(`Sources transfered to ${config.connection['remote-host']}`);
+          }
         }
-      }
-      vscode.window.showInformationMessage('Remote source check finished');
-      return true;
-    })
+
+        if (changed_sources['old-sources'] && changed_sources['old-sources'].length) {
+          const answer = await vscode.window.showErrorMessage(`${changed_sources['old-sources'].length} not needed sources on remote system.\nDo you want to delete them?\n\n${changed_sources['old-sources'].join('\n')}`, { modal: true }, ...['Yes', 'No']);
+          switch (answer) {
+            case 'No':
+              return false;
+            case undefined: // Canceled
+              return false;
+            case 'Yes':
+              await SSH_Tasks.delete_sources(changed_sources['old-sources']);
+              vscode.window.showInformationMessage(`Sources transfered to ${config.connection['remote-host']}`);
+          }
+        }
+        vscode.window.showInformationMessage('Remote source check finished');
+        return true;
+      })
 
     return result;
   }
 
-  
+
   public static contains_obi_project(): boolean {
 
     if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length == 0) {
@@ -412,8 +412,8 @@ export class OBITools {
 
 
   public static async initialize_folder(): Promise<void> {
-    
-    if (! vscode.workspace.workspaceFolders || !OBITools.ext_context) {
+
+    if (!vscode.workspace.workspaceFolders || !OBITools.ext_context) {
       vscode.window.showErrorMessage('No workspace is opened!');
       return;
     }
@@ -438,21 +438,21 @@ export class OBITools {
       vscode.window.showInformationMessage(`${copies.length} files copied`);
       vscode.commands.executeCommand("workbench.action.reloadWindow");
     })
-    .catch((reason: Error) => {
-      vscode.window.showErrorMessage(reason.message);
-    });
+      .catch((reason: Error) => {
+        vscode.window.showErrorMessage(reason.message);
+      });
 
   }
 
 
 
-  public static get_global_stuff(webview : vscode.Webview, extensionUri: vscode.Uri) {
+  public static get_global_stuff(webview: vscode.Webview, extensionUri: vscode.Uri) {
 
     const styleUri = getUri(webview, extensionUri, ["asserts/css", "style.css"]);
 
     const asserts_uri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'asserts'));
     const nonce = getNonce();
-    
+
     let theme_mode = 'light';
     if (vscode.window.activeColorTheme.kind == vscode.ColorThemeKind.Dark)
       theme_mode = 'dark';
@@ -473,12 +473,12 @@ export class OBITools {
 
 
 
-  public static override_dict(from_dict:{}, to_dict:{}): any {
+  public static override_dict(from_dict: {}, to_dict: {}): any {
     if (to_dict == undefined)
       to_dict = {};
 
     for (let [k, v] of Object.entries(from_dict)) {
-      if (typeof v==='object' && v!==null && to_dict[k] && !(v instanceof Array) && !(v instanceof Date))
+      if (typeof v === 'object' && v !== null && to_dict[k] && !(v instanceof Array) && !(v instanceof Date))
         v = OBITools.override_dict(from_dict[k], to_dict[k]);
 
       if (v == undefined)
@@ -497,8 +497,8 @@ export class OBITools {
 
 
 
-  public static get_compile_list(workspaceUri: vscode.Uri): {}|undefined {
-    
+  public static get_compile_list(workspaceUri: vscode.Uri): {} | undefined {
+
     if (AppConfig.attributes_missing())
       return undefined;
 
@@ -507,9 +507,9 @@ export class OBITools {
       vscode.window.showErrorMessage('OBI config is invalid');
       throw Error('OBI config is invalid');
     }
-      
+
     const file_path: string = path.join(workspaceUri.fsPath, config.general['compile-list']);
-    
+
     if (!DirTool.file_exists(file_path))
       return undefined;
 
@@ -517,7 +517,7 @@ export class OBITools {
     // Converting to JSON 
     const compile_list = JSON.parse(compile_list_string);
 
-    if (typeof compile_list !='object' || compile_list==null || (compile_list instanceof Array) || (compile_list instanceof Date))
+    if (typeof compile_list != 'object' || compile_list == null || (compile_list instanceof Array) || (compile_list instanceof Date))
       return undefined;
 
     if (!compile_list['compiles'] || !compile_list['timestamp'])
@@ -533,12 +533,12 @@ export class OBITools {
 
     let sources: source.SourceCompileList[] = [];
 
-    const compile_list: {}|undefined = OBITools.get_compile_list(Workspace.get_workspace_uri());
+    const compile_list: {} | undefined = OBITools.get_compile_list(Workspace.get_workspace_uri());
 
     if (!compile_list || !('compiles' in compile_list))
       return sources;
 
-    for (const level_item of (compile_list['compiles'] as any) ) {
+    for (const level_item of (compile_list['compiles'] as any)) {
       for (const source of level_item['sources']) {
         sources.push(source);
       }
@@ -554,12 +554,12 @@ export class OBITools {
     let sources: string[] = [];
     let need_2_build: boolean = false;
 
-    const compile_list: {}|undefined = OBITools.get_compile_list(Workspace.get_workspace_uri());
+    const compile_list: {} | undefined = OBITools.get_compile_list(Workspace.get_workspace_uri());
 
     if (!compile_list || !('compiles' in compile_list))
       return sources;
 
-    for (const level_item of (compile_list['compiles'] as any) ) {
+    for (const level_item of (compile_list['compiles'] as any)) {
       for (const source of level_item['sources']) {
         need_2_build = false;
         for (const cmd of source['cmds']) {
@@ -580,13 +580,13 @@ export class OBITools {
 
 
   public static is_compile_list_completed(workspaceUri: vscode.Uri): boolean {
-    
-    const compile_list: {}|undefined = OBITools.get_compile_list(workspaceUri);
+
+    const compile_list: {} | undefined = OBITools.get_compile_list(workspaceUri);
 
     if (!compile_list || !('compiles' in compile_list))
       return false;
 
-    for (const level_item of (compile_list['compiles'] as any) ) {
+    for (const level_item of (compile_list['compiles'] as any)) {
       for (const source of level_item['sources']) {
         for (const cmd of source['cmds']) {
           if (cmd['status'] != 'success')
@@ -601,13 +601,13 @@ export class OBITools {
 
 
 
-  public static get_source_hash_list(workspace:string): source.ISource | undefined {
+  public static get_source_hash_list(workspace: string): source.ISource | undefined {
 
     const config = AppConfig.get_app_config();
     if (!config.general['compiled-object-list'])
       return undefined
-    
-    const file:string = path.join(workspace, config.general['compiled-object-list'])
+
+    const file: string = path.join(workspace, config.general['compiled-object-list'])
 
     return DirTool.get_json(file)
 
@@ -621,7 +621,7 @@ export class OBITools {
     const current_hash_list = await OBITools.retrieve_current_source_hashes();
     const t1 = performance.now();
     logger.info(`1. It took ${t1 - t0} milliseconds.`);
-    
+
     const t2 = performance.now();
     const changed_sources: source.ISourceList = await OBITools.compare_source_change(current_hash_list);
     const t3 = performance.now();
@@ -632,22 +632,22 @@ export class OBITools {
 
 
 
-  public static get_dependency_list(): {['source']: string[]} {
-    
+  public static get_dependency_list(): { ['source']: string[] } {
+
     const config = AppConfig.get_app_config();
-    const dependency_list: {['source']: string[]} = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['dependency-list'])) || {};
+    const dependency_list: { ['source']: string[] } = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['dependency-list'])) || {};
     return dependency_list;
   }
-  
 
 
-  public static save_dependency_list(dependency_list: {['source']: string[]}): void {
-    
+
+  public static save_dependency_list(dependency_list: { ['source']: string[] }): void {
+
     const config = AppConfig.get_app_config();
     DirTool.write_json(path.join(Workspace.get_workspace(), config.general['dependency-list']), dependency_list);
   }
 
-  
+
 
   public static get_dependend_sources(changed_sources: source.ISourceList): string[] {
 
@@ -656,9 +656,9 @@ export class OBITools {
 
     const all_sources: string[] = Object.assign([], changed_sources['changed-sources'], changed_sources['new-objects']);
 
-    const dependency_list: {['source']: string[]} = OBITools.get_dependency_list();
+    const dependency_list: { ['source']: string[] } = OBITools.get_dependency_list();
     for (const [k, v] of Object.entries(dependency_list)) {
-      for (let i=0; i<all_sources.length; i++) {
+      for (let i = 0; i < all_sources.length; i++) {
         if (v.includes(all_sources[i]) && !all_sources.includes(k)) {
           dependend_sources.push(k);
           break;
@@ -679,13 +679,13 @@ export class OBITools {
 
     logger.info('Get changed sources');
     let changed_sources: source.ISourceList = {
-        "new-objects": [],
-        "changed-sources": [source||''],
-        "old-sources": []
-      }
+      "new-objects": [],
+      "changed-sources": [source || ''],
+      "old-sources": []
+    }
     if (!source)
       changed_sources = await OBITools.get_changed_sources();
-      
+
     logger.info('Get dependend sources');
     const dependend_sources: string[] = OBITools.get_dependend_sources(changed_sources);
 
@@ -700,7 +700,7 @@ export class OBITools {
 
 
 
-  public static async compare_source_change(results: source.ISource[], last_source_hashes?: source.ISource|undefined): Promise<source.ISourceList> {
+  public static async compare_source_change(results: source.ISource[], last_source_hashes?: source.ISource | undefined): Promise<source.ISourceList> {
 
     // Get all sources which are new or have changed
     if (!last_source_hashes)
@@ -727,19 +727,19 @@ export class OBITools {
     logger.info(`Start check_source_change_item: It took ${t7 - t6} milliseconds.`);
 
     //----
-/*
-    let promise_list2: Promise<string|undefined>[] = [];
-
-    // Check for old sources
-    const t4 = performance.now();
-  
-    for (const k in last_source_hashes) {
-      promise_list2.push(OBITools.check_old_source_item(k, results));
-    };
-
-    const t5 = performance.now();
-    logger.info(`Start check_old_source_item: It took ${t5 - t4} milliseconds.`);
-  */
+    /*
+        let promise_list2: Promise<string|undefined>[] = [];
+    
+        // Check for old sources
+        const t4 = performance.now();
+      
+        for (const k in last_source_hashes) {
+          promise_list2.push(OBITools.check_old_source_item(k, results));
+        };
+    
+        const t5 = performance.now();
+        logger.info(`Start check_old_source_item: It took ${t5 - t4} milliseconds.`);
+      */
 
     //----------------------------------------
     // Then get the results
@@ -748,7 +748,7 @@ export class OBITools {
     const all_promises = await Promise.all(promise_list);
     const t1 = performance.now();
     logger.info(`Change check: It took ${t1 - t0} milliseconds.`);
-    
+
     all_promises.map((source_item_list: source.ISourceList) => {
       if (source_item_list['changed-sources'].length > 0)
         changed_sources.push(source_item_list['changed-sources'][0]);
@@ -757,17 +757,17 @@ export class OBITools {
     });
 
     //----
-/*
-    const t2 = performance.now();
-    const all_promises2 = await Promise.all(promise_list2);
-    const t3 = performance.now();
-    logger.info(`Old check: It took ${t3 - t2} milliseconds.`);
-
-    all_promises2.map((source_item: string|undefined) => {
-      if (source_item)
-        old_sources.push(source_item);
-    });
-*/
+    /*
+        const t2 = performance.now();
+        const all_promises2 = await Promise.all(promise_list2);
+        const t3 = performance.now();
+        logger.info(`Old check: It took ${t3 - t2} milliseconds.`);
+    
+        all_promises2.map((source_item: string|undefined) => {
+          if (source_item)
+            old_sources.push(source_item);
+        });
+    */
 
     logger.info(`new_sources: ${new_sources.length}, changed-sources: ${changed_sources.length}`);
 
@@ -780,16 +780,16 @@ export class OBITools {
 
 
 
-  private static async check_old_source_item(source_from_list: string, current_sources: source.ISource[]): Promise<string|undefined> {
+  private static async check_old_source_item(source_from_list: string, current_sources: source.ISource[]): Promise<string | undefined> {
 
-    let found =false;
+    let found = false;
     current_sources.map((source_item: source.ISource) => {
-      if (source_item[source_from_list]){
+      if (source_item[source_from_list]) {
         found = true;
         return;
       }
     });
-    
+
     if (found)
       return source_from_list;
 
@@ -799,28 +799,28 @@ export class OBITools {
 
 
   private static async check_source_change_item(source_item: source.ISource, last_source_hashes: source.ISource): Promise<source.ISourceList> {
-    
+
     const source_name: string = Object.keys(source_item)[0];
     const k_source: string = source_name.replaceAll('\\', '/');
     const v_hash: string = source_item[source_name];
     let source_changed = true;
 
     if (!(k_source in last_source_hashes)) {
-      return {"changed-sources": [], "new-objects": [k_source]};
+      return { "changed-sources": [], "new-objects": [k_source] };
     }
 
     if (k_source in last_source_hashes) {
 
       if (last_source_hashes[k_source] == v_hash) {
         source_changed = false;
-        return {"changed-sources": [], "new-objects": []};
+        return { "changed-sources": [], "new-objects": [] };
       }
     }
 
     if (source_changed)
-      return {"changed-sources": [k_source], "new-objects": []};
+      return { "changed-sources": [k_source], "new-objects": [] };
 
-    return {"changed-sources": [], "new-objects": []};
+    return { "changed-sources": [], "new-objects": [] };
 
   }
 
@@ -843,7 +843,7 @@ export class OBITools {
     );
 
     let p2 = performance.now();
-    logger.info(`Duration: ${p2-p1} milliseconds`);
+    logger.info(`Duration: ${p2 - p1} milliseconds`);
 
     logger.info(`Get checksum of sources`);
 
@@ -853,11 +853,11 @@ export class OBITools {
 
     p1 = performance.now();
     if (sources) {
-      
+
       //OBITools.parallel(sources, )
       //... eher mit dowhile und Promise.all und immer dazuhängen ...
       for (const source of sources) {
-        counter ++;
+        counter++;
         checksum_calls.push(DirTool.checksumFile(source_dir, source));
         if (counter > max_threads) {
           const all_promises = await Promise.all(checksum_calls);
@@ -872,16 +872,16 @@ export class OBITools {
       if (all_promises)
         hash_values = [...hash_values, ...all_promises];
     }
-    
+
     p2 = performance.now();
-    logger.info(`In total ${hash_values.length} hash values. Duration: ${p2-p1}`);
+    logger.info(`In total ${hash_values.length} hash values. Duration: ${p2 - p1}`);
     return hash_values;
   }
 
 
 
 
-  public static async parallel(arr: [], fn: Function, threads:number = 10) {
+  public static async parallel(arr: [], fn: Function, threads: number = 10) {
     const result = [];
     while (arr.length) {
       const res = await Promise.all(arr.splice(0, threads).map(x => fn(x)));
@@ -892,7 +892,7 @@ export class OBITools {
 
 
 
-  public static get_remote_compiled_object_list(){
+  public static get_remote_compiled_object_list() {
 
     const config = AppConfig.get_app_config();
 
@@ -901,38 +901,38 @@ export class OBITools {
 
     const local_file: string = path.join(Workspace.get_workspace(), config.general['compiled-object-list']);
     const remote_file: string = `${config.general['remote-base-dir']}/${config.general['compiled-object-list']}`;
-    
+
     SSH_Tasks.getRemoteFile(local_file, remote_file);
   }
 
 
 
-  public static async transfer_project_folder(silent: boolean|undefined) {
-    
+  public static async transfer_project_folder(silent: boolean | undefined) {
+
     if (OBITools.transfer_all_status != OBIStatus.READY) {
       vscode.window.showErrorMessage('Transfer is already running');
       return;
     }
 
     OBITools.transfer_all_status = OBIStatus.IN_PROCESS;
-    let result:boolean = false;
+    let result: boolean = false;
 
     try {
       await OBITools.process_transfer_project_folder(silent);
     }
-    catch(e: any) {
+    catch (e: any) {
       logger.error(e);
       vscode.window.showErrorMessage('Error occured during transfer to remote');
     }
-    
+
     OBITools.transfer_all_status = OBIStatus.READY;
 
     return;
   }
 
 
-  
-  public static async process_transfer_project_folder(silent: boolean|undefined) {
+
+  public static async process_transfer_project_folder(silent: boolean | undefined) {
 
     const config = AppConfig.get_app_config();
 
@@ -941,10 +941,10 @@ export class OBITools {
 
     const local_dir: string = Workspace.get_workspace();
     const remote_dir: string = config.general['remote-base-dir'];
-    
+
     if (!silent) {
       const answer = await vscode.window.showErrorMessage(`Do you want to transfer all?\nThis can take several minutes.\n\nRemote folder: ${remote_dir}`, { modal: true }, ...['Only minimum', 'Yes', 'No']);
-      
+
       switch (answer) {
 
         case 'No':
@@ -954,22 +954,22 @@ export class OBITools {
         case undefined:
           vscode.window.showErrorMessage('Transfer canceled by user');
           throw new Error('Transfer canceled by user');
-      
+
         case 'Only minimum':
           //Transfer minimum setup;
           await OBITools.transfer_minimum_now(local_dir, remote_dir);
           break;
-          
+
         case 'Yes':
           await OBITools.transfer_all_now(local_dir, remote_dir);
           break;
-        }
+      }
     }
-    
+
   }
 
 
-  
+
 
   private static async transfer_all_now(local_dir: string, remote_dir: string) {
     vscode.window.showInformationMessage('Start transfer');
@@ -1004,10 +1004,10 @@ export class OBITools {
 
 
 
-  public static async get_filtered_sources_with_details(source_list_file: string): Promise<source.IQualifiedSource[]|undefined> {
+  public static async get_filtered_sources_with_details(source_list_file: string): Promise<source.IQualifiedSource[] | undefined> {
 
     const sources = await OBITools.get_local_sources(false);
-    
+
     const source_filters: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, source_list_file)) || [];
 
     const filtered_sources = OBITools.get_filtered_sources(sources, source_filters);
@@ -1018,7 +1018,7 @@ export class OBITools {
 
 
 
-  public static async get_local_sources(filter_supported_types: boolean = true): Promise<source.IQualifiedSource[]|undefined> {
+  public static async get_local_sources(filter_supported_types: boolean = true): Promise<source.IQualifiedSource[] | undefined> {
 
     const config = AppConfig.get_app_config();
     const source_dir = path.join(Workspace.get_workspace(), config.general['source-dir'] || 'src');
@@ -1054,19 +1054,19 @@ export class OBITools {
     const full_name: string = `${source_path}/${source_member}`;
 
     if (!(full_name in source_infos)) {
-      source_infos[full_name] = {'description': ''};
+      source_infos[full_name] = { 'description': '' };
     }
 
     source_infos[full_name]['description'] = description;
 
     DirTool.write_file(path.join(Workspace.get_workspace(), config.general['source-infos'] || '.obi/etc/source-infos.json'), JSON.stringify(source_infos, undefined, 2));
-    
+
     return;
   }
 
 
 
-  public static get_extended_source_infos(sources: source.IQualifiedSource[]|undefined): source.IQualifiedSource[] | undefined {
+  public static get_extended_source_infos(sources: source.IQualifiedSource[] | undefined): source.IQualifiedSource[] | undefined {
 
     if (!sources)
       return;
@@ -1079,7 +1079,7 @@ export class OBITools {
     for (let source of sources) {
 
       source.description = '';
-      
+
       const full_name: string = `${source['source-lib']}/${source['source-file']}/${source['source-member']}`;
       if (full_name in source_infos) {
         source.description = source_infos[full_name].description;
@@ -1093,40 +1093,44 @@ export class OBITools {
 
 
 
-  private static get_filtered_sources(sources: source.IQualifiedSource[]|undefined, source_filters: source.IQualifiedSource[]): source.IQualifiedSource[] | undefined {
+  private static get_filtered_sources(sources: source.IQualifiedSource[] | undefined, source_filters: source.IQualifiedSource[]): source.IQualifiedSource[] | undefined {
 
     if (!sources)
       return;
 
     const wcmatch = require('wildcard-match');
     let filtered_sources: source.IQualifiedSource[] = [];
-    let use_regex;
+    let use_regex: boolean;
+    let show_empty_folders: boolean;
     let lib: string;
     let file: string;
     let mbr: string;
     let isMatch: boolean = false;
 
     for (let source of sources) {
-      
+
       const src_mbr = source['source-member'];
       const src_file = source['source-file'];
       const src_lib = source['source-lib'];
 
-      if (!src_lib || !src_file || !src_mbr)
-        continue;
 
       for (const source_filter of source_filters) {
-        
+
+
+        show_empty_folders = source_filter['show-empty-folders'];
         use_regex = source_filter['use-regex'];
         lib = (source_filter['source-lib'] || '').toLowerCase();
         file = (source_filter['source-file'] || '').toLowerCase();
         mbr = (source_filter['source-member'] || '').toLowerCase();
         isMatch = false;
 
+        if ((!src_lib || !src_file || !src_mbr) && !show_empty_folders)
+          continue;
+
         if (use_regex) {
           const re_lib = new RegExp(`^${lib}$`);
           const re_file = new RegExp(`^${file}$`);
-          const re_mbr = new RegExp(`^${mbr}$`);  
+          const re_mbr = new RegExp(`^${mbr}$`);
           isMatch = (src_lib.toLowerCase().match(re_lib) != null && src_file.toLowerCase().match(re_file) != null && src_mbr.toLowerCase().match(re_mbr) != null);
         }
         else {
@@ -1136,7 +1140,7 @@ export class OBITools {
           isMatch = wc_lib(src_lib.toLowerCase()) && wc_file(src_file.toLowerCase()) && wc_mbr(src_mbr.toLowerCase());
         }
         if (isMatch)
-          filtered_sources.push({"source-lib": src_lib, "source-file": src_file, "source-member": src_mbr, "use-regex": source_filter['use-regex']});
+          filtered_sources.push({ "source-lib": src_lib, "source-file": src_file, "source-member": src_mbr, "use-regex": source_filter['use-regex'], "show-empty-folders": source_filter['show-empty-folders'] });
       }
     }
 
@@ -1157,4 +1161,27 @@ export class OBITools {
 
     return local_file_path;
   }
+
+
+
+  public static async reload_obi_extension_on_config_change() {
+
+    const ws_uri = Workspace.get_workspace_uri();
+
+    // Create a file system watcher
+    const watcher_project = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(ws_uri, Constants.OBI_APP_CONFIG_FILE));
+    const watcher_user = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(ws_uri, Constants.OBI_APP_CONFIG_USER_FILE));
+
+    // File change events
+    watcher_project.onDidChange(uri => {
+      vscode.window.showInformationMessage(`Project config file changed: ${uri.fsPath}`);
+      vscode.commands.executeCommand("workbench.action.reloadWindow");
+    });
+    watcher_user.onDidChange(uri => {
+      vscode.window.showInformationMessage(`User config file changed: ${uri.fsPath}`);
+      vscode.commands.executeCommand("workbench.action.reloadWindow");
+    });
+
+  }
+
 }

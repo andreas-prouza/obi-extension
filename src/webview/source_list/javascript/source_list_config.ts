@@ -115,6 +115,7 @@ function save_config() {
     const files = document.getElementById(`file_${counter}`).value.split(',');
     const members = document.getElementById(`member_${counter}`).value.split(',');
     const regex = document.getElementById(`regex_${counter}`).checked;
+    const show_empty_folders = document.getElementById(`show_empty_folders_${counter}`).checked;
     
     for (let lib of libs) {
       for (let file of files) {
@@ -130,7 +131,8 @@ function save_config() {
             "source-file":file.trim(), 
             "source-lib":lib.trim(), 
             "source-member":member.trim(),
-            "use-regex":regex
+            "use-regex":regex,
+            "show-empty-folders":show_empty_folders,
           });
         }
       }

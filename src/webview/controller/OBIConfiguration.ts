@@ -88,6 +88,8 @@ export class OBIConfiguration {
     const host = config.connection['remote-host'];
     const user = config.connection['ssh-user'];
 
+    const error_text = AppConfig.self_check();
+
     const pwd = await context.secrets.get(`obi|${host}|${user}`);
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
@@ -106,7 +108,8 @@ export class OBIConfiguration {
         source_config_file: DirTool.get_encoded_file_URI(Constants.OBI_SOURCE_CONFIG_FILE),
         panel: await context.secrets.get('obi|config|panel'),
         panel_tab: await context.secrets.get('obi|config|panel_tab'),
-        config_source_list: AppConfig.get_source_configs()
+        config_source_list: AppConfig.get_source_configs(),
+        error_text: error_text
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         //object_list: this.get_object_list(workspaceUri),
         //compile_list: this.get_compile_list(workspaceUri)

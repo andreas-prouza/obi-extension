@@ -22,12 +22,12 @@ export class Welcome implements vscode.WebviewViewProvider {
 	public static readonly viewType = 'obi-welcome';
 
 	private _view?: vscode.WebviewView;
-  private _context?: vscode.WebviewViewResolveContext;
-  private readonly _extensionUri: vscode.Uri;
+	private _context?: vscode.WebviewViewResolveContext;
+	private readonly _extensionUri: vscode.Uri;
 
 	constructor(extensionUri: vscode.Uri) {
-    this._extensionUri = extensionUri;
-   }
+		this._extensionUri = extensionUri;
+	}
 
 	public resolveWebviewView(
 		webviewView: vscode.WebviewView,
@@ -40,28 +40,28 @@ export class Welcome implements vscode.WebviewViewProvider {
 		webviewView.webview.options = {
 			// Allow scripts in the webview
 			enableScripts: true,
-      enableCommandUris: true,
+			enableCommandUris: true,
 			localResourceRoots: [
-        vscode.Uri.joinPath(this._extensionUri, "out"),
-        vscode.Uri.joinPath(this._extensionUri, "asserts")
+				vscode.Uri.joinPath(this._extensionUri, "out"),
+				vscode.Uri.joinPath(this._extensionUri, "asserts")
 			]
 		};
 
-    //if (vscode.workspace.workspaceFolders == undefined) {
-    //  vscode.window.showErrorMessage('No workspace defined');
-    //  return;
-    //}
-    
-    const html_template = 'controller/welcome.html';
+		//if (vscode.workspace.workspaceFolders == undefined) {
+		//  vscode.window.showErrorMessage('No workspace defined');
+		//  return;
+		//}
 
-    nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-    const html = nunjucks.render(html_template, 
-      {
-        global_stuff: OBITools.get_global_stuff(webviewView.webview, this._extensionUri),
+		const html_template = 'controller/welcome.html';
+
+		nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
+		const html = nunjucks.render(html_template,
+			{
+				global_stuff: OBITools.get_global_stuff(webviewView.webview, this._extensionUri),
 				main_java_script: getUri(webviewView.webview, this._extensionUri, ["out", "welcome.js"]),
 				workspace_exist: vscode.workspace.workspaceFolders != undefined
-      }
-    );
+			}
+		);
 		webviewView.webview.html = html;
 
 		webviewView.webview.onDidReceiveMessage(data => {

@@ -43,6 +43,7 @@
         <th>{{ global_stuff['get_text']('File') | safe }}</th>
         <th>{{ global_stuff['get_text']('Member') | safe }}</th>
         <th>{{ global_stuff['get_text']('Regex') | safe }}</th>
+        <th>{{ global_stuff['get_text']('Empty folder') | safe }}</th>
       </tr>
     </thead>
     <tbody>
@@ -62,6 +63,9 @@
         </td>
         <td>
           <vscode-checkbox class="source_filter_{{ loop.index0 }}" id="regex_{{ loop.index0 }}" name="regex" lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}" {% if row['use-regex'] %}checked{% endif %} />
+        </td>
+        <td>
+          <vscode-checkbox class="source_filter_{{ loop.index0 }}" id="show_empty_folders_{{ loop.index0 }}" name="show_empty_folders" lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}" {% if row['show-empty-folders'] %}checked{% endif %} />
         </td>
         <td>
           <vscode-button class="delete_filter" lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}" list_index="{{ loop.index0 }}" id="delete_filter_{{ loop.index0 }}">
@@ -84,6 +88,9 @@
         </td>
         <td>
           <vscode-checkbox id="new_regex" />
+        </td>
+        <td>
+          <vscode-checkbox id="show_empty_folders" />
         </td>
         <td>
           <vscode-button id="add_filter">

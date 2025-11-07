@@ -28,6 +28,14 @@
   color: black
 }
 
+.config_error {
+  margin: 20px;
+  padding: 5px;
+  border: 2px solid red;
+  border-radius: 5px;
+  width: max-content;
+}
+
 h1 {
   display: block;
   font-size: 2em;
