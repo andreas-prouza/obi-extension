@@ -1,17 +1,16 @@
 import * as vscode from 'vscode';
-import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
 import { getUri } from "../../utilities/getUri";
-import { getNonce } from "../../utilities/getNonce";
 import { DirTool } from '../../utilities/DirTool';
 import { OBITools } from '../../utilities/OBITools';
 import { Constants } from '../../Constants';
 import * as path from 'path';
-import { OBICommands } from '../../obi/OBICommands';
 import { BuildSummary } from '../show_changes/BuildSummary';
 import * as fs from 'fs';
 import { AppConfig } from './AppConfig';
 import { Workspace } from '../../utilities/Workspace';
 import { SystemCmdExecution } from '../../utilities/SystemCmdExecution';
+import { logger } from '../../utilities/Logger';
+import { log } from 'console';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -65,8 +64,61 @@ export class OBIController implements vscode.WebviewViewProvider {
 
 
 
+  public static check_obi_response() {
+
+    const ws = Workspace.get_workspace();
+    const obi_status_file = path.join(ws, Constants.OBI_STATUS_FILE);
+
+    if (DirTool.file_exists(obi_status_file)) {
+      const status = DirTool.get_json(obi_status_file);
+
+      if (status) {
+
+        logger.info(`Status: ${JSON.stringify(status)}`);
+
+        if (!status['version'] || status['version'] < Constants.OBI_BACKEND_VERSION) {
+          vscode.window.showWarningMessage(
+            'An update for OBI backend is available.',
+            'Update'
+          ).then(async selection => {
+          if (selection === 'Update') {
+            const config = AppConfig.get_app_config();
+
+            const cmd = 'git pull';
+            try {
+              await SystemCmdExecution.run_system_cmd(config.general['local-obi-dir'], cmd, 'update_obi');
+              vscode.window.showInformationMessage('OBI backend updated successfully.');
+            } catch (error: any) {
+              if (error.signal === 'SIGTERM') {
+                vscode.window.showErrorMessage('Git pull command was aborted.');
+              }
+              throw error;
+            }
+          }
+          });
+        }
+
+        if (status['message']) {
+        
+          vscode.window.showErrorMessage(
+            status['message'],
+            'Open Details'
+          ).then(selection => {
+
+            if (selection === 'Open Details') {
+              vscode.window.showInformationMessage(status['details'], { modal: true });
+            }
+
+          });
+        }
+      }
+    }
+  }
+
+
   public static run_finished() {
     OBIController.view_object._view?.webview.postMessage({command: 'run_finished'});
+    OBIController.check_obi_response();
     OBIController.update_build_summary_timestamp();
     BuildSummary.update();
     //webviewView.webview.postMessage();

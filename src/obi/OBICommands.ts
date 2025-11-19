@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { fork, spawn, exec, execSync } from "child_process";
+import { fork, spawn } from "child_process";
 import { BuildSummary } from '../webview/show_changes/BuildSummary';
 import { OBIStatus } from './OBIStatus';
 import { OBIController } from '../webview/controller/OBIController';
@@ -382,33 +382,7 @@ export class OBICommands {
     catch (error: any) {
 
       logger.error(error);
-
-      const obi_status_file = path.join(ws, Constants.OBI_STATUS_FILE);
-      if (DirTool.file_exists(obi_status_file)) {
-        const status = DirTool.get_json(obi_status_file);
-
-        if (status) {
-
-          logger.info(`Status: ${JSON.stringify(status)}`);
-
-          vscode.window.showErrorMessage(
-            status['message'],
-            'Open Details'
-          ).then(selection => {
-
-            if (selection === 'Open Details') {
-              vscode.window.showInformationMessage(
-                status['details'] || error.message,
-                { modal: true }
-              );
-            }
-
-          });
-        }
-      }
-      //vscode.window.showErrorMessage("Status file exists: .obi/build-output/status.json");
-
-      //vscode.window.showErrorMessage(error.message);
+      vscode.window.showInformationMessage(error.message, { modal: true });
     }
 
     OBICommands.show_changes_status = OBIStatus.READY;

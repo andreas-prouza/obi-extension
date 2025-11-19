@@ -1,3 +1,8 @@
+## [0.4.12]
+
+* Update OBI backend
+
+
 ## [0.4.11]
 
 * npm updates
