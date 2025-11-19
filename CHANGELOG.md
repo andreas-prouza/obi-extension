@@ -1,3 +1,8 @@
+## [0.4.11]
+
+* npm updates
+
+
 ## [0.4.10]
 
 * Copy dummy source on init
