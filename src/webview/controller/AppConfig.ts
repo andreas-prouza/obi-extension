@@ -416,7 +416,7 @@ export class AppConfig {
   private static get_string(value: string|undefined): string|undefined {
     if (!value || value.length == 0)
       return undefined;
-    return value;
+    return value.trim();
   }
   
   

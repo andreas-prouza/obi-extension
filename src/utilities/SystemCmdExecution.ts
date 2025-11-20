@@ -9,7 +9,9 @@ export class SystemCmdExecution {
 
     public static async run_system_cmd(cwd: string, cmd: string, id: string): Promise<void> {
 
-        const child = spawn(cmd, { cwd: cwd, shell: true });
+        // Use platform-specific shell
+        const shell = process.platform === "win32" ? "cmd.exe" : "/bin/bash";
+        const child = spawn(cmd, { cwd: cwd, shell: shell });
         SystemCmdExecution.processes[id] = child;
 
         return new Promise<void>((resolve, reject) => {

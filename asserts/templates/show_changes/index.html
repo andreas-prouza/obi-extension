@@ -72,13 +72,14 @@
         <tr>
           <th>{{ level_item['level'] }}. {{ global_stuff['get_text']('level') | safe }}</th>
         </tr>
-        {% for source_item in level_item['sources'] %}
+      {% for source_item in level_item['sources'] %}
         {% set source_splitted=source_item['source'].split('/') %}
         {% set lib = source_splitted[0] %}
         {% set file = source_splitted[1] %}
         {% set member = source_splitted[2] %}
         <tr>
-          <td></td><td><a href='command:vscode.open?{{ source_item["file"] }}'>{{ lib }} / {{ file }} / {{ member }}</a></td>
+          <td><vscode-checkbox class="type_checkbox" source="{{ source_item['source'] }}" {% if 'ignore' not in source_item or source_item['ignore'] == true %}checked{% endif %}></vscode-checkbox></td>
+          <td><a href='command:vscode.open?{{ source_item["file"] }}'>{{ lib }} / {{ file }} / {{ member }}</a></td>
           <td>
             {% set last_cmd = source_item['cmds'][0] %}
             {% for cmd_entry in source_item['cmds'] %}
@@ -101,7 +102,7 @@
                 <tr>
                   <td>{{ cmd_entry.updated }}</td>
                   <td><span class="{{ cmd_entry.status }}">{{ cmd_entry.status }}</span></td>
-                  <td><details><summary><code>{{ cmd_entry.cmd | truncate(15) }}</code></summary><div style="border: 1px solid">{% for cmd in cmds %}<pre style="white-space: pre-wrap;">{{ cmd | trim }}</pre>{% endfor %}</div></details></td>
+                  <td><details><summary><code>{{ cmd_entry.cmd | truncate(100) }}</code></summary><div style="border: 1px solid">{% for cmd in cmds %}<pre style="white-space: pre-wrap;">{{ cmd | trim }}</pre>{% endfor %}</div></details></td>
                   {% if 'joblog' in cmd_entry and cmd_entry['joblog']|length %}
                     <td>
                       <vscode-button class="joblog" source="{{ source_item['source'] }}" level="{{ level_item['level'] }}" cmd_index="{{ loop.index0 }}" appearance="primary">Joblog</vscode-button>
