@@ -161,7 +161,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       throw new Error('Canceled by user. No source filter name provided');
 
 
-    const data: source.IQualifiedSource[] = [{ "source-lib": '*', "source-file": '*', 'source-member': '*', "use-regex": false, "show-empty-folders": false }];
+    const data: source.IQualifiedSource[] = [{ "source-lib": '*', "source-file": '*', 'source-member': '*', "use-regex": false, "show-empty-folders": true }];
 
     DirTool.write_file(path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, `${source_list}.json`), JSON.stringify(data, undefined, 2));
 

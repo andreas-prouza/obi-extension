@@ -212,6 +212,7 @@ export class SSH_Tasks {
     files.forEach((file) => {
       if (!first)
         cmd = `${cmd} && `;
+      file = SSH_Tasks.get_finalized_remote_path(file);
       cmd = `${cmd} ls "${file}"`;
       first = false;
     })
@@ -253,7 +254,9 @@ export class SSH_Tasks {
     let cmds: Promise<SSHExecCommandResponse>[] = [];
 
     source_list.map((file: string) => {
-      cmds.push(SSH_Tasks.ssh.execCommand(`rm ${remote_source_dir}/${file}`));
+      let file_path = `${remote_source_dir}/${file}`;
+      file_path = SSH_Tasks.get_finalized_remote_path(file_path);
+      cmds.push(SSH_Tasks.ssh.execCommand(`rm ${file_path}`));
     })
 
     await Promise.all(cmds);
@@ -279,7 +282,7 @@ export class SSH_Tasks {
     if (!config.general['remote-base-dir'] || config.general['remote-base-dir'].length < 4) // to be sure it's not root!
       throw Error(`Config attribute 'config.general.remote_base_dir' invalid: ${config.general['remote-base-dir']}`);
     
-    const remote_base_dir: string = config.general['remote-base-dir'];
+    const remote_base_dir: string = SSH_Tasks.get_finalized_remote_path(config.general['remote-base-dir']);
     const answer = await vscode.window.showInformationMessage(`Process with remote folder: '${remote_base_dir}'?`, { modal: true }, ...['Yes', 'No']);
     switch (answer) {
       case 'No':

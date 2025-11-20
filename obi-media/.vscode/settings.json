@@ -3,6 +3,8 @@
         "*.rpg.pgm": "rpg",
         "*.rpgle.pgm": "rpgle",
         "*.rpgle.srvpgm": "rpgle",
+        "*.rpgle.cpy": "rpgle",
+        "*.sqlrpgle.cpy": "rpgle",
         "*.sqlrpgle.pgm": "rpgle",
         "*.sqlrpgle.srvpgm": "rpgle",
         "*.clle.srvpgm": "cl",

@@ -500,6 +500,7 @@ export class OBITools {
 
     for (const level_item of (compile_list['compiles'] as any)) {
       for (const source of level_item['sources']) {
+        source['ignore'] = false;
         if (ignore_sources.includes(source['source'])) {
           source['ignore'] = true;
         }

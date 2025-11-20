@@ -326,6 +326,9 @@ export class OBICommands {
       if (sources.length > 0) {
         await OBICommands.run_build_process(sources, false);
       }
+      else {
+        vscode.window.showInformationMessage('No sources to build');
+      }
 
       BuildSummary.update();
       OBIController.update_build_summary_timestamp();
