@@ -495,6 +495,21 @@ export class OBITools {
   }
 
 
+  public static update_compile_list(ignore_sources: string[]) {
+    let compile_list = OBITools.get_compile_list(Workspace.get_workspace_uri());
+
+    for (const level_item of (compile_list['compiles'] as any)) {
+      for (const source of level_item['sources']) {
+        if (ignore_sources.includes(source['source'])) {
+          source['ignore'] = true;
+        }
+      }
+    }
+
+    DirTool.write_json(path.join(Workspace.get_workspace(), AppConfig.get_app_config().general['compile-list']), compile_list);
+
+  }
+
 
 
   public static get_compile_list(workspaceUri: vscode.Uri): {} | undefined {
@@ -549,7 +564,7 @@ export class OBITools {
 
 
 
-  public static get_sources_2_build_from_compile_list(): string[] {
+  public static get_sources_2_build_from_compile_list(skip_ignored: boolean=false): string[] {
 
     let sources: string[] = [];
     let need_2_build: boolean = false;
@@ -560,7 +575,12 @@ export class OBITools {
       return sources;
 
     for (const level_item of (compile_list['compiles'] as any)) {
+      
       for (const source of level_item['sources']) {
+        
+        if (skip_ignored && source['ignore'])
+          continue;
+
         need_2_build = false;
         for (const cmd of source['cmds']) {
           if (cmd['status'] != 'success') {

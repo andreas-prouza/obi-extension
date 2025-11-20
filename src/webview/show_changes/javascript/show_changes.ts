@@ -53,8 +53,20 @@ function main() {
 
 
 function run_build() {
+
+  const build_source = document.getElementsByClassName("build_source");
+  let ignore_sources: string[] = [];
+
+  for (let i = 0; i < build_source.length; i++) {
+    const checkbox = build_source[i] as HTMLInputElement;
+    if (!checkbox.checked) {
+      ignore_sources.push(checkbox.getAttribute('source') || '');
+    }
+  }
+
   vscode.postMessage({
-    command: "run_build"
+    command: "run_build",
+    ignore_sources: ignore_sources
   });
 }
 

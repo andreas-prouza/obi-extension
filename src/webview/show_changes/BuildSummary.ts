@@ -98,7 +98,7 @@ export class BuildSummary {
             return;
 
           case "run_build":
-            OBICommands.rerun_build();
+            OBICommands.rerun_build(message.ignore_sources);
         }
       }
     );

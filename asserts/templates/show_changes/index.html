@@ -78,7 +78,7 @@
         {% set file = source_splitted[1] %}
         {% set member = source_splitted[2] %}
         <tr>
-          <td><vscode-checkbox class="type_checkbox" source="{{ source_item['source'] }}" {% if 'ignore' not in source_item or source_item['ignore'] == true %}checked{% endif %}></vscode-checkbox></td>
+          <td><vscode-checkbox class="type_checkbox build_source" source="{{ source_item['source'] }}" {% if 'ignore' not in source_item or source_item['ignore'] == true %}checked{% endif %}></vscode-checkbox></td>
           <td><a href='command:vscode.open?{{ source_item["file"] }}'>{{ lib }} / {{ file }} / {{ member }}</a></td>
           <td>
             {% set last_cmd = source_item['cmds'][0] %}
