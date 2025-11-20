@@ -32,8 +32,8 @@ STGMDL = "*SNGLVL"
 ACTGRP = "*CALLER"
 LIBL = [ "$(TARGET_LIB)", "QGPL" ]
 #INCLUDE_BNDDIR = "prouzadir"
-#INCDIR_RPGLE = "'./src/prouzalib' './src/prouzalib2'"
-#INCDIR_SQLRPGLE = "''./src/prouzalib'' ''./src/prouzalib2''"
+INCDIR_RPGLE = "'./src'"
+INCDIR_SQLRPGLE = "''./src'' ''./src''"
 
 [global.settings.general.TARGET_LIB_MAPPING]
 #prouzalib = "prouzat1"
@@ -60,8 +60,6 @@ chg-src-ccsid = "cl -v \"CHGATR OBJ('\"'$(SOURCE_FILE_NAME)'\"') ATR(*CCSID) VAL
 replace-special-chars-in-file-name = "mv $(subst $$,'$$',$(subst #,#,$?)) $$(echo $(subst $$,'$$',$(subst #,\\#,$?)) | sed -e 's/'$$'\\302''//g'),"
 test-cmd = "echo 'Works as designed'"
 add-lible = "liblist -a $(LIB) 2> /dev/null"
-joblog-separator = "=============(!)JOBLOG(!)===================="
-dspjoblog = "; echo '$(joblog-separator)'; cl -v \"DSPJOBLOG\""
 sql-set-target-lib = "export OBI_CONTENT=`sed 's/$(SQL_TARGET_LIB)/$(TARGET_LIB)/g' $(SOURCE_FILE_NAME)`; printf \"$OBI_CONTENT\" > $(SOURCE_FILE_NAME)"
 
 [global.compile-cmds]
@@ -100,3 +98,5 @@ pgm = "$(SET_LIBL); cl -v \"CRTPGM PGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") ACTGRP($
 "sqlfunc.obj" = [ "global.cmds.chg-src-ccsid", "global.cmds.sql-set-target-lib", "global.compile-cmds.\"sqlfunc.obj\"" ]
 "pf.file" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"pf.file\"" ]
 "dspf.file" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"dspf.file\"" ]
+"rpgle.cpy" = [ "global.cmds.chg-src-ccsid" ]
+"sqlrpgle.cpy" = [ "global.cmds.chg-src-ccsid"]

@@ -1,3 +1,8 @@
+## [0.4.14]
+
+* Update obi config template
+
+
 ## [0.4.13]
 
 * Bugfixes
