@@ -238,6 +238,8 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
     const src_dir: string = config.general['source-dir'] || 'src';
 
+    logger.debug(`Changing source description for item: ${JSON.stringify(item, null, 2)}`);
+
     if (item instanceof SourceListItem) {
       if (!item.member_path_obi || !item.src_member) {
         throw new Error('Source member information missing');
@@ -248,6 +250,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     }
 
     if (item instanceof vscode.Uri) {
+      logger.debug(`Changing source description for URI: ${item.fsPath}`);
       
       source_path = OBITools.convert_local_filepath_2_obi_filepath(item.fsPath, true);
 
@@ -259,6 +262,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       file = match[2];
       source_path = `${lib}/${file}`;
       member = match[3];
+      logger.debug(`Changing description for source member: lib='${lib}', file='${file}', member='${member}'`);
 
       const source_infos: source.ISourceInfos = await OBITools.get_source_infos();
       if (source_infos[`${source_path}/${member}`]) {
@@ -267,7 +271,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     }
 
     const new_description: string | undefined = await vscode.window.showInputBox({ 
-      title: `Description of source member for ${source_path}`, 
+      title: `Description of source member for ${source_path}/${member}`, 
       placeHolder: "Source description", 
       value: description,
     });
@@ -396,7 +400,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     });
 
     
-    vscode.commands.registerCommand('obi.source-filter.change-source-description', async (item: SourceListItem) => {
+    vscode.commands.registerCommand('obi.source-filter.change-source-description', async (item: SourceListItem | vscode.Uri) => {
       await this.change_source_description(item);
       this.refresh();
     });

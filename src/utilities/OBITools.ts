@@ -1073,6 +1073,7 @@ export class OBITools {
     const source_infos: source.ISourceInfos = OBITools.get_source_infos();
 
     const full_name: string = `${source_path}/${source_member}`;
+    logger.info(`Update source info for ${full_name}`);
 
     if (!(full_name in source_infos)) {
       source_infos[full_name] = { 'description': '' };
@@ -1175,7 +1176,7 @@ export class OBITools {
     const src_dir: string = config.general['source-dir'] || 'src';
 
     local_file_path = local_file_path.replace(Workspace.get_workspace(), '')
-    local_file_path = local_file_path.replace('\\', '/');
+    local_file_path = local_file_path.replace(/\\/g, '/');
     if (remove_src)
       local_file_path = local_file_path.replace(`${src_dir}/`, '');
     local_file_path = local_file_path.replace(/^\/+/, '');

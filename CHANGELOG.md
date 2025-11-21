@@ -1,3 +1,13 @@
+## [0.4.19]
+
+* Bugfixes with Windows path
+
+
+## [0.4.16]
+
+* Bugfixes with Windows path
+
+
 ## [0.4.15]
 
 * Some improvements
