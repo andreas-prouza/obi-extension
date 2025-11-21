@@ -59,8 +59,7 @@ export class LocalSourceList {
         logger.debug(`File changed: ${uri.fsPath}`);
         if (ext == 'log')
             return;
-        if (!config.general['supported-object-types']?.includes(ext))
-            return;
+
         logger.debug(`Reload some stuff`);
         await LocalSourceList.load_source_list();
         await vscode.commands.executeCommand("obi.source-filter.update");

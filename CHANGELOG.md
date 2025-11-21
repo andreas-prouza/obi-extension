@@ -1,3 +1,13 @@
+## [0.4.22]
+
+* Bugfixes
+
+
+## [0.4.21]
+
+* Bugfixes
+
+
 ## [0.4.20]
 
 * Automatically refresh environment on changes

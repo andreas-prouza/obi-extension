@@ -533,7 +533,7 @@ export class SourceListItem extends vscode.TreeItem {
       return;
 
     if (list_level == 'source-member') {
-      this.member_path_obi = path.join(this.src_lib || '', this.src_file || '');
+      this.member_path_obi = OBITools.convert_local_filepath_2_obi_filepath(path.join(this.src_lib || '', this.src_file || ''));
       this.member_path = path.join(AppConfig.get_app_config().general['source-dir']||'src', this.member_path_obi);
       member_file_path = path.join(this.member_path, this.src_member || '');
       if (!DirTool.file_exists(path.join(ws, member_file_path)))

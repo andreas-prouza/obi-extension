@@ -1138,7 +1138,6 @@ export class OBITools {
 
       for (const source_filter of source_filters) {
 
-
         show_empty_folders = source_filter['show-empty-folders'];
         use_regex = source_filter['use-regex'];
         lib = (source_filter['source-lib'] || '').toLowerCase();
@@ -1147,6 +1146,9 @@ export class OBITools {
         isMatch = false;
 
         if ((!src_lib || !src_file || !src_mbr) && !show_empty_folders)
+          continue;
+
+        if (!src_lib && !src_file)
           continue;
 
         if (use_regex) {
@@ -1170,7 +1172,7 @@ export class OBITools {
   }
 
 
-  public static convert_local_filepath_2_obi_filepath(local_file_path: string, remove_src: boolean): string {
+  public static convert_local_filepath_2_obi_filepath(local_file_path: string, remove_src?: boolean): string {
 
     const config = AppConfig.get_app_config();
     const src_dir: string = config.general['source-dir'] || 'src';
