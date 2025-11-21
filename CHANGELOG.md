@@ -1,3 +1,8 @@
+## [0.4.20]
+
+* Automatically refresh environment on changes
+
+
 ## [0.4.19]
 
 * Bugfixes with Windows path
