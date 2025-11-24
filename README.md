@@ -68,49 +68,48 @@ Because you work locally, you need to sync your changes with other developers.
 
 ## Following steps you need to do
 
-1. Get your Sources to IFS (to your project folder)
-   You can use my RPG program to get this job done: 
-   https://github.com/andreas-prouza/ibm-i-build-obi/blob/main/src/prouzalib/qrpglesrc/cpysrc2ifs.sqlrpgle.pgm
-2. If you are working in a Team you should use git
-   1. Create a git repository (on your IBM i, gitlab, github, gitea, ...)
-   2. Add the project folder to this git repository
-   3. Clone the git repo on your PC
-3. In vscode open the project folder
-4. Switch to the OBI view
+### First start
+
+1. On your PC create an empty project folder
+2. In vscode open that folder
+3. Switch to the OBI view
    
-   You will see the welcome screen
+   You will see the welcome screen.  
+   Here you can initialize the project with OBI
 
-    <img src="asserts/img/ext/welcome.png" style="width: 300px">
+    <img src="asserts/img/ext/welcome3.png" style="width: 300px">
 
-5. Initialize the project with OBI
+   This creates a new folder ```.obi``` including some initial config files
+
+4. Then OBI opens the config where you need to define some mandatory settings (server, user credentials, ifs locations, ...)
    
-   A new folder ```.obi``` will be created including some initial config files
+     <img src="asserts/img/ext/config-minimum.png" style="width: 800px">
 
-6. Take a look into the config to define some mandatory settings (server, user, ifs locations, ...)
+     >**```Project configuration```** contains settings shared with all team members
+
+     >The **```User configuration```** area overwrites the ```Project configuration``` with the users specific settings (like SSH user & password, ...).
+
+     When you finished configuration, save it and you project gets reloaded automatically.
+
+5. Now, you will OBI containing an sample source in the ```Source Filters``` area
+   <img src="asserts/img/ext/obi-after-init.png" style="width: 800px">
+
+6. Check if it works with ```Show changes```
    
-     <img src="asserts/img/ext/config-2.png" style="width: 300px">
+     <img src="asserts/img/ext/show-changes-3.png" style="width: 800px">
 
-     <img src="asserts/img/ext/config.png" style="width: 800px">
+     In the ```Summary``` you see a list of sources, ready to compile.
 
-     <img src="asserts/img/ext/config-compile.png" style="width: 800px">
+     <img src="asserts/img/ext/show-changes.png" style="width: 800px">
 
-     >User specific settings (like IFS remote directory, SSH password, ...) can be defined/overwritten in the ```User configuration``` area.
+7. Run Build
+   2 ways go to:
+   * In the ```Summary``` click on ```Run build```
+   * Open the source you need to build and click on the ```Run build``` button:
+  <img src="asserts/img/ext/run-build.png" style="width: 300px">
 
-7. Check if it works with ```Show changes```
-   
-     <img src="asserts/img/ext/show-changes-2.png" style="width: 800px">
 
-     You should see a list of sources, ready to compile.
-
-8. Reset the compiled object list
-   OBI can check which sources have changed and need to be built.  
-   Therefore, a hash value is stored for each source.
-   
-   <img src="asserts/img/ext/compiled-obj-list.png" style="width: 300px">
-
-   From now, the ```Show changes``` action only shows changed sources.
-
-9.  On your IBM i
+8.  On your IBM i
     Clone OBI from GitHub somewhere in the IFS and run the setup script.
     
     ```sh
@@ -123,12 +122,34 @@ Because you work locally, you need to sync your changes with other developers.
 
     <img src="asserts/img/ext/obi-path.png" style="width: 800px">
 
-10.  When you are motivated, you can create a dependency list.
+
+### Start migrating your source to OBI
+
+1. **GIT**  
+  If you are working in a Team you should use git
+   1. Create a git repository (on your IBM i, gitlab, github, gitea, ...)
+   2. Add the project folder to this git repository
+   3. Clone the git repo on your PC
+
+2. **Copy source to IFS**  
+   Get your Sources to IFS (to your project folder)
+   You can use my RPG program to get this job done: 
+   https://github.com/andreas-prouza/ibm-i-build-obi/blob/main/src/prouzalib/qrpglesrc/cpysrc2ifs.sqlrpgle.pgm
+
+3. Reset the compiled object list
+   OBI can check which sources have changed and need to be built.  
+   Therefore, a hash value is stored for each source.
+   
+   <img src="asserts/img/ext/compiled-obj-list.png" style="width: 300px">
+
+   From now, the ```Show changes``` action only shows changed sources.
+
+4.   When you are motivated, you can create a dependency list.
     
      With a dependency list OBI creates the correct build order and includes all dependend objects. (E.g. for SRVPGM, files, ...)
      (See [dependency list](https://github.com/andreas-prouza/ibm-i-build-obi/blob/main/docs/pages/configuration.md#etcdependencytoml))
     
-11. Sync all changes to your git repo
+5.  Sync all changes to your git repo
 
 If no OBI config could be found, you will see the welcome screen:
 
