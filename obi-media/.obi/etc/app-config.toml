@@ -60,7 +60,7 @@ chg-src-ccsid = "cl -v \"CHGATR OBJ('\"'$(SOURCE_FILE_NAME)'\"') ATR(*CCSID) VAL
 replace-special-chars-in-file-name = "mv $(subst $$,'$$',$(subst #,#,$?)) $$(echo $(subst $$,'$$',$(subst #,\\#,$?)) | sed -e 's/'$$'\\302''//g'),"
 test-cmd = "echo 'Works as designed'"
 add-lible = "liblist -a $(LIB) 2> /dev/null"
-sql-set-target-lib = "export OBI_CONTENT=`sed 's/$(SQL_TARGET_LIB)/$(TARGET_LIB)/g' $(SOURCE_FILE_NAME)`; printf \"$OBI_CONTENT\" > $(SOURCE_FILE_NAME)"
+sql-set-target-lib = "export OBI_CONTENT=\"$(sed 's/$(SQL_TARGET_LIB)/$(TARGET_LIB)/g' $(SOURCE_FILE_NAME))\"; printf '%s' \"$OBI_CONTENT\" > $(SOURCE_FILE_NAME)"
 
 [global.compile-cmds]
 bnddir-rmv = "$(SET_LIBL); cl -v \"RMVBNDDIRE BNDDIR($(INCLUDE_BNDDIR)) OBJ(\"'*LIBL/$(OBJ_NAME)'\")\" "
