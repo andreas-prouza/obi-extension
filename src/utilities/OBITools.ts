@@ -14,6 +14,8 @@ import { logger } from './Logger';
 import { OBICommands } from '../obi/OBICommands';
 import { LocaleText } from './LocaleText';
 import { OBIStatus } from '../obi/OBIStatus';
+import { createBuildList } from '../obi/compile_list/createBuildList';
+
 
 
 export class OBITools {
@@ -214,7 +216,7 @@ export class OBITools {
           await SSH_Tasks.executeCommand(`echo 'export PATH="/QOpenSys/pkgs/bin:$PATH"' > /home/$USER/.bashrc`);
         }
         catch (e: any) {
-          logger.error(e);
+          logger.error(e, e.stack);
           vscode.window.showErrorMessage(`Error creating /home/$USER.bashrc: ${e.message}`);
           return false;
         }
@@ -248,7 +250,7 @@ export class OBITools {
           await SSH_Tasks.executeCommand(`mkdir -p /home/$USER/.ssh && chmod 755 /home/$USER && chmod 700 /home/$USER/.ssh && echo 'export PATH="/QOpenSys/pkgs/bin:$PATH"' > /home/$USER/.bashrc`);
         }
         catch (e: any) {
-          logger.error(e);
+          logger.error(e, e.stack);
           if (!e.message.includes('No such file or directory')) {
             vscode.window.showErrorMessage(`Error creating home directory: ${e.message}`);
             return false;
@@ -306,7 +308,7 @@ export class OBITools {
       result = await OBITools.process_check_remote_sources();
     }
     catch (e: any) {
-      logger.error(e);
+      logger.error(e, e.stack);
       vscode.window.showErrorMessage('Error occured during remote source check');
     }
 
@@ -710,6 +712,8 @@ export class OBITools {
     logger.info('Get dependend sources');
     const dependend_sources: string[] = OBITools.get_dependend_sources(changed_sources);
 
+    createBuildList(source);
+
     logger.info('Clean dir');
     DirTool.clean_dir(path.join(Workspace.get_workspace(), '.obi', 'tmp'));
     DirTool.write_file(path.join(Workspace.get_workspace(), Constants.CHANGED_OBJECT_LIST), JSON.stringify(changed_sources, undefined, 2));
@@ -942,7 +946,7 @@ export class OBITools {
       await OBITools.process_transfer_project_folder(silent);
     }
     catch (e: any) {
-      logger.error(e);
+      logger.error(e, e.stack);
       vscode.window.showErrorMessage('Error occured during transfer to remote');
     }
 

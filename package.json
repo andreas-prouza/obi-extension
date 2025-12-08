@@ -74,7 +74,7 @@
         "command": "obi.get-remote-compiled-object-list",
         "title": "%obi.get-remote-compiled-object-list%",
         "icon": "$(arrow-circle-down)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "when": "obi.contains_obi_project && obi.valid-config && false"
       },
       {
         "command": "obi.reset-compiled-object-list",
@@ -86,13 +86,13 @@
         "command": "obi.get-remote-source-list",
         "title": "%obi.get-remote-source-list%",
         "icon": "$(arrow-down)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "when": "obi.contains_obi_project && obi.valid-config && false"
       },
       {
         "command": "obi.check-remote-sources",
         "title": "%obi.check-remote-sources%",
         "icon": "$(tasklist)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "when": "obi.contains_obi_project && obi.valid-config && false"
       },
       {
         "command": "obi.controller.config",
