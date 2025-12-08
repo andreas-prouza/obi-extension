@@ -113,7 +113,7 @@ export class I_Releaser implements vscode.WebviewViewProvider {
 			return data;
 		}
 		catch (e: any){
-			logger.error(e);
+			logger.error(e, e.stack);
 			vscode.window.showErrorMessage(`i-Releaser error: ${e.message}`);
 		}
 

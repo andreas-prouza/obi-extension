@@ -387,7 +387,7 @@ export class OBICommands {
     }
     catch (error: any) {
 
-      logger.error(error);
+      logger.error(error, error.stack);
       vscode.window.showInformationMessage(error.message, { modal: true });
     }
 
@@ -494,7 +494,7 @@ export class OBICommands {
       OBICommands.remote_source_list_status = OBIStatus.READY;
       vscode.window.showErrorMessage(e.message);
       vscode.window.showErrorMessage('Failed to get remote source list');
-      logger.error(e.message);
+      logger.error(e.message, e.stack);
       throw e;
     }
     OBICommands.remote_source_list_status = OBIStatus.READY;

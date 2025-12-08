@@ -1,11 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="{{ global_stuff['theme_mode'] }}">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
     <link rel="stylesheet" href="{{ config_css }}">
+
+    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
 
   </head>
   <body>
@@ -56,6 +60,11 @@
     <hr />
 
     <h2>{{ global_stuff['get_text']('Details') | safe }}</h2>
+
+    <div>{{ global_stuff['get_text']('IBM i IFS path') | safe }} <code>{{ ifs_path }}</code></div>
+    <br/>
+
+
     <vscode-divider role="presentation"></vscode-divider>
 
     <table id="details">
@@ -102,7 +111,7 @@
                 <tr>
                   <td>{{ cmd_entry.updated }}</td>
                   <td><span class="{{ cmd_entry.status }}">{{ cmd_entry.status }}</span></td>
-                  <td><details {% if cmd_entry.status == 'failed' %}open{% endif %}><summary><code>{{ cmd_entry.cmd | truncate(100) }}</code></summary><div style="border: 1px solid">{% for cmd in cmds %}<pre style="white-space: pre-wrap;">{{ cmd | trim }}</pre>{% endfor %}</div></details></td>
+                  <td><details {% if cmd_entry.status == 'failed' %}open{% endif %}><summary><code>{{ cmd_entry.cmd | replace('2> /dev/null', '')  | truncate(100) }}</code></summary><div style="border: 1px solid">{% for cmd in cmds %}<pre style="white-space: pre-wrap;">{{ cmd | trim }}</pre>{% endfor %}</div></details></td>
                   {% if 'joblog' in cmd_entry and cmd_entry['joblog']|length %}
                     <td>
                       <vscode-button class="joblog" source="{{ source_item['source'] }}" level="{{ level_item['level'] }}" cmd_index="{{ loop.index0 }}" appearance="primary">Joblog</vscode-button>

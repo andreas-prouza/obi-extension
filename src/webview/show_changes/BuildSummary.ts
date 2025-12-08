@@ -135,7 +135,8 @@ export class BuildSummary {
         compile_list: compile_list,
         compile_file: DirTool.get_encoded_file_URI(config.general['compile-list']),
         log_file: DirTool.get_encoded_file_URI(Constants.OBI_LOG_FILE),
-        run_build: !OBITools.is_compile_list_completed(ws)
+        run_build: !OBITools.is_compile_list_completed(ws),
+        ifs_path: config.general['remote-base-dir']
       }
     );
 

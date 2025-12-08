@@ -130,5 +130,6 @@
   "Connection settings": "Verbindungseinstellungen",
   "Project locations": "Projekt Pfade",
   "External OBI module": "Externes OBI Modul",
-  "Empty folder": "Leere Ordner anzeigen"
+  "Empty folder": "Leere Ordner anzeigen",
+  "IBM i IFS path": "IBM i IFS Pfad"
 }

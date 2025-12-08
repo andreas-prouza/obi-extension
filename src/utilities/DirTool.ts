@@ -242,11 +242,14 @@ export class DirTool {
     
     file = DirTool.resolve_env_in_path(file);
     
+    if (!DirTool.dir_exists(path.dirname(file))) {
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+    }
     try{
-      
       // Read the TOML file into a string
       const text = JSON.stringify(data, null, 2);
-
+      logger.info(`Writing JSON to file 2: ${path.resolve(file)}`);
+      
       fs.writeFileSync(file, text, 'utf8');
     }
     catch (e: any) {
@@ -333,6 +336,9 @@ export class DirTool {
 
     file = DirTool.resolve_env_in_path(file);
 
+    if (!DirTool.dir_exists(path.dirname(file))) {
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+    }
     const toml = require('smol-toml');
     try{
       
