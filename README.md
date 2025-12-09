@@ -89,18 +89,19 @@ Because you work locally, you need to sync your changes with other developers.
 
      >The **```User configuration```** area overwrites the ```Project configuration``` with the users specific settings (like SSH user & password, ...).
 
-     When you finished configuration, save it and you project gets reloaded automatically.
+     When you finished configuration, save it and your project gets reloaded automatically.
 
-5. Now, you will OBI containing an sample source in the ```Source Filters``` area
+5. Now, OBI opens finally containing an sample source in the ```Source Filters``` area
    <img src="asserts/img/ext/obi-after-init.png" style="width: 800px">
 
 6. Check if it works with ```Show changes```
    
      <img src="asserts/img/ext/show-changes-3.png" style="width: 800px">
 
-     In the ```Summary``` you see a list of sources, ready to compile.
+     In the ```Summary``` you see a list of sources, ready to compile.  
+     In the `Details` section you see the build order and it's build commands.
 
-     <img src="asserts/img/ext/show-changes.png" style="width: 800px">
+     <img src="asserts/img/ext/show-changes-4.png" style="width: 800px">
 
 7. Run Build
    2 ways go to:
@@ -118,7 +119,7 @@ Because you work locally, you need to sync your changes with other developers.
     ./setup.sh
     ```
 
-    (Remember the path. You need to set it in your project config)
+    (Copy the path in your project config)
 
     <img src="asserts/img/ext/obi-path.png" style="width: 800px">
 
