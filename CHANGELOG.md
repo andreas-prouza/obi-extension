@@ -1,3 +1,10 @@
+## [0.5.1]
+
+* Generate build list without OBI python client
+* Build summary design
+* Bugfixes
+
+
 ## [0.4.22]
 
 * Bugfixes
