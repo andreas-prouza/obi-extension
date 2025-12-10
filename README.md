@@ -161,6 +161,8 @@ If no OBI config could be found, you will see the welcome screen:
 
 ## For more information
 
+* [Source dependencies](asserts/docs/dependencies.md)
+* [SSH setup](asserts/docs/ssh.md)
 * [OBI: the build tool running on IBM i](https://github.com/andreas-prouza/obi)
 * [OBI: detailed description](https://github.com/andreas-prouza/ibm-i-build-obi)
 * [OBI: vscode extension](https://github.com/andreas-prouza/obi-extension)

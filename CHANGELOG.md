@@ -1,3 +1,8 @@
+## [0.5.2]
+
+* Add docu
+
+
 ## [0.5.1]
 
 * Generate build list without OBI python client
