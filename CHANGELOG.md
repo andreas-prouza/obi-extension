@@ -1,3 +1,8 @@
+## [0.5.3]
+
+* Another windows path cleanup
+
+
 ## [0.5.2]
 
 * Add docu

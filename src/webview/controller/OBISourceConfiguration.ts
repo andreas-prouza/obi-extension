@@ -72,7 +72,7 @@ export class OBISourceConfiguration {
 
     OBISourceConfiguration._context = context;
     OBISourceConfiguration._extensionUri = extensionUri;
-    OBISourceConfiguration.source_config = source_config;
+    OBISourceConfiguration.source_config = OBITools.convert_local_filepath_2_obi_filepath(source_config);
 
     if (OBISourceConfiguration.currentPanel) {
       OBISourceConfiguration.currentPanel.dispose();
