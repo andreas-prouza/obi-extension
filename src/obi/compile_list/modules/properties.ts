@@ -9,7 +9,8 @@ import { Workspace } from '../../../utilities/Workspace';
 export function getSourceProperties(config: any, source: string): any {
   const sourceConfig = DirTool.get_toml(path.join(Workspace.get_workspace(), OBIConstants.get('SOURCE_CONFIG_TOML')));
   const srcSuffixes = source.split('.').slice(1).join('.');
-  const fileExtensions = srcSuffixes.split('.').slice(-2).join('');
+  //const fileExtensions = srcSuffixes.split('.').slice(-2).join('');
+  const fileExtensions = source.split('.').slice(-2).join('.');
 
   let globalSettings = getTableElement(config, ['global', 'settings', 'general']);
   const typeSettings = getTableElement(config, ['global', 'settings', 'language'])?.[fileExtensions] || {};
@@ -26,7 +27,7 @@ export function getSourceProperties(config: any, source: string): any {
     globalSettings.TARGET_LIB,
     globalSettings.TARGET_LIB_MAPPING
   );
-  globalSettings['OBJ_NAME'] = path.basename(source, path.extname(source));
+  globalSettings['OBJ_NAME'] = path.basename(source).split('.')[0];
 
   globalSettings['SET_LIBL'] = getSetLiblCmd(config, globalSettings.LIBL || [], globalSettings.TARGET_LIB);
 

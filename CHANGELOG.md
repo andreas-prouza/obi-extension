@@ -1,3 +1,9 @@
+## [0.5.4]
+
+* Bugfix
+* npm update
+
+
 ## [0.5.3]
 
 * Another windows path cleanup
