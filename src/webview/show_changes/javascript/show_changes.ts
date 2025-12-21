@@ -55,7 +55,9 @@ function main() {
 function run_build() {
 
   const build_source = document.getElementsByClassName("build_source");
+  const build_source_cmd = document.getElementsByClassName("build_source_cmd");
   let ignore_sources: string[] = [];
+  let ignore_sources_cmd: { [key: string]: string | null } = {};
 
   for (let i = 0; i < build_source.length; i++) {
     const checkbox = build_source[i] as HTMLInputElement;
@@ -64,9 +66,20 @@ function run_build() {
     }
   }
 
+  for (let i = 0; i < build_source_cmd.length; i++) {
+    const checkbox = build_source_cmd[i] as HTMLInputElement;
+    if (!checkbox.checked) {
+      const source = checkbox.getAttribute('source');
+      if (source !== null) {
+        ignore_sources_cmd[source] = checkbox.getAttribute('cmd');
+      }
+    }
+  }
+
   vscode.postMessage({
     command: "run_build",
-    ignore_sources: ignore_sources
+    ignore_sources: ignore_sources,
+    ignore_sources_cmd: ignore_sources_cmd
   });
 }
 

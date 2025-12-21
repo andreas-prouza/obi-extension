@@ -1,3 +1,9 @@
+## [0.5.5]
+
+* Now you can set single cmds to get ignored
+* npm update
+
+
 ## [0.5.4]
 
 * Bugfix
