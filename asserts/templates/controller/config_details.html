@@ -158,6 +158,19 @@
       <br />
       <hr />
       <br />
+      <h2>{{ global_stuff['get_text']('Global settings') | safe }}</h2>
+      <br />
+      <div style="display: flex; align-items: center">
+      <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox" 
+              {% if general_settings['USE_ESP'] %}checked{% endif %} 
+              panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|USE_ESP">
+      </vscode-checkbox>
+      {{ global_stuff['get_text']('Activate extended source processing') | safe }}
+      </div>
+      
+      <br />
+      <hr />
+      <br />
 
       <h2>{{ global_stuff['get_text']('Global variables') | safe }}</h2>
       <table border="1">

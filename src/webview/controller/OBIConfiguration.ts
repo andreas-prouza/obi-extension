@@ -104,7 +104,7 @@ export class OBIConfiguration {
         project_config: project_config,
         SSH_PASSWORD: pwd,
         project_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_FILE),
-        user_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_USER_FILE),
+        user_config_file: DirTool.get_encoded_file_URI(AppConfig.get_current_profile_app_config_file()),
         source_config_file: DirTool.get_encoded_file_URI(Constants.OBI_SOURCE_CONFIG_FILE),
         panel: await context.secrets.get('obi|config|panel'),
         panel_tab: await context.secrets.get('obi|config|panel_tab'),
@@ -341,7 +341,7 @@ export class OBIConfiguration {
     // App config
     let toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_FILE);
     if (isUser)
-      toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_USER_FILE);
+      toml_file = path.join(workspaceUri.fsPath, AppConfig.get_current_profile_app_config_file());
     
     DirTool.write_toml(toml_file, new_config);
     AppConfig.reset();

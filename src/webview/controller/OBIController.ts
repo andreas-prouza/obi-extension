@@ -11,6 +11,7 @@ import { Workspace } from '../../utilities/Workspace';
 import { SystemCmdExecution } from '../../utilities/SystemCmdExecution';
 import { logger } from '../../utilities/Logger';
 import { log } from 'console';
+import { OBIConfiguration } from './OBIConfiguration';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -168,6 +169,7 @@ export class OBIController implements vscode.WebviewViewProvider {
         vscode.Uri.joinPath(this._extensionUri, "asserts")
 			]
 		};
+    (webviewView as any).retainContextWhenHidden = true;
 
     if (vscode.workspace.workspaceFolders == undefined) {
       vscode.window.showErrorMessage('No workspace defined');
@@ -184,6 +186,7 @@ export class OBIController implements vscode.WebviewViewProvider {
     const html = nunjucks.render(html_template, 
       {
         global_stuff: OBITools.get_global_stuff(webviewView.webview, this._extensionUri),
+        config_profiles: AppConfig.get_profile_app_config_list(),
         main_java_script: getUri(webviewView.webview, this._extensionUri, ["out", "controller.js"]),
         build_summary_timestamp: compile_list ? compile_list['timestamp'] : undefined,
         builds_exist: compile_list ? compile_list['compiles'].length : undefined
@@ -227,6 +230,11 @@ export class OBIController implements vscode.WebviewViewProvider {
 
         case 'cancel_show_changes': // command:obi.show_changes
           SystemCmdExecution.abort_system_cmd('show_changes');
+          break;
+
+        case 'change_profile': // command:obi.show_changes
+          AppConfig.change_current_profile(data.profile);
+          OBIConfiguration.update();
           break;
 			}
 		});

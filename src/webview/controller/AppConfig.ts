@@ -3,7 +3,7 @@ import { OBITools } from '../../utilities/OBITools';
 import { DirTool } from '../../utilities/DirTool';
 import * as path from 'path';
 import { Constants } from '../../Constants';
-import { Workspace } from '../../utilities/Workspace';
+import { Workspace, WorkspaceSettings } from '../../utilities/Workspace';
 import { SourceListConfig } from '../source_list/SourceListConfig';
 
 
@@ -174,8 +174,9 @@ export class ConfigCompileSettings {
   public INCLUDE_BNDDIR?: string;
   public ACTGRP?: string;
   public TARGET_LIB?: string;
+  public USE_ESP?: string;
 
-  constructor(TGTRLS?: string, DBGVIEW?: string, TGTCCSID?: string, STGMDL?: string, LIBL?: string[], INCDIR_RPGLE?: string, INCDIR_SQLRPGLE?: string, TARGET_LIB_MAPPING?: {}, RPGPPOPT?: string, INCLUDE_BNDDIR?: string, ACTGRP?: string, TARGET_LIB?: string) {
+  constructor(TGTRLS?: string, DBGVIEW?: string, TGTCCSID?: string, STGMDL?: string, LIBL?: string[], INCDIR_RPGLE?: string, INCDIR_SQLRPGLE?: string, TARGET_LIB_MAPPING?: {}, RPGPPOPT?: string, INCLUDE_BNDDIR?: string, ACTGRP?: string, TARGET_LIB?: string, USE_ESP?: string) {
     this.TGTRLS = TGTRLS; 
     this.DBGVIEW = DBGVIEW; 
     this.TGTCCSID = TGTCCSID; 
@@ -188,6 +189,7 @@ export class ConfigCompileSettings {
     this.INCLUDE_BNDDIR = INCLUDE_BNDDIR;
     this.ACTGRP = ACTGRP;
     this.TARGET_LIB = TARGET_LIB;
+    this.USE_ESP = USE_ESP;
   }
 
   public attributes_missing(): boolean {
@@ -229,7 +231,8 @@ export class ConfigSettings {
         general.RPGPPOPT,
         general.INCLUDE_BNDDIR,
         general.ACTGRP,
-        general.TARGET_LIB
+        general.TARGET_LIB,
+        general.USE_ESP
       );
     }
 
@@ -303,6 +306,8 @@ export type SourceConfigList = {
 
 export class AppConfig {
 
+  public profiles?: { [profile_name: string]: AppConfig };
+  public current_profile?: string;
   public connection: ConfigConnection;
   public general: ConfigGeneral;
   public global: ConfigGlobal;
@@ -311,7 +316,7 @@ export class AppConfig {
   private static _last_loading_time: number = 0;
 
 
-  constructor(con?: ConfigConnection, gen?: ConfigGeneral, glob?: ConfigGlobal) {
+  constructor(con?: ConfigConnection, gen?: ConfigGeneral, glob?: ConfigGlobal, current_profile?: string) {
     this.connection = new ConfigConnection(
       AppConfig.get_string(con?.['remote-host']),
       AppConfig.get_string(con?.['ssh-key']),
@@ -320,6 +325,7 @@ export class AppConfig {
   );
     this.general = gen ?? new ConfigGeneral();
     this.global = glob ?? new ConfigGlobal();
+    this.current_profile = current_profile;
   }
 
 
@@ -420,7 +426,28 @@ export class AppConfig {
   }
   
   
-  
+  public static get_profile_app_config_list(): { alias: string; file: string }[] {
+
+    let configs: { alias: string; file: string }[] = [{'alias': 'Default User Config', 'file': Constants.OBI_APP_CONFIG_USER}];
+    const files = DirTool.list_dir(path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_DIR));
+
+    for (const file of files) {
+      if (file.endsWith('.toml') && (file.startsWith('.user-app-config') && file != Constants.OBI_APP_CONFIG && file != Constants.OBI_APP_CONFIG_USER)) {
+        configs.push({'alias': file.replace('.user-app-config-', '').replace('.toml', ''), 'file': file});
+      }
+    }
+    
+    return configs;
+  }
+
+
+  public static change_current_profile(profile: string) {
+    const ws_settings: WorkspaceSettings = Workspace.get_workspace_settings();
+    ws_settings.current_profile = profile;
+    Workspace.update_workspace_settings(ws_settings);
+    AppConfig.reset();
+  }
+
 
   public static get_project_app_config(workspace: vscode.Uri): AppConfig {
 
@@ -429,11 +456,26 @@ export class AppConfig {
     return app_config
   }
 
+  public static get_current_profile_app_config_name(): string {
+    const workspace_settings: WorkspaceSettings = Workspace.get_workspace_settings();
+    let profile: string = '';
+    
+    if (workspace_settings.current_profile)
+      return workspace_settings.current_profile;
+
+    return Constants.OBI_APP_CONFIG_USER;
+  }
+
+
+  public static get_current_profile_app_config_file(): string {
+
+    return path.join(Constants.OBI_APP_CONFIG_DIR, AppConfig.get_current_profile_app_config_name());
+  }
 
 
   public static get_user_app_config(workspace: vscode.Uri): AppConfig {
 
-    const user_app_config: AppConfig|undefined = DirTool.get_toml(path.join(workspace.fsPath, Constants.OBI_APP_CONFIG_USER_FILE));
+    const user_app_config: AppConfig|undefined = DirTool.get_toml(path.join(workspace.fsPath, AppConfig.get_current_profile_app_config_file()));
 
     const app_config: AppConfig = new AppConfig(user_app_config?.connection, user_app_config?.general, user_app_config?.global);
 

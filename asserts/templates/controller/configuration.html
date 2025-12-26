@@ -24,10 +24,13 @@
     {% include "tools/alertBox.html" %}
   </div>
 
+  {% set current_profile = global_stuff['current_profile'] | replace('.toml', '') | replace('.user-app-config-', '') | replace('.user-app-config', '') %}
+  {% set current_profile = ' (' + current_profile + ')' if current_profile | length > 0 else '' %}
+
   <vscode-panels activeid="{{ panel or 'project_cfg' }}" aria-label="Default">
 
     <vscode-panel-tab id="project_cfg"><h1>{{  global_stuff['get_text']('Project configuration') | safe }}</h1></vscode-panel-tab>
-    <vscode-panel-tab id="user_cfg"><h1>{{  global_stuff['get_text']('User configuration') | safe }}</h1></vscode-panel-tab>
+    <vscode-panel-tab id="user_cfg"><h1>{{  global_stuff['get_text']('User configuration') + current_profile | safe }} </h1></vscode-panel-tab>
     <vscode-panel-tab id="source_cfg"><h1>{{  global_stuff['get_text']('Source configuration') | safe }}</h1></vscode-panel-tab>
 
     

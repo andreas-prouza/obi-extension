@@ -421,10 +421,10 @@ function check_missing_hint() {
   const missing_elements = document.getElementsByClassName('missing_value');
   let missing_el: HTMLDivElement = document.getElementById('still_missing') as HTMLDivElement;
 
-  if (missing_elements.length > 0)
-    missing_el.style.visibility = "visible";
+  if (missing_elements.length > 1)
+    missing_el.style.display = "";
   else
-    missing_el.style.visibility = "hidden";
+    missing_el.style.display = "none";
 }
 
 
@@ -432,9 +432,9 @@ function check_error_text() {
   let error_el: HTMLDivElement = document.getElementById('error_text') as HTMLDivElement;
 
   if (error_el.getAttribute('show') === 'true')
-    error_el.style.visibility = "visible";
+    error_el.style.display = "";
   else
-    error_el.style.visibility = "hidden";
+    error_el.style.display = "none";
 }
 
 

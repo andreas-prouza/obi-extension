@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
+</head>
+
+<body>
+
+{% for setting in config_settings_attributes %}
+  <div>
+    <label for="{{ setting.name }}">{{ setting.name }} ({{ setting.type }})</label>
+    <vscode-text-field type="text" id="{{ setting.name }}" name="{{ setting.name }}" value="{{ setting.value }}"/>
+  </div>
+{% endfor %}
+
+  <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
+
+</body>
+
+</html>

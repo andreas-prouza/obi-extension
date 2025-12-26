@@ -20,6 +20,7 @@ import { I_Releaser } from './webview/deployment/I_Releaser';
 import { Constants } from './Constants';
 import { OBISourceDependency } from './webview/controller/OBISourceDependency';
 import { LocalSourceList } from './utilities/LocalSourceList';
+import { QuickSettings } from './webview/quick_settings/QuickSettings';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -206,6 +207,11 @@ export function activate(context: vscode.ExtensionContext) {
 	const obi_controller_provider = new OBIController(context.extensionUri);
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(OBIController.viewType, obi_controller_provider)
+	);
+
+	const quick_settings = new QuickSettings(context.extensionUri);
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(QuickSettings.viewType, quick_settings)
 	);
 
 	// Register Source List Tree View

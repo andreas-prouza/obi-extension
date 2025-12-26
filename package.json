@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "0.5.5",
+  "version": "0.6.1",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -213,12 +213,12 @@
         },
         {
           "command": "obi.get-remote-source-list",
-          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
+          "when": "false && obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
           "group": "navigation@20"
         },
         {
           "command": "obi.get-remote-compiled-object-list",
-          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
+          "when": "false && obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
           "group": "navigation@30"
         },
         {
@@ -228,7 +228,7 @@
         },
         {
           "command": "obi.check-remote-sources",
-          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
+          "when": "false && obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
           "group": "navigation@50"
         },
         {
@@ -353,6 +353,12 @@
           "id": "obi.source-filter",
           "name": "%Source filters%",
           "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "type": "webview",
+          "id": "obi.quick-settings",
+          "name": "%Quick settings%",
+          "when": "false && obi.contains_obi_project && obi.valid-config"
         },
         {
           "type": "webview",

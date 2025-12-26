@@ -131,5 +131,9 @@
   "Project locations": "Project locations",
   "External OBI module": "External OBI module",
   "Empty folder": "Show empty folders",
-  "IBM i IFS path": "IBM i IFS path"
+  "IBM i IFS path": "IBM i IFS path",
+  "Quick settings": "Quick settings",
+  "Use profile": "Use profile",
+  "Activate extended source processing": "Activate extended source processing",
+  "Global settings": "Global settings"
 }

@@ -468,7 +468,8 @@ export class OBITools {
       get_text: (v: string) => {
         return LocaleText.localeText?.get_Text(v);
       },
-      locale: LocaleText.localeText?.current_locale
+      locale: LocaleText.localeText?.current_locale,
+      current_profile: AppConfig.get_current_profile_app_config_name(),
     }
   }
 
@@ -1204,7 +1205,7 @@ export class OBITools {
 
     // Create a file system watcher
     const watcher_project = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(ws_uri, Constants.OBI_APP_CONFIG_FILE));
-    const watcher_user = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(ws_uri, Constants.OBI_APP_CONFIG_USER_FILE));
+    const watcher_user = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(ws_uri, AppConfig.get_current_profile_app_config_file()));
 
     // File change events
     watcher_project.onDidChange(uri => {

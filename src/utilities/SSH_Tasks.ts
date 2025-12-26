@@ -339,7 +339,7 @@ export class SSH_Tasks {
         remote: `${remote_base_dir}/${Constants.OBI_APP_CONFIG_FILE}`,
       },
       {
-        local: path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_USER_FILE),
+        local: path.join(Workspace.get_workspace(), AppConfig.get_current_profile_app_config_file()),
         remote: `${remote_base_dir}/${Constants.OBI_APP_CONFIG_USER_FILE}`,
       },
       {

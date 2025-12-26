@@ -1,3 +1,11 @@
+## [0.6.1]
+
+* Introduce config profiles
+* Keep state of webviews getting to background
+* Activation of source extended processing
+* npm update
+
+
 ## [0.5.5]
 
 * Now you can set single cmds to get ignored

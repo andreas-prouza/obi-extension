@@ -1,13 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="{{ global_stuff['theme_mode'] }}>
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
+  <link rel="stylesheet" href="{{ config_css }}">
+  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/css/choices.min.css">
+  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/css/choices-dark-overrides.css">
+  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/css/tom-select.min.css">
 </head>
 
 <body>
+
+  <br />
+  <div style="display: flex; align-items: center">
+  {{ global_stuff['get_text']('Use profile') | safe }}&nbsp;
+  <vscode-dropdown id="drp_use_profile" style="width: max-content; min-width: 160px;">
+    {% for profile in config_profiles %}
+    <vscode-option value="{{ profile.file }}" {% if profile.file == global_stuff['current_profile'] %}selected{% endif %}>{{ profile.alias }}</vscode-option>
+    {% endfor %}
+  </vscode-dropdown>
+</div>
+  <br />
+  <br />
 
   <table>
     <tr>
@@ -49,7 +65,7 @@
         </vscode-button>
       </td>
       <td>
-        <div id="show_changes_ring" style="visibility: hidden;">
+        <div id="show_changes_ring" style="visibility: hidden; display: flex; flex-wrap: nowrap">
           <vscode-progress-ring id="show_changes_ring_"></vscode-progress-ring>
           <vscode-button id="cancel_show_changes">
             <span class="codic</vscode-button>on codicon-add"><img
@@ -59,10 +75,9 @@
       </td>
     </tr>
   </table>
-
+  
   <br />
 
-  <br />
   <a id="open_build_summary" href='command:obi.open_build_summary'
     style="visibility: {% if builds_exist == 0 %}hidden{% else %}visible{% endif %};">
     <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/file.svg">{{

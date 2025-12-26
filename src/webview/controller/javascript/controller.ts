@@ -39,8 +39,30 @@ function main() {
   const cancel_show_changes_button = document.getElementById("cancel_show_changes") as Button;
   cancel_show_changes_button?.addEventListener("click", cancel_show_changes);
   
+  const drp_use_profile = document.getElementById("drp_use_profile") as Button;
+  drp_use_profile?.addEventListener("change", change_profile);
+  
+  const previousState = vscode.getState();
+  if (previousState && previousState.selected_profile) {
+    drp_use_profile.value = previousState.selected_profile;
+  }
+
   window.addEventListener('message', receive_message);
 
+}
+
+
+function change_profile(event: Event) {
+
+  const value = (event.target as HTMLSelectElement).value || "";
+  console.log(`Profile changed to ${value}`);
+  
+  vscode.setState({ selected_profile: value });
+
+  vscode.postMessage({
+    command: "change_profile",
+    profile: value
+  });
 }
 
 
