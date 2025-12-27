@@ -39,6 +39,12 @@ function main() {
   const cancel_show_changes_button = document.getElementById("cancel_show_changes") as Button;
   cancel_show_changes_button?.addEventListener("click", cancel_show_changes);
   
+  const delete_current_profile_button = document.getElementById("btn_delete_current_profile") as Button;
+  delete_current_profile_button?.addEventListener("click", delete_current_profile);
+  
+  const copy_profile_button = document.getElementById("btn_copy_profile") as Button;
+  copy_profile_button?.addEventListener("click", copy_profile);
+  
   const drp_use_profile = document.getElementById("drp_use_profile") as Button;
   drp_use_profile?.addEventListener("change", change_profile);
   
@@ -111,16 +117,28 @@ function show_single_changes() {
   });
 }
 
-//--function handleHowdyClick() {
-function cancel_show_changes() {
 
+function delete_current_profile() {
+  vscode.postMessage({
+    command: "delete_current_profile"
+  });
+}
+
+
+function copy_profile() {
+  vscode.postMessage({
+    command: "copy_profile"
+  });
+}
+
+
+function cancel_show_changes() {
   vscode.postMessage({
     command: "cancel_show_changes"
   });
 }
 
 function controller_refresh() {
-
   vscode.postMessage({
     command: "refresh"
   });
@@ -157,6 +175,13 @@ function receive_message(e: MessageEvent) {
         build_summary_timestamp_label.innerHTML = ` (${e.data.build_summary_timestamp})`;
         build_summary_timestamp_label.style.visibility=visibility;
       }
+      break;
+
+    case 'update_current_profile':
+      const drp_use_profile = document.getElementById("drp_use_profile") as HTMLSelectElement;
+      drp_use_profile.value = e.data.current_profile;
+      
+      vscode.setState({ selectedVal: e.data.current_profile });
       break;
   }
 }

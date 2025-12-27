@@ -19,6 +19,7 @@
   "obi.source-filter.view-source-infos": "OBI: Source Infos anzeigen",
   "obi.source.edit-compile-config": "OBI: Individuelle Build Konfiguration",
   "obi.deployment.maintain": "OBI: Deployment Konfiguration",
+  "obi.copy-profile-config": "OBI: Profilkonfiguration kopieren",
   "Welcome": "Willkommen",
   "deployment": "Deployment",
   "Source filters": "Source Filters",

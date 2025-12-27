@@ -497,4 +497,12 @@ export class DirTool {
       });
     });
   }
+
+
+  public static delete_file(file: string): void {
+
+    if (DirTool.file_exists(file)) {
+      fs.unlinkSync(file);
+    }
+  }
 }

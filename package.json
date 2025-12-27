@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -75,6 +75,12 @@
         "title": "%obi.get-remote-compiled-object-list%",
         "icon": "$(arrow-circle-down)",
         "when": "obi.contains_obi_project && obi.valid-config && false"
+      },
+      {
+        "command": "obi.copy-profile-config",
+        "title": "%obi.copy-profile-config%",
+        "icon": "$(person-add)",
+        "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.reset-compiled-object-list",

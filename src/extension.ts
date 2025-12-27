@@ -131,6 +131,12 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.copy-profile-config', () => {
+			OBIController.copy_current_profile()
+		})
+	);
+
+	context.subscriptions.push(
 		vscode.commands.registerCommand('obi.check-remote-sources', () => {
 			// Only available with workspaces
 			OBITools.check_remote_sources().then((success) => {

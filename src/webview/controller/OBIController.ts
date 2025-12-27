@@ -65,6 +65,20 @@ export class OBIController implements vscode.WebviewViewProvider {
 
 
 
+
+  public static async update(): Promise<void> {
+
+    if (OBIController.view_object && OBIController.view_object._view) {
+      OBIController.view_object.resolveWebviewView(
+        OBIController.view_object._view,
+        OBIController.view_object._context!,
+        OBIController.view_object._token!
+      );
+    }
+    
+  }
+
+
   public static check_obi_response() {
 
     const ws = Workspace.get_workspace();
@@ -149,6 +163,18 @@ export class OBIController implements vscode.WebviewViewProvider {
       });
   }
 
+  
+  public static async update_current_profile() {
+
+    await OBIController.update();
+
+    OBIController.view_object._view?.webview.postMessage(
+      {
+        command: 'update_current_profile',
+        current_profile: AppConfig.get_current_profile_app_config_name()
+      });
+  }
+
 
 
 	public resolveWebviewView(
@@ -218,28 +244,73 @@ export class OBIController implements vscode.WebviewViewProvider {
           vscode.commands.executeCommand('obi.run_single_build');
           break;
 
-        case 'show_changes': // command:obi.show_changes
+        case 'show_changes':
           OBIController.current_run_type = data.command;
           vscode.commands.executeCommand('obi.show_changes');
           break;
 
-        case 'show_single_changes': // command:obi.show_changes
+        case 'show_single_changes':
           OBIController.current_run_type = data.command;
           vscode.commands.executeCommand('obi.show_single_changes');
           break;
 
-        case 'cancel_show_changes': // command:obi.show_changes
+        case 'cancel_show_changes':
           SystemCmdExecution.abort_system_cmd('show_changes');
           break;
 
-        case 'change_profile': // command:obi.show_changes
+        case 'change_profile':
           AppConfig.change_current_profile(data.profile);
           OBIConfiguration.update();
+          break;
+
+        case 'copy_profile':
+          vscode.commands.executeCommand('obi.copy-profile-config');
+          break;
+
+        case 'delete_current_profile':
+          const current_profile = AppConfig.get_current_profile_app_config_file();
+          let ws = Workspace.get_workspace_settings();
+          ws.current_profile = Constants.OBI_APP_CONFIG_USER;
+          Workspace.update_workspace_settings(ws);
+          DirTool.delete_file(path.join(Workspace.get_workspace(), current_profile));
+          OBIController.update_current_profile();
           break;
 			}
 		});
 
 	}
+
+
+    // obi.source-filter.add-source-file
+  public static async copy_current_profile(): Promise<void> {
+  
+    const current_profile = AppConfig.get_current_profile_app_config_name();
+    const profile_list = AppConfig.get_profile_app_config_list();
+
+    let new_profile_config: string | undefined = await vscode.window.showInputBox({ title: `Copy profile config ${current_profile}`, 
+                                                        placeHolder: 'profile-name', validateInput(value) {
+      if (value.trim() === '')
+        return 'Profile name cannot be empty';
+
+      value = value.replace(' ', '-');
+      value = value.replace('.toml', '');
+      value = Constants.OBI_APP_CONFIG_USER.replace('.toml', `-${value}.toml`);
+      if (profile_list.some((profile: { file: string }) => profile.file === value))
+        return `Profile ${value} already exists`;
+      return null;
+    }});
+    if (!new_profile_config)
+      throw new Error('Canceled by user. No new profile name provided.');
+    
+    new_profile_config = Constants.OBI_APP_CONFIG_USER.replace('.toml', `-${new_profile_config}.toml`);
+    const new_profile_config_file = path.join(Constants.OBI_CONFIGS_DIR, new_profile_config);
+    DirTool.write_toml(path.join(Workspace.get_workspace(), new_profile_config_file), AppConfig.get_user_app_config(Workspace.get_workspace_uri()))
+
+    AppConfig.change_current_profile(new_profile_config);
+
+    OBIController.update_current_profile();
+
+  }
 
 
 }

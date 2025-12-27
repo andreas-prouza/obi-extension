@@ -1,3 +1,8 @@
+## [0.6.2]
+
+* Delete/copy profiles
+
+
 ## [0.6.1]
 
 * Introduce config profiles

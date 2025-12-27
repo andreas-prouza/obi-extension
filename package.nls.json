@@ -25,6 +25,7 @@
   "obi.source.maintain-source-dependency": "OBI: Maintain source dependencies",
   "obi.source.edit-compile-config": "OBI: Individual build settings",
   "obi.deployment.maintain": "OBI: deployment config",
+  "obi.copy-profile-config": "OBI: Copy profile configuration",
   "Welcome": "Welcome",
   "deployment": "Deployment",
   "Source filters": "Source filters",
