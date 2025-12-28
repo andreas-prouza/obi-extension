@@ -689,14 +689,28 @@ export class OBITools {
     const dependency_list: { ['source']: string[] } = OBITools.get_dependency_list();
     for (const [k, v] of Object.entries(dependency_list)) {
       for (let i = 0; i < all_sources.length; i++) {
-        if (v.includes(all_sources[i]) && !all_sources.includes(k)) {
+        if (v.includes(all_sources[i]) && !all_sources.includes(k) && !dependend_sources.includes(k)) {
           dependend_sources.push(k);
-          break;
+          OBITools.add_all_dependend_sources(dependend_sources, k);
         }
       }
     }
 
     return dependend_sources;
+  }
+
+
+
+  public static add_all_dependend_sources(dependend_sources: string[], source: string): string[] {
+
+    const dependency_list: { ['source']: string[] } = OBITools.get_dependency_list();
+
+    for (const [k, v] of Object.entries(dependency_list)) {
+      if (v.includes(source) && source !== k && !dependend_sources.includes(k)) {
+        dependend_sources.push(k);
+        OBITools.add_all_dependend_sources(dependend_sources, k);
+      }
+    }
   }
 
 
@@ -1175,7 +1189,7 @@ export class OBITools {
           isMatch = wc_lib(src_lib.toLowerCase()) && wc_file(src_file.toLowerCase()) && wc_mbr(src_mbr.toLowerCase());
         }
         if (isMatch)
-          filtered_sources.push({ "source-lib": src_lib, "source-file": src_file, "source-member": src_mbr, "use-regex": source_filter['use-regex'], "show-empty-folders": source_filter['show-empty-folders'] });
+          filtered_sources.push({ "source-lib": src_lib, "source-file": src_file, "source-member": src_mbr});
       }
     }
 

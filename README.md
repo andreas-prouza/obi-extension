@@ -13,9 +13,22 @@ Final release will be available soon.
 
 ## Features
 
-* Individual source lists with source descriptions
+* Use different profiles for your build settings (LIBL, target lib, build cmd, ...)
   
-  ![img](asserts/img/ext/source-list.png)
+  <img src="asserts/img/ext/controller-1.png" style="width: 200px">
+
+* Individual source lists
+  
+  ![img](asserts/img/ext/source-filter-1.png)
+
+* Open source filter as table  
+  There you can filter, sort
+
+  ![img](asserts/img/ext/source-filter-2.png)
+
+* Maintain source descriptions
+  
+  ![img](asserts/img/ext/source-filter-3.png)
   
 * Check for changes
   

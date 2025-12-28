@@ -14,9 +14,9 @@
   </head>
   <body>
 
-    <h1>{{ global_stuff['get_text']('Summary') | safe }}</h1>
+    <h3>{{ global_stuff['get_text']('Summary') | safe }}</h3>
+    <br/>
     {% if compile_list %}
-    <br/><br/>
     <div>
       {{ global_stuff['get_text']('Created at') | safe }} <b><u>{{ compile_list['timestamp'] }}</u></b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <a href='command:vscode.open?{{ compile_file }}'>{{ global_stuff['get_text']('open JSON file') | safe }}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -29,7 +29,7 @@
     <br/>
     
     <table id="source_list">
-      <tr><th>{{ global_stuff['get_text']('New sources') | safe }}</th><th>{{ global_stuff['get_text']('Changed sources') | safe }}</th><th>{{ global_stuff['get_text']('Dependend objects') | safe }}</th></tr>
+      <tr><th style="text-align: center;">{{ global_stuff['get_text']('New sources') | safe }}&nbsp;</th><th style="text-align: center;">{{ global_stuff['get_text']('Changed sources') | safe }}&nbsp;</th><th style="text-align: center;">{{ global_stuff['get_text']('Dependend objects') | safe }}</th></tr>
       <tr>
         <td>
           <ul>
@@ -59,7 +59,7 @@
 
     <hr />
 
-    <h2>{{ global_stuff['get_text']('Details') | safe }}</h2>
+    <h3>{{ global_stuff['get_text']('Details') | safe }}</h3>
 
     <div>{{ global_stuff['get_text']('IBM i IFS path') | safe }} <code>{{ ifs_path }}</code></div>
     <br/>

@@ -35,20 +35,19 @@
 
   <table>
     <tr>
-      <td colspan="3">{{ global_stuff['get_text']('Run build') | safe }}</td>
+      <td colspan="3">{{ global_stuff['get_text']('Active source') | safe }}</td>
     </tr>
     <tr>
       <td>
-        <vscode-button id="run_single_build">
+        <vscode-button id="run_single_build" style="height:35px; width:60px">
           <span class="codicon codicon-add"><img
               src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/run.svg"></span>
         </vscode-button>
       </td>
       <td>
-        <vscode-button id="run_build">
-          *ALL
-          <span slot="start" class="codicon codicon-add"><img
-              src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/run-all.svg"></span>
+        <vscode-button id="show_single_changes" style="height:35px; width:60px">
+          <span class="codicon codicon-add"><img
+              src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/check.svg"></span>
         </vscode-button>
       </td>
       <td>
@@ -56,19 +55,18 @@
       </td>
     </tr>
     <tr>
-      <td colspan="3"> {{ global_stuff['get_text']('Show changes') | safe }}</td>
+      <td colspan="3"> {{ global_stuff['get_text']('All sources') | safe }}</td>
     </tr>
     <tr>
       <td>
-        <vscode-button id="show_single_changes">
+        <vscode-button id="run_build" style="width:60px">
           <span class="codicon codicon-add"><img
-              src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/check.svg"></span>
+              src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/run-all.svg"></span>
         </vscode-button>
       </td>
       <td>
-        <vscode-button id="show_changes">
-          *ALL
-          <span slot="start" class="codicon codicon-add"><img
+        <vscode-button id="show_changes" style="width:60px">
+          <span class="codicon codicon-add"><img
               src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/checklist.svg"></span>
         </vscode-button>
       </td>
