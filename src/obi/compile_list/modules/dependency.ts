@@ -6,6 +6,7 @@ import { addBuildCmds } from './build_cmds';
 import { AppConfig } from '../../../webview/controller/AppConfig';
 import { Workspace } from '../../../utilities/Workspace';
 import { DirTool } from '../../../utilities/DirTool';
+import { logger } from '../../../utilities/Logger';
 
 
 export function getBuildOrder(
@@ -30,8 +31,9 @@ export function getBuildOrder(
   if (!appConfig) {
     appConfig = AppConfig.get_app_config();
   }
+  const extended_sources_config = DirTool.get_toml(OBIConstants.get('EXTENDED_SOURCE_PROCESS_CONFIG_TOML'));
 
-  addBuildCmds(newTargetTree, appConfig);
+  addBuildCmds(newTargetTree, appConfig, extended_sources_config);
 
   newTargetTree = { timestamp: new Date().toISOString(), compiles: newTargetTree };
 
@@ -116,27 +118,57 @@ export function getTargetOnlyDependedObjects(
 }
 
 export function removeDuplicities(targetTree: any[] = []): any[] {
+  
+  logger.debug('Sort target tree by level');
+
   const sortedTree = [...targetTree].sort((a, b) => a.level - b.level);
 
-  for (const levelItem of sortedTree) {
-    for (const obj of levelItem.sources) {
-      for (const revLevelItem of [...sortedTree].reverse()) {
-        const revLevelSources = revLevelItem.sources.map((item: any) => item.source);
-        for (let i = 0; i < sortedTree.length; i++) {
-          const sources = sortedTree[i].sources.map((item: any) => item.source);
-          if (
-            sortedTree[i].level < revLevelItem.level &&
-            revLevelSources.includes(obj.source) &&
-            sources.includes(obj.source)
-          ) {
-            sortedTree[i].sources = sortedTree[i].sources.filter((item: any) => item.source !== obj.source);
-          }
-        }
-      }
-    }
-  }
+  logger.info('Remove duplicities from build order');
 
-  return sortedTree;
+  //for (const levelItem of sortedTree) {
+  //  for (const obj of levelItem.sources) {
+  //    for (const revLevelItem of [...sortedTree].reverse()) {
+  //      const revLevelSources = revLevelItem.sources.map((item: any) => item.source);
+  //      for (let i = 0; i < sortedTree.length; i++) {
+  //        const sources = sortedTree[i].sources.map((item: any) => item.source);
+  //        if (
+  //          sortedTree[i].level < revLevelItem.level &&
+  //          revLevelSources.includes(obj.source) &&
+  //          sources.includes(obj.source)
+  //        ) {
+  //          sortedTree[i].sources = sortedTree[i].sources.filter((item: any) => item.source !== obj.source);
+  //        }
+  //      }
+  //    }
+  //  }
+  //}
+
+  const optimizeTree = (sortedTree) => {
+    const seenSources = new Set();
+    
+    // 1. Reverse the tree to start from the highest level (Level 5 -> Level 1)
+    // We use slice() to avoid mutating the original array order during iteration
+    const reversedTree = [...sortedTree].reverse();
+
+    for (const levelItem of reversedTree) {
+      // 2. Filter sources: keep only those NOT seen in a higher level
+      levelItem.sources = levelItem.sources.filter(obj => {
+        if (seenSources.has(obj.source)) {
+          return false; // Duplicate found at a higher level, remove from this lower level
+        } else {
+          seenSources.add(obj.source); // Mark as seen
+          return true;
+        }
+      });
+    }
+
+    return sortedTree;
+  };
+
+  const result = optimizeTree(sortedTree);
+
+  return result;
+  //return sortedTree;
 }
 
 export function getTargetsByLevel(targetTree: Record<string, any> = {}, level: number = 1): any[] {

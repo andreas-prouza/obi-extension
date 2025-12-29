@@ -26,6 +26,18 @@ export class OBITools {
   public static check_remote_sources_status: OBIStatus = OBIStatus.READY;
   public static transfer_all_status: OBIStatus = OBIStatus.READY;
 
+  private static _dependency_list: { ['source']: string[] }|undefined = undefined;
+  private static _last_loading_time: number = 0;
+
+  private static _threads: {[key: string]: string} = {};
+
+
+
+
+  public static cancel(thread_name: string) {
+    OBITools._threads[thread_name] = 'cancel';
+  }
+
 
   /**
    * Self check of the extension
@@ -121,8 +133,8 @@ export class OBITools {
 
     OBITools.ext_context.workspaceState.update('obi.version', current_version);
 
-    const content: string | undefined = DirTool.get_file_content(path.join(Workspace.get_workspace(), config.general['dependency-list'] || Constants.DEPENDENCY_LIST))
-    if (!content || content.length == 0) {
+    const content: {['source']: string[]}  = OBITools.get_dependency_list();
+    if (!content || Object.keys(content).length === 0) {
       vscode.window.showWarningMessage('Missing source dependencies');
     }
 
@@ -470,6 +482,7 @@ export class OBITools {
       },
       locale: LocaleText.localeText?.current_locale,
       current_profile: AppConfig.get_current_profile_app_config_name(),
+      workspace_settings: Workspace.get_workspace_settings()
     }
   }
 
@@ -650,12 +663,12 @@ export class OBITools {
     const t0 = performance.now();
     const current_hash_list = await OBITools.retrieve_current_source_hashes();
     const t1 = performance.now();
-    logger.info(`1. It took ${t1 - t0} milliseconds.`);
+    logger.info(`1. It took ${((t1 - t0) / 1000).toFixed(2)} seconds.`);
 
     const t2 = performance.now();
     const changed_sources: source.ISourceList = await OBITools.compare_source_change(current_hash_list);
     const t3 = performance.now();
-    logger.info(`2. It took ${t3 - t2} milliseconds.`);
+    logger.info(`2. It took ${((t3 - t2) / 1000).toFixed(2)} seconds.`);
 
     return changed_sources;
   }
@@ -663,10 +676,16 @@ export class OBITools {
 
 
   public static get_dependency_list(): { ['source']: string[] } {
+    
+    if (this._dependency_list && this._last_loading_time > (Date.now() - 10000)) { // Reuse if only 2 seconds old
+      return this._dependency_list;
+    }
 
     const config = AppConfig.get_app_config();
-    const dependency_list: { ['source']: string[] } = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['dependency-list'])) || {};
-    return dependency_list;
+    this._dependency_list = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['dependency-list'])) || {};
+    this._last_loading_time = Date.now();
+    return this._dependency_list;
+
   }
 
 
@@ -770,7 +789,7 @@ export class OBITools {
       promise_list.push(OBITools.check_source_change_item(source_item, last_source_hashes));
     });
     const t7 = performance.now();
-    logger.info(`Start check_source_change_item: It took ${t7 - t6} milliseconds.`);
+    logger.info(`Start check_source_change_item: It took ${((t7 - t6) / 1000).toFixed(2)} seconds.`);
 
     //----
     /*
@@ -793,7 +812,7 @@ export class OBITools {
     const t0 = performance.now();
     const all_promises = await Promise.all(promise_list);
     const t1 = performance.now();
-    logger.info(`Change check: It took ${t1 - t0} milliseconds.`);
+    logger.info(`Change check: It took ${((t1 - t0) / 1000).toFixed(2)} seconds.`);
 
     all_promises.map((source_item_list: source.ISourceList) => {
       if (source_item_list['changed-sources'].length > 0)
@@ -876,6 +895,7 @@ export class OBITools {
   public static async retrieve_current_source_hashes(): Promise<source.ISource[]> {
 
     logger.info('Start retrieve_current_source_hashes');
+    delete OBITools._threads['retrieve_current_source_hashes'];
     let p1 = performance.now();
 
     const config = AppConfig.get_app_config();
@@ -889,7 +909,7 @@ export class OBITools {
     );
 
     let p2 = performance.now();
-    logger.info(`Duration: ${p2 - p1} milliseconds`);
+    logger.info(`Duration: ${((p2 - p1) / 1000).toFixed(2)} seconds`);
 
     logger.info(`Get checksum of sources`);
 
@@ -903,6 +923,11 @@ export class OBITools {
       //OBITools.parallel(sources, )
       //... eher mit dowhile und Promise.all und immer dazuhängen ...
       for (const source of sources) {
+
+        if (OBITools._threads['retrieve_current_source_hashes'] == 'cancel') {
+          delete OBITools._threads['retrieve_current_source_hashes'];
+          throw Error('Operation canceled by user');
+        }
         counter++;
         checksum_calls.push(DirTool.checksumFile(source_dir, source));
         if (counter > max_threads) {
@@ -920,7 +945,7 @@ export class OBITools {
     }
 
     p2 = performance.now();
-    logger.info(`In total ${hash_values.length} hash values. Duration: ${p2 - p1}`);
+    logger.info(`In total ${hash_values.length} hash values. Duration: ${((p2 - p1) / 1000).toFixed(2)} seconds`);
     return hash_values;
   }
 

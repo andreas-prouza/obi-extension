@@ -15,7 +15,7 @@
   <body>
 
     <h3>{{ global_stuff['get_text']('Summary') | safe }}</h3>
-    <br/>
+
     {% if compile_list %}
     <div>
       {{ global_stuff['get_text']('Created at') | safe }} <b><u>{{ compile_list['timestamp'] }}</u></b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -111,7 +111,7 @@
                 {% set cmds = cmd_entry.cmd.split(';') %}
                 <tr>
                   <td><vscode-checkbox class="type_checkbox build_source_cmd" source="{{ source_item['source'] }}" cmd="{{ cmd_entry['cmd'] }}" {% if 'ignore' not in cmd_entry or cmd_entry['ignore'] == false %}checked{% endif %}></vscode-checkbox></td>
-                  <td>{{ cmd_entry.updated }}</td>
+                  <td>{{ (cmd_entry.updated or "").slice(11, 23) }}</td>
                   <td><span class="{{ cmd_entry.status }}">{{ cmd_entry.status }}</span></td>
                   <td><details {% if cmd_entry.status == 'failed' %}open{% endif %}><summary><code>{{ cmd_entry.cmd | replace('2> /dev/null', '') | replace('cl -v', '') | replace('"\'', '') | replace('\'"', '') | replace('"', '') | truncate(100) }}</code></summary><div style="border: 1px solid">{% for cmd in cmds %}<pre style="white-space: pre-wrap;">{{ cmd | trim }}</pre>{% endfor %}</div></details></td>
                   {% if 'joblog' in cmd_entry and cmd_entry['joblog']|length %}
@@ -121,7 +121,7 @@
                   {% endif %}
                   {% if 'stdout' in cmd_entry and cmd_entry['stdout']|length %}
                     <td>
-                      <vscode-button class="stdout" source="{{ source_item['source'] }}" level="{{ level_item['level'] }}" cmd_index="{{ loop.index0 }}" appearance="primary">Spool file</vscode-button>
+                      <vscode-button class="stdout" source="{{ source_item['source'] }}" level="{{ level_item['level'] }}" cmd_index="{{ loop.index0 }}" appearance="primary">Spool</vscode-button>
                     </td>
                   {% endif %}
                   {% if 'stderr' in cmd_entry and cmd_entry['stderr']|length %}

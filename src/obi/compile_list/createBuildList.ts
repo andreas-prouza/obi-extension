@@ -7,6 +7,7 @@ import { OBIConstants } from './modules/obi_constants';
 import { DirTool } from '../../utilities/DirTool';
 import { AppConfig } from '../../webview/controller/AppConfig';
 import { Workspace } from '../../utilities/Workspace';
+import { OBITools } from '../../utilities/OBITools';
 
 
 
@@ -20,7 +21,7 @@ export function createBuildList(source?: string): void {
   const sourceDir = path.join(ws, generalConfig['local-base-dir'], generalConfig['source-dir']);
   const buildListPath = path.join(ws, generalConfig['compiled-object-list']);
   const objectTypes = generalConfig['supported-object-types'];
-  const dependencyList = DirTool.get_json(path.join(ws, generalConfig['dependency-list']));
+  const dependencyList = OBITools.get_dependency_list();
   const buildOutputDir = path.join(ws, generalConfig['build-output-dir'] || '.obi/build-output');
 
   if (fs.existsSync(buildOutputDir)) {

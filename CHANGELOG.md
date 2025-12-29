@@ -1,5 +1,13 @@
 ## [0.6.2]
 
+* Performance improvements
+* Docu
+* Bugfixes
+* GUI
+
+
+## [0.6.2]
+
 * Delete/copy profiles
 
 

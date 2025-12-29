@@ -6,13 +6,13 @@ import { DirTool } from '../../../utilities/DirTool';
 import path from 'path';
 import { Workspace } from '../../../utilities/Workspace';
 
-export function addBuildCmds(targetTree: any[], appConfig: any): void {
+export function addBuildCmds(targetTree: any[], appConfig: any, extended_sources_config: any): void {
   let objectList: string[] = [];
 
   for (const targetItem of targetTree) {
     for (const sourceItem of targetItem.sources) {
       objectList.push(getObjectList(sourceItem.source, appConfig));
-      sourceItem.cmds = getSourceBuildCmds(sourceItem.source, appConfig);
+      sourceItem.cmds = getSourceBuildCmds(sourceItem.source, appConfig, extended_sources_config);
     }
   }
 
@@ -31,14 +31,14 @@ export function getObjectList(source: string, appConfig: any): string {
   return `prod_obj|${prodLib}|${variableDict.TARGET_LIB}|${variableDict.OBJ_NAME}|${objType}|${objAttr}|${source}`;
 }
 
-export function getSourceBuildCmds(source: string, appConfig: any): any[] {
+export function getSourceBuildCmds(source: string, appConfig: any, extended_sources_config: any): any[] {
   const sourcesConfig = DirTool.get_toml(path.join(Workspace.get_workspace(), OBIConstants.get('SOURCE_CONFIG_TOML')));
   let sourceConfig: any = {};
   if (sourcesConfig && sourcesConfig[source]) {
     sourceConfig = sourcesConfig[source];
   }
 
-  let steps = getSteps(source, appConfig);
+  let steps = getSteps(source, appConfig, extended_sources_config);
   if (sourceConfig.steps && sourceConfig.steps.length > 0) {
     steps = sourceConfig.steps;
   }

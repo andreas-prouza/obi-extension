@@ -281,28 +281,10 @@ export class OBICommands {
       return;
     }
 
-    OBICommands.run_build_status = OBIStatus.IN_PROCESS;
+    await OBICommands.show_changes(context, source);
 
-    const ws_uri = Workspace.get_workspace_uri();
-    let buff;
+    await OBICommands.rerun_build([], {});
 
-    OBICommands.show_changes(context, source);
-
-    try {
-      if (source)
-        await OBICommands.run_build_process([source]);
-      else
-        await OBICommands.run_build_process();
-
-      BuildSummary.render(context.extensionUri, ws_uri)
-      OBIController.update_build_summary_timestamp();
-    }
-    catch (e: any) {
-      vscode.window.showErrorMessage(e.message);
-    }
-
-    OBICommands.run_build_status = OBIStatus.READY;
-    OBIController.run_finished();
     return;
   }
 

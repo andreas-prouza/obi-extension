@@ -4,19 +4,21 @@ import { OBIConstants } from './obi_constants';
 import { getSourceProperties } from './properties';
 import { DirTool } from '../../../utilities/DirTool';
 
-export function getSteps(source: string, appConfig: any): Array<string | object> {
+export function getSteps(source: string, appConfig: any, extended_sources_config: any): Array<string | object> {
   let initSteps: Array<string | object> = [];
   if (appConfig.global?.steps?.['*ALL']) {
     initSteps = appConfig.global.steps['*ALL'];
   }
 
-  const extendedSteps = getExtendedSteps(source, appConfig);
+  const extendedSteps = getExtendedSteps(source, appConfig, extended_sources_config);
   if (extendedSteps) {
     return [...initSteps, ...extendedSteps];
   }
 
   return [...initSteps, ...getGlobalSteps(source, appConfig)];
 }
+
+
 
 function getGlobalSteps(source: string, appConfig: any): Array<string | object> {
   if (appConfig.global?.steps) {
@@ -31,9 +33,10 @@ function getGlobalSteps(source: string, appConfig: any): Array<string | object> 
   return appConfig.global?.steps?.[fileExtensions] || [];
 }
 
-function getExtendedSteps(source: string, appConfig: any): Array<string | object> | null {
-  const sourcesConfig = DirTool.get_toml(OBIConstants.get('EXTENDED_SOURCE_PROCESS_CONFIG_TOML'));
-  if (!sourcesConfig?.extended_source_processing) {
+
+
+function getExtendedSteps(source: string, appConfig: any, extended_sources_config: any): Array<string | object> | null {
+  if (!extended_sources_config?.extended_source_processing) {
     return null;
   }
 
@@ -41,7 +44,7 @@ function getExtendedSteps(source: string, appConfig: any): Array<string | object
   let resultSteps: Array<string | object> = [];
   let allowMultipleMatches = true;
 
-  for (const sourceConfigEntry of sourcesConfig.extended_source_processing) {
+  for (const sourceConfigEntry of extended_sources_config.extended_source_processing) {
     if (matchSourceConditions(sourceConfigEntry, source, sourceProperties)) {
       if (!allowMultipleMatches && resultSteps.length > 0) {
         throw new Error(`Multiple extended source processing entries found for ${source}`);

@@ -206,7 +206,7 @@ export class BuildSummary {
   private static createNewPanel(extensionUri : Uri) {
     return window.createWebviewPanel(
       'show_changes', // Identifies the type of the webview. Used internally
-      'Show changes', // Title of the panel displayed to the user
+      'Build summary', // Title of the panel displayed to the user
       // The editor column the panel should be displayed in
       ViewColumn.One,
       // Extra panel configurations

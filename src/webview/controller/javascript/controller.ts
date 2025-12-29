@@ -26,18 +26,12 @@ function main() {
 
   const run_build_button = document.getElementById("run_build") as Button;
   run_build_button?.addEventListener("click", run_build);
-
-  const run_single_build_button = document.getElementById("run_single_build") as Button;
-  run_single_build_button?.addEventListener("click", run_single_build);
   
   const show_changes_button = document.getElementById("show_changes") as Button;
   show_changes_button?.addEventListener("click", show_changes);
-  
-  const show_single_changes_button = document.getElementById("show_single_changes") as Button;
-  show_single_changes_button?.addEventListener("click", show_single_changes);
-  
-  const cancel_show_changes_button = document.getElementById("cancel_show_changes") as Button;
-  cancel_show_changes_button?.addEventListener("click", cancel_show_changes);
+    
+  const cancel_running_button = document.getElementById("cancel_running") as Button;
+  cancel_running_button?.addEventListener("click", cancel_running);
   
   const delete_current_profile_button = document.getElementById("btn_delete_current_profile") as Button;
   delete_current_profile_button?.addEventListener("click", delete_current_profile);
@@ -72,48 +66,44 @@ function change_profile(event: Event) {
 }
 
 
-function run_build() {
-
-  const run_build_ring = document.getElementById("run_build_ring");
-  if (run_build_ring)
-    run_build_ring.style.visibility='visible';
-
-  vscode.postMessage({
-    command: "run_build"
-  });
+function get_run_type() : string {
+  const run_type_drp = document.getElementById("opt_run_type") as HTMLSelectElement;
+  return run_type_drp.value;
 }
 
-function run_single_build() {
 
+function run_build() {
+
+  let command: string = 'run_single_build';
   const run_build_ring = document.getElementById("run_build_ring");
+
   if (run_build_ring)
-    run_build_ring.style.visibility='visible';
+    run_build_ring.style.display='flex';
+  
+  if (get_run_type() == "all") {
+    command = 'run_build';
+  }
 
   vscode.postMessage({
-    command: "run_single_build"
+    command: command
   });
 }
 
 
 function show_changes() {
 
-  const show_changes_ring = document.getElementById("show_changes_ring");
-  if (show_changes_ring)
-    show_changes_ring.style.visibility='visible';
-  
-  vscode.postMessage({
-    command: "show_changes"
-  });
-}
+  let command: string = 'show_single_changes';
 
-function show_single_changes() {
-
-  const show_changes_ring = document.getElementById("show_changes_ring");
-  if (show_changes_ring)
-    show_changes_ring.style.visibility='visible';
+  const running_ring = document.getElementById("running_ring");
+  if (running_ring)
+    running_ring.style.display='flex';
   
+  if (get_run_type() == "all") {
+    command = 'show_changes';
+  }
+
   vscode.postMessage({
-    command: "show_single_changes"
+    command: command
   });
 }
 
@@ -132,9 +122,9 @@ function copy_profile() {
 }
 
 
-function cancel_show_changes() {
+function cancel_running() {
   vscode.postMessage({
-    command: "cancel_show_changes"
+    command: "cancel_running"
   });
 }
 
@@ -150,30 +140,25 @@ function receive_message(e: MessageEvent) {
   switch (e.data.command) {
 
     case 'run_finished':
-      const show_changes_ring = document.getElementById("show_changes_ring");
-      if (show_changes_ring)
-        show_changes_ring.style.visibility='hidden';
-
-      const run_build_ring = document.getElementById("run_build_ring");
-      if (run_build_ring)
-        run_build_ring.style.visibility='hidden';
-      
+      const running_ring = document.getElementById("running_ring");
+      if (running_ring) {
+        running_ring.style.display='none';
+      }
       break;
 
     case 'update_build_summary_timestamp':
 
-      let visibility = 'visible';
+      let display = 'flex';
       if (!e.data.build_counts || e.data.build_counts == 0)
-        visibility = 'hidden';
+        display = 'none';
 
       let open_build_summary = document.getElementById("open_build_summary");
       if (open_build_summary)
-        open_build_summary.style.visibility=visibility;
-
+        open_build_summary.style.display=display;
       let build_summary_timestamp_label = document.getElementById("build_summary_timestamp");
       if (build_summary_timestamp_label) {
         build_summary_timestamp_label.innerHTML = ` (${e.data.build_summary_timestamp})`;
-        build_summary_timestamp_label.style.visibility=visibility;
+        build_summary_timestamp_label.style.display=display;
       }
       break;
 

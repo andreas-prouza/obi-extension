@@ -41,8 +41,6 @@ function main() {
       });
   }
 
-  window.addEventListener('message', receive_message);
-
   showAlert('Configuration reloaded.', 'success');
 }
 
@@ -149,42 +147,4 @@ function save_config() {
   });
 
 }
-
-
-
-
-function receive_message(e: MessageEvent) {
-
-  switch (e.data.command) {
-
-    case 'run_finished':
-      const show_changes_ring = document.getElementById("show_changes_ring");
-      if (show_changes_ring)
-        show_changes_ring.style.visibility='hidden';
-
-      const run_build_ring = document.getElementById("run_build_ring");
-      if (run_build_ring)
-        run_build_ring.style.visibility='hidden';
-      
-      break;
-
-    case 'update_build_summary_timestamp':
-
-      let visibility = 'visible';
-      if (!e.data.build_counts || e.data.build_counts == 0)
-        visibility = 'hidden';
-
-      let open_build_summary = document.getElementById("open_build_summary");
-      if (open_build_summary)
-        open_build_summary.style.visibility=visibility;
-
-      let build_summary_timestamp_label = document.getElementById("build_summary_timestamp");
-      if (build_summary_timestamp_label) {
-        build_summary_timestamp_label.innerHTML = ` (${e.data.build_summary_timestamp})`;
-        build_summary_timestamp_label.style.visibility=visibility;
-      }
-      break;
-  }
-}
-
 

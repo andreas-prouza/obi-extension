@@ -254,8 +254,10 @@ export class OBIController implements vscode.WebviewViewProvider {
           vscode.commands.executeCommand('obi.show_single_changes');
           break;
 
-        case 'cancel_show_changes':
+        case 'cancel_running':
           SystemCmdExecution.abort_system_cmd('show_changes');
+          SystemCmdExecution.abort_system_cmd('run_build');
+          OBITools.cancel('retrieve_current_source_hashes');
           break;
 
         case 'change_profile':

@@ -46,7 +46,7 @@ Final release will be available soon.
 
 * Compile in correct order
   
-  Tables before programs etc. based on the dependency list
+  Tables before programs etc. based on the [dependency list](asserts/docs/dependencies.md)
 
 
 * See which objects has been compiled and their details  
@@ -104,26 +104,11 @@ Because you work locally, you need to sync your changes with other developers.
 
      When you finished configuration, save it and your project gets reloaded automatically.
 
-5. Now, OBI opens finally containing an sample source in the ```Source Filters``` area
+5. Now, OBI is ready. It comes with an sample source in the ```Source Filters``` area
    <img src="asserts/img/ext/obi-after-init.png" style="width: 800px">
 
-6. Check if it works with ```Show changes```
-   
-     <img src="asserts/img/ext/show-changes-3.png" style="width: 800px">
 
-     In the ```Summary``` you see a list of sources, ready to compile.  
-     In the `Details` section you see the build order and it's build commands.
-
-     <img src="asserts/img/ext/show-changes-4.png" style="width: 800px">
-
-7. Run Build
-   2 ways go to:
-   * In the ```Summary``` click on ```Run build```
-   * Open the source you need to build and click on the ```Run build``` button:
-  <img src="asserts/img/ext/run-build.png" style="width: 300px">
-
-
-8.  On your IBM i
+6.  On your IBM i
     Clone OBI from GitHub somewhere in the IFS and run the setup script.
     
     ```sh

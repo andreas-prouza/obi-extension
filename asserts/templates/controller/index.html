@@ -23,77 +23,62 @@
         <vscode-option value="{{ profile.file }}" {% if profile.file == global_stuff['current_profile'] %}selected{% endif %}>{{ profile.alias }}</vscode-option>
         {% endfor %}
       </vscode-dropdown>
-      <vscode-button id="btn_delete_current_profile">
+      <vscode-button id="btn_delete_current_profile" title="{{ global_stuff['get_text']('Delete selected profile') | safe }}">
         <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
       </vscode-button>
-      <vscode-button id="btn_copy_profile">
+      <vscode-button id="btn_copy_profile" title="{{ global_stuff['get_text']('Copy selected profile') | safe }}">
         <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
       </vscode-button>
     </div>
   </div>
   <br />
 
-  <table>
-    <tr>
-      <td colspan="3">{{ global_stuff['get_text']('Active source') | safe }}</td>
-    </tr>
-    <tr>
-      <td>
-        <vscode-button id="run_single_build" style="height:35px; width:60px">
-          <span class="codicon codicon-add"><img
-              src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/run.svg"></span>
-        </vscode-button>
-      </td>
-      <td>
-        <vscode-button id="show_single_changes" style="height:35px; width:60px">
-          <span class="codicon codicon-add"><img
-              src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/check.svg"></span>
-        </vscode-button>
-      </td>
-      <td>
-        <vscode-progress-ring id="run_build_ring" style="visibility: hidden;"></vscode-progress-ring>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="3"> {{ global_stuff['get_text']('All sources') | safe }}</td>
-    </tr>
-    <tr>
-      <td>
-        <vscode-button id="run_build" style="width:60px">
+  <div>
+    {{ global_stuff['get_text']('Run type') | safe }}
+    <vscode-radio-group id="opt_run_type">
+      <vscode-radio id="run_type_single" value="single" checked>
+        {{ global_stuff['get_text']('*CURRENT') | safe }}
+      </vscode-radio>
+      <vscode-radio id="run_type_all" value="all">
+        {{ global_stuff['get_text']('*ALL') | safe }}
+      </vscode-radio>
+    </vscode-radio-group>
+  </div>
+
+    <div>
+        <vscode-button id="run_build" style="height:35px; width:60px" title="{{ global_stuff['get_text']('Run build') | safe }}">
           <span class="codicon codicon-add"><img
               src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/run-all.svg"></span>
         </vscode-button>
-      </td>
-      <td>
-        <vscode-button id="show_changes" style="width:60px">
-          <span class="codicon codicon-add"><img
-              src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/checklist.svg"></span>
+
+        <vscode-button id="show_changes" style="height:35px; width:60px" title="{{ global_stuff['get_text']('Show build list') | safe }}">
+          <span class="codicon codicon-add">
+            <img
+              src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/checklist.svg">
+          </span>
         </vscode-button>
-      </td>
-      <td>
-        <div id="show_changes_ring" style="visibility: hidden; display: flex; flex-wrap: nowrap">
-          <vscode-progress-ring id="show_changes_ring_"></vscode-progress-ring>
-          <vscode-button id="cancel_show_changes">
+
+        <div id="running_ring" style="display: none">
+          <vscode-progress-ring id="running_ring_"></vscode-progress-ring>
+          <vscode-button id="cancel_running">
             <span class="codic</vscode-button>on codicon-add"><img
               src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/stop-circle.svg"></span>
           </vscode-button>
         </div>
-      </td>
-    </tr>
-  </table>
-  
+  </div>
+
   <br />
 
-  <a id="open_build_summary" href='command:obi.open_build_summary'
-    style="visibility: {% if builds_exist == 0 %}hidden{% else %}visible{% endif %};">
-    <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/file.svg">{{
-    global_stuff['get_text']('Open build summary') | safe }}
-  </a>
-  <br />
-  <label id="build_summary_timestamp" style="visibility: {% if builds_exist == 0 %}hidden{% else %}visible{% endif %};">
-    ({{ build_summary_timestamp }})
-  </label>
-
+  <div>
+    <a id="open_build_summary" href='command:obi.open_build_summary'
+      style="display: {% if builds_exist == 0 %}none{% else %}block{% endif %};">
+      <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/file.svg">{{
+      global_stuff['get_text']('Open build summary') | safe }}
+    </a>
+    <label id="build_summary_timestamp" style="display: {% if builds_exist == 0 %}none{% else %}block{% endif %};">
+      ({{ build_summary_timestamp }})
+    </label>
+  </div>
 
   <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
 
