@@ -1,4 +1,9 @@
-## [0.6.2]
+## [0.6.4]
+
+* npm update
+
+
+## [0.6.3]
 
 * Performance improvements
 * Docu
