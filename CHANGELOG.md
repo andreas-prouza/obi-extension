@@ -1,3 +1,8 @@
+## [0.6.5]
+
+* Use same icons for dark and light mode
+
+
 ## [0.6.4]
 
 * npm update
