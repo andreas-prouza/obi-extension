@@ -511,7 +511,7 @@ export class OBITools {
   }
 
 
-  public static update_compile_list(ignore_sources: string[], ignore_sources_cmd: { [key: string]: string | null }): void {
+  public static update_compile_list(ignore_sources: string[], ignore_sources_cmd: { [key: string]: [string] | null }): void {
     let compile_list = OBITools.get_compile_list(Workspace.get_workspace_uri());
 
     for (const level_item of (compile_list['compiles'] as any)) {
@@ -522,7 +522,7 @@ export class OBITools {
         }
         for (const cmd of source['cmds']) {
           cmd['ignore'] = false;
-          if (ignore_sources_cmd[source['source']] == cmd['cmd']) {
+          if (ignore_sources_cmd[source['source']] && ignore_sources_cmd[source['source']].includes(cmd['cmd'])) {
             cmd['ignore'] = true;
           }
         }

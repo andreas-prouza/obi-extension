@@ -291,7 +291,7 @@ export class OBICommands {
 
 
 
-  public static async rerun_build(ignore_sources: string[], ignore_sources_cmd: { [key: string]: string | null }) {
+  public static async rerun_build(ignore_sources: string[], ignore_sources_cmd: { [key: string]: [string] | null }) {
 
     if (OBICommands.run_build_status != OBIStatus.READY) {
       vscode.window.showErrorMessage('OBI process is already running');

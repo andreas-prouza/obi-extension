@@ -1,3 +1,8 @@
+## [0.6.6]
+
+* Bugfix
+
+
 ## [0.6.5]
 
 * Use same icons for dark and light mode
