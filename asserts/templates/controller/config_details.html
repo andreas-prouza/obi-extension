@@ -167,6 +167,14 @@
       </vscode-checkbox>
       {{ global_stuff['get_text']('Activate extended source processing') | safe }}
       </div>
+
+      <div style="display: flex; align-items: center">
+      <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox" 
+              {% if general_settings['ALWAYS_TRANSFER_RELATED_COPYBOOKS'] %}checked{% endif %} 
+              panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|ALWAYS_TRANSFER_RELATED_COPYBOOKS">
+      </vscode-checkbox>
+      {{ global_stuff['get_text']('Always transfer related copybooks') | safe }}
+      </div>
       
       <br />
       <hr />

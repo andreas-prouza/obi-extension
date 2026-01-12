@@ -175,8 +175,9 @@ export class ConfigCompileSettings {
   public ACTGRP?: string;
   public TARGET_LIB?: string;
   public USE_ESP?: string;
+  public ALWAYS_TRANSFER_RELATED_COPYBOOKS?: string;
 
-  constructor(TGTRLS?: string, DBGVIEW?: string, TGTCCSID?: string, STGMDL?: string, LIBL?: string[], INCDIR_RPGLE?: string, INCDIR_SQLRPGLE?: string, TARGET_LIB_MAPPING?: {}, RPGPPOPT?: string, INCLUDE_BNDDIR?: string, ACTGRP?: string, TARGET_LIB?: string, USE_ESP?: string) {
+  constructor(TGTRLS?: string, DBGVIEW?: string, TGTCCSID?: string, STGMDL?: string, LIBL?: string[], INCDIR_RPGLE?: string, INCDIR_SQLRPGLE?: string, TARGET_LIB_MAPPING?: {}, RPGPPOPT?: string, INCLUDE_BNDDIR?: string, ACTGRP?: string, TARGET_LIB?: string, USE_ESP?: string, ALWAYS_TRANSFER_RELATED_COPYBOOKS?: string) {
     this.TGTRLS = TGTRLS; 
     this.DBGVIEW = DBGVIEW; 
     this.TGTCCSID = TGTCCSID; 
@@ -190,6 +191,7 @@ export class ConfigCompileSettings {
     this.ACTGRP = ACTGRP;
     this.TARGET_LIB = TARGET_LIB;
     this.USE_ESP = USE_ESP;
+    this.ALWAYS_TRANSFER_RELATED_COPYBOOKS = ALWAYS_TRANSFER_RELATED_COPYBOOKS;
   }
 
   public attributes_missing(): boolean {
@@ -232,7 +234,8 @@ export class ConfigSettings {
         general.INCLUDE_BNDDIR,
         general.ACTGRP,
         general.TARGET_LIB,
-        general.USE_ESP
+        general.USE_ESP,
+        general.ALWAYS_TRANSFER_RELATED_COPYBOOKS
       );
     }
 

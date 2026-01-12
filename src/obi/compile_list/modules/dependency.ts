@@ -14,6 +14,10 @@ export function getBuildOrder(
   targetList: string[] = [],
   appConfig?: any
 ): any {
+  
+  if (!appConfig) {
+    appConfig = AppConfig.get_app_config();
+  }
   const objectsTree = getTargetsDependedObjects(dependencyDict, targetList);
   const ws = Workspace.get_workspace();
 
@@ -22,7 +26,23 @@ export function getBuildOrder(
   const dependendObjects = getTargetsOnlyDependedObjects(dependencyDict, targetList);
   DirTool.write_json(path.join(ws, OBIConstants.get('DEPENDEND_OBJECT_LIST')), dependendObjects);
 
+  const allObjectsToBuild = Array.from(new Set([...targetList, ...dependendObjects]));
+
   let orderedTargetTree = getTargetsByLevel(objectsTree);
+  
+  if (appConfig.general?.ALWAYS_TRANSFER_RELATED_COPYBOOKS) {
+    const copySources = getCopySources(dependencyDict, allObjectsToBuild);
+    logger.info(`Found copy sources: ${copySources.join(', ')}`);
+    if (copySources.length > 0) {
+      orderedTargetTree.unshift({
+        level: 0,
+        sources: copySources.map(src => ({ source: src, cmds: [] }))
+      });
+    }
+  }
+
+
+
   DirTool.write_json(path.join(ws, '.obi/tmp/ordered_target_tree.json'), orderedTargetTree);
 
   let newTargetTree = removeDuplicities(orderedTargetTree);
@@ -103,6 +123,7 @@ export function getTargetOnlyDependedObjects(
 
   for (const obj in dependencyDict) {
     if (dependencyDict[obj].includes(target)) {
+
       if (!fs.existsSync(path.join(ws, srcBasePath, obj))) {
         continue;
       }
@@ -207,4 +228,22 @@ export function getTargetsByLevel(targetTree: Record<string, any> = {}, level: n
   }
 
   return newTargetTree.sort((a, b) => a.level - b.level);
+}
+
+export function getCopySources(
+  dependencyDict: Record<string, string[]>,
+  targets: string[],
+  allDependencies: Set<string> = new Set()
+): string[] {
+  for (const target of targets) {
+    const directDependencies = dependencyDict[target] || [];
+    for (const dep of directDependencies) {
+      if (!allDependencies.has(dep)) {
+        allDependencies.add(dep);
+        getCopySources(dependencyDict, [dep], allDependencies);
+      }
+    }
+  }
+
+  return Array.from(allDependencies).filter(dep => dep.toLowerCase().endsWith('.cpy'));
 }

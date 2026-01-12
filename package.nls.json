@@ -186,5 +186,7 @@
   "*ALL": "*ALL",
   "Show build list": "Show build list",
   "Delete selected profile": "Delete selected profile",
-  "Copy selected profile": "Copy selected profile"
+  "Copy selected profile": "Copy selected profile",
+  "Always transfer copybooks": "Always transfer copybooks",
+  "Always transfer related copybooks": "Always transfer related copybooks"
 }
