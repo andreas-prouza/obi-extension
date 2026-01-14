@@ -1,3 +1,8 @@
+## [0.6.9]
+
+* Support for special characters in ADDLIBLE command (liblist -a)
+
+
 ## [0.6.8]
 
 * Add constant attribute
