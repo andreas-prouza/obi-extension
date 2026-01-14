@@ -1,3 +1,9 @@
+## [0.6.8]
+
+* Add constant attribute
+* Replace constant.py after extension update
+
+
 ## [0.6.7]
 
 * Config
