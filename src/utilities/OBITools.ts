@@ -132,7 +132,7 @@ export class OBITools {
     }
     if (previous_version_int <= 607) {
       fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
-
+    }
 
     OBITools.ext_context.workspaceState.update('obi.version', current_version);
 
