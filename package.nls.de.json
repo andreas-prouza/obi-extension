@@ -136,5 +136,13 @@
   "Quick settings": "Schnelleinstellungen",
   "Use profile": "Verwendetes Profil",
   "Activate extended source processing": "Erweiterte Quellverarbeitung aktivieren",
-  "Global settings": "Globale Einstellungen"
+  "Global settings": "Globale Einstellungen",
+  "show-empty-folders": "Leere Ordner anzeigen",
+  "Run type": "Art der Ausführung",
+  "*CURRENT": "*CURRENT",
+  "*ALL": "*ALL",
+  "Show build list": "Buildliste anzeigen",
+  "Delete selected profile": "Ausgewähltes Profil löschen",
+  "Copy selected profile": "Ausgewähltes Profil kopieren",
+  "Always transfer related copybooks": "Copy-Strecken immer übertragen"
 }

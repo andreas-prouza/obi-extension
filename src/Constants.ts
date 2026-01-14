@@ -10,7 +10,7 @@ export class Constants {
   public static readonly BUILD_OUTPUT_DIR: string = ".obi/build-output";
   public static readonly OBI_STATUS_FILE: string = `${Constants.BUILD_OUTPUT_DIR}/status.json`;
   public static readonly OBI_WORKSPACE_SETTINGS_FILE: string = `${Constants.OBI_CONFIGS_DIR}/workspace-settings.json`;
-  public static readonly OBI_BACKEND_VERSION: number = 2;
+  public static readonly OBI_BACKEND_VERSION: number = 3;
   public static readonly OBI_APP_CONFIG: string = 'app-config.toml';
   public static readonly OBI_APP_CONFIG_FILE: string = `${Constants.OBI_APP_CONFIG_DIR}/${Constants.OBI_APP_CONFIG}`;
   public static readonly OBI_APP_CONFIG_USER: string = '.user-app-config.toml';

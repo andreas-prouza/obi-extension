@@ -1,3 +1,11 @@
+## [0.6.7]
+
+* Config
+  * keep not yes supported attributes
+  * New option to transfer always copybooks
+* npm update
+
+
 ## [0.6.6]
 
 * Bugfix

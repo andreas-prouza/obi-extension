@@ -176,17 +176,12 @@
   "Use profile": "Using profile",
   "Activate extended source processing": "Activate extended source processing",
   "Global settings": "Global settings",
-  "Active source": "Active source",
-  "All sources": "All sources",
   "show-empty-folders": "show-empty-folders",
-  "Run single source": "Run single source",
-  "Run all sources": "Run all sources",
   "Run type": "Run type",
   "*CURRENT": "*CURRENT",
   "*ALL": "*ALL",
   "Show build list": "Show build list",
   "Delete selected profile": "Delete selected profile",
   "Copy selected profile": "Copy selected profile",
-  "Always transfer copybooks": "Always transfer copybooks",
   "Always transfer related copybooks": "Always transfer related copybooks"
 }

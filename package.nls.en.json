@@ -136,5 +136,13 @@
   "Quick settings": "Quick settings",
   "Use profile": "Using profile",
   "Activate extended source processing": "Activate extended source processing",
-  "Global settings": "Global settings"
+  "Global settings": "Global settings",
+  "show-empty-folders": "show-empty-folders",
+  "Run type": "Run type",
+  "*CURRENT": "*CURRENT",
+  "*ALL": "*ALL",
+  "Show build list": "Show build list",
+  "Delete selected profile": "Delete selected profile",
+  "Copy selected profile": "Copy selected profile",
+  "Always transfer related copybooks": "Always transfer related copybooks"
 }

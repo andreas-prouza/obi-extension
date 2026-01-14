@@ -327,10 +327,30 @@ export class OBIConfiguration {
       new_config = AppConfig.get_project_app_config(Workspace.get_workspace_uri());
     }
 
-    new_config.connection = data['connection'];
-    new_config.general = data['general'];
-    if (data['global'] && data['global']['settings'])
-      new_config.global.settings = data['global']['settings'];
+    if ('connection' in data) {
+      new_config.connection = { ...new_config.connection, ...data['connection' as keyof typeof data] };
+    }
+    const mergeRecursive = (target: any, source: any) => {
+      for (const key in source) {
+      if (source.hasOwnProperty(key)) {
+        if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+        if (!target[key]) {
+          Object.assign(target, { [key]: {} });
+        }
+        mergeRecursive(target[key], source[key]);
+        } else {
+        Object.assign(target, { [key]: source[key] });
+        }
+      }
+      }
+    };
+
+    if ('general' in data && typeof data.general === 'object' && data.general !== null) {
+      mergeRecursive(new_config.general, data.general);
+    }
+    if ('global' in data && typeof data.global === 'object' && data.global !== null) {
+      mergeRecursive(new_config.global, data.global);
+    }
     if (data['global'] && data['global']['cmds'])
       new_config.global.cmds = data['global']['cmds'];
     if (data['global'] && data['global']['steps'])

@@ -162,6 +162,7 @@ export class ConfigGeneral {
 
 
 export class ConfigCompileSettings {
+  [key: string]: any;
   public TGTRLS?: string;
   public DBGVIEW?: string;
   public TGTCCSID?: string;
@@ -177,21 +178,10 @@ export class ConfigCompileSettings {
   public USE_ESP?: string;
   public ALWAYS_TRANSFER_RELATED_COPYBOOKS?: string;
 
-  constructor(TGTRLS?: string, DBGVIEW?: string, TGTCCSID?: string, STGMDL?: string, LIBL?: string[], INCDIR_RPGLE?: string, INCDIR_SQLRPGLE?: string, TARGET_LIB_MAPPING?: {}, RPGPPOPT?: string, INCLUDE_BNDDIR?: string, ACTGRP?: string, TARGET_LIB?: string, USE_ESP?: string, ALWAYS_TRANSFER_RELATED_COPYBOOKS?: string) {
-    this.TGTRLS = TGTRLS; 
-    this.DBGVIEW = DBGVIEW; 
-    this.TGTCCSID = TGTCCSID; 
-    this.STGMDL = STGMDL; 
-    this.LIBL = LIBL; 
-    this.INCDIR_RPGLE = INCDIR_RPGLE; 
-    this.INCDIR_SQLRPGLE = INCDIR_SQLRPGLE; 
-    this.TARGET_LIB_MAPPING = TARGET_LIB_MAPPING; 
-    this.RPGPPOPT = RPGPPOPT;
-    this.INCLUDE_BNDDIR = INCLUDE_BNDDIR;
-    this.ACTGRP = ACTGRP;
-    this.TARGET_LIB = TARGET_LIB;
-    this.USE_ESP = USE_ESP;
-    this.ALWAYS_TRANSFER_RELATED_COPYBOOKS = ALWAYS_TRANSFER_RELATED_COPYBOOKS;
+  constructor(settings?: Partial<ConfigCompileSettings>) {
+    if (settings) {
+      Object.assign(this, settings);
+    }
   }
 
   public attributes_missing(): boolean {
@@ -221,22 +211,7 @@ export class ConfigSettings {
   constructor(general?: ConfigCompileSettings, language?: IConfigLanguageCompileSettings) {
 
     if (general) {
-      this.general = new ConfigCompileSettings(
-        general.TGTRLS, 
-        general.DBGVIEW, 
-        general.TGTCCSID, 
-        general.STGMDL, 
-        general.LIBL,
-        general.INCDIR_RPGLE,
-        general.INCDIR_SQLRPGLE,
-        general.TARGET_LIB_MAPPING,
-        general.RPGPPOPT,
-        general.INCLUDE_BNDDIR,
-        general.ACTGRP,
-        general.TARGET_LIB,
-        general.USE_ESP,
-        general.ALWAYS_TRANSFER_RELATED_COPYBOOKS
-      );
+      this.general = new ConfigCompileSettings(general);
     }
 
     if (language) {
