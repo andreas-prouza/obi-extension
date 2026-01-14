@@ -21,6 +21,7 @@ import { Constants } from './Constants';
 import { OBISourceDependency } from './webview/controller/OBISourceDependency';
 import { LocalSourceList } from './utilities/LocalSourceList';
 import { QuickSettings } from './webview/quick_settings/QuickSettings';
+import { BuildHistoryProvider } from './webview/build_history/BuildHistoryProvider';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -197,9 +198,12 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.open_build_summary', () => {
+		vscode.commands.registerCommand('obi.open_build_summary', (summary_file_path?: string) => {
 			// Only available with workspaces
-			BuildSummary.render(context.extensionUri, ws_uri);
+			if (summary_file_path) {
+				summary_file_path = OBITools.convert_local_filepath_2_obi_filepath(summary_file_path);
+			}
+			BuildSummary.render(context.extensionUri, ws_uri, summary_file_path);
 		})
 	);
 
@@ -219,6 +223,10 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(QuickSettings.viewType, quick_settings)
 	);
+
+	// Register Build History Tree View
+	const buildHistoryProvider = new BuildHistoryProvider(rootPath);
+	buildHistoryProvider.register(context);
 
 	// Register Source List Tree View
 	const sourceListProvider: SourceListProvider = new SourceListProvider(rootPath);

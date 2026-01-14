@@ -8,6 +8,7 @@ export class Constants {
   public static readonly OBI_APP_CONFIG_DIR: string = `${Constants.OBI_CONFIGS_DIR}`;
   public static readonly SOURCE_FILTER_FOLDER_NAME: string = '.obi/source-list';
   public static readonly BUILD_OUTPUT_DIR: string = ".obi/build-output";
+  public static readonly BUILD_HISTORY_DIR: string = ".obi/build-history";
   public static readonly OBI_STATUS_FILE: string = `${Constants.BUILD_OUTPUT_DIR}/status.json`;
   public static readonly OBI_WORKSPACE_SETTINGS_FILE: string = `${Constants.OBI_CONFIGS_DIR}/workspace-settings.json`;
   public static readonly OBI_BACKEND_VERSION: number = 3;

@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "0.6.9",
+  "version": "0.6.10",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -193,6 +193,20 @@
         "title": "%obi.deployment.maintain%",
         "icon": "$(settings-gear)",
         "when": "1==2 && obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-history.update",
+        "title": "Update Build History"
+      },
+      {
+        "command": "obi.build-history.delete-item",
+        "title": "Delete Build History Item",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "obi.build-history.delete-date",
+        "title": "Delete Build History for Date",
+        "icon": "$(trash)"
       }
     ],
     "menus": {
@@ -334,6 +348,16 @@
           "command": "obi.source-filter.add-source-file",
           "when": "obi.contains_obi_project && view == obi.source-filter && viewItem == source-lib",
           "group": "inline@0"
+        },
+        {
+          "command": "obi.build-history.delete-item",
+          "when": "view == obi.build-history && viewItem == buildHistoryFile",
+          "group": "inline"
+        },
+        {
+          "command": "obi.build-history.delete-date",
+          "when": "view == obi.build-history && viewItem == buildHistoryDate",
+          "group": "inline"
         }
       ]
     },
@@ -352,6 +376,12 @@
           "type": "webview",
           "id": "obi.controller",
           "name": "OBI Build",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "type": "tree",
+          "id": "obi.build-history",
+          "name": "Build history",
           "when": "obi.contains_obi_project && obi.valid-config"
         },
         {

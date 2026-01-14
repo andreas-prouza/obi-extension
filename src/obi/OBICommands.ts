@@ -15,6 +15,7 @@ import { DirTool } from '../utilities/DirTool';
 import { Constants } from '../Constants';
 import { logger } from '../utilities/Logger';
 import { SystemCmdExecution } from '../utilities/SystemCmdExecution';
+import { Uri } from 'vscode';
 
 
 
@@ -206,6 +207,7 @@ export class OBICommands {
     const config = AppConfig.get_app_config();
     const remote_base_dir: string | undefined = config.general['remote-base-dir'];
     const ws: string = Workspace.get_workspace();
+    const ws_uri: Uri = Workspace.get_workspace_uri();
 
     let promise_list = [
       SSH_Tasks.getRemoteDir(path.join(ws, Constants.BUILD_OUTPUT_DIR), `${remote_base_dir}/${Constants.BUILD_OUTPUT_DIR}`),
@@ -216,6 +218,10 @@ export class OBICommands {
     await Promise.all(promise_list);
 
     if (DirTool.file_exists(path.join(ws, config.general['compile-list']))) {
+      
+      const compile_list: {} = OBITools.get_compile_list(ws_uri) || {};
+      DirTool.write_json(path.join(ws, Constants.BUILD_HISTORY_DIR, `${compile_list['timestamp']}.json`), compile_list);
+
       const sources: source.SourceCompileList[] = OBITools.get_sources_info_from_compile_list();
       const source_hashes: source.ISource = OBITools.get_source_hash_list(Workspace.get_workspace()) || {};
 

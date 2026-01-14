@@ -35,6 +35,7 @@ export class BuildSummary {
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
   private static _extensionUri: Uri;
+  private static _current_compile_list: string | undefined;
 
 
   /**
@@ -59,15 +60,15 @@ export class BuildSummary {
    *
    * @param extensionUri The URI of the directory containing the extension.
    */
-  public static render(extensionUri: Uri, workspaceUri: Uri|undefined) {
+  public static render(extensionUri: Uri, workspaceUri: Uri|undefined, summary_file_path?: string) {
 
     logger.info('Render BuildSummary');
     BuildSummary._extensionUri = extensionUri;
+    BuildSummary._current_compile_list = summary_file_path;
 
     if (BuildSummary.currentPanel) {
       // If the webview panel already exists reveal it
-      BuildSummary.currentPanel._panel.reveal(ViewColumn.One);
-      return;
+      BuildSummary.currentPanel._panel.dispose();
     }
 
 
@@ -99,12 +100,24 @@ export class BuildSummary {
 
           case "run_build":
             OBICommands.rerun_build(message.ignore_sources, message.ignore_sources_cmd);
+            return;
         }
       }
     );
 
     BuildSummary.currentPanel = new BuildSummary(panel, extensionUri);
   
+  }
+
+
+  public static get_compile_list(): {} {
+    let compile_list: {}|undefined;
+    if (BuildSummary._current_compile_list) {
+      compile_list = DirTool.get_json(path.join(Workspace.get_workspace(), BuildSummary._current_compile_list));
+    } else {
+      compile_list = OBITools.get_compile_list(Workspace.get_workspace_uri());
+    }
+    return compile_list;
   }
 
 
@@ -116,7 +129,8 @@ export class BuildSummary {
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
 
-    let compile_list: {}|undefined = OBITools.get_compile_list(ws);
+    const compile_list = BuildSummary.get_compile_list();
+
     if (compile_list) {
       for (let level_item of (compile_list['compiles'] as any) ) {
         for (let source of level_item['sources']) {
@@ -125,7 +139,6 @@ export class BuildSummary {
       }
     }
 
-
     const html = nunjucks.render('show_changes/index.html', 
       {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),
@@ -133,7 +146,7 @@ export class BuildSummary {
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         object_list: BuildSummary.get_object_list(ws),
         compile_list: compile_list,
-        compile_file: DirTool.get_encoded_file_URI(config.general['compile-list']),
+        compile_file: DirTool.get_encoded_file_URI(BuildSummary._current_compile_list ?? config.general['compile-list']),
         log_file: DirTool.get_encoded_file_URI(Constants.OBI_LOG_FILE),
         run_build: !OBITools.is_compile_list_completed(ws),
         ifs_path: config.general['remote-base-dir']

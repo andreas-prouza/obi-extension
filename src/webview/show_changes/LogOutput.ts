@@ -7,6 +7,7 @@ import { Constants } from '../../Constants';
 import { OBITools } from '../../utilities/OBITools';
 import * as path from 'path';
 import { AppConfig } from '../controller/AppConfig';
+import { BuildSummary } from './BuildSummary';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -98,9 +99,7 @@ export class LogOutput {
     const fs = require("fs"); 
     
     const config = AppConfig.get_app_config();
-    let compile_list = fs.readFileSync(path.join(workspaceUri.fsPath, config.general['compile-list']));
-    // Converting to JSON 
-    compile_list = JSON.parse(compile_list);
+    let compile_list = BuildSummary.get_compile_list();
 
     for (const level_item of compile_list['compiles']) {
 
