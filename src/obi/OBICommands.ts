@@ -220,7 +220,8 @@ export class OBICommands {
     if (DirTool.file_exists(path.join(ws, config.general['compile-list']))) {
       
       const compile_list: {} = OBITools.get_compile_list(ws_uri) || {};
-      DirTool.write_json(path.join(ws, Constants.BUILD_HISTORY_DIR, `${compile_list['timestamp']}.json`), compile_list);
+      const timestamp: string = compile_list['timestamp'] || new Date().toISOString();
+      DirTool.write_json(path.join(ws, Constants.BUILD_HISTORY_DIR, `${timestamp.replaceAll(":", ".")}.json`), compile_list);
 
       const sources: source.SourceCompileList[] = OBITools.get_sources_info_from_compile_list();
       const source_hashes: source.ISource = OBITools.get_source_hash_list(Workspace.get_workspace()) || {};
