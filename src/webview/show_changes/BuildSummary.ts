@@ -139,17 +139,23 @@ export class BuildSummary {
       }
     }
 
+    let created_timestamp = 'Unsupported timestamp';
+    if (compile_list && compile_list['timestamp']) {
+      created_timestamp = new Date(compile_list['timestamp']).toLocaleString();
+    }
+
     const html = nunjucks.render('show_changes/index.html', 
       {
-        global_stuff: OBITools.get_global_stuff(webview, extensionUri),
-        main_java_script: getUri(webview, extensionUri, ["out", "show_changes.js"]),
-        //filex: encodeURIComponent(JSON.stringify(fileUri)),
-        object_list: BuildSummary.get_object_list(ws),
-        compile_list: compile_list,
-        compile_file: DirTool.get_encoded_file_URI(BuildSummary._current_compile_list ?? config.general['compile-list']),
-        log_file: DirTool.get_encoded_file_URI(Constants.OBI_LOG_FILE),
-        run_build: !OBITools.is_compile_list_completed(ws),
-        ifs_path: config.general['remote-base-dir']
+      global_stuff: OBITools.get_global_stuff(webview, extensionUri),
+      main_java_script: getUri(webview, extensionUri, ["out", "show_changes.js"]),
+      //filex: encodeURIComponent(JSON.stringify(fileUri)),
+      object_list: BuildSummary.get_object_list(ws),
+      compile_list: compile_list,
+      created_timestamp: created_timestamp,
+      compile_file: DirTool.get_encoded_file_URI(BuildSummary._current_compile_list ?? config.general['compile-list']),
+      log_file: DirTool.get_encoded_file_URI(Constants.OBI_LOG_FILE),
+      run_build: !OBITools.is_compile_list_completed(ws),
+      ifs_path: config.general['remote-base-dir']
       }
     );
 
