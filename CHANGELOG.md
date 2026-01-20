@@ -1,3 +1,14 @@
+## [0.6.12]
+
+* Improve design in build summary (button, timestamp)
+* Bugfix
+
+
+## [0.6.11]
+
+* Win bugfix
+
+
 ## [0.6.10]
 
 * Add build history

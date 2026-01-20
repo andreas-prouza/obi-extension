@@ -434,9 +434,13 @@ export class AppConfig {
     return app_config
   }
 
-  public static get_current_profile_app_config_name(): string {
-    const workspace_settings: WorkspaceSettings = Workspace.get_workspace_settings();
+  public static get_current_profile_app_config_name(): string | undefined {
+    const workspace_settings: WorkspaceSettings | undefined = Workspace.get_workspace_settings();
     let profile: string = '';
+
+    if (! workspace_settings) {
+      return undefined;
+    }
     
     if (workspace_settings.current_profile)
       return workspace_settings.current_profile;

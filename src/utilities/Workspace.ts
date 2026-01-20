@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { DirTool } from './DirTool';
 import path from 'path';
 import { Constants } from '../Constants';
+import { logger } from './Logger';
 
 
 export class WorkspaceSettings {
@@ -17,6 +18,7 @@ export class Workspace {
   }
 
   public static get_workspace_settings(): WorkspaceSettings {
+
     const result: WorkspaceSettings = DirTool.get_json(path.join(Workspace.get_workspace(), Constants.OBI_WORKSPACE_SETTINGS_FILE)) ?? {};
     return result;
   }
@@ -31,10 +33,12 @@ export class Workspace {
 
 
 
-  public static get_workspace(): string {
+  public static get_workspace(): string | undefined {
 
-    if (!vscode.workspace.workspaceFolders)
-      throw new Error('No workspace available');
+    if (!vscode.workspace.workspaceFolders) {
+      logger.error('No workspace available');
+      return undefined;
+    }
 
     return vscode.workspace.workspaceFolders[0].uri.fsPath;
   }
