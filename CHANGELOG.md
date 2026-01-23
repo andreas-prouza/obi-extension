@@ -1,3 +1,9 @@
+## [0.6.13]
+
+* Bugfix
+* Design
+
+
 ## [0.6.12]
 
 * Improve design in build summary (button, timestamp)
