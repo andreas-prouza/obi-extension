@@ -13,28 +13,8 @@
 
 <body>
 
-  <br />
-  <div>
-    <div style="padding-bottom: 5px;">
-      {{ global_stuff['get_text']('Use profile') | safe }}</div>
-    <div>
-      <vscode-dropdown id="drp_use_profile" style="width: max-content; min-width: 160px;">
-        {% for profile in config_profiles %}
-        <vscode-option value="{{ profile.file }}" {% if profile.file == global_stuff['current_profile'] %}selected{% endif %}>{{ profile.alias }}</vscode-option>
-        {% endfor %}
-      </vscode-dropdown>
-      <vscode-button id="btn_delete_current_profile" title="{{ global_stuff['get_text']('Delete selected profile') | safe }}">
-        <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
-      </vscode-button>
-      <vscode-button id="btn_copy_profile" title="{{ global_stuff['get_text']('Copy selected profile') | safe }}">
-        <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
-      </vscode-button>
-    </div>
-  </div>
-  <br />
 
   <div>
-    {{ global_stuff['get_text']('Run type') | safe }}
     <vscode-radio-group id="opt_run_type">
       <vscode-radio id="run_type_single" value="single" checked>
         {{ global_stuff['get_text']('*CURRENT') | safe }}
@@ -67,6 +47,24 @@
         </div>
   </div>
 
+  <br />
+ <div>
+    <div style="padding-bottom: 5px;">
+      {{ global_stuff['get_text']('Use profile') | safe }}</div>
+    <div>
+      <vscode-dropdown id="drp_use_profile" style="width: max-content; min-width: 160px;">
+        {% for profile in config_profiles %}
+        <vscode-option value="{{ profile.file }}" {% if profile.file == global_stuff['current_profile'] %}selected{% endif %}>{{ profile.alias }}</vscode-option>
+        {% endfor %}
+      </vscode-dropdown>
+      <vscode-button id="btn_delete_current_profile" title="{{ global_stuff['get_text']('Delete selected profile') | safe }}">
+        <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
+      </vscode-button>
+      <vscode-button id="btn_copy_profile" title="{{ global_stuff['get_text']('Copy selected profile') | safe }}">
+        <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
+      </vscode-button>
+    </div>
+  </div>
   <br />
 
   <div>

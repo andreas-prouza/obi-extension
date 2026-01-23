@@ -552,7 +552,10 @@ function set_element_missing_value(element: Element) {
 
 
 
-function save_global_cmds(class_prefix:string) {
+//function save_global_cmds(class_prefix:string) {
+function get_global_cmds(class_prefix:string) {
+
+  let results = {};
 
   const app_elements = document.getElementsByClassName(`${class_prefix}_save_app_global_cmds`);
   for (let i = 0; i < app_elements.length; i++) {
@@ -561,63 +564,49 @@ function save_global_cmds(class_prefix:string) {
     const key = el2[3];
     const value = (document.getElementById(`${class_prefix}|global|cmds|${key}|value`) as TextField).value;
 
-    vscode.postMessage({
-      command: `save_global_cmd`,
-      panel: panel,
-      panel_tab: panel_tab,
-      user_project: class_prefix,
-      key: key,
-      value: value
-    });
-
+    results[key] = value;
   }
+
+  return results;
 }
 
 
 
 
-function save_global_step(class_prefix:string) {
+//function save_global_step(class_prefix:string) {
+function get_global_steps(class_prefix:string) {
 
+  let results = {};
   const app_elements = document.getElementsByClassName(`${class_prefix}_save_app_global_step`);
   for (let i = 0; i < app_elements.length; i++) {
     
     const key = (document.getElementById(app_elements[i].id) as TextField).value;
     const value = (document.getElementById(`${class_prefix}|global|steps|${key}|value`) as TextField).value;
+    const value_list = value.split('\n');
 
-    vscode.postMessage({
-      command: `save_global_step`,
-      panel: panel,
-      panel_tab: panel_tab,
-      user_project: class_prefix,
-      key: key,
-      value: value
-    });
-
+    results[key] = value_list;
   }
+  
+  return results;
 }
 
 
 
-function save_compile_cmds(class_prefix:string) {
+function get_compile_cmds(class_prefix:string) {
 
+  let results = {};
   const app_elements = document.getElementsByClassName(`${class_prefix}_save_app_compile_cmd`);
   for (let i = 0; i < app_elements.length; i++) {
     
     const el2: string[] = app_elements[i].id.split('|');
     const key = el2[3];
     const value = (document.getElementById(`${class_prefix}|global|compile-cmds|${key}|value`) as TextField).value;
-
-    vscode.postMessage({
-      command: `save_compile_cmd`,
-      panel: panel,
-      panel_tab: panel_tab,
-      user_project: class_prefix,
-      key: key,
-      value: value
-    });
-
+    
+    results[key] = value;
   }
+  return results;
 }
+
 
 
 function reload() {
@@ -632,9 +621,11 @@ function save_config(class_prefix:string) {
 
   let app_config:{} = {};
 
-  save_global_cmds(class_prefix);
-  save_global_step(class_prefix);
-  save_compile_cmds(class_prefix);
+  const global_cmds = get_global_cmds(class_prefix);
+  const global_steps = get_global_steps(class_prefix);
+  const compile_cmds = get_compile_cmds(class_prefix);
+
+  app_config['global'] = { cmds: global_cmds, steps: global_steps, 'compile-cmds': compile_cmds };
 
   const app_elements = document.getElementsByClassName(`${class_prefix}_save_app`);
   let json_string: string = '';

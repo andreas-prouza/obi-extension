@@ -346,10 +346,12 @@ export class OBIConfiguration {
     };
 
     if ('general' in data && typeof data.general === 'object' && data.general !== null) {
-      mergeRecursive(new_config.general, data.general);
+      //mergeRecursive(new_config.general, data.general);
+      new_config['general'] = data['general'];
     }
     if ('global' in data && typeof data.global === 'object' && data.global !== null) {
-      mergeRecursive(new_config.global, data.global);
+      //mergeRecursive(new_config.global, data.global);
+      new_config['global'] = data['global'];
     }
     if (data['global'] && data['global']['cmds'])
       new_config.global.cmds = data['global']['cmds'];
