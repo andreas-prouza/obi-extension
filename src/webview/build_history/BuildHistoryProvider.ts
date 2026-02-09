@@ -43,21 +43,21 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
     }
 
     if (element) {
-      // Children of a date group
-      const build_history_files = DirTool.list_dir(build_history_path);
-      const historyItems = build_history_files
-        .map(file => {
-          const filePath = path.join(build_history_path, file);
-          if (DirTool.is_file(filePath)) {
-            const stats = fs.statSync(filePath);
-            const fileDate = stats.mtime.toISOString().split('T')[0];
-            if (fileDate === element.label) {
+      // Children of a date group: these are the timestamped build folders
+      const build_history_dirs = DirTool.list_dir(build_history_path);
+      const historyItems = build_history_dirs
+        .map(dir => {
+          const dirPath = path.join(build_history_path, dir);
+          if (DirTool.dir_exists(dirPath)) {
+            const parsableDir = dir.replace("_", " ").replace(/\./g, ':');
+            const dirDate = new Date(parsableDir).toISOString().split('T')[0];
+            if (dirDate === element.label) {
               return new BuildHistoryItem(
-                stats.mtime.toLocaleTimeString(),
+                new Date(parsableDir).toLocaleTimeString(),
                 vscode.TreeItemCollapsibleState.None,
-                filePath,
+                dirPath,
                 'file',
-                file
+                dir
               );
             }
           }
@@ -70,14 +70,23 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
     }
 
     // Top-level items (date groups)
-    const build_history_files = DirTool.list_dir(build_history_path);
+    const build_history_dirs = DirTool.list_dir(build_history_path);
     const dateGroups = new Set<string>();
 
-    build_history_files.forEach(file => {
-      const filePath = path.join(build_history_path, file);
-      if (DirTool.is_file(filePath)) {
-        const stats = fs.statSync(filePath);
-        dateGroups.add(stats.mtime.toISOString().split('T')[0]);
+    build_history_dirs.forEach(dir => {
+      const dirPath = path.join(build_history_path, dir);
+      if (DirTool.dir_exists(dirPath)) {
+        // The dir name is the timestamp
+        try {
+          const parsableDir = dir.replace("_", " ").replace(/\./g, ':');
+          const normalized = parsableDir.replace(" ", "T")
+                            .replace(/:(\d+)$/, ".$1")
+                            .substring(0, 23);
+          const date = new Date(normalized);
+          dateGroups.add(date.toISOString().split('T')[0]);
+        } catch (e) {
+          logger.error(`Invalid date format for build history directory: ${dir}`);
+        }
       }
     });
 
@@ -125,8 +134,8 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
     });
 
     vscode.commands.registerCommand('obi.build-history.delete-item', (item: BuildHistoryItem) => {
-      if (item && item.file_path && DirTool.file_exists(item.file_path)) {
-        fs.unlinkSync(item.file_path);
+      if (item && item.file_path && DirTool.dir_exists(item.file_path)) {
+        fs.rmSync(item.file_path, { recursive: true, force: true });
         this.refresh();
       }
     });
@@ -134,14 +143,18 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
     vscode.commands.registerCommand('obi.build-history.delete-date', (item: BuildHistoryItem) => {
       const build_history_path = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR);
       if (item && item.date && DirTool.dir_exists(build_history_path)) {
-        const build_history_files = DirTool.list_dir(build_history_path);
-        build_history_files.forEach(file => {
-          const filePath = path.join(build_history_path, file);
-          if (DirTool.is_file(filePath)) {
-            const stats = fs.statSync(filePath);
-            const fileDate = stats.mtime.toISOString().split('T')[0];
-            if (fileDate === item.date) {
-              fs.unlinkSync(filePath);
+        const build_history_dirs = DirTool.list_dir(build_history_path);
+        build_history_dirs.forEach(dir => {
+          const dirPath = path.join(build_history_path, dir);
+          if (DirTool.dir_exists(dirPath)) {
+            try {
+              const parsableDir = dir.replace("_", " ").replace(/\./g, ':');
+              const dirDate = new Date(parsableDir).toISOString().split('T')[0];
+              if (dirDate === item.date) {
+                fs.rmSync(dirPath, { recursive: true, force: true });
+              }
+            } catch (e) {
+              logger.error(`Invalid date format for build history directory: ${dir}`);
             }
           }
         });
@@ -199,7 +212,7 @@ export class BuildHistoryItem extends vscode.TreeItem {
       this.command = {
         command: 'obi.open_build_summary',
         title: 'Open Build Summary',
-        arguments: [this.file_path]
+        arguments: [path.join(this.file_path, 'compile-list.json')]
       };
 
       this.iconPath = new vscode.ThemeIcon('file-text');

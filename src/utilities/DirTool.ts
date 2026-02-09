@@ -505,4 +505,21 @@ export class DirTool {
       fs.unlinkSync(file);
     }
   }
+
+  public static copy_dir(src: string, dest: string): void {
+    if (!DirTool.dir_exists(src)) {
+      return;
+    }
+    if (!DirTool.dir_exists(dest)) {
+      fs.mkdirSync(dest, { recursive: true });
+    }
+    let entries = fs.readdirSync(src, { withFileTypes: true });
+
+    for (let entry of entries) {
+      let srcPath = path.join(src, entry.name);
+      let destPath = path.join(dest, entry.name);
+
+      entry.isDirectory() ? DirTool.copy_dir(srcPath, destPath) : fs.copyFileSync(srcPath, destPath);
+    }
+  }
 }

@@ -221,7 +221,11 @@ export class OBICommands {
       
       const compile_list: {} = OBITools.get_compile_list(ws_uri) || {};
       const timestamp: string = compile_list['timestamp'] || new Date().toISOString();
-      DirTool.write_json(path.join(ws, Constants.BUILD_HISTORY_DIR, `${timestamp.replaceAll(":", ".")}.json`), compile_list);
+      // Windows compatibility for directory name
+      const historyDirName = timestamp.replace(":", ".").replace(" ", "_");
+      const historyDir = path.join(ws, Constants.BUILD_HISTORY_DIR, historyDirName);
+      DirTool.write_json(path.join(historyDir, 'compile-list.json'), compile_list);
+      DirTool.copy_dir(path.join(ws, Constants.OBI_TMP_DIR), historyDir);
 
       const sources: source.SourceCompileList[] = OBITools.get_sources_info_from_compile_list();
       const source_hashes: source.ISource = OBITools.get_source_hash_list(Workspace.get_workspace()) || {};
