@@ -1,3 +1,9 @@
+## [0.6.14]
+
+* Build history enhancements
+* npm updates
+
+
 ## [0.6.13]
 
 * Bugfix

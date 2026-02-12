@@ -61,8 +61,7 @@
 
     <h3>{{ global_stuff['get_text']('Details') | safe }}</h3>
 
-    <div>{{ global_stuff['get_text']('Remote host') | safe }} <code>{{ app_config['connection']['remote-host'] }}</code></div>
-    <div>{{ global_stuff['get_text']('IBM i IFS path') | safe }} <code>{{ app_config['general']['remote-base-dir'] }}</code></div>
+    <div>{{ global_stuff['get_text']('Remote host') | safe }}: <code>{{ app_config['connection']['ssh-user'] }}@{{ app_config['connection']['remote-host'] }}</code> &nbsp;&nbsp;&nbsp;&nbsp; {{ global_stuff['get_text']('IBM i IFS path') | safe }}: <code>{{ app_config['general']['remote-base-dir'] }}</code></div>
     <br/>
 
 

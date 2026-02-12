@@ -6,6 +6,7 @@ import { Constants } from '../../Constants';
 import { logger } from '../../utilities/Logger';
 import * as source from '../../obi/Source';
 import { Workspace } from '../../utilities/Workspace';
+import { AppConfig } from '../controller/AppConfig';
 
 
 interface IBuildHistorys {
@@ -42,34 +43,67 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
       return Promise.resolve([]);
     }
 
+    const config = AppConfig.get_app_config();
+
     if (element) {
-      // Children of a date group: these are the timestamped build folders
-      const build_history_dirs = DirTool.list_dir(build_history_path);
-      const historyItems = build_history_dirs
-        .map(dir => {
-          const dirPath = path.join(build_history_path, dir);
-          if (DirTool.dir_exists(dirPath)) {
-            const parsableDir = dir.replace("_", " ").replace(/\./g, ':');
-            const normalized = parsableDir.replace(" ", "T")
-                            .replace(/:(\d+)$/, ".$1")
-                            .substring(0, 23);
-            const dirDate = new Date(normalized).toISOString().split('T')[0];
-            if (dirDate === element.label) {
-              return new BuildHistoryItem(
-                new Date(normalized).toLocaleTimeString(),
-                vscode.TreeItemCollapsibleState.None,
-                dirPath,
-                'file',
-                dir
-              );
+      if (element.contextValue === 'buildHistoryDate') {
+        // Children of a date group: these are the timestamped build folders
+        const build_history_dirs = DirTool.list_dir(build_history_path);
+        const historyItems = build_history_dirs
+          .map(dir => {
+            const dirPath = path.join(build_history_path, dir);
+            if (DirTool.dir_exists(dirPath)) {
+              const parsableDir = dir.replace("_", " ").replace(/\./g, ':');
+              const normalized = parsableDir.replace(" ", "T")
+                .replace(/:(\d+)$/, ".$1")
+                .substring(0, 23);
+              const dirDate = new Date(normalized).toISOString().split('T')[0];
+              if (dirDate === element.label) {
+                return new BuildHistoryItem(
+                  new Date(normalized).toLocaleTimeString(),
+                  vscode.TreeItemCollapsibleState.Collapsed,
+                  dirPath,
+                  'build',
+                  dir
+                );
+              }
+            }
+            return null;
+          })
+          .filter((item): item is BuildHistoryItem => item !== null)
+          .sort((a, b) => b.label.localeCompare(a.label));
+
+        return Promise.resolve(historyItems);
+      } else if (element.contextValue === 'buildHistoryBuild') {
+        const compileListPath = path.join(element.file_path, 'compile-list.json');
+        if (fs.existsSync(compileListPath)) {
+          const compileList = JSON.parse(fs.readFileSync(compileListPath, 'utf-8'));
+          const sources: BuildHistoryItem[] = [];
+          if (compileList.compiles) {
+            for (const compile of compileList.compiles) {
+              if (compile.sources) {
+                for (const src of compile.sources) {
+                  const item = new BuildHistoryItem(
+                    src.source,
+                    vscode.TreeItemCollapsibleState.None,
+                    '',
+                    'source'
+                  );
+                  item.command = {
+                    command: 'vscode.open',
+                    title: 'Open Source',
+                    arguments: [vscode.Uri.joinPath(Workspace.get_workspace_uri(), config.general['source-dir'], src.source)]
+                  };
+                  sources.push(item);
+                }
+              }
             }
           }
-          return null;
-        })
-        .filter((item): item is BuildHistoryItem => item !== null)
-        .sort((a, b) => b.label.localeCompare(a.label));
-
-      return Promise.resolve(historyItems);
+          return Promise.resolve(sources);
+        }
+        return Promise.resolve([]);
+      }
+      return Promise.resolve([]);
     }
 
     // Top-level items (date groups)
@@ -195,7 +229,7 @@ export class BuildHistoryItem extends vscode.TreeItem {
     label: string,
     collapsibleState: vscode.TreeItemCollapsibleState,
     file_path: string,
-    type: 'date' | 'file',
+    type: 'date' | 'build' | 'source',
     fileName?: string
   ) {
     super(label, collapsibleState);
@@ -208,9 +242,9 @@ export class BuildHistoryItem extends vscode.TreeItem {
       this.contextValue = 'buildHistoryDate';
       this.iconPath = new vscode.ThemeIcon('calendar');
       this.date = label;
-    } else {
+    } else if (type === 'build') {
       this.tooltip = `Build history: ${fileName}`;
-      this.contextValue = 'buildHistoryFile';
+      this.contextValue = 'buildHistoryBuild';
 
       this.command = {
         command: 'obi.open_build_summary',
@@ -219,6 +253,10 @@ export class BuildHistoryItem extends vscode.TreeItem {
       };
 
       this.iconPath = new vscode.ThemeIcon('file-text');
+    } else { // source
+      this.tooltip = `Source: ${label}`;
+      this.contextValue = 'buildHistorySource';
+      this.iconPath = new vscode.ThemeIcon('file-code');
     }
   }
 
