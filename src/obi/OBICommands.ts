@@ -221,6 +221,9 @@ export class OBICommands {
       
       const compile_list: {} = OBITools.get_compile_list(ws_uri) || {};
       const timestamp: string = compile_list['timestamp'] || new Date().toISOString();
+
+      compile_list['config'] = config;
+
       // Windows compatibility for directory name
       const historyDirName = timestamp.replace(":", ".").replace(" ", "_");
       const historyDir = path.join(ws, Constants.BUILD_HISTORY_DIR, historyDirName);

@@ -202,6 +202,9 @@ export function activate(context: vscode.ExtensionContext) {
 			// Only available with workspaces
 			if (summary_file_path) {
 				summary_file_path = OBITools.convert_local_filepath_2_obi_filepath(summary_file_path);
+				if (DirTool.file_exists(path.join(Workspace.get_workspace(), summary_file_path))) {
+					summary_file_path = path.dirname(summary_file_path);
+				}
 			}
 			BuildSummary.render(context.extensionUri, ws_uri, summary_file_path);
 		})

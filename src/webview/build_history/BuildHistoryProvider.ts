@@ -50,10 +50,13 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
           const dirPath = path.join(build_history_path, dir);
           if (DirTool.dir_exists(dirPath)) {
             const parsableDir = dir.replace("_", " ").replace(/\./g, ':');
-            const dirDate = new Date(parsableDir).toISOString().split('T')[0];
+            const normalized = parsableDir.replace(" ", "T")
+                            .replace(/:(\d+)$/, ".$1")
+                            .substring(0, 23);
+            const dirDate = new Date(normalized).toISOString().split('T')[0];
             if (dirDate === element.label) {
               return new BuildHistoryItem(
-                new Date(parsableDir).toLocaleTimeString(),
+                new Date(normalized).toLocaleTimeString(),
                 vscode.TreeItemCollapsibleState.None,
                 dirPath,
                 'file',

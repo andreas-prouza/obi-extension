@@ -136,7 +136,7 @@ const deployment_config_ViewConfig = {
     await build(deployment_config_ViewConfig);
     console.log("build complete");
   } catch (err) {
-    process.stderr.write(err.stderr);
+    console.error(err);
     process.exit(1);
   }
 })();

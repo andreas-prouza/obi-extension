@@ -19,10 +19,14 @@ export class Constants {
   public static readonly OBI_SOURCE_CONFIG_FILE: string = ".obi/etc/source-config.toml";
   public static readonly OBI_TMP_DIR: string = ".obi/tmp";
   public static readonly OBI_LOG_FILE: string = ".obi/log/main.log";
-  public static readonly DEPENDEND_OBJECT_LIST: string = ".obi/tmp/dependend-object-list.json";
-  public static readonly CHANGED_OBJECT_LIST: string = ".obi/tmp/changed-object-list.json";
+  public static readonly DEPENDEND_OBJECT_LIST_FILE_NAME: string = 'dependend-object-list.json';
+  public static readonly DEPENDEND_OBJECT_LIST: string = `${Constants.OBI_TMP_DIR}/${Constants.DEPENDEND_OBJECT_LIST_FILE_NAME}`;
+  public static readonly CHANGED_OBJECT_LIST_FILE_NAME: string = 'changed-object-list.json';
+  public static readonly CHANGED_OBJECT_LIST: string = `${Constants.OBI_TMP_DIR}/${Constants.CHANGED_OBJECT_LIST_FILE_NAME}`;
   public static readonly REMOTE_OBI_PYTHON_PATH: string = "venv/bin/python";
   public static readonly DEPLOYMENT_CONFIG_FILE: string = ".obi/etc/deployment.toml";
+  public static readonly CHANGED_OBJECT_LIST_NAME: string = "changed-object-list.json";
+  public static readonly DEPENDEND_OBJECT_LIST_NAME: string = "dependend-object-list.json";
 
   public static readonly DEPENDENCY_LIST: string = ".obi/etc/dependency.json";
   public static readonly SOURCE_LIST: string = ".obi/etc/source-list.json";

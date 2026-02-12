@@ -540,18 +540,21 @@ export class OBITools {
 
 
 
-  public static get_compile_list(workspaceUri: vscode.Uri): {} | undefined {
+  public static get_compile_list(workspaceUri: vscode.Uri, compileListFileName: string|undefined): {} | undefined {
 
     if (AppConfig.attributes_missing())
       return undefined;
-
+    
     const config = AppConfig.get_app_config();
-    if (!config.general['compile-list']) {
-      vscode.window.showErrorMessage('OBI config is invalid');
-      throw Error('OBI config is invalid');
+
+    if (!compileListFileName) {
+      if (!config.general['compile-list']) {
+        vscode.window.showErrorMessage('OBI config is invalid');
+        throw Error('OBI config is invalid');
+      }
     }
 
-    const file_path: string = path.join(workspaceUri.fsPath, config.general['compile-list']);
+    const file_path: string = compileListFileName ? path.join(workspaceUri.fsPath, compileListFileName) : path.join(workspaceUri.fsPath, config.general['compile-list']);
 
     if (!DirTool.file_exists(file_path))
       return undefined;

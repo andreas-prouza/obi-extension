@@ -35,7 +35,7 @@ export class BuildSummary {
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
   private static _extensionUri: Uri;
-  private static _current_compile_list: string | undefined;
+  private static _current_compile_output_folder: string | undefined;
 
 
   /**
@@ -64,7 +64,7 @@ export class BuildSummary {
 
     logger.info('Render BuildSummary');
     BuildSummary._extensionUri = extensionUri;
-    BuildSummary._current_compile_list = summary_file_path;
+    BuildSummary._current_compile_output_folder = summary_file_path;
 
     if (BuildSummary.currentPanel) {
       // If the webview panel already exists reveal it
@@ -112,11 +112,14 @@ export class BuildSummary {
 
   public static get_compile_list(): {} {
     let compile_list: {}|undefined;
-    if (BuildSummary._current_compile_list) {
-      compile_list = DirTool.get_json(path.join(Workspace.get_workspace(), BuildSummary._current_compile_list));
-    } else {
-      compile_list = OBITools.get_compile_list(Workspace.get_workspace_uri());
+    let compileListFileName: string|undefined = AppConfig.get_app_config().general['compile-list'];
+    
+    if (BuildSummary._current_compile_output_folder && compileListFileName) {
+      compileListFileName = path.basename(compileListFileName);
+      compileListFileName = path.join(BuildSummary._current_compile_output_folder, compileListFileName);
     }
+
+    compile_list = OBITools.get_compile_list(Workspace.get_workspace_uri(), compileListFileName);
     return compile_list;
   }
 
@@ -152,10 +155,10 @@ export class BuildSummary {
       object_list: BuildSummary.get_object_list(ws),
       compile_list: compile_list,
       created_timestamp: created_timestamp,
-      compile_file: DirTool.get_encoded_file_URI(BuildSummary._current_compile_list ?? config.general['compile-list']),
+      compile_file: DirTool.get_encoded_file_URI(path.join(BuildSummary._current_compile_output_folder ?? Constants.BUILD_OUTPUT_DIR, 'compile-list.json')),
       log_file: DirTool.get_encoded_file_URI(Constants.OBI_LOG_FILE),
       run_build: !OBITools.is_compile_list_completed(ws),
-      ifs_path: config.general['remote-base-dir']
+      app_config: compile_list['config'] ?? config
       }
     );
 
@@ -181,8 +184,18 @@ export class BuildSummary {
 
   private static get_object_list(workspaceUri: Uri): {}|undefined {
 
-    const changed_object_list = path.join(Workspace.get_workspace(), Constants.CHANGED_OBJECT_LIST);
-    const dependend_object_list = path.join(Workspace.get_workspace(), Constants.DEPENDEND_OBJECT_LIST);
+
+
+    const ws: string = Workspace.get_workspace();
+    
+    let changed_object_list = path.join(ws, Constants.CHANGED_OBJECT_LIST);
+    if (BuildSummary._current_compile_output_folder) {
+      changed_object_list = path.join(ws, BuildSummary._current_compile_output_folder, Constants.CHANGED_OBJECT_LIST_FILE_NAME);
+    }
+    let dependend_object_list = path.join(ws, Constants.DEPENDEND_OBJECT_LIST);
+    if (BuildSummary._current_compile_output_folder) {
+      dependend_object_list = path.join(ws, BuildSummary._current_compile_output_folder, Constants.DEPENDEND_OBJECT_LIST_FILE_NAME);
+    }
 
     if (!DirTool.file_exists(changed_object_list) || !DirTool.file_exists(dependend_object_list)) {
       logger.info(`${changed_object_list}: ${DirTool.file_exists(changed_object_list)}`);
