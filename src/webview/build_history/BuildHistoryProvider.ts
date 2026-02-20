@@ -53,7 +53,7 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
           .map(dir => {
             const dirPath = path.join(build_history_path, dir);
             if (DirTool.dir_exists(dirPath)) {
-              const parsableDir = dir.replace("_", " ").replace(/\./g, ':');
+                     const parsableDir = dir.replace(/\./g, ":");
               const normalized = parsableDir.replace(" ", "T")
                 .replace(/:(\d+)$/, ".$1")
                 .substring(0, 23);
@@ -115,7 +115,7 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
       if (DirTool.dir_exists(dirPath)) {
         // The dir name is the timestamp
         try {
-          const parsableDir = dir.replace("_", " ").replace(/\./g, ':');
+            const parsableDir = dir.replace("_", " ").replace(/(\d{2})\.(\d{2})\.(\d{2})\.(\d{6})$/, '$1:$2:$3:$4');
           const normalized = parsableDir.replace(" ", "T")
                             .replace(/:(\d+)$/, ".$1")
                             .substring(0, 23);
@@ -185,8 +185,11 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
           const dirPath = path.join(build_history_path, dir);
           if (DirTool.dir_exists(dirPath)) {
             try {
-              const parsableDir = dir.replace("_", " ").replace(/\./g, ':');
-              const dirDate = new Date(parsableDir).toISOString().split('T')[0];
+              const parsableDir = dir.replace("_", " ").replace(/\.(?=\d{6}$)/, ':');
+              const normalized = parsableDir.replace(" ", "T")
+                .replace(/:(\d+)$/, ".$1")
+                .substring(0, 23);
+              const dirDate = new Date(normalized).toISOString().split('T')[0];
               if (dirDate === item.date) {
                 fs.rmSync(dirPath, { recursive: true, force: true });
               }

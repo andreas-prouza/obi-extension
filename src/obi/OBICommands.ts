@@ -225,7 +225,7 @@ export class OBICommands {
       compile_list['config'] = config;
 
       // Windows compatibility for directory name
-      const historyDirName = timestamp.replace(":", ".").replace(" ", "_");
+      const historyDirName = timestamp.replace(/:/g, ".").replace(" ", "_");
       const historyDir = path.join(ws, Constants.BUILD_HISTORY_DIR, historyDirName);
       DirTool.write_json(path.join(historyDir, 'compile-list.json'), compile_list);
       DirTool.copy_dir(path.join(ws, Constants.OBI_TMP_DIR), historyDir);
