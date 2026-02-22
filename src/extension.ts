@@ -22,6 +22,7 @@ import { OBISourceDependency } from './webview/controller/OBISourceDependency';
 import { LocalSourceList } from './utilities/LocalSourceList';
 import { QuickSettings } from './webview/quick_settings/QuickSettings';
 import { BuildHistoryProvider } from './webview/build_history/BuildHistoryProvider';
+import { sourceQuickSearch } from './source-quick-search';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -98,12 +99,31 @@ export function activate(context: vscode.ExtensionContext) {
 
 	vscode.commands.executeCommand('setContext', 'obi.valid-config', true);
 
+
 	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.controller.dependency-list', () => {
-			const fileUri = vscode.Uri.file(path.join(Workspace.get_workspace(), config.general['dependency-list'] || Constants.DEPENDENCY_LIST));
-			vscode.commands.executeCommand('vscode.open', fileUri);
+		vscode.commands.registerCommand('obi.source-quick-search', () => {
+			sourceQuickSearch();
 		})
-	)
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.open.file', async () => {
+			const source_list = await LocalSourceList.get_source_list();
+			if (source_list) {
+				const file = await vscode.window.showQuickPick(source_list);
+				if (file) {
+					const fileUri = vscode.Uri.file(file);
+					vscode.commands.executeCommand('vscode.open', fileUri);
+				}
+			}
+		})
+	);
+
+	// Create new source list provider
+	const source_list_provider = new SourceListProvider(rootPath, context);
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(source_list_provider)
+	);
 
 	//--------------------------------------------------------
 	// i-Releaser

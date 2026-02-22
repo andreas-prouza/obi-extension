@@ -207,6 +207,19 @@
         "command": "obi.build-history.delete-date",
         "title": "Delete Build History for Date",
         "icon": "$(trash)"
+      },
+      {
+        "command": "obi.open.file",
+        "title": "OBI: Open file by name"
+      },
+      {
+        "command": "obi.source-quick-search",
+        "title": "OBI: Source quick search"
+      },
+      {
+        "command": "obi.show.tools",
+        "category": "OBI",
+        "title": "OBI: Show tools"
       }
     ],
     "menus": {
