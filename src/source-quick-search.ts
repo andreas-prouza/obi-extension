@@ -1,19 +1,16 @@
 import * as vscode from 'vscode';
 import { LocalSourceList } from './utilities/LocalSourceList';
-import { OBITools } from './utilities/OBITools';
 import { AppConfig } from './webview/controller/AppConfig';
 import * as path from 'path';
 import { Workspace } from './utilities/Workspace';
-import { IQualifiedSource, ISourceInfos } from './obi/Source';
-import * as fs from 'fs';
-import { DirTool } from './utilities/DirTool';
+import { ISourceInfos } from './obi/Source';
 
 
 export function sourceQuickSearch() {
     const quickPick = vscode.window.createQuickPick();
-    quickPick.placeholder = 'Search for a source file';
+    quickPick.placeholder = 'Search for a source by name or description...';
     quickPick.matchOnDescription = true;
-    quickPick.matchOnDetail = true;
+    // quickPick.matchOnDetail = true;
 
     quickPick.onDidChangeValue(async (value) => {
         if (value) {
@@ -21,7 +18,7 @@ export function sourceQuickSearch() {
             quickPick.busy = true;
             const sourceInfoList: ISourceInfos = await LocalSourceList.get_source_info_list();
   
-            const descriptionMatches = Object.fromEntries(
+            const sourceInfoListMatches = Object.fromEntries(
                 Object.entries(sourceInfoList).filter(([sub_key, sub_value]) =>{
                         const keyMatch = sub_key.toLowerCase().includes(value_lower);
                         const descriptionMatch = ((sub_value || {}).description||'').toLowerCase().includes(value_lower);
@@ -30,10 +27,30 @@ export function sourceQuickSearch() {
                     })
             );
 
+            const sourceMatches = Object.fromEntries(
+                Object.entries(sourceInfoListMatches).filter(([sub_key, sub_value]) =>{
+                        return sub_key.toLowerCase().includes(value_lower);
+                    })
+            );
+  
+            const descriptionMatches = Object.fromEntries(
+                Object.entries(sourceInfoList).filter(([sub_key, sub_value]) =>{
+                        return ((sub_value || {}).description||'').toLowerCase().includes(value_lower);
+                    })
+            );
+
             let items: vscode.QuickPickItem[] = [];
 
+            if (Object.keys(sourceMatches).length > 0) {
+                items.push(...Object.entries(sourceMatches).map(([key1, value1]) => {
+                    return { label: key1, description: (value1||{}).description || '' }
+                }));
+            }
+
+            items.push({ label: 'Description Matches', kind: vscode.QuickPickItemKind.Separator });
+
             if (Object.keys(descriptionMatches).length > 0) {
-                //items.push({ label: 'Description Matches', kind: vscode.QuickPickItemKind.Separator });
+                items.push({ label: `Description Matches ${value}`, kind: vscode.QuickPickItemKind.Separator, alwaysShow: true });
                 items.push(...Object.entries(descriptionMatches).map(([key1, value1]) => {
                     return { label: key1, description: (value1||{}).description || '' }
                 }));
