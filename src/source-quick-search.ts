@@ -12,42 +12,32 @@ import { DirTool } from './utilities/DirTool';
 export function sourceQuickSearch() {
     const quickPick = vscode.window.createQuickPick();
     quickPick.placeholder = 'Search for a source file';
+    quickPick.matchOnDescription = true;
+    quickPick.matchOnDetail = true;
 
     quickPick.onDidChangeValue(async (value) => {
         if (value) {
             const value_lower = value.toLowerCase();
             quickPick.busy = true;
-            const sourceList = await LocalSourceList.get_source_list();
-            const filenameMatches = sourceList.filter(item => item.toLowerCase().includes(value_lower));
+            const sourceInfoList: ISourceInfos = await LocalSourceList.get_source_info_list();
+  
+            const descriptionMatches = Object.fromEntries(
+                Object.entries(sourceInfoList).filter(([sub_key, sub_value]) =>{
+                        const keyMatch = sub_key.toLowerCase().includes(value_lower);
+                        const descriptionMatch = ((sub_value || {}).description||'').toLowerCase().includes(value_lower);
 
-            const config = AppConfig.get_app_config();
-            const sourceInfoPath = path.join(Workspace.get_workspace(), config.general['source-infos']);
-            let descriptionMatches: ISourceInfos = [];
-            if (sourceInfoPath && DirTool.file_exists(sourceInfoPath)) {
-                const sourceInfos: ISourceInfos = DirTool.get_json(sourceInfoPath);
-                //descriptionMatches = Object.entries(sourceInfos)
-                //    .filter(([_, info]) => (info.description || '').toLowerCase().includes(value_lower));
-                descriptionMatches = Object.fromEntries(
-                        Object.entries(sourceInfos).filter(([, value]) =>
-                            value.description.toLowerCase().includes(value_lower)
-                        ))
-                //descriptionMatches = sourceInfos.filter(info => (info.description || '').toLowerCase().includes(value_lower));
-            }
+                        return keyMatch || descriptionMatch;
+                    })
+            );
 
             let items: vscode.QuickPickItem[] = [];
-            if (filenameMatches.length > 0) {
-                items.push(...filenameMatches.map(item => ({ label: item })));
-            }
-
-            //const descriptionMatchFiles = descriptionMatches.map(item => ({ label: item[0] }));
-            //const uniqueDescriptionMatches = descriptionMatchFiles.filter(item => !filenameMatches.includes(item));
 
             if (Object.keys(descriptionMatches).length > 0) {
                 //items.push({ label: 'Description Matches', kind: vscode.QuickPickItemKind.Separator });
-                items.push(...Object.keys(descriptionMatches).map(item => ({ label: item })));
+                items.push(...Object.entries(descriptionMatches).map(([key1, value1]) => {
+                    return { label: key1, description: (value1||{}).description || '' }
+                }));
             }
-
-            items = [{ label: '--- Filename Matches ---'}, { label: '--- Filename Matches 2 ---'}];
 
             quickPick.items = items;
             quickPick.busy = false;

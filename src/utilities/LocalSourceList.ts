@@ -5,11 +5,14 @@ import { Workspace } from "./Workspace";
 import { DirTool } from "./DirTool";
 import { Constants } from '../Constants';
 import { logger } from './Logger';
+import { OBITools } from './OBITools';
+import { ISourceInfos } from '../obi/Source';
 
 
 export class LocalSourceList {
 
     private static source_list: string[] | undefined = undefined;
+    private static source_info_list: ISourceInfos | undefined = undefined;
     private static last_load_time: number = 0;
     private static source_loading_promise: Promise<void>[] = [];
     
@@ -29,6 +32,13 @@ export class LocalSourceList {
         config.general['supported-object-types'] || ['pgm', 'file', 'srvpgm'],
         true
         ) || [];
+
+        LocalSourceList.source_info_list = OBITools.get_source_infos();
+
+        for (const source of LocalSourceList.source_list) {
+            LocalSourceList.source_info_list[source] = LocalSourceList.source_info_list[source] || {};
+        }
+
         LocalSourceList.last_load_time = Date.now();
 
         if (LocalSourceList.watcher_project === undefined) {
@@ -81,6 +91,13 @@ export class LocalSourceList {
         if (LocalSourceList.source_list === undefined)
             await LocalSourceList.load_source_list();
         return LocalSourceList.source_list || [];
+    }
+
+
+    public static async get_source_info_list(): Promise<ISourceInfos> {
+        if (LocalSourceList.source_info_list === undefined)
+            await LocalSourceList.load_source_list();
+        return LocalSourceList.source_info_list || {};
     }
 
 }
