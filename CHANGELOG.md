@@ -1,3 +1,10 @@
+## [0.6.15]
+
+* New feature: Quick search
+* Build history bugfixes (because of Windows filesystem)
+* npm (securitiy) updates
+
+
 ## [0.6.14]
 
 * Build history enhancements
