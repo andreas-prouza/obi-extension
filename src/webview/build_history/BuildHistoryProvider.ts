@@ -53,8 +53,9 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
           .map(dir => {
             const dirPath = path.join(build_history_path, dir);
             if (DirTool.dir_exists(dirPath)) {
-                     const parsableDir = dir.replace(/\./g, ":");
+              const parsableDir = dir.replace(/\./g, ":");
               const normalized = parsableDir.replace(" ", "T")
+                .replace("_", "T")
                 .replace(/:(\d+)$/, ".$1")
                 .substring(0, 23);
               const dirDate = new Date(normalized).toISOString().split('T')[0];

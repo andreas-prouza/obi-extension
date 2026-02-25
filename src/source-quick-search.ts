@@ -13,54 +13,55 @@ export function sourceQuickSearch() {
     // quickPick.matchOnDetail = true;
 
     quickPick.onDidChangeValue(async (value) => {
-        if (value) {
-            const value_lower = value.toLowerCase();
-            quickPick.busy = true;
-            const sourceInfoList: ISourceInfos = await LocalSourceList.get_source_info_list();
-  
-            const sourceInfoListMatches = Object.fromEntries(
-                Object.entries(sourceInfoList).filter(([sub_key, sub_value]) =>{
-                        const keyMatch = sub_key.toLowerCase().includes(value_lower);
-                        const descriptionMatch = ((sub_value || {}).description||'').toLowerCase().includes(value_lower);
-
-                        return keyMatch || descriptionMatch;
-                    })
-            );
-
-            const sourceMatches = Object.fromEntries(
-                Object.entries(sourceInfoListMatches).filter(([sub_key, sub_value]) =>{
-                        return sub_key.toLowerCase().includes(value_lower);
-                    })
-            );
-  
-            const descriptionMatches = Object.fromEntries(
-                Object.entries(sourceInfoList).filter(([sub_key, sub_value]) =>{
-                        return ((sub_value || {}).description||'').toLowerCase().includes(value_lower);
-                    })
-            );
-
-            let items: vscode.QuickPickItem[] = [];
-
-            if (Object.keys(sourceMatches).length > 0) {
-                items.push(...Object.entries(sourceMatches).map(([key1, value1]) => {
-                    return { label: key1, description: (value1||{}).description || '' }
-                }));
-            }
-
-            items.push({ label: 'Description Matches', kind: vscode.QuickPickItemKind.Separator });
-
-            if (Object.keys(descriptionMatches).length > 0) {
-                items.push({ label: `Description Matches ${value}`, kind: vscode.QuickPickItemKind.Separator, alwaysShow: true });
-                items.push(...Object.entries(descriptionMatches).map(([key1, value1]) => {
-                    return { label: key1, description: (value1||{}).description || '' }
-                }));
-            }
-
-            quickPick.items = items;
-            quickPick.busy = false;
-        } else {
+        
+        if (!value) {
             quickPick.items = [];
+            return;
         }
+
+        quickPick.busy = true;
+        const value_lower = value.toLowerCase();
+        let items: vscode.QuickPickItem[] = [];
+        const sourceInfoList: ISourceInfos = await LocalSourceList.get_source_info_list();
+
+        const sourceInfoListMatches = Object.fromEntries(
+            Object.entries(sourceInfoList).filter(([sub_key, sub_value]) =>{
+                    const keyMatch = sub_key.toLowerCase().includes(value_lower);
+                    const descriptionMatch = ((sub_value || {}).description||'').toLowerCase().includes(value_lower);
+
+                    return keyMatch || descriptionMatch;
+                })
+        );
+
+        const sourceMatches = Object.fromEntries(
+            Object.entries(sourceInfoListMatches).filter(([sub_key, sub_value]) =>{
+                    return sub_key.toLowerCase().includes(value_lower);
+                })
+        );
+
+        const descriptionMatches = Object.fromEntries(
+            Object.entries(sourceInfoList).filter(([sub_key, sub_value]) =>{
+                    return ((sub_value || {}).description||'').toLowerCase().includes(value_lower);
+                })
+        );
+
+        items.push({ label: 'File matches', kind: vscode.QuickPickItemKind.Separator });
+        if (Object.keys(sourceMatches).length > 0) {
+            items.push(...Object.entries(sourceMatches).map(([key1, value1]) => {
+                return { label: key1, description: (value1||{}).description || '' }
+            }));
+        }
+
+        items.push({ label: 'Description matches', kind: vscode.QuickPickItemKind.Separator });
+        if (Object.keys(descriptionMatches).length > 0) {
+            items.push({ label: `Description Matches ${value}`, kind: vscode.QuickPickItemKind.Separator, alwaysShow: true });
+            items.push(...Object.entries(descriptionMatches).map(([key1, value1]) => {
+                return { label: key1, description: (value1||{}).description || '' }
+            }));
+        }
+
+        quickPick.items = items;
+        quickPick.busy = false;
     });
 
     quickPick.onDidChangeSelection(selection => {
