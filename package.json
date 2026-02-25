@@ -214,7 +214,8 @@
       },
       {
         "command": "obi.source-quick-search",
-        "title": "OBI: Source quick search"
+        "title": "OBI: Source quick search",
+        "icon": "$(search)"
       },
       {
         "command": "obi.show.tools",
@@ -224,6 +225,11 @@
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "obi.source-quick-search",
+          "when": "obi.contains_obi_project && obi.valid-config && view == obi.source-filter",
+          "group": "navigation@0"
+        },
         {
           "command": "obi.source-filter.add",
           "when": "obi.contains_obi_project && obi.valid-config && view == obi.source-filter",
@@ -393,14 +399,14 @@
         },
         {
           "type": "tree",
-          "id": "obi.build-history",
-          "name": "Build history",
+          "id": "obi.source-filter",
+          "name": "%Source filters%",
           "when": "obi.contains_obi_project && obi.valid-config"
         },
         {
           "type": "tree",
-          "id": "obi.source-filter",
-          "name": "%Source filters%",
+          "id": "obi.build-history",
+          "name": "Build history",
           "when": "obi.contains_obi_project && obi.valid-config"
         },
         {
