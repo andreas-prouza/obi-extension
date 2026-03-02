@@ -1,3 +1,8 @@
+## [0.6.16]
+
+* npm update
+
+
 ## [0.6.15]
 
 * New feature: Quick search
