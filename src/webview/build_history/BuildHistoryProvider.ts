@@ -26,6 +26,19 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
   }
 
 
+  public static escaped_date2date(escaped_date: string): Date {
+    const parsableDir = escaped_date.replace(/\./g, ":");
+    const normalized = parsableDir.replace(" ", "T")
+      .replace("_", "T")
+      .replace(/:(\d+)$/, ".$1")
+      .substring(0, 23);
+    return new Date(normalized);
+  }
+
+  public static date2escaped_date(date: string): string {
+    return date.replace(/:/g, ".").replace(" ", "_");
+  }
+
 
   getTreeItem(element: BuildHistoryItem): vscode.TreeItem {
     return element;
@@ -46,22 +59,26 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
     const config = AppConfig.get_app_config();
 
     if (element) {
+      
+      // List folders for a Date
       if (element.contextValue === 'buildHistoryDate') {
+        
         // Children of a date group: these are the timestamped build folders
         const build_history_dirs = DirTool.list_dir(build_history_path);
+
+        // Convert back timestamp folder names to a valid timestamp format
         const historyItems = build_history_dirs
           .map(dir => {
+            
             const dirPath = path.join(build_history_path, dir);
+            
             if (DirTool.dir_exists(dirPath)) {
-              const parsableDir = dir.replace(/\./g, ":");
-              const normalized = parsableDir.replace(" ", "T")
-                .replace("_", "T")
-                .replace(/:(\d+)$/, ".$1")
-                .substring(0, 23);
-              const dirDate = new Date(normalized).toISOString().split('T')[0];
+              const date: Date = this.escaped_date2date(dir);
+              const dirDate = date.toISOString().split('T')[0];
+              
               if (dirDate === element.label) {
                 return new BuildHistoryItem(
-                  new Date(normalized).toLocaleTimeString(),
+                  date.toLocaleTimeString(),
                   vscode.TreeItemCollapsibleState.Collapsed,
                   dirPath,
                   'build',
@@ -75,21 +92,33 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
           .sort((a, b) => b.label.localeCompare(a.label));
 
         return Promise.resolve(historyItems);
-      } else if (element.contextValue === 'buildHistoryBuild') {
+      }
+        
+      // List effected sources of a build
+      if (element.contextValue === 'buildHistoryBuild') {
+        
         const compileListPath = path.join(element.file_path, 'compile-list.json');
+
         if (fs.existsSync(compileListPath)) {
+
           const compileList = JSON.parse(fs.readFileSync(compileListPath, 'utf-8'));
           const sources: BuildHistoryItem[] = [];
+          
           if (compileList.compiles) {
+          
             for (const compile of compileList.compiles) {
+          
               if (compile.sources) {
+          
                 for (const src of compile.sources) {
+
                   const item = new BuildHistoryItem(
                     src.source,
                     vscode.TreeItemCollapsibleState.None,
                     '',
                     'source'
                   );
+
                   item.command = {
                     command: 'vscode.open',
                     title: 'Open Source',
@@ -116,11 +145,7 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
       if (DirTool.dir_exists(dirPath)) {
         // The dir name is the timestamp
         try {
-            const parsableDir = dir.replace("_", " ").replace(/(\d{2})\.(\d{2})\.(\d{2})\.(\d{6})$/, '$1:$2:$3:$4');
-          const normalized = parsableDir.replace(" ", "T")
-                            .replace(/:(\d+)$/, ".$1")
-                            .substring(0, 23);
-          const date = new Date(normalized);
+          const date: Date = this.escaped_date2date(dir);
           dateGroups.add(date.toISOString().split('T')[0]);
         } catch (e) {
           logger.error(`Invalid date format for build history directory: ${dir}`);
@@ -186,11 +211,7 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
           const dirPath = path.join(build_history_path, dir);
           if (DirTool.dir_exists(dirPath)) {
             try {
-              const parsableDir = dir.replace("_", " ").replace(/\.(?=\d{6}$)/, ':');
-              const normalized = parsableDir.replace(" ", "T")
-                .replace(/:(\d+)$/, ".$1")
-                .substring(0, 23);
-              const dirDate = new Date(normalized).toISOString().split('T')[0];
+              const dirDate = this.escaped_date2date(dir).toISOString().split('T')[0];
               if (dirDate === item.date) {
                 fs.rmSync(dirPath, { recursive: true, force: true });
               }
