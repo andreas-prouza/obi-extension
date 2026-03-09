@@ -73,7 +73,7 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
             const dirPath = path.join(build_history_path, dir);
             
             if (DirTool.dir_exists(dirPath)) {
-              const date: Date = this.escaped_date2date(dir);
+              const date: Date = BuildHistoryProvider.escaped_date2date(dir);
               const dirDate = date.toISOString().split('T')[0];
               
               if (dirDate === element.label) {
@@ -145,7 +145,7 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
       if (DirTool.dir_exists(dirPath)) {
         // The dir name is the timestamp
         try {
-          const date: Date = this.escaped_date2date(dir);
+          const date: Date = BuildHistoryProvider.escaped_date2date(dir);
           dateGroups.add(date.toISOString().split('T')[0]);
         } catch (e) {
           logger.error(`Invalid date format for build history directory: ${dir}`);
@@ -211,7 +211,7 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
           const dirPath = path.join(build_history_path, dir);
           if (DirTool.dir_exists(dirPath)) {
             try {
-              const dirDate = this.escaped_date2date(dir).toISOString().split('T')[0];
+              const dirDate = BuildHistoryProvider.escaped_date2date(dir).toISOString().split('T')[0];
               if (dirDate === item.date) {
                 fs.rmSync(dirPath, { recursive: true, force: true });
               }

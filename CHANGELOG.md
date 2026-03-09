@@ -1,3 +1,10 @@
+## [0.6.17]
+
+* Bugfixes
+* Quick search improved
+* npm updates
+
+
 ## [0.6.16]
 
 * npm update
