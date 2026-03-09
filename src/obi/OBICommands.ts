@@ -16,6 +16,7 @@ import { Constants } from '../Constants';
 import { logger } from '../utilities/Logger';
 import { SystemCmdExecution } from '../utilities/SystemCmdExecution';
 import { Uri } from 'vscode';
+import { BuildHistoryProvider } from '../webview/build_history/BuildHistoryProvider';
 
 
 
@@ -225,7 +226,7 @@ export class OBICommands {
       compile_list['config'] = config;
 
       // Windows compatibility for directory name
-      const historyDirName = timestamp.replace(/:/g, ".").replace(" ", "_");
+      const historyDirName = BuildHistoryProvider.date2escaped_date(timestamp);
       const historyDir = path.join(ws, Constants.BUILD_HISTORY_DIR, historyDirName);
       DirTool.write_json(path.join(historyDir, 'compile-list.json'), compile_list);
       DirTool.copy_dir(path.join(ws, Constants.OBI_TMP_DIR), historyDir);

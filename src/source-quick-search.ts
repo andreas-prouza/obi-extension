@@ -6,12 +6,17 @@ import { Workspace } from './utilities/Workspace';
 import { ISourceInfos } from './obi/Source';
 
 
-export function sourceQuickSearch() {
+export async function sourceQuickSearch() {
     const quickPick = vscode.window.createQuickPick();
     quickPick.placeholder = 'Search for a source by name or description...';
     quickPick.matchOnDescription = true;
     // quickPick.matchOnDetail = true;
+    const sourceInfoList: ISourceInfos = await LocalSourceList.get_source_info_list();
+    quickPick.items = Object.entries(sourceInfoList).map(([key, value]) => {
+        return { label: key, description: (value || {}).description || '' };
+    });
 
+    /*
     quickPick.onDidChangeValue(async (value) => {
         
         if (!value) {
@@ -63,7 +68,7 @@ export function sourceQuickSearch() {
         quickPick.items = items;
         quickPick.busy = false;
     });
-
+*/
     quickPick.onDidChangeSelection(selection => {
         if (selection[0]) {
             const config = AppConfig.get_app_config();
