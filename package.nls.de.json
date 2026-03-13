@@ -144,5 +144,8 @@
   "Show build list": "Buildliste anzeigen",
   "Delete selected profile": "Ausgewähltes Profil löschen",
   "Copy selected profile": "Ausgewähltes Profil kopieren",
-  "Always transfer related copybooks": "Copy-Strecken immer übertragen"
+  "Always transfer related copybooks": "Copy-Strecken immer übertragen",
+  "Choose a source to configure": "Wähle eine Source zur Konfiguration",
+  "Show all sources": "Alle Sourcen anzeigen",
+  "sources with individual settings": "Sourcen mit individuellen Einstellungen"
 }

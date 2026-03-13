@@ -183,5 +183,8 @@
   "Show build list": "Show build list",
   "Delete selected profile": "Delete selected profile",
   "Copy selected profile": "Copy selected profile",
-  "Always transfer related copybooks": "Always transfer related copybooks"
+  "Always transfer related copybooks": "Always transfer related copybooks",
+  "Choose a source to configure": "Choose a source to configure",
+  "Show all sources": "Show all sources",
+  "sources with individual settings": "sources with individual settings"
 }

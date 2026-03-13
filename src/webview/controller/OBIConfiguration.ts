@@ -10,6 +10,7 @@ import { AppConfig, ConfigCompileSettings, SourceConfigList } from './AppConfig'
 import { Workspace } from '../../utilities/Workspace';
 import { logger } from '../../utilities/Logger';
 import { OBISourceConfiguration } from './OBISourceConfiguration';
+import { LocalSourceList } from '../../utilities/LocalSourceList';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -94,6 +95,8 @@ export class OBIConfiguration {
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
     
+    const local_source_list: string[] = await LocalSourceList.get_source_list();
+
     const html = nunjucks.render('controller/configuration.html', 
       {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),
@@ -109,7 +112,8 @@ export class OBIConfiguration {
         panel: await context.secrets.get('obi|config|panel'),
         panel_tab: await context.secrets.get('obi|config|panel_tab'),
         config_source_list: AppConfig.get_source_configs(),
-        error_text: error_text
+        error_text: error_text,
+        source_list: local_source_list
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         //object_list: this.get_object_list(workspaceUri),
         //compile_list: this.get_compile_list(workspaceUri)

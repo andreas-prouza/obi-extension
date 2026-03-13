@@ -167,7 +167,7 @@ function save_config() {
     switch (app_elements[i].constructor.name) {
 
       case 'TextArea2':
-        value = Array.from((app_elements[i] as HTMLTextAreaElement).value.split('\n'));
+        value = Array.from((app_elements[i] as HTMLTextAreaElement).value.split(/\r?\n/));
         break;
 
       default:

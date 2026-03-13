@@ -142,32 +142,11 @@ function main() {
 
   }
 
-  $('#config_source_list').on('post-body.bs.table', function (name, args) {
-    let buttons = document.getElementsByClassName('edit_source_config');
-    console.log(`source configs: ${buttons.length}`);
-    for (let i = 0; i < buttons.length; i++) {
-      const el = buttons[i] as Button;
-      console.log(`Add click source config2: ${el.id}`);
-      el.addEventListener("click", () => {
-        edit_source_config(el.getAttribute('key'));
-      });
-    }
+  const edit_source_config_button = document.getElementById('edit_source_config') as Button;
+  edit_source_config_button.addEventListener("click", edit_source_config);
 
-    buttons = document.getElementsByClassName('delete_source_config');
-    for (let i = 0; i < buttons.length; i++) {
-      const el = buttons[i];
-      el.addEventListener("click", () => {
-        delete_source_config(el.getAttribute('key')); 
-        reload();
-      });
-    }
-  
-  });
-
-
-  const add_source_config_button = document.getElementById('add_source_config') as Button;
-  add_source_config_button.addEventListener("click", add_source_config);
-
+  const delete_source_config_button = document.getElementById('delete_source_config') as Button;
+  delete_source_config_button.addEventListener("click", delete_source_config);
 
   window.addEventListener('message', receive_message);
 
@@ -179,7 +158,10 @@ function main() {
 
 
 
-function edit_source_config(key: string|null) {
+function edit_source_config() {
+  
+  const config_source_list = document.getElementById('config_source_list') as HTMLSelectElement;
+  const key: string|null = config_source_list.value;
 
   console.log(`Edit source config: ${key}`);
   vscode.postMessage({
@@ -190,23 +172,26 @@ function edit_source_config(key: string|null) {
 }
 
 function add_source_config() {
-  const lib:string = (document.getElementById("new_lib") as TextField).value;
-  const file:string = (document.getElementById("new_file") as TextField).value;
-  const member:string = (document.getElementById("new_member") as TextField).value;
 
-  console.log(`Add source config: ${lib} / ${file} / ${member}`);
+  const config_source_list = document.getElementById('new_config_source_list') as HTMLSelectElement;
+  const key: string|null = config_source_list.value;
+
+  console.log(`Add source config: ${key}`);
   vscode.postMessage({
     command: "add_source_config",
     panel: panel,
     panel_tab: panel_tab,
-    source: `${lib}/${file}/${member}`
+    source: key
   });
 
 }
 
 
 
-function delete_source_config(key: string|null) {
+function delete_source_config() {
+
+  const config_source_list = document.getElementById('config_source_list') as HTMLSelectElement;
+  const key: string|null = config_source_list.value;
 
   console.log(`delete_source_config: ${key}`);
   vscode.postMessage({
