@@ -1,3 +1,10 @@
+## [0.6.18]
+
+* Bugfixes
+* npm updates
+* Change view for individual settings
+
+
 ## [0.6.17]
 
 * Bugfixes
