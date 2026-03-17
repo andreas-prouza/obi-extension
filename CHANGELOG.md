@@ -1,3 +1,10 @@
+## [0.6.19]
+
+* Compile output: use virtual files
+* Bugfixes
+* npm updates
+
+
 ## [0.6.18]
 
 * Bugfixes

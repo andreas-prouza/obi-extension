@@ -10,6 +10,7 @@ import { AppConfig } from '../controller/AppConfig';
 import { Workspace } from '../../utilities/Workspace';
 import { logger } from '../../utilities/Logger';
 import { OBICommands } from '../../obi/OBICommands';
+import { LogOutputProvider } from './LogOutputProvider';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -95,7 +96,8 @@ export class BuildSummary {
             return;
 
           case "show_log":
-            LogOutput.render(workspaceUri, message.type, message.level, message.source, message.cmd_index);
+            //LogOutput.render(workspaceUri, message.type, message.level, message.source, message.cmd_index);
+            LogOutputProvider.showOutput(message.type, message.level, message.source, message.cmd_index);
             return;
 
           case "run_build":

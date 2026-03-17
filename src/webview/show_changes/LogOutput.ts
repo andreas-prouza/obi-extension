@@ -94,7 +94,7 @@ export class LogOutput {
 
 
 
-  private static get_log_content(workspaceUri: Uri, log_type: string, level: number, source: string, cmd_index: number): string {
+  public static get_log_content(workspaceUri: Uri, log_type: string, level: number, source: string, cmd_index: number): string {
 
     const fs = require("fs"); 
     

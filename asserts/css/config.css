@@ -22,3 +22,7 @@ vscode-text-field.missing_value {
   position: fixed;
   z-index: 1;
 }
+
+vscode-text-field, vscode-button {
+  vertical-align: middle;
+}

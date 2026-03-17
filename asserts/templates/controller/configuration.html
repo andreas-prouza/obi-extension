@@ -29,9 +29,9 @@
 
   <vscode-panels activeid="{{ panel or 'project_cfg' }}" aria-label="Default">
 
-    <vscode-panel-tab id="project_cfg"><h1>{{  global_stuff['get_text']('Project configuration') | safe }}</h1></vscode-panel-tab>
-    <vscode-panel-tab id="user_cfg"><h1>{{  global_stuff['get_text']('User configuration') + current_profile | safe }} </h1></vscode-panel-tab>
-    <vscode-panel-tab id="source_cfg"><h1>{{  global_stuff['get_text']('Source configuration') | safe }}</h1></vscode-panel-tab>
+    <vscode-panel-tab id="project_cfg"><h2>{{  global_stuff['get_text']('Project configuration') | safe }}</h2></vscode-panel-tab>
+    <vscode-panel-tab id="user_cfg"><h2>{{  global_stuff['get_text']('User configuration') + current_profile | safe }} </h2></vscode-panel-tab>
+    <vscode-panel-tab id="source_cfg"><h2>{{  global_stuff['get_text']('Source configuration') | safe }}</h2></vscode-panel-tab>
 
     
     <vscode-panel-view id="project_cfg-view">

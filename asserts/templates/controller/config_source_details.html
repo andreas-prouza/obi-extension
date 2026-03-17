@@ -14,7 +14,7 @@
   </head>
   <body>
 
-    <h1>{{ global_stuff['get_text']('Source config') | safe }} <code><a href='command:vscode.open?{{ source_file }}'>{{ source }}</a></code></h1>
+    <h2>{{ global_stuff['get_text']('Source config') | safe }} <code><a href='command:vscode.open?{{ source_file }}'>{{ source }}</a></code></h2>
 
     <div class="save-button-wrapper">
       <vscode-button class="save-button" id="save_config">{{ global_stuff['get_text']('Save') | safe }}</vscode-button>
@@ -24,7 +24,7 @@
     📝 <a href='command:vscode.open?{{ source_config_file }}'>{{  global_stuff['get_text']('Open source config file') | safe }}</a>
 
   
-    <h2>{{ global_stuff['get_text']('Compile settings') | safe }}</h2>
+    <h3>{{ global_stuff['get_text']('Compile settings') | safe }}</h3>
     {% set settings = source_config['settings'] %}
 
     <table>
@@ -37,11 +37,11 @@
         <td>{{ key }}{% if value | typename == "Array" %} (<code>List</code>){% endif %}</td>
         <td>
           {% if value | typename == "Array" %}
-            <vscode-text-area class="save_source_setting" key="{{ key }}" id="{{ key }}|value"
+            <vscode-text-area class="save_source_setting" key="{{ key }}" data-type="list" id="{{ key }}|value"
               value='{{ value | join("\n") }}' rows="{{ value | length }}" resize="both">
             </vscode-text-area>
           {% else %}
-            <vscode-text-field class="save_source_setting" key="{{ key }}" id="{{ key }}|value"
+            <vscode-text-field class="save_source_setting" key="{{ key }}" data-type="string" id="{{ key }}|value"
               value="{{ value }}">
             </vscode-text-field>
           {% endif %}
@@ -53,6 +53,7 @@
         </td>
       </tr>
       {% endfor %}
+      <tr><td>&nbsp;</td></tr>
       <tr>
         <td>
           <vscode-text-field id="new_source_setting_key" placeholder="TARGET_LIB"></vscode-text-field>
@@ -78,7 +79,7 @@
 
     <hr />
   
-    <h2>{{ global_stuff['get_text']('Compile commands') | safe }} (<code>source-cmds</code>)</h2>
+    <h3>{{ global_stuff['get_text']('Compile commands') | safe }} (<code>source-cmds</code>)</h3>
     {% set compile_cmds = source_config['source-cmds'] %}
 
     <table>
@@ -90,7 +91,7 @@
       <tr>
         <td>{{ key }}</td>
         <td>
-          <vscode-text-area class="save_source_cmd" key="{{ key }}" cols="80" rows="4" resize="both"  id="{{ key }}|value"
+          <vscode-text-area class="save_source_cmd" key="{{ key }}" data-type="string" cols="80" rows="4" resize="both"  id="{{ key }}|value"
             value="{{ value }}">
           </vscode-text-area>
         </td>
@@ -118,10 +119,10 @@
 
     <hr />
 
-    <h2>{{ global_stuff['get_text']('Compile steps') | safe }}</h2>
+    <h3>{{ global_stuff['get_text']('Compile steps') | safe }}</h3>
     {% set compile_steps = source_config['steps'] %}
 
-    <h3>{{ global_stuff['get_text']('Command IDs (separated by new line)') | safe }}</h3>
+    <h6><b>{{ global_stuff['get_text']('Command IDs (separated by new line)') | safe }}</b></h6>
     <vscode-text-area cols="100" rows="4" resize="both" id="steps" placeholder="source.cmd.commandid&#10;global.cmds.check-error"
       value="{{ (compile_steps or []) | join('\n') }}">
     </vscode-text-area>

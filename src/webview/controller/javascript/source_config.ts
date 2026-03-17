@@ -5,6 +5,8 @@ import {
   TextField
 } from "@vscode/webview-ui-toolkit";
 
+import { showAlert } from "../../tools/javascript/alertBox";
+
 // In order to use all the Webview UI Toolkit web components they
 // must be registered with the browser (i.e. webview) using the
 // syntax below.
@@ -144,7 +146,7 @@ function receive_message(e: MessageEvent) {
 
 
 type SourceSettings = {
-  [key: string]: string
+  [key: string]: string | string[]
 }
 
 type SourceCmds = {
@@ -157,16 +159,20 @@ function save_config() {
   let app_elements = document.getElementsByClassName(`save_source_setting`);
   let source_settings: SourceSettings = {};
 
-  console.log(`save_source_setting: ${app_elements.length}`);
+  console.log(`save_source_setting: ${app_elements.length} elements`);
   let key = '';
-  let value = '';
+  let value: string | string[] = '';
 
   for (let i = 0; i < app_elements.length; i++) {
     key = app_elements[i].getAttribute('key') || 'undefined';
+    const type = app_elements[i].getAttribute('data-type') || 'string';
 
-    switch (app_elements[i].constructor.name) {
+    console.log(`save_source_setting: ${key} : ${type}`);
 
-      case 'TextArea2':
+    switch (type) {
+
+      case 'list':
+        console.log(`save_source_setting: list value: ${(app_elements[i] as HTMLTextAreaElement).value}`);
         value = Array.from((app_elements[i] as HTMLTextAreaElement).value.split(/\r?\n/));
         break;
 
