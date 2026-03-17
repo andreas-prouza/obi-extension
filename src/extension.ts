@@ -23,6 +23,7 @@ import { LocalSourceList } from './utilities/LocalSourceList';
 import { QuickSettings } from './webview/quick_settings/QuickSettings';
 import { BuildHistoryProvider } from './webview/build_history/BuildHistoryProvider';
 import { sourceQuickSearch } from './source-quick-search';
+import { show_diagnostic_infos } from './source/compile-diagnostics';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -330,6 +331,14 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	LocalSourceList.load_source_list();
+
+	const diagnosticCollection = vscode.languages.createDiagnosticCollection('obi-compiler');
+	
+	// Example function to trigger when your compile finishes
+    let disposable = vscode.commands.registerCommand('obi.showErrors', () => {
+        show_diagnostic_infos();
+    });
+
 
 }
 

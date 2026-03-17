@@ -35,6 +35,12 @@
   "contributes": {
     "commands": [
       {
+        "command": "obi.showErrors",
+        "title": "OBI: Show Errors",
+        "icon": "$(check-all)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
         "command": "obi.show_changes",
         "title": "%obi.show_changes%",
         "icon": "$(check-all)",
