@@ -1,3 +1,8 @@
+## [0.6.20]
+
+* npm updates
+
+
 ## [0.6.19]
 
 * Compile output: use virtual files
