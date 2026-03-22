@@ -1,3 +1,10 @@
+## [1.0.0]
+
+* Integration of EVFEVENT files
+* Config enhancements. Added useable variables
+* npm updates
+
+
 ## [0.6.20]
 
 * npm updates
