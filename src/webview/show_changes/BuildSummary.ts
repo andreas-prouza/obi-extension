@@ -11,6 +11,7 @@ import { Workspace } from '../../utilities/Workspace';
 import { logger } from '../../utilities/Logger';
 import { OBICommands } from '../../obi/OBICommands';
 import { LogOutputProvider } from './LogOutputProvider';
+import { show_diagnostic_infos } from '../../source/compile-diagnostics';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -80,6 +81,8 @@ export class BuildSummary {
 
     const config = AppConfig.get_app_config();
 
+    const src_dir: string = config.general['source-dir'] || 'src';
+
     // If a webview panel does not already exist create and show a new one
     const panel = BuildSummary.createNewPanel(extensionUri);
 
@@ -102,6 +105,15 @@ export class BuildSummary {
 
           case "run_build":
             OBICommands.rerun_build(message.ignore_sources, message.ignore_sources_cmd);
+            return;
+
+          case "open_file":
+            const fileUri = vscode.Uri.parse(path.join(Workspace.get_workspace(), src_dir, message.source));
+            vscode.workspace.openTextDocument(fileUri).then(doc => {
+              vscode.window.showTextDocument(doc).then(editor => {;
+                show_diagnostic_infos(path.join(Workspace.get_workspace(), BuildSummary._current_compile_output_folder, Constants.EVFEVENT_OUTPUT_FOLDER, message.source))
+              });
+            });
             return;
         }
       }

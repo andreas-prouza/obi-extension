@@ -21,6 +21,7 @@ build-output-dir = ".obi/build-output/objects"
 compile-list = ".obi/build-output/compile-list.json"
 compiled-object-list-md = ".obi/build-output/compiled-object-list.md"
 max-threads = 20
+evfevent-output-dir = ".obi/build-output/evfevent"
 
 [global]
 [global.settings]
@@ -61,42 +62,43 @@ replace-special-chars-in-file-name = "mv $(subst $$,'$$',$(subst #,#,$?)) $$(ech
 test-cmd = "echo 'Works as designed'"
 add-lible = "liblist -a '$(LIB)' 2> /dev/null"
 sql-set-target-lib = "export OBI_CONTENT=\"$(sed 's/$(SQL_TARGET_LIB)/$(TARGET_LIB)/g' $(SOURCE_FILE_NAME))\"; printf '%s' \"$OBI_CONTENT\" > $(SOURCE_FILE_NAME)"
+evfevent-export = "FILE='$(evfevent-output-dir)/$(SOURCE)' && mkdir -p \"${FILE%/*}\" ; \ncl -v \"CPYTOIMPF FROMFILE(\"'$(TARGET_LIB)/EVFEVENT $(OBJ_NAME)'\") TOSTMF('\"'$(evfevent-output-dir)/$(SOURCE)'\"') MBROPT(*REPLACE) STMFCCSID(1208) RCDDLM(*LF) DTAFMT(*FIXED) STRDLM(*NONE) STRESCCHR(*NONE) RMVBLANK(*EOR) FLDDLM('')\""
 
 [global.compile-cmds]
 bnddir-rmv = "$(SET_LIBL); cl -v \"RMVBNDDIRE BNDDIR($(INCLUDE_BNDDIR)) OBJ(\"'*LIBL/$(OBJ_NAME)'\")\" "
 bnddir-add = "$(SET_LIBL); cl -v \"ADDBNDDIRE BNDDIR($(INCLUDE_BNDDIR)) OBJ(\"'*LIBL/$(OBJ_NAME)'\")\" "
 srvpgm-crt = "$(SET_LIBL); cl -v \"CRTSRVPGM SRVPGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") EXPORT(*ALL) ACTGRP($(ACTGRP)) BNDDIR($(INCLUDE_BNDDIR)) REPLACE(*YES) TGTRLS($(TGTRLS)) STGMDL($(STGMDL)) \""
-"clle.pgm" = "$(SET_LIBL); cl -v \"CRTBNDCL PGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\")  SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') ACTGRP($(ACTGRP)) REPLACE(*YES) TGTRLS($(TGTRLS)) STGMDL($(STGMDL)) DFTACTGRP(*NO)\""
-"clp.pgm" = "$(SET_LIBL); cl -v \"CRTSRCPF FILE(QTEMP/QSRC) RCDLEN(112)\" 2> /dev/null; cl -v \"CPYFRMSTMF FROMSTMF('\"'$(SOURCE_FILE_NAME)'\"') TOMBR('/QSYS.LIB/QTEMP.LIB/QSRC.FILE/\"'$(OBJ_NAME)'\".MBR') MBROPT(*replace)\"; cl -v \"CRTCLPGM PGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCFILE(QTEMP/QSRC) REPLACE(*YES)\" "
-"rpg.pgm" = "$(SET_LIBL); cl -v \"CRTSRCPF FILE(QTEMP/QSRC) RCDLEN(112)\" 2> /dev/null; cl -v \"CPYFRMSTMF FROMSTMF('\"'$(SOURCE_FILE_NAME)'\"') TOMBR('/QSYS.LIB/QTEMP.LIB/QSRC.FILE/\"'$(OBJ_NAME)'\".MBR') MBROPT(*replace)\"; cl -v \"CRTRPGPGM PGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCFILE(QTEMP/QSRC) REPLACE(*YES)\" "
+"clle.pgm" = "$(SET_LIBL); cl -v \"CRTBNDCL PGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\")  SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') ACTGRP($(ACTGRP)) REPLACE(*YES) TGTRLS($(TGTRLS)) STGMDL($(STGMDL)) DFTACTGRP(*NO) OPTION(*EVENTF)\""
+"clp.pgm" = "$(SET_LIBL); cl -v \"CRTSRCPF FILE(QTEMP/QSRC) RCDLEN(112)\" 2> /dev/null; cl -v \"CPYFRMSTMF FROMSTMF('\"'$(SOURCE_FILE_NAME)'\"') TOMBR('/QSYS.LIB/QTEMP.LIB/QSRC.FILE/\"'$(OBJ_NAME)'\".MBR') MBROPT(*replace)\"; cl -v \"CRTCLPGM PGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCFILE(QTEMP/QSRC) REPLACE(*YES) OPTION(*EVENTF)\" "
+"rpg.pgm" = "$(SET_LIBL); cl -v \"CRTSRCPF FILE(QTEMP/QSRC) RCDLEN(112)\" 2> /dev/null; cl -v \"CPYFRMSTMF FROMSTMF('\"'$(SOURCE_FILE_NAME)'\"') TOMBR('/QSYS.LIB/QTEMP.LIB/QSRC.FILE/\"'$(OBJ_NAME)'\".MBR') MBROPT(*replace)\"; cl -v \"CRTRPGPGM PGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCFILE(QTEMP/QSRC) REPLACE(*YES) OPTION(*EVENTF)\" "
 "rpgle.mod" = "$(SET_LIBL); cl -v \"CRTRPGMOD MODULE(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') DBGVIEW($(DBGVIEW)) REPLACE(*YES) TGTCCSID($(TGTCCSID)) INCDIR($(INCDIR_RPGLE))\""
-"rpgle.pgm" = "$(SET_LIBL); cl -v \"CRTBNDRPG PGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') DBGVIEW($(DBGVIEW)) REPLACE(*YES) TGTCCSID($(TGTCCSID)) INCDIR($(INCDIR_RPGLE))\""
-"sqlrpgle.mod" = "$(SET_LIBL); cl -v \"CRTSQLRPGI OBJ(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') OBJTYPE(*MODULE) RPGPPOPT($(RPGPPOPT)) TGTRLS($(TGTRLS)) DBGVIEW($(DBGVIEW)) REPLACE(*YES) COMPILEOPT('TGTCCSID($(TGTCCSID)) INCDIR($(INCDIR_SQLRPGLE))')\""
-"sqlrpgle.pgm" = "$(SET_LIBL); cl -v \"CRTSQLRPGI OBJ(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') OBJTYPE(*PGM) RPGPPOPT($(RPGPPOPT)) TGTRLS($(TGTRLS)) DBGVIEW($(DBGVIEW)) REPLACE(*YES) COMPILEOPT('TGTCCSID($(TGTCCSID)) INCDIR($(INCDIR_SQLRPGLE))')\""
-pgm = "$(SET_LIBL); cl -v \"CRTPGM PGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") ACTGRP($(ACTGRP)) REPLACE(*YES) TGTRLS($(TGTRLS)) STGMDL($(STGMDL)) DETAIL(*BASIC) BNDDIR($(INCLUDE_BNDDIR))\""
+"rpgle.pgm" = "$(SET_LIBL); cl -v \"CRTBNDRPG PGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') DBGVIEW($(DBGVIEW)) REPLACE(*YES) TGTCCSID($(TGTCCSID)) INCDIR($(INCDIR_RPGLE)) OPTION(*EVENTF)\""
+"sqlrpgle.mod" = "$(SET_LIBL); cl -v \"CRTSQLRPGI OBJ(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') OBJTYPE(*MODULE) RPGPPOPT($(RPGPPOPT)) TGTRLS($(TGTRLS)) DBGVIEW($(DBGVIEW)) REPLACE(*YES) COMPILEOPT('TGTCCSID($(TGTCCSID)) INCDIR($(INCDIR_SQLRPGLE))') OPTION(*EVENTF)\""
+"sqlrpgle.pgm" = "$(SET_LIBL); cl -v \"CRTSQLRPGI OBJ(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') OBJTYPE(*PGM) RPGPPOPT($(RPGPPOPT)) TGTRLS($(TGTRLS)) DBGVIEW($(DBGVIEW)) REPLACE(*YES) COMPILEOPT('TGTCCSID($(TGTCCSID)) INCDIR($(INCDIR_SQLRPGLE))') OPTION(*EVENTF)\""
+pgm = "$(SET_LIBL); cl -v \"CRTPGM PGM(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") ACTGRP($(ACTGRP)) REPLACE(*YES) TGTRLS($(TGTRLS)) STGMDL($(STGMDL)) DETAIL(*BASIC) BNDDIR($(INCLUDE_BNDDIR)) OPTION(*EVENTF)\""
 "sqltable.file" = "$(SET_LIBL); cl -v \"RUNSQLSTM SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') COMMIT(*NONE) ERRLVL(21)\""
 "sqlview.file" = "$(SET_LIBL); cl -v \"RUNSQLSTM SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') COMMIT(*NONE) ERRLVL(21)\""
 "sqlindex.file" = "$(SET_LIBL); cl -v \"RUNSQLSTM SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') COMMIT(*NONE) ERRLVL(21)\""
 "sqlproc.obj" = "$(SET_LIBL);  cl -v \"RUNSQLSTM SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') COMMIT(*NONE) ERRLVL(21)\""
 "sqlfunc.obj" = "$(SET_LIBL); cl -v \"RUNSQLSTM SRCSTMF('\"'$(SOURCE_FILE_NAME)'\"') COMMIT(*NONE) ERRLVL(21)\""
-"pf.file" = "$(SET_LIBL); cl -v \"CRTSRCPF FILE(QTEMP/QSRC) RCDLEN(112)\" 2> /dev/null; cl -v \"CPYFRMSTMF FROMSTMF('\"'$(SOURCE_FILE_NAME)'\"') TOMBR('/QSYS.LIB/QTEMP.LIB/QSRC.FILE/\"'$(OBJ_NAME)'\".MBR') MBROPT(*replace)\"; cl -v \"CRTPF FILE(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCFILE(QTEMP/QSRC)\" 2> /dev/null; cl -v \"CHGPF FILE(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCFILE(QTEMP/QSRC)\" "
-"dspf.file" = "$(SET_LIBL); cl -v \"CRTSRCPF FILE(QTEMP/QSRC) RCDLEN(112)\" 2> /dev/null; cl -v \"CPYFRMSTMF FROMSTMF('\"'$(SOURCE_FILE_NAME)'\"') TOMBR('/QSYS.LIB/QTEMP.LIB/QSRC.FILE/\"'$(OBJ_NAME)'\".MBR') MBROPT(*replace)\"; cl -v \"CRTDSPF FILE(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCFILE(QTEMP/QSRC)\" "
-"prtf.file" = "$(SET_LIBL); cl -v \"CRTSRCPF FILE(QTEMP/QSRC) RCDLEN(112)\" 2> /dev/null; cl -v \"CPYFRMSTMF FROMSTMF('\"'$(SOURCE_FILE_NAME)'\"') TOMBR('/QSYS.LIB/QTEMP.LIB/QSRC.FILE/\"'$(OBJ_NAME)'\".MBR') MBROPT(*replace)\"; cl -v \"CRTPRTF FILE(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCFILE(QTEMP/QSRC) REPLACE(*YES)\" "
+"pf.file" = "$(SET_LIBL); cl -v \"CRTSRCPF FILE(QTEMP/QSRC) RCDLEN(112)\" 2> /dev/null; cl -v \"CPYFRMSTMF FROMSTMF('\"'$(SOURCE_FILE_NAME)'\"') TOMBR('/QSYS.LIB/QTEMP.LIB/QSRC.FILE/\"'$(OBJ_NAME)'\".MBR') MBROPT(*replace)\"; cl -v \"CRTPF FILE(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCFILE(QTEMP/QSRC) OPTION(*EVENTF)\" 2> /dev/null; cl -v \"CHGPF FILE(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCFILE(QTEMP/QSRC) OPTION(*EVENTF)\" "
+"dspf.file" = "$(SET_LIBL); cl -v \"CRTSRCPF FILE(QTEMP/QSRC) RCDLEN(112)\" 2> /dev/null; cl -v \"CPYFRMSTMF FROMSTMF('\"'$(SOURCE_FILE_NAME)'\"') TOMBR('/QSYS.LIB/QTEMP.LIB/QSRC.FILE/\"'$(OBJ_NAME)'\".MBR') MBROPT(*replace)\"; cl -v \"CRTDSPF FILE(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCFILE(QTEMP/QSRC) OPTION(*EVENTF)\" "
+"prtf.file" = "$(SET_LIBL); cl -v \"CRTSRCPF FILE(QTEMP/QSRC) RCDLEN(112)\" 2> /dev/null; cl -v \"CPYFRMSTMF FROMSTMF('\"'$(SOURCE_FILE_NAME)'\"') TOMBR('/QSYS.LIB/QTEMP.LIB/QSRC.FILE/\"'$(OBJ_NAME)'\".MBR') MBROPT(*replace)\"; cl -v \"CRTPRTF FILE(\"'$(TARGET_LIB)/$(OBJ_NAME)'\") SRCFILE(QTEMP/QSRC) REPLACE(*YES) OPTION(*EVENTF)\" "
 
 [global.steps]
-"sqlrpgle.srvpgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"sqlrpgle.mod\"", "global.compile-cmds.bnddir-rmv", "global.compile-cmds.srvpgm-crt", "global.compile-cmds.bnddir-add" ]
-"sqlrpgle.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"sqlrpgle.pgm\"" ]
-"clle.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"clle.pgm\"" ]
-"clp.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"clp.pgm\"" ]
-"rpg.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"rpg.pgm\"" ]
-"rpgle.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"rpgle.pgm\"" ]
-"rpgle.srvpgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"rpgle.mod\"", "global.compile-cmds.bnddir-rmv", "global.compile-cmds.srvpgm-crt", "global.compile-cmds.bnddir-add" ]
+"sqlrpgle.srvpgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"sqlrpgle.mod\"", "global.compile-cmds.bnddir-rmv", "global.compile-cmds.srvpgm-crt", "global.compile-cmds.bnddir-add", "global.cmds.evfevent-export" ]
+"sqlrpgle.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"sqlrpgle.pgm\"", "global.cmds.evfevent-export" ]
+"clle.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"clle.pgm\"", "global.cmds.evfevent-export" ]
+"clp.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"clp.pgm\"", "global.cmds.evfevent-export" ]
+"rpg.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"rpg.pgm\"", "global.cmds.evfevent-export" ]
+"rpgle.pgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"rpgle.pgm\"", "global.cmds.evfevent-export" ]
+"rpgle.srvpgm" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"rpgle.mod\"", "global.compile-cmds.bnddir-rmv", "global.compile-cmds.srvpgm-crt", "global.compile-cmds.bnddir-add", "global.cmds.evfevent-export" ]
 "sqltable.file" = [ "global.cmds.chg-src-ccsid", "global.cmds.sql-set-target-lib", "global.compile-cmds.\"sqltable.file\"" ]
 "sqlview.file" = [ "global.cmds.chg-src-ccsid", "global.cmds.sql-set-target-lib","global.compile-cmds.\"sqlview.file\"" ]
 "sqlindex.file" = [ "global.cmds.chg-src-ccsid", "global.cmds.sql-set-target-lib", "global.compile-cmds.\"sqlindex.file\"" ]
 "sqlproc.obj" = [ "global.cmds.chg-src-ccsid", "global.cmds.sql-set-target-lib", "global.compile-cmds.\"sqlproc.obj\"" ]
 "sqlfunc.obj" = [ "global.cmds.chg-src-ccsid", "global.cmds.sql-set-target-lib", "global.compile-cmds.\"sqlfunc.obj\"" ]
-"pf.file" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"pf.file\"" ]
-"dspf.file" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"dspf.file\"" ]
+"pf.file" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"pf.file\"", "global.cmds.evfevent-export" ]
+"dspf.file" = [ "global.cmds.chg-src-ccsid", "global.compile-cmds.\"dspf.file\"", "global.cmds.evfevent-export" ]
 "rpgle.cpy" = [ "global.cmds.chg-src-ccsid" ]
 "sqlrpgle.cpy" = [ "global.cmds.chg-src-ccsid"]

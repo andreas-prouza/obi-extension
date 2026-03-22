@@ -28,25 +28,27 @@ function main() {
   const run_button = document.getElementById('run_build') as Button;
   console.log(`run_button.addEventListener ${run_button}`);
   if (run_button)
-    run_button.addEventListener('click', run_build);
-  
+    run_button.addEventListener('click', run_build);  
   
   const joblogButton = document.getElementsByClassName("joblog");
-  
   console.log(`joblog.addEventListener ${joblogButton.length}`);
   for (let i = 0; i < joblogButton.length; i++) {
     joblogButton[i].addEventListener("click", function (e) {show_log('joblog', joblogButton[i]);});
   }
-  
-  const splfButton = document.getElementsByClassName("stdout");
 
+  const splfButton = document.getElementsByClassName("stdout");
   for (let i = 0; i < splfButton.length; i++) {
     splfButton[i].addEventListener("click", function (e) {show_log('stdout', splfButton[i]);});
   }
+  
   const errorButton = document.getElementsByClassName("stderr");
-
   for (let i = 0; i < errorButton.length; i++) {
     errorButton[i].addEventListener("click", function (e) {show_log('stderr', errorButton[i]);});
+  }
+
+  const openFileButton = document.getElementsByClassName("open_file");
+  for (let i = 0; i < openFileButton.length; i++) {
+    openFileButton[i].addEventListener("click", function (e) {open_file(openFileButton[i]);});
   }
 
 }
@@ -98,6 +100,17 @@ function show_log(log_type: string, e: Element) {
     type: log_type,
     level: level,
     cmd_index: cmd_index,
+    source: source
+  });
+}
+
+
+//--function handleHowdyClick() {
+function open_file(e: Element) {
+  const source: string = e.getAttribute('data-file') || '';
+
+  vscode.postMessage({
+    command: "open_file",
     source: source
   });
 }

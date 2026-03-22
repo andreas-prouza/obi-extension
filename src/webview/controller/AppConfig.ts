@@ -38,6 +38,7 @@ export interface IConfigGeneralProperties {
   'build-output-dir' : string,
   'compile-list' : string
   'check-remote-source-on-startup' : boolean
+  'evfevent-output-dir' : string
 }
 
 
@@ -103,13 +104,14 @@ export class ConfigGeneral {
   public ['check-remote-source-on-startup']?: boolean;
   public ['max-threads']?: number;
   public ['cloud-ws-ssh-remote-host']?: string; // This is the remote instead of local workspace not the IBM i server
+  public ['evfevent-output-dir']?: string;
 
 
   constructor(local_base_dir?: string, remote_base_dir?: string, source_dir?: string, 
     local_obi_dir?: string, remote_obi_dir?: string, supported_object_types?: string[], file_system_encoding?: string, 
     console_output_encoding?: string, compiled_object_list?: string, dependency_list?: string, deployment_object_list?: string, 
     build_output_dir?: string, compile_list?: string, compiled_object_list_md?: string, remote_source_list?: string, 
-    check_remote_source_on_startup?: boolean, source_infos?: string, max_threads?: number, local_source_list?: string, cloud_ws_ssh_remote_host?: string) {
+    check_remote_source_on_startup?: boolean, source_infos?: string, max_threads?: number, local_source_list?: string, cloud_ws_ssh_remote_host?: string, EVFEVENT_OUTPUT_PATH?: string) {
       
     this['local-base-dir'] = local_base_dir;
     this['remote-base-dir'] = remote_base_dir;
@@ -132,6 +134,7 @@ export class ConfigGeneral {
     this['check-remote-source-on-startup'] = check_remote_source_on_startup;
     this['max-threads'] = max_threads;
     this['cloud-ws-ssh-remote-host'] = cloud_ws_ssh_remote_host;
+    this['evfevent-output-dir'] = EVFEVENT_OUTPUT_PATH || Constants.EVFEVENT_OUTPUT_PATH;
   }
 
   public attributes_missing(): boolean {
@@ -153,7 +156,9 @@ export class ConfigGeneral {
       !this['build-output-dir'] ||
       !this['compile-list'] ||
       !this['compiled-object-list-md'] ||
-      !this['max-threads']
+      !this['max-threads'] ||
+      !this['evfevent-output-dir']
+    
     );
   }
 
@@ -378,7 +383,8 @@ export class AppConfig {
         AppConfig.get_string(gen['source-infos']),
         gen['max-threads'],
         AppConfig.get_string(gen['source-list']),
-        AppConfig.get_string(gen['cloud-ws-ssh-remote-host'])
+        AppConfig.get_string(gen['cloud-ws-ssh-remote-host']),
+        AppConfig.get_string(gen['evfevent-output-dir'])
       );
     }
 

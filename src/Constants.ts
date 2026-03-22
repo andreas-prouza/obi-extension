@@ -32,5 +32,7 @@ export class Constants {
   public static readonly SOURCE_LIST: string = ".obi/etc/source-list.json";
   public static readonly REMOTE_SOURCE_LIST: string = '.obi/etc/source-list-remote.json';
   public static readonly COMPILED_OBJECT_LIST: string = '.obi/etc/object-builds.json';
+  public static readonly EVFEVENT_OUTPUT_FOLDER: string = 'evfevent';
+  public static readonly EVFEVENT_OUTPUT_PATH: string = `${Constants.OBI_TMP_DIR}/${Constants.EVFEVENT_OUTPUT_FOLDER}`;
 
 }

@@ -1,10 +1,57 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
+import { ISequentialFileReader, IMarkerCreator, ErrorInformationRecord, Parser } from '@ibm/ibmi-eventf-parser';
+import { DirTool } from '../utilities/DirTool';
 
+class StringReader implements ISequentialFileReader {
+    constructor(private lines: string[]) { }
+    private currentIndex = 0;
 
-export async function show_diagnostic_infos() {
+    readNextLine(): string | undefined {
+        if (this.currentIndex < this.lines.length) {
+            return this.lines[this.currentIndex++];
+        }
+        return undefined;
+    }
+}
 
+// Stays in-memory, so we can use it later
+export interface Marker {
+    file: string;
+    line: number;
+    text: string;
+    sev: number;
+    msgid: string;
+}
 
+class MarkerCreator implements IMarkerCreator {
+    private markers: Marker[] = [];
+
+    createMarker(record: ErrorInformationRecord, fileLocation: string) {
+        this.markers.push({
+            file: fileLocation,
+            line: record.getStmtLine(),
+            text: record.getMsg(),
+            sev: record.getSevNum(),
+            msgid: record.getMsgId(),
+        });
+    }
+
+    public getMarkers(): Marker[] {
+        return this.markers;
+    }
+}
+
+export interface IQualifiedSource {
+  "start-line": number,
+  "start-char": number,
+  "end-line": number,
+  "end-char": number
+}
+
+export async function show_diagnostic_infos(evfevent_file: string) {
+
+    const eventfile_lines = (DirTool.get_file_content(evfevent_file)??'').split(/\r?\n/);
+        
 	const diagnosticCollection = vscode.languages.createDiagnosticCollection('obi-compiler');
 	
         const editor = vscode.window.activeTextEditor;
@@ -12,24 +59,43 @@ export async function show_diagnostic_infos() {
         if (editor) {
             const uri = editor.document.uri;
 
-            // 2. Define where the error is (Line 5, Char 0 to Line 5, Char 10)
-            // Note: VS Code lines are 0-indexed (Line 1 in RPG is 0 in VS Code)
-            const range = new vscode.Range(4, 0, 4, 10);
+            const parser = new Parser();
+            const markerCreator = new MarkerCreator();
+            parser.parse(new StringReader(eventfile_lines), markerCreator);
 
-            // 3. Create the diagnostic object
-            const diagnostic = new vscode.Diagnostic(
-                range,
-                "RNF7030: The name or indicator is not defined.",
-                vscode.DiagnosticSeverity.Information
-            );
+            const diagnostics: vscode.Diagnostic[] = [];
+            for (const marker of markerCreator.getMarkers()) {
+                // Note: VS Code lines are 0-indexed (Line 1 in RPG is 0 in VS Code)
+                const range = new vscode.Range(Math.max(marker.line - 1, 0), 0, Math.max(marker.line - 1, 0), 100);
 
-            // Optional: Add a code/ID for the error
-            diagnostic.code = 'RNF7030';
-            diagnostic.source = 'IBM i Compiler';
+                let severity: vscode.DiagnosticSeverity;
+                if (marker.sev < 10) {
+                    severity = vscode.DiagnosticSeverity.Information;
+                } else if (marker.sev < 20) {
+                    severity = vscode.DiagnosticSeverity.Warning;
+                } else {
+                    severity = vscode.DiagnosticSeverity.Error;
+                }
 
-            // 4. Update the collection for this specific file
-            // This will immediately show the "red squiggle" in the editor
-            diagnosticCollection.set(uri, [diagnostic]);
+                const diagnostic = new vscode.Diagnostic(
+                    range,
+                    marker.text,
+                    severity
+                );
+                // Optional: Add a code/ID for the error
+                diagnostic.code = marker.msgid;
+                diagnostic.source = 'IBM i Compiler';
+                diagnostic.relatedInformation = [
+                    new vscode.DiagnosticRelatedInformation(
+                        new vscode.Location(uri, range),
+                        `Message ID: ${marker.msgid} | Severity: ${marker.sev}`
+                    )
+                ];
+    
+                diagnostics.push(diagnostic);
+            }
+
+            diagnosticCollection.set(uri, diagnostics);
         }
     //context.subscriptions.push(diagnosticCollection, disposable);
 }
