@@ -581,6 +581,11 @@
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-4" id="{{ class_prefix }}|general|compiled-object-list-md" placeholder=".obi/build-output/compiled-object-list.md"
         value="{{ app_general['compiled-object-list-md'] }}">{{ global_stuff['get_text']('Compiled object list md') | safe }}</vscode-text-field>
     
+      <br/>
+      <br/>
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-4" id="{{ class_prefix }}|general|evfevent-output-dir" placeholder=".obi/build-output/evfevent"
+        value="{{ app_general['evfevent-output-dir'] }}">{{ global_stuff['get_text']('EVF Event output dir') | safe }}</vscode-text-field>
+    
 
     </section>
 

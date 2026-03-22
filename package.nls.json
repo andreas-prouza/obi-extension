@@ -186,5 +186,6 @@
   "Always transfer related copybooks": "Always transfer related copybooks",
   "Choose a source to configure": "Choose a source to configure",
   "Show all sources": "Show all sources",
-  "sources with individual settings": "sources with individual settings"
+  "sources with individual settings": "sources with individual settings",
+  "EVF Event output dir": "EVF Event output dir"
 }

@@ -14,12 +14,15 @@ export function getSourceProperties(config: any, source: string): any {
 
   let globalSettings = getTableElement(config, ['global', 'settings', 'general']);
   const typeSettings = getTableElement(config, ['global', 'settings', 'language'])?.[fileExtensions] || {};
+  const generalSettings = getTableElement(config, ['general']);
+  const globalCmds = getTableElement(config, ['global', 'cmds'], true);
 
   if (sourceConfig && source in sourceConfig && 'settings' in sourceConfig[source]) {
     globalSettings = { ...globalSettings, ...sourceConfig[source]['settings'] };
   }
 
-  globalSettings = { ...globalSettings, ...typeSettings };
+  globalSettings = { ...globalSettings, ...typeSettings, ...generalSettings, ...globalCmds };
+  globalSettings['SOURCE'] = source;
   globalSettings['SOURCE_FILE_NAME'] = path.join(config['general']['source-dir'], source).replace(/\\/g, '/');
   globalSettings['SOURCE_BASE_FILE_NAME'] = path.basename(globalSettings['SOURCE_FILE_NAME']);
   globalSettings['TARGET_LIB'] = getTargetLib(
