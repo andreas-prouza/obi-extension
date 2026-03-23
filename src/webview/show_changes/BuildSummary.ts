@@ -108,7 +108,9 @@ export class BuildSummary {
             return;
 
           case "open_file":
-            const fileUri = vscode.Uri.parse(path.join(Workspace.get_workspace(), src_dir, message.source));
+            
+            const file_path = path.join(Workspace.get_workspace(), src_dir, message.source);
+            const fileUri = vscode.Uri.file(file_path);
             vscode.workspace.openTextDocument(fileUri).then(doc => {
               vscode.window.showTextDocument(doc).then(editor => {;
                 show_diagnostic_infos(path.join(Workspace.get_workspace(), BuildSummary._current_compile_output_folder, Constants.EVFEVENT_OUTPUT_FOLDER, message.source))
