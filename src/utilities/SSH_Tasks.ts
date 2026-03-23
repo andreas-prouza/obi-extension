@@ -43,10 +43,12 @@ export class SSH_Tasks {
   }
 
 
-  public static get_finalized_remote_path(path: string): string {
+  public static get_finalized_remote_path(path_string: string): string {
     // Execute command in bash shell
     const ssh_user = SSH_Tasks.get_ssh_user() || 'UNKNOWN';
-    return path.replace(/\$USER/g, ssh_user).replace(/~/g, `/home/${ssh_user}`); // Replace ~ with /home/$USER
+    return path_string.replace(/\$USER/g, ssh_user)
+               .replace(/~/g, `/home/${ssh_user}`) // Replace ~ with /home/$USER
+               .replace("${workspaceFolderBasename}", path.basename(Workspace.get_workspace() || 'workspace'));
   }
 
 

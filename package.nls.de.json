@@ -37,7 +37,7 @@
   "Tilde (~) and env vars (e.g. $HOME) are not supported for paths.": "Tilde (~) und umgebungsvariablen (z.B. $HOME) werden im Pfad nicht unterstützt.",
   "Local path": "Lokaler Pfad ('.' = aktueller Workspace)",
   "Remote ifs path": "Auf IBM i: Remote IFS Pfad",
-  "Tip: Remote ifs path": "Pfad im IFS auf dem Remote IBM i System, wo die Projektquellen gespeichert werden sollen. \nBeispiel: /home/myuser/myproject",
+  "Tip: Remote ifs path": "Pfad im IFS auf dem Remote IBM i System, wo die Projektquellen gespeichert werden sollen. \nBeispiel: /home/myuser/myproject\nVerfügbare Variablen: ${workspaceFolderBasename}",
   "Source directory": "Source Verzeichnis",
   "Check remote sources on start up": "Sourcen auf IBM i beim Starten prüfen",
   "Use remote OBI (show changes)": "Verwende OBI auf IBM i (Anzeige Änderungen)",
