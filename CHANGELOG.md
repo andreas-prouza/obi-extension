@@ -1,3 +1,13 @@
+## [1.0.2]
+
+* Bugfixes
+
+
+## [1.0.1]
+
+* Bugfix for windows
+
+
 ## [1.0.0]
 
 * Integration of EVFEVENT files

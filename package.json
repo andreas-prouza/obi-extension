@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -34,6 +34,11 @@
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
+      {
+        "command": "obi.clearDiagnostics",
+        "title": "Clear Diagnostics",
+        "icon": "$(clear-all)"
+      },
       {
         "command": "obi.showErrors",
         "title": "OBI: Show Errors",
@@ -230,6 +235,13 @@
       }
     ],
     "menus": {
+      "editor/title": [
+        {
+          "command": "obi.clearDiagnostics",
+          "when": "obi.contains_obi_project && (resourceExtname == .pgm || resourceExtname == .srvpgm || resourceExtname == .module || resourceExtname == .file)",
+          "group": "navigation"
+        }
+      ],
       "view/title": [
         {
           "command": "obi.source-quick-search",

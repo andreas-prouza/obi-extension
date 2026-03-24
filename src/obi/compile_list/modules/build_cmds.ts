@@ -116,7 +116,10 @@ export function replaceCmdParameters(cmd: string, variableDict: any): string {
     if (typeof v !== 'string' && typeof v !== 'number') {
       continue;
     }
-    cmd = cmd.replace(new RegExp(`\\$\\(${k}\\)`, 'g'), String(v));
+    const cmd_new = cmd.replace(new RegExp(`\\$\\(${k}\\)`, 'g'), String(v));
+    if (cmd_new !== cmd) {
+      cmd = replaceCmdParameters(cmd_new, variableDict);
+    }
   }
 
   return removeUnresolvedCmdParameters(cmd);

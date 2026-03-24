@@ -113,7 +113,7 @@ export class BuildSummary {
             const fileUri = vscode.Uri.file(file_path);
             vscode.workspace.openTextDocument(fileUri).then(doc => {
               vscode.window.showTextDocument(doc).then(editor => {;
-                show_diagnostic_infos(path.join(Workspace.get_workspace(), BuildSummary._current_compile_output_folder, Constants.EVFEVENT_OUTPUT_FOLDER, message.source))
+                show_diagnostic_infos(path.join(Workspace.get_workspace(), BuildSummary._current_compile_output_folder || Constants.OBI_TMP_DIR, Constants.EVFEVENT_OUTPUT_FOLDER, message.source))
               });
             });
             return;
