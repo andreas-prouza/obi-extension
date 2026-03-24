@@ -1,3 +1,25 @@
+## [1.0.2]
+
+* Bugfixes
+
+
+## [1.0.1]
+
+* Bugfix for windows
+
+
+## [1.0.0]
+
+* Integration of EVFEVENT files
+* Config enhancements. Added useable variables
+* npm updates
+
+
+## [0.6.20]
+
+* npm updates
+
+
 ## [0.6.19]
 
 * Compile output: use virtual files

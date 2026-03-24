@@ -228,11 +228,19 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
     context.subscriptions.push(tree);
 
     const buildHistoryPath = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR, '**/*');
+    const buildHistoryRootPath = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR);
+    DirTool.dir_exists(buildHistoryRootPath) || fs.mkdirSync(buildHistoryRootPath);
+    const watcherRootPath = vscode.workspace.createFileSystemWatcher(buildHistoryRootPath);
     const watcher = vscode.workspace.createFileSystemWatcher(buildHistoryPath);
 
     watcher.onDidCreate(() => this.refresh());
     watcher.onDidChange(() => this.refresh());
     watcher.onDidDelete(() => this.refresh());
+
+    watcherRootPath.onDidDelete(() => {
+      fs.mkdirSync(buildHistoryRootPath);
+      this.refresh();
+    });
 
     context.subscriptions.push(watcher);
   }

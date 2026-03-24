@@ -39,7 +39,8 @@ export class SSH_Tasks {
 
   public static get_finalized_command(cmd: string): string {
     // Execute command in bash shell
-    return `bash -c '${cmd.replace(/'/g, "''")}'`;
+    return `bash -c '${cmd.replace(/'/g, "''")}'`.
+        replace("${workspaceFolderBasename}", path.basename(Workspace.get_workspace() || 'workspace'));
   }
 
 
