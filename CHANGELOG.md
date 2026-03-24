@@ -1,3 +1,9 @@
+## [1.0.3]
+
+* Add clear diagnostic button
+* Bugfixes
+
+
 ## [1.0.2]
 
 * Bugfixes
