@@ -218,6 +218,7 @@ export class DirTool {
       return JSON.parse(json_string);
     }
     catch (e: any) {
+      vscode.window.showErrorMessage(`Error in json file: ${path}: ${e.message}`);
       logger.error(`JSON parse error for ${path}`);
       logger.debug(`JSON content: ${json_string}`);
       logger.error(`Parsing JSON content on line ${e.line}, column ${e.column}: ${e.message}`);
