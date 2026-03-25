@@ -30,7 +30,7 @@ export function getBuildOrder(
 
   let orderedTargetTree = getTargetsByLevel(objectsTree);
   
-  if (appConfig.general?.ALWAYS_TRANSFER_RELATED_COPYBOOKS) {
+  if (appConfig.global.settings.general.ALWAYS_TRANSFER_RELATED_COPYBOOKS) {
     const copySources = getCopySources(dependencyDict, allObjectsToBuild);
     logger.info(`Found copy sources: ${copySources.join(', ')}`);
     if (copySources.length > 0) {
@@ -60,6 +60,8 @@ export function getBuildOrder(
   return newTargetTree;
 }
 
+
+
 export function getTargetsDependedObjects(
   dependencyDict: Record<string, string[]>,
   targets: string[] = [],
@@ -74,25 +76,42 @@ export function getTargetsDependedObjects(
   return targetsObjects;
 }
 
+
+
 export function getTargetDependedObjects(
   dependencyDict: Record<string, string[]>,
   target: string,
-  result: Record<string, any> = {}
+  result: Record<string, any> = {},
+  processed: Record<string, number> = {}
 ): Record<string, any> {
   const dependendObjects: Record<string, any> = {};
   const srcBasePath = AppConfig.get_app_config()?.['general']?.['source-dir'] || 'src';
   const ws = Workspace.get_workspace();
 
   for (const obj in dependencyDict) {
+    
     if (dependendObjects.hasOwnProperty(obj)) {
       continue;
     }
-
+    
     if (dependencyDict[obj].includes(target)) {
       if (!fs.existsSync(path.join(ws, srcBasePath, obj))) {
         continue;
       }
-      dependendObjects[obj] = getTargetDependedObjects(dependencyDict, obj, result);
+
+      if (!processed[obj]) {
+        processed[obj] = 0;
+      }
+      processed[obj] += 1;
+
+      if (processed[obj] > 50) {
+        const maxKey = Object.keys(processed).reduce((a, b) => processed[a] > processed[b] ? a : b, '');
+        const error = `Looks like a recursion while processing dependencies. Please check the dependency tree of ${maxKey}.`;
+        logger.error(error);
+        throw new Error(error);
+      }
+
+      dependendObjects[obj] = getTargetDependedObjects(dependencyDict, obj, result, processed);
     }
   }
 
@@ -112,10 +131,12 @@ export function getTargetsOnlyDependedObjects(
   return Array.from(new Set(targetsObjects));
 }
 
+
 export function getTargetOnlyDependedObjects(
   dependencyDict: Record<string, string[]>,
   target: string,
-  origTargets: string[]
+  origTargets: string[],
+  processed: string[] = []
 ): string[] {
   let dependendObjects: string[] = [];
   const srcBasePath = AppConfig.get_app_config()['general']?.['source-dir'] || 'src';
@@ -124,19 +145,23 @@ export function getTargetOnlyDependedObjects(
   for (const obj in dependencyDict) {
     if (dependencyDict[obj].includes(target)) {
 
-      if (!fs.existsSync(path.join(ws, srcBasePath, obj))) {
+      processed.push(obj);
+
+      if (!DirTool.file_exists(path.join(ws, srcBasePath, obj))) {
         continue;
       }
 
       if (origTargets.includes(obj)) {
         continue;
       }
-      dependendObjects = dependendObjects.concat([obj], getTargetOnlyDependedObjects(dependencyDict, obj, origTargets));
+      dependendObjects = dependendObjects.concat([obj], getTargetOnlyDependedObjects(dependencyDict, obj, origTargets, processed));
     }
   }
 
   return dependendObjects;
 }
+
+
 
 export function removeDuplicities(targetTree: any[] = []): any[] {
   
@@ -192,6 +217,8 @@ export function removeDuplicities(targetTree: any[] = []): any[] {
   //return sortedTree;
 }
 
+
+
 export function getTargetsByLevel(targetTree: Record<string, any> = {}, level: number = 1): any[] {
   let newTargetTree: any[] = [];
 
@@ -229,6 +256,8 @@ export function getTargetsByLevel(targetTree: Record<string, any> = {}, level: n
 
   return newTargetTree.sort((a, b) => a.level - b.level);
 }
+
+
 
 export function getCopySources(
   dependencyDict: Record<string, string[]>,

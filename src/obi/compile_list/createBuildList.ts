@@ -24,7 +24,7 @@ export function createBuildList(source?: string): void {
   const dependencyList = OBITools.get_dependency_list();
   const buildOutputDir = path.join(ws, generalConfig['build-output-dir'] || '.obi/build-output');
 
-  if (fs.existsSync(buildOutputDir)) {
+  if (DirTool.dir_exists(buildOutputDir)) {
     fs.rmSync(buildOutputDir, { recursive: true, force: true });
   }
 

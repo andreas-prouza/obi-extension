@@ -1,3 +1,8 @@
+## [1.0.4]
+
+* Check dependency recursion
+
+
 ## [1.0.3]
 
 * Add clear diagnostic button
