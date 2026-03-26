@@ -15,30 +15,35 @@ export interface IConfigCompileSteps {
 
 
 export interface IConfigConnectionProperties {
-  'remote-host' : string,
-  'ssh-key' : string | undefined,
-  'ssh-user' : string,
-  'ssh-concurrency' : number
+  'remote-host' : string;
+  'ssh-key' : string | undefined;
+  'ssh-user' : string;
+  'ssh-concurrency' : number;
 }
 
 export interface IConfigGeneralProperties {
-  'local-base-dir' : string,
-  'remote-base-dir' : string,
-  'source-dir' : string,
-  'local-obi-dir' : string,
-  'remote-obi-dir' : string,
-  'supported-object-types' : string[],
-  'file-system-encoding' : string,
-  'console-output-encoding' : string,
-  'compiled-object-list' : string,
-  'remote-source-list' : string,
-  'compiled-object-list-md' : string,
-  'dependency-list' : string,
-  'deployment-object-list' : string,
-  'build-output-dir' : string,
-  'compile-list' : string
-  'check-remote-source-on-startup' : boolean
-  'evfevent-output-dir' : string
+  'local-base-dir' : string|undefined;
+  'remote-base-dir' : string|undefined;
+  'source-dir' : string|undefined;
+  'local-obi-dir' : string|undefined;
+  'remote-obi-dir' : string|undefined;
+  'supported-object-types' : string[]|undefined;
+  'file-system-encoding' : string|undefined;
+  'console-output-encoding' : string|undefined;
+  'compiled-object-list' : string|undefined;
+  'source-list' : string|undefined;
+  'remote-source-list' : string|undefined;
+  'source-infos' : string|undefined;
+  'compiled-object-list-md' : string|undefined;
+  'dependency-list' : string|undefined;
+  'deployment-object-list' : string|undefined;
+  'build-output-dir' : string|undefined;
+  'compile-list' : string|undefined;
+  'check-remote-source-on-startup' : boolean|undefined;
+  'max-threads' : number|undefined;
+  'cloud-ws-ssh-remote-host' : string|undefined;
+  'evfevent-output-dir' : string|undefined;
+  [key: string]: string | string[] | boolean | number | undefined;
 }
 
 
@@ -82,61 +87,42 @@ export class ConfigConnection {
 
 
 
-export class ConfigGeneral {
+export class ConfigGeneral implements IConfigGeneralProperties {
 
-  public ['local-base-dir']?: string;
-  public ['remote-base-dir']?: string;
-  public ['source-dir']?: string;
-  public ['local-obi-dir']?: string; // if not used, not necessary
-  public ['remote-obi-dir']?: string;
-  public ['supported-object-types']?: string[];
-  public ['file-system-encoding']?: string;
-  public ['console-output-encoding']?: string;
-  public ['compiled-object-list']?: string;
-  public ['source-list']?: string;
-  public ['remote-source-list']?: string;
-  public ['source-infos']?: string;
-  public ['dependency-list']?: string;
-  public ['deployment-object-list']?: string;
-  public ['build-output-dir']?: string;
-  public ['compile-list']?: string;
-  public ['compiled-object-list-md']?: string;
-  public ['check-remote-source-on-startup']?: boolean;
-  public ['max-threads']?: number;
-  public ['cloud-ws-ssh-remote-host']?: string; // This is the remote instead of local workspace not the IBM i server
-  public ['evfevent-output-dir']?: string;
+  'local-base-dir': string|undefined;
+  'remote-base-dir': string|undefined;
+  'source-dir': string|undefined;
+  'local-obi-dir': string|undefined; // if not us, not necessary
+  'remote-obi-dir': string|undefined;
+  'supported-object-types': string[]|undefined;
+  'file-system-encoding': string|undefined;
+  'console-output-encoding': string|undefined;
+  'compiled-object-list': string|undefined;
+  'source-list': string|undefined;
+  'remote-source-list': string|undefined;
+  'source-infos': string|undefined;
+  'dependency-list': string|undefined;
+  'deployment-object-list': string|undefined;
+  'build-output-dir': string|undefined;
+  'compile-list': string|undefined;
+  'compiled-object-list-md': string|undefined;
+  'check-remote-source-on-startup': boolean|undefined;
+  'max-threads': number|undefined;
+  'cloud-ws-ssh-remote-host': string|undefined; // This is the remote instead of local workspace not e IBM i server
+  'evfevent-output-dir': string|undefined;
+
+  [key: string]: string | string[] | boolean | number | undefined;
 
 
-  constructor(local_base_dir?: string, remote_base_dir?: string, source_dir?: string, 
-    local_obi_dir?: string, remote_obi_dir?: string, supported_object_types?: string[], file_system_encoding?: string, 
-    console_output_encoding?: string, compiled_object_list?: string, dependency_list?: string, deployment_object_list?: string, 
-    build_output_dir?: string, compile_list?: string, compiled_object_list_md?: string, remote_source_list?: string, 
-    check_remote_source_on_startup?: boolean, source_infos?: string, max_threads?: number, local_source_list?: string, cloud_ws_ssh_remote_host?: string, EVFEVENT_OUTPUT_PATH?: string) {
+  constructor(data: Partial<IConfigGeneralProperties> = {}) {
       
-    this['local-base-dir'] = local_base_dir;
-    this['remote-base-dir'] = remote_base_dir;
-    this['local-obi-dir'] = local_obi_dir;
-    this['remote-obi-dir'] = remote_obi_dir;
-    this['source-dir'] = source_dir;
-    
-    this['supported-object-types'] = supported_object_types;
-    this['file-system-encoding'] = file_system_encoding;
-    this['console-output-encoding'] = console_output_encoding;
-    this['compiled-object-list'] = compiled_object_list;
-    this['remote-source-list'] = remote_source_list;
-    this['source-list'] = local_source_list;
-    this['source-infos'] = source_infos;
-    this['dependency-list'] = dependency_list;
-    this['deployment-object-list'] = deployment_object_list;
-    this['build-output-dir'] = build_output_dir;
-    this['compile-list'] = compile_list;
-    this['compiled-object-list-md'] = compiled_object_list_md;
-    this['check-remote-source-on-startup'] = check_remote_source_on_startup;
-    this['max-threads'] = max_threads;
-    this['cloud-ws-ssh-remote-host'] = cloud_ws_ssh_remote_host;
-    this['evfevent-output-dir'] = EVFEVENT_OUTPUT_PATH || Constants.EVFEVENT_OUTPUT_PATH;
+    Object.assign(this, data);
+    if (!this['evfevent-output-dir']) {
+      this['evfevent-output-dir'] = Constants.EVFEVENT_OUTPUT_PATH;
+    }
   }
 
+  
   public attributes_missing(): boolean {
 
     return (
@@ -363,29 +349,7 @@ export class AppConfig {
     
     if (configs['general']) {
       const gen: ConfigGeneral = configs.general
-      gen_obj = new ConfigGeneral(
-        AppConfig.get_string(gen['local-base-dir']),
-        AppConfig.get_string(gen['remote-base-dir']),
-        AppConfig.get_string(gen['source-dir']),
-        AppConfig.get_string(gen['local-obi-dir']),
-        AppConfig.get_string(gen['remote-obi-dir']),
-        gen['supported-object-types'],
-        AppConfig.get_string(gen['file-system-encoding']),
-        AppConfig.get_string(gen['console-output-encoding']),
-        AppConfig.get_string(gen['compiled-object-list']),
-        AppConfig.get_string(gen['dependency-list']),
-        AppConfig.get_string(gen['deployment-object-list']),
-        AppConfig.get_string(gen['build-output-dir']),
-        AppConfig.get_string(gen['compile-list']),
-        AppConfig.get_string(gen['compiled-object-list-md']),
-        AppConfig.get_string(gen['remote-source-list']),
-        gen['check-remote-source-on-startup'] === true,
-        AppConfig.get_string(gen['source-infos']),
-        gen['max-threads'],
-        AppConfig.get_string(gen['source-list']),
-        AppConfig.get_string(gen['cloud-ws-ssh-remote-host']),
-        AppConfig.get_string(gen['evfevent-output-dir'])
-      );
+      gen_obj = new ConfigGeneral(configs.general);
     }
 
     if (configs['global']) {
