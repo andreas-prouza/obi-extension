@@ -1,3 +1,9 @@
+## [1.1.0]
+
+* Accept individual config parameters
+* Show error, when json parse failed
+
+
 ## [1.0.4]
 
 * Check dependency recursion
