@@ -36,7 +36,7 @@
     "commands": [
       {
         "command": "obi.clearDiagnostics",
-        "title": "Clear Diagnostics",
+        "title": "OBI: Clear Diagnostics",
         "icon": "$(clear-all)"
       },
       {

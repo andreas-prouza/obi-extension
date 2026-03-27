@@ -21,7 +21,7 @@ build-output-dir = ".obi/build-output/objects"
 compile-list = ".obi/build-output/compile-list.json"
 compiled-object-list-md = ".obi/build-output/compiled-object-list.md"
 max-threads = 20
-evfevent-output-dir = ".obi/build-output/evfevent"
+evfevent-output-dir = ".obi/tmp/evfevent"
 
 [global]
 [global.settings]
