@@ -11,6 +11,7 @@ import { Workspace } from '../../utilities/Workspace';
 import { logger } from '../../utilities/Logger';
 import { OBISourceConfiguration } from './OBISourceConfiguration';
 import { LocalSourceList } from '../../utilities/LocalSourceList';
+import { ExtendedSourceProcessing, ExtendedSourceProcessingList } from './EspConfig';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -96,6 +97,8 @@ export class OBIConfiguration {
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
     
     const local_source_list: string[] = await LocalSourceList.get_source_list();
+    const esp_config = new ExtendedSourceProcessingList();
+    
 
     const html = nunjucks.render('controller/configuration.html', 
       {
@@ -113,7 +116,8 @@ export class OBIConfiguration {
         panel_tab: await context.secrets.get('obi|config|panel_tab'),
         config_source_list: AppConfig.get_source_configs(),
         error_text: error_text,
-        source_list: local_source_list
+        source_list: local_source_list,
+        extended_source_processing_list: esp_config.extended_source_processing || []
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         //object_list: this.get_object_list(workspaceUri),
         //compile_list: this.get_compile_list(workspaceUri)
@@ -290,6 +294,16 @@ export class OBIConfiguration {
         break;
 
       case "reload":
+        OBIConfiguration.update();
+        break;
+
+      case "add_esp_block":
+
+        const esp_block = new ExtendedSourceProcessing();
+        esp_block.conditions = {"SOURCE_FILE_NAMES": ["*"], "TARGET_LIB": ["*"]};
+        esp_block.steps = [{use_standard_step: true, properties: {"TARGET_LIB": "PROUZALIB", "JOB_CCSID": "1141"}}];
+        const esp_config = new ExtendedSourceProcessingList();
+        esp_config.add_new_esp_block(esp_block);
         OBIConfiguration.update();
         break;
 

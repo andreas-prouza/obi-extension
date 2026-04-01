@@ -1,0 +1,129 @@
+
+<div class="esp-container">
+  {% for esp in extended_source_processing_list %}
+  <div class="esp-block" style="margin-bottom: 30px; padding: 15px; border: 1px solid var(--vscode-editorGroup-border); border-radius: 4px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <h3 style="margin: 0;">{{ global_stuff['get_text']('Extended Source Processing Block') | safe }} #{{ loop.index }}</h3>
+      <vscode-button class="delete_esp_block" project_user="{{ class_prefix }}" key="esp|{{ loop.index0 }}" id="delete_esp_{{ loop.index0 }}">
+        <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
+      </vscode-button>
+    </div>
+
+    <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+      <vscode-checkbox 
+        id="{{ class_prefix }}|esp|{{ loop.index0 }}|use_regex" 
+        {{ 'checked' if esp.use_regex else '' }}>
+        {{ global_stuff['get_text']('Use Regex') | safe }}
+      </vscode-checkbox>
+      
+      <vscode-checkbox 
+        id="{{ class_prefix }}|esp|{{ loop.index0 }}|allow_multiple_matches" 
+        {{ 'checked' if esp.allow_multiple_matches else '' }}>
+        {{ global_stuff['get_text']('Allow Multiple Matches') | safe }}
+      </vscode-checkbox>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px;">{{ global_stuff['get_text']('Conditions (JSON or Dict String)') | safe }}</label>
+      <vscode-text-area 
+        style="width: 60%;"
+        resize="both" 
+        id="{{ class_prefix }}|esp|{{ loop.index0 }}|conditions"
+        value="{{ esp.conditions | dump(2) if esp.conditions else '' }}"
+        placeholder='e.g., {"SOURCE_FILE_NAME": ["all_*.pgm"]}'>
+      </vscode-text-area>
+    </div>
+
+    <label style="display: block; margin-bottom: 5px;">{{ global_stuff['get_text']('List of steps and its properties') | safe }}</label>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+      <tr style="text-align: left; border-bottom: 1px solid var(--vscode-editorGroup-border);">
+        <th style="padding-bottom: 5px; width: 10%;"><span title="{{ global_stuff['get_text']('Tip: Add default steps') | safe }}">💡 {{ global_stuff['get_text']('Add default steps') | safe }}</span></th>
+        <th style="padding-bottom: 5px; width: 20%;">{{ global_stuff['get_text']('Step') | safe }}</th>
+        <th style="padding-bottom: 5px; width: 40%;">{{ global_stuff['get_text']('Properties (Free Text)') | safe }}</th>
+        <th style="padding-bottom: 5px; width: 20%;"><span title="{{ global_stuff['get_text']('Tip: Hook') | safe }}">💡 {{ global_stuff['get_text']('Hook') | safe }}</span></th>
+        <th style="padding-bottom: 5px; width: 10%;"></th>
+      </tr>
+      
+      {% for step in esp.steps %}
+      <tr>
+        <td>
+          <vscode-checkbox 
+            id="{{ class_prefix }}|esp|{{ loop.parent.index0 }}|steps|{{ loop.index0 }}|use_standard_step" 
+            {{ 'checked' if step.use_standard_step else '' }}>
+          </vscode-checkbox>
+        </td>
+        <td>
+          <vscode-text-area 
+            style="width: 100%;"
+            resize="both" 
+            id="{{ class_prefix }}|esp|{{ loop.parent.index0 }}|steps|{{ loop.index0 }}|step"
+            value="{{ step.step }}"
+            placeholder='global.cmds.cmd-id'>
+          </vscode-text-area>
+        </td>
+        <td>
+          <vscode-text-area 
+            style="width: 100%;"
+            resize="both" 
+            id="{{ class_prefix }}|esp|{{ loop.parent.index0 }}|steps|{{ loop.index0 }}|properties"
+            value="{{ step.properties | dump(2) if step.properties else '' }}"
+            placeholder='{"LIBL": ["lib1"], "TARGET_LIB": "#target"}'>
+          </vscode-text-area>
+        </td>
+        <td>
+          <vscode-text-field 
+            style="width: 100%;"
+            id="{{ class_prefix }}|esp|{{ loop.parent.index0 }}|steps|{{ loop.index0 }}|exit_point_script"
+            value="{{ step.exit_point_script | default('') }}">
+          </vscode-text-field>
+        </td>
+        <td>
+          <vscode-button appearance="icon" class="delete_step" project_user="{{ class_prefix }}" key="esp|{{ loop.parent.index0 }}|steps|{{ loop.index0 }}" id="delete_step_{{ loop.parent.index0 }}_{{ loop.index0 }}">
+            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
+          </vscode-button>
+        </td>
+      </tr>
+      {% endfor %}
+      
+      <tr>
+        <td><vscode-checkbox id="new_step_std_{{ loop.index0 }}" checked></vscode-checkbox></td>
+        <td>
+          <vscode-text-field 
+            style="width: 100%;"
+            id="new_step_step_{{ loop.index0 }}" 
+            placeholder='global.cmds.cmd-id'>
+          </vscode-text-field>
+        </td>
+        <td>
+          <vscode-text-field 
+            style="width: 100%;"
+            id="new_step_props_{{ loop.index0 }}" 
+            placeholder='e.g., {"LIBL": [], "TARGET_LIB": ""}'>
+          </vscode-text-field>
+        </td>
+        <td>
+          <vscode-text-field 
+            style="width: 100%;"
+            id="new_step_script_{{ loop.index0 }}" 
+            placeholder="steps.script">
+          </vscode-text-field>
+        </td>
+        <td>
+          <vscode-button appearance="icon" id="add_step_to_esp_{{ loop.index0 }}" config="{{ class_prefix }}">
+            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
+          </vscode-button>
+        </td>
+      </tr>
+    </table>
+
+  </div>
+  {% endfor %}
+
+  <div style="margin-top: 10px;">
+    <vscode-button id="add_new_esp_block" config="{{ class_prefix }}">
+      <span slot="start"><img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg"></span>
+      {{ global_stuff['get_text']('Add Processing Block') | safe }}
+    </vscode-button>
+  </div>
+</div>

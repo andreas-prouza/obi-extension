@@ -26,3 +26,13 @@ vscode-text-field.missing_value {
 vscode-text-field, vscode-button {
   vertical-align: middle;
 }
+
+vscode-text-area::part(control) {
+  field-sizing: content;
+  width: 100%;
+  min-height: 40px; /* Give it a sensible minimum size */
+}
+
+.esp-container, .section-config {
+  width: 100%;
+}

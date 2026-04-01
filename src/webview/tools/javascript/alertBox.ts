@@ -18,7 +18,6 @@ export function showAlert(text: string, type: 'success' | 'info' | 'error' = 'in
   box.textContent = text;
   box.className = `alert ${type}`;
   box.style.display = 'block';
-  console.log(`Show alert: ${type} - ${box.className}`);
   setTimeout(() => box.style.display = 'none', 2000);
 }
 

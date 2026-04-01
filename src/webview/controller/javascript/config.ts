@@ -142,6 +142,14 @@ function main() {
 
   }
 
+  // Add new ESP block
+  const new_esp_button = document.getElementById('add_new_esp_block');
+  new_esp_button?.addEventListener('click', () => {
+    const config: string = new_esp_button.getAttribute('config') ?? '';
+    add_esp_block(config);
+    reload();
+  });
+
   const edit_source_config_button = document.getElementById('edit_source_config') as Button;
   edit_source_config_button.addEventListener("click", edit_source_config);
 
@@ -156,6 +164,19 @@ function main() {
   showAlert('Configuration reloaded.', 'success');
 }
 
+
+
+function add_esp_block(config: string) {
+  
+  console.log(`Add new ESP block`);
+  vscode.postMessage({
+    command: "add_esp_block",
+    panel: panel,
+    panel_tab: panel_tab,
+    user_project: config
+  });
+
+}
 
 
 function edit_source_config() {
