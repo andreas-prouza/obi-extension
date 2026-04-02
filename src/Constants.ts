@@ -35,5 +35,6 @@ export class Constants {
   public static readonly EVFEVENT_OUTPUT_FOLDER: string = 'evfevent';
   public static readonly EVFEVENT_OUTPUT_PATH: string = `${Constants.OBI_TMP_DIR}/${Constants.EVFEVENT_OUTPUT_FOLDER}`;
 
-  public static readonly EXTENDED_SOURCE_PROCESS_CONFIG_TOML: string = `${Constants.OBI_CONFIGS_DIR}/extended-source-processing-config.toml`;
+  public static readonly EXTENDED_SOURCE_PROCESS_CONFIG_USER: string = `${Constants.OBI_CONFIGS_DIR}/.user-extended-source-processing-config.toml`;
+  public static readonly EXTENDED_SOURCE_PROCESS_CONFIG: string = `${Constants.OBI_CONFIGS_DIR}/extended-source-processing-config.toml`;
 }

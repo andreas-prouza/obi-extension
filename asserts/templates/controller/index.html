@@ -54,7 +54,7 @@
     <div>
       <vscode-dropdown id="drp_use_profile" style="width: max-content; min-width: 160px;">
         {% for profile in config_profiles %}
-        <vscode-option value="{{ profile.file }}" {% if profile.file == global_stuff['current_profile'] %}selected{% endif %}>{{ profile.alias }}</vscode-option>
+        <vscode-option value="{{ profile.alias }}" {% if profile.alias == global_stuff['current_profile'] %}selected{% endif %}>{{ profile.description }}</vscode-option>
         {% endfor %}
       </vscode-dropdown>
       <vscode-button id="btn_delete_current_profile" title="{{ global_stuff['get_text']('Delete selected profile') | safe }}">

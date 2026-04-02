@@ -50,6 +50,7 @@
         {% set class_prefix = 'project' %}
 
         {% set app_config = project_config %}
+        {% set extended_source_processing_list = extended_source_processing_list_project %}
 
         {% include "controller/config_details.html" %}
       
@@ -73,7 +74,7 @@
         {% set class_prefix = 'user' %}
 
         {% set app_config = user_config %}
-
+        {% set extended_source_processing_list = extended_source_processing_list_user %}
         {% include "controller/config_details.html" %}
 
       </section>

@@ -10,13 +10,18 @@ import {
 provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
+let initialized = false;
 
 window.addEventListener("load", main);
 
 function main() {
+
   // To get improved type annotations/IntelliSense the associated class for
   // a given toolkit component can be imported and used to type cast a reference
   // to the element (i.e. the `as Button` syntax)
+
+  console.log("Main is called");
+  console.log(vscode.getState());
 
   const elements = document.getElementsByClassName("controller_refresh");
 
@@ -34,17 +39,22 @@ function main() {
   cancel_running_button?.addEventListener("click", cancel_running);
   
   const delete_current_profile_button = document.getElementById("btn_delete_current_profile") as Button;
+  delete_current_profile_button?.removeEventListener("click", delete_current_profile);
   delete_current_profile_button?.addEventListener("click", delete_current_profile);
   
   const copy_profile_button = document.getElementById("btn_copy_profile") as Button;
+  copy_profile_button?.removeEventListener("click", copy_profile);
   copy_profile_button?.addEventListener("click", copy_profile);
   
   const drp_use_profile = document.getElementById("drp_use_profile") as Button;
   drp_use_profile?.addEventListener("change", change_profile);
   
   const previousState = vscode.getState();
+  if (previousState && previousState.profiles) {
+    update_profile_drp(previousState.profiles);
+  }
   if (previousState && previousState.selected_profile) {
-    drp_use_profile.value = previousState.selected_profile;
+    set_current_profile(previousState.selected_profile);
   }
 
   window.addEventListener('message', receive_message);
@@ -57,7 +67,7 @@ function change_profile(event: Event) {
   const value = (event.target as HTMLSelectElement).value || "";
   console.log(`Profile changed to ${value}`);
   
-  vscode.setState({ selected_profile: value });
+  updateState({ selected_profile: value });
 
   vscode.postMessage({
     command: "change_profile",
@@ -109,6 +119,7 @@ function show_changes() {
 
 
 function delete_current_profile() {
+  console.log("Delete current profile command issued");
   vscode.postMessage({
     command: "delete_current_profile"
   });
@@ -162,13 +173,61 @@ function receive_message(e: MessageEvent) {
       }
       break;
 
-    case 'update_current_profile':
-      const drp_use_profile = document.getElementById("drp_use_profile") as HTMLSelectElement;
-      drp_use_profile.value = e.data.current_profile;
       
-      vscode.setState({ selectedVal: e.data.current_profile });
+    case 'update_current_profile':
+
+      console.log(`update_current_profile: `, e.data);
+      update_profile_drp(e.data.profiles);
+      set_current_profile(e.data.current_profile);
+     
+      console.log(vscode.getState());
       break;
   }
 }
 
 
+function update_profile_drp(profiles: any[]) {
+  const drp_use_profile = document.getElementById("drp_use_profile") as HTMLSelectElement;
+
+  // Remove all existing options
+  drp_use_profile.replaceChildren();
+
+  // Add new options
+  profiles.forEach((profile: { alias: string; description: string; file: string }) => {
+
+    const option = document.createElement("vscode-option");
+    option.value = profile.alias;
+    option.textContent = profile.description; 
+
+    drp_use_profile.appendChild(option);
+  });
+
+  updateState({ profiles: profiles });
+}
+
+
+function set_current_profile(profile_alias: string) {
+
+  setTimeout(() => {
+    const drp_use_profile = document.getElementById("drp_use_profile") as HTMLSelectElement;
+    drp_use_profile.value = profile_alias;
+  }, 0);
+
+  updateState({ selected_profile: profile_alias });
+}
+
+
+// A helpful wrapper function to safely update partial state
+function updateState(newData: any) {
+    // 1. Get the current state. Fallback to an empty object if it's null/undefined.
+    const currentState = vscode.getState() || {};
+
+    // 2. Merge the old state with the new data using the spread operator (...)
+    const mergedState = {
+        ...currentState, // Keeps all existing properties
+        ...newData       // Overwrites specific properties with new values
+    };
+
+    // 3. Save the newly merged object
+    vscode.setState(mergedState);
+}

@@ -374,27 +374,21 @@ export class AppConfig {
   }
   
   
-  public static get_profile_app_config_list(): { alias: string; file: string }[] {
+  public static get_profile_app_config_list(): { alias: string; description: string; file: string }[] {
 
-    let configs: { alias: string; file: string }[] = [{'alias': 'Default User Config', 'file': Constants.OBI_APP_CONFIG_USER}];
+    let configs: { alias: string; description: string; file: string }[] = [{'alias': '', 'description': 'Default User Config', 'file': Constants.OBI_APP_CONFIG_USER}];
     const files = DirTool.list_dir(path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_DIR));
 
     for (const file of files) {
       if (file.endsWith('.toml') && (file.startsWith('.user-app-config') && file != Constants.OBI_APP_CONFIG && file != Constants.OBI_APP_CONFIG_USER)) {
-        configs.push({'alias': file.replace('.user-app-config-', '').replace('.toml', ''), 'file': file});
+        const alias = file.replace('.user-app-config-', '').replace('.toml', '');
+        configs.push({'alias': alias, 'description': alias, 'file': file});
       }
     }
     
     return configs;
   }
 
-
-  public static change_current_profile(profile: string) {
-    const ws_settings: WorkspaceSettings = Workspace.get_workspace_settings();
-    ws_settings.current_profile = profile;
-    Workspace.update_workspace_settings(ws_settings);
-    AppConfig.reset();
-  }
 
 
   public static get_project_app_config(workspace: vscode.Uri): AppConfig {
@@ -404,19 +398,32 @@ export class AppConfig {
     return app_config
   }
 
+
+
+
   public static get_current_profile_app_config_name(): string | undefined {
     const workspace_settings: WorkspaceSettings | undefined = Workspace.get_workspace_settings();
-    let profile: string = '';
 
     if (! workspace_settings) {
       return undefined;
     }
     
-    if (workspace_settings.current_profile)
-      return workspace_settings.current_profile;
+    if (workspace_settings.current_profile) {
+      return AppConfig.convert_profile_alias_to_file(workspace_settings.current_profile);
+    }
 
     return Constants.OBI_APP_CONFIG_USER;
   }
+
+
+
+
+  public static convert_profile_alias_to_file(profile_alias: string): string | undefined {
+    return Constants.OBI_APP_CONFIG_USER.replace('.toml', `-${profile_alias}.toml`);
+  }
+
+
+
 
 
   public static get_current_profile_app_config_file(): string {

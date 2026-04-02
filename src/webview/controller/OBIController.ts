@@ -161,18 +161,21 @@ export class OBIController implements vscode.WebviewViewProvider {
         build_summary_timestamp: compile_list ? compile_list['timestamp'] : undefined,
         build_counts: compile_list ? compile_list['compiles'].length : undefined
       });
+
   }
 
   
   public static async update_current_profile() {
 
-    await OBIController.update();
+    //await OBIController.update();
 
     OBIController.view_object._view?.webview.postMessage(
       {
         command: 'update_current_profile',
-        current_profile: AppConfig.get_current_profile_app_config_name()
+        profiles: AppConfig.get_profile_app_config_list(),
+        current_profile: Workspace.get_workspace_settings().current_profile
       });
+    
   }
 
 
@@ -261,8 +264,7 @@ export class OBIController implements vscode.WebviewViewProvider {
           break;
 
         case 'change_profile':
-          AppConfig.change_current_profile(data.profile);
-          OBIConfiguration.update();
+          Workspace.change_profile(data.profile);
           break;
 
         case 'copy_profile':
@@ -272,8 +274,8 @@ export class OBIController implements vscode.WebviewViewProvider {
         case 'delete_current_profile':
           const current_profile = AppConfig.get_current_profile_app_config_file();
           let ws = Workspace.get_workspace_settings();
-          ws.current_profile = Constants.OBI_APP_CONFIG_USER;
-          Workspace.update_workspace_settings(ws);
+          ws.current_profile = '';
+          Workspace.change_profile('');
           DirTool.delete_file(path.join(Workspace.get_workspace(), current_profile));
           OBIController.update_current_profile();
           break;
@@ -286,29 +288,30 @@ export class OBIController implements vscode.WebviewViewProvider {
     // obi.source-filter.add-source-file
   public static async copy_current_profile(): Promise<void> {
   
-    const current_profile = AppConfig.get_current_profile_app_config_name();
+    const ws = Workspace.get_workspace();
+    const current_profile_config_file = path.join(ws, AppConfig.get_current_profile_app_config_file());
+    const current_profile = Workspace.get_workspace_settings().current_profile;
     const profile_list = AppConfig.get_profile_app_config_list();
 
-    let new_profile_config: string | undefined = await vscode.window.showInputBox({ title: `Copy profile config ${current_profile}`, 
+    const new_profile: string | undefined = await vscode.window.showInputBox({ title: `Copy profile config ${current_profile}`, 
                                                         placeHolder: 'profile-name', validateInput(value) {
       if (value.trim() === '')
         return 'Profile name cannot be empty';
 
       value = value.replace(' ', '-');
       value = value.replace('.toml', '');
-      value = Constants.OBI_APP_CONFIG_USER.replace('.toml', `-${value}.toml`);
-      if (profile_list.some((profile: { file: string }) => profile.file === value))
+      if (profile_list.some((profile: { alias: string }) => profile.alias === value))
         return `Profile ${value} already exists`;
       return null;
     }});
-    if (!new_profile_config)
+    if (!new_profile)
       throw new Error('Canceled by user. No new profile name provided.');
     
-    new_profile_config = Constants.OBI_APP_CONFIG_USER.replace('.toml', `-${new_profile_config}.toml`);
-    const new_profile_config_file = path.join(Constants.OBI_CONFIGS_DIR, new_profile_config);
-    DirTool.write_toml(path.join(Workspace.get_workspace(), new_profile_config_file), AppConfig.get_user_app_config(Workspace.get_workspace_uri()))
+    let new_profile_config_file = AppConfig.convert_profile_alias_to_file(new_profile);
+    new_profile_config_file = path.join(ws, Constants.OBI_CONFIGS_DIR, new_profile_config_file);
+    DirTool.copy_file(current_profile_config_file, new_profile_config_file);
 
-    AppConfig.change_current_profile(new_profile_config);
+    Workspace.change_profile(new_profile);
 
     OBIController.update_current_profile();
 

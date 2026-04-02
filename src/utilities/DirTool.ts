@@ -9,6 +9,7 @@ import * as path from 'path';
 import * as source from "../obi/Source";
 import * as fs from 'fs';
 import { Workspace } from "./Workspace";
+import { bool } from '@emnapi/runtime';
 
 
 const crypto = require('crypto')
@@ -522,5 +523,15 @@ export class DirTool {
 
       entry.isDirectory() ? DirTool.copy_dir(srcPath, destPath) : fs.copyFileSync(srcPath, destPath);
     }
+  }
+
+
+
+  public static copy_file(src: string, dest: string): void {
+    if (!DirTool.file_exists(src)) {
+      vscode.window.showErrorMessage(`Copy error: source file does not exist: ${src}`);
+      throw new Error(`Source file does not exist: ${src}`);
+    }
+    fs.copyFileSync(src, dest);
   }
 }
