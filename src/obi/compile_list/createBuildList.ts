@@ -8,10 +8,11 @@ import { DirTool } from '../../utilities/DirTool';
 import { AppConfig } from '../../webview/controller/AppConfig';
 import { Workspace } from '../../utilities/Workspace';
 import { OBITools } from '../../utilities/OBITools';
+import { DependencyList } from '../../Dependency';
 
 
 
-export function createBuildList(source?: string): void {
+export async function createBuildList(source?: string): Promise<void> {
   console.log('Create build list');
 
   const ws = Workspace.get_workspace();
@@ -21,7 +22,7 @@ export function createBuildList(source?: string): void {
   const sourceDir = path.join(ws, generalConfig['local-base-dir'], generalConfig['source-dir']);
   const buildListPath = path.join(ws, generalConfig['compiled-object-list']);
   const objectTypes = generalConfig['supported-object-types'];
-  const dependencyList = OBITools.get_dependency_list();
+  const dependencyList = await DependencyList.get_dependencies();
   const buildOutputDir = path.join(ws, generalConfig['build-output-dir'] || '.obi/build-output');
 
   if (DirTool.dir_exists(buildOutputDir)) {

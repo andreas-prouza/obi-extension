@@ -4,7 +4,6 @@ import { DirTool } from '../../utilities/DirTool';
 import * as path from 'path';
 import { Constants } from '../../Constants';
 import { Workspace, WorkspaceSettings } from '../../utilities/Workspace';
-import { SourceListConfig } from '../source_list/SourceListConfig';
 
 
 
@@ -91,7 +90,7 @@ export class ConfigGeneral implements IConfigGeneralProperties {
 
   'local-base-dir': string|undefined;
   'remote-base-dir': string|undefined;
-  'source-dir': string|undefined;
+  'source-dir': string = 'src';
   'local-obi-dir': string|undefined; // if not us, not necessary
   'remote-obi-dir': string|undefined;
   'supported-object-types': string[]|undefined;
@@ -99,12 +98,12 @@ export class ConfigGeneral implements IConfigGeneralProperties {
   'console-output-encoding': string|undefined;
   'compiled-object-list': string|undefined;
   'source-list': string|undefined;
-  'remote-source-list': string|undefined;
+  'remote-source-list': string = Constants.REMOTE_SOURCE_LIST;
   'source-infos': string|undefined;
-  'dependency-list': string|undefined;
+  'dependency-list': string = Constants.DEPENDENCY_LIST;
   'deployment-object-list': string|undefined;
-  'build-output-dir': string|undefined;
-  'compile-list': string|undefined;
+  'build-output-dir': string = Constants.BUILD_OUTPUT_DIR;
+  'compile-list': string = '.obi/build-output/compile-list.json';
   'compiled-object-list-md': string|undefined;
   'check-remote-source-on-startup': boolean|undefined;
   'max-threads': number|undefined;
@@ -123,7 +122,7 @@ export class ConfigGeneral implements IConfigGeneralProperties {
   }
 
   
-  public attributes_missing(): boolean {
+  public get attributes_missing(): boolean {
 
     return (
       !this['local-base-dir'] ||
@@ -374,27 +373,21 @@ export class AppConfig {
   }
   
   
-  public static get_profile_app_config_list(): { alias: string; file: string }[] {
+  public static get_profile_app_config_list(): { alias: string; description: string; file: string }[] {
 
-    let configs: { alias: string; file: string }[] = [{'alias': 'Default User Config', 'file': Constants.OBI_APP_CONFIG_USER}];
+    let configs: { alias: string; description: string; file: string }[] = [{'alias': '', 'description': 'Default User Config', 'file': Constants.OBI_APP_CONFIG_USER}];
     const files = DirTool.list_dir(path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_DIR));
 
     for (const file of files) {
       if (file.endsWith('.toml') && (file.startsWith('.user-app-config') && file != Constants.OBI_APP_CONFIG && file != Constants.OBI_APP_CONFIG_USER)) {
-        configs.push({'alias': file.replace('.user-app-config-', '').replace('.toml', ''), 'file': file});
+        const alias = file.replace('.user-app-config-', '').replace('.toml', '');
+        configs.push({'alias': alias, 'description': alias, 'file': file});
       }
     }
     
     return configs;
   }
 
-
-  public static change_current_profile(profile: string) {
-    const ws_settings: WorkspaceSettings = Workspace.get_workspace_settings();
-    ws_settings.current_profile = profile;
-    Workspace.update_workspace_settings(ws_settings);
-    AppConfig.reset();
-  }
 
 
   public static get_project_app_config(workspace: vscode.Uri): AppConfig {
@@ -404,19 +397,29 @@ export class AppConfig {
     return app_config
   }
 
-  public static get_current_profile_app_config_name(): string | undefined {
-    const workspace_settings: WorkspaceSettings | undefined = Workspace.get_workspace_settings();
-    let profile: string = '';
 
-    if (! workspace_settings) {
-      return undefined;
-    }
+
+
+  public static get_current_profile_app_config_name(): string {
+    const workspace_settings: WorkspaceSettings | undefined = Workspace.get_workspace_settings();
+
     
-    if (workspace_settings.current_profile)
-      return workspace_settings.current_profile;
+    if (workspace_settings.current_profile) {
+      return AppConfig.convert_profile_alias_to_file(workspace_settings.current_profile);
+    }
 
     return Constants.OBI_APP_CONFIG_USER;
   }
+
+
+
+
+  public static convert_profile_alias_to_file(profile_alias: string): string {
+    return Constants.OBI_APP_CONFIG_USER.replace('.toml', `-${profile_alias}.toml`);
+  }
+
+
+
 
 
   public static get_current_profile_app_config_file(): string {
@@ -479,7 +482,7 @@ export class AppConfig {
   public attributes_missing(): boolean {
     return (
       !this.connection || this.connection.attributes_missing() || 
-      !this.general || this.general.attributes_missing() || 
+      !this.general || this.general.attributes_missing || 
       !this.global || this.global.attributes_missing()
     );
   }

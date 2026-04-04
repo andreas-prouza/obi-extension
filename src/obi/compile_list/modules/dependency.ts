@@ -51,7 +51,7 @@ export function getBuildOrder(
   if (!appConfig) {
     appConfig = AppConfig.get_app_config();
   }
-  const extended_sources_config = DirTool.get_toml(OBIConstants.get('EXTENDED_SOURCE_PROCESS_CONFIG_TOML'));
+  const extended_sources_config = DirTool.get_toml(OBIConstants.get('EXTENDED_SOURCE_PROCESS_CONFIG'));
 
   addBuildCmds(newTargetTree, appConfig, extended_sources_config);
 

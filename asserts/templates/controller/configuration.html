@@ -36,7 +36,7 @@
     
     <vscode-panel-view id="project_cfg-view">
       
-      <section>
+      <section class="section-config">
         <br/>
       
         💡 {{  global_stuff['get_text']('This config will contains definitions for the whole project team (remote host, remote obi path, ...)') | safe }}
@@ -50,6 +50,7 @@
         {% set class_prefix = 'project' %}
 
         {% set app_config = project_config %}
+        {% set extended_source_processing_list = extended_source_processing_list_project %}
 
         {% include "controller/config_details.html" %}
       
@@ -59,7 +60,7 @@
 
     <vscode-panel-view id="user_cfg-view">
 
-      <section>
+      <section class="section-config">
         <br/>
       
         💡 {{  global_stuff['get_text']('This config will override the project config and should contain user specific definitions (target lib mapping, local obi path, ...)') | safe }}
@@ -73,7 +74,7 @@
         {% set class_prefix = 'user' %}
 
         {% set app_config = user_config %}
-
+        {% set extended_source_processing_list = extended_source_processing_list_user %}
         {% include "controller/config_details.html" %}
 
       </section>
@@ -82,7 +83,7 @@
 
     <vscode-panel-view id="source_cfg-view">
 
-      <section>
+      <section class="section-config">
         
         📝 <a href='command:vscode.open?{{ source_config_file }}'>{{  global_stuff['get_text']('Open source config file') | safe }}</a>
         <br/>

@@ -123,7 +123,7 @@
     {% set compile_steps = source_config['steps'] %}
 
     <h6><b>{{ global_stuff['get_text']('Command IDs (separated by new line)') | safe }}</b></h6>
-    <vscode-text-area cols="100" rows="4" resize="both" id="steps" placeholder="source.cmd.commandid&#10;global.cmds.check-error"
+    <vscode-text-area cols="100" rows="4" resize="both" id="steps" placeholder="source-cmds.commandid&#10;global.cmds.check-error"
       value="{{ (compile_steps or []) | join('\n') }}">
     </vscode-text-area>
 

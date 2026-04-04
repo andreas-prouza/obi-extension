@@ -1,12 +1,12 @@
 
 
 export interface IQualifiedSource {
-  "source-lib": string,
-  "source-file": string,
-  "source-member": string,
-  "use-regex": boolean,
-  "show-empty-folders": boolean,
-  path?: string,
+  "source-lib": string
+  "source-file": string
+  "source-member": string
+  "use-regex"?: boolean
+  "show-empty-folders"?: boolean
+  path?: string
   description?: String
 }
 

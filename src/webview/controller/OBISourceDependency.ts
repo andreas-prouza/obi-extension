@@ -8,6 +8,7 @@ import { OBITools } from '../../utilities/OBITools';
 import { AppConfig, ConfigCompileSettings, SourceConfig, SourceConfigList } from './AppConfig';
 import { Workspace } from '../../utilities/Workspace';
 import { LocalSourceList } from '../../utilities/LocalSourceList';
+import { Dependencies, DependencyList } from '../../Dependency';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -107,7 +108,7 @@ export class OBISourceDependency {
       source_config = source_configs[OBISourceDependency.source];
 
     const local_source_list: string[] = await LocalSourceList.get_source_list();
-    const dependencies: {['source']: string[]} = OBITools.get_dependency_list() || {};
+    const dependencies: Dependencies = await DependencyList.get_dependencies();
     let dependencies_1: string[] = [];
     let dependencies_2: string[] = [];
 
@@ -172,19 +173,19 @@ export class OBISourceDependency {
     switch (command) {
 
       case "add_dependency_1":
-        OBISourceDependency.add_dependency(1, message.source);
+        DependencyList.add_dependency(OBISourceDependency.source, 1, message.source);
         break;
 
       case "add_dependency_2":
-        OBISourceDependency.add_dependency(2, message.source);
+        DependencyList.add_dependency(OBISourceDependency.source, 2, message.source);
         break;
 
       case "delete_dependency_1":
-        OBISourceDependency.delete_dependency(1, message.source);
+        DependencyList.delete_dependency(OBISourceDependency.source, 1, message.source);
         break;
 
       case "delete_dependency_2":
-        OBISourceDependency.delete_dependency(2, message.source);
+        DependencyList.delete_dependency(OBISourceDependency.source, 2, message.source);
         break;
 
       case "reload":
@@ -193,58 +194,6 @@ export class OBISourceDependency {
     }
     return;
   }
-
-
-
-  private static add_dependency(type: number, new_source: string): void {
-
-    let dependency_list: {['source']: string[]} = OBITools.get_dependency_list();
-
-    // Add dependency to current source
-    if (type == 1) {
-      if (!dependency_list[OBISourceDependency.source])
-        dependency_list[OBISourceDependency.source] = [];
-      dependency_list[OBISourceDependency.source].push(new_source);
-    }
-
-    // Add current source as dependency to other source
-    if (type == 2) {
-      if (!dependency_list[new_source])
-        dependency_list[new_source] = [];
-      dependency_list[new_source].push(OBISourceDependency.source);
-    }
-
-    OBITools.save_dependency_list(dependency_list);
-  }
-
-
-
-  private static delete_dependency(type: number, source: string): void {
-    let dependency_list: {['source']: string[]} = OBITools.get_dependency_list();
-
-    let key: string;
-    let value: string;
-
-    if (type == 1) {
-      key = OBISourceDependency.source;
-      value = source;
-    }
-
-    if (type == 2) {
-      key = source;
-      value = OBISourceDependency.source;
-    }
-
-    if (dependency_list[key]) {
-      const i = dependency_list[key].indexOf(value);
-      if (i > -1) {
-        dependency_list[key].splice(i, 1);
-      }
-    }
-
-    OBITools.save_dependency_list(dependency_list);
-  }
-
 
 
   private static createNewPanel(extensionUri : Uri) {

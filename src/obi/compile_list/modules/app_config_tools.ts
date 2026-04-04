@@ -80,7 +80,7 @@ function getStepsFromCurrentEsp(
     if (step.step) {
       stepsToAppend.push({ step: step.step });
     }
-    if (step.use_standard_step) {
+    if (step.add_default_steps) {
       const globalSteps = getGlobalSteps(source, appConfig);
       stepsToAppend = stepsToAppend.concat(globalSteps.map(gs => ({ step: gs })));
     }

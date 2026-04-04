@@ -10,6 +10,7 @@ import { AppConfig } from '../controller/AppConfig';
 import { Workspace } from '../../utilities/Workspace';
 import { SourceListConfig } from './SourceListConfig';
 import { OBITools } from '../../utilities/OBITools';
+import { LocalSourceList } from '../../utilities/LocalSourceList';
 
 
 interface ISourceLists {
@@ -44,9 +45,9 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
 
 
-  getChildren(element?: SourceListItem): Thenable<SourceListItem[]> {
+  async getChildren(element?: SourceListItem): Promise<SourceListItem[]> {
     if (!this.workspaceRoot) {
-      return Promise.resolve([]);
+      return [];
     }
 
     if (element) {
@@ -55,7 +56,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
     const source_list_path = path.join(this.workspaceRoot, Constants.SOURCE_FILTER_FOLDER_NAME);
     if (!DirTool.dir_exists(source_list_path)) {
-      return Promise.resolve([]);
+      return [];
     }
 
     let child = [];
@@ -72,7 +73,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       //OBITools.get_filtered_sources_with_details(element).then((result) => {
       //  SourceListProvider.source_lists[element] = result;
       //});
-      SourceListProvider.source_lists[element] = OBITools.get_filtered_sources_with_details(element);
+      SourceListProvider.source_lists[element] = await LocalSourceList.get_filtered_sources_with_details(element);
 
       const new_child = new SourceListItem(
         element.replaceAll('.json', ''),
@@ -86,7 +87,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       child.push(new_child);
     }
 
-    return Promise.resolve(child);
+    return child;
 
   }
 
@@ -148,6 +149,11 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     this._onDidChangeTreeData.fire();
   }
 
+
+
+  public static get_instance(): SourceListProvider {  
+    return SourceListProvider.source_list_provider;
+  }
 
 
   async add_new_source_filter(): Promise<string|undefined> {
@@ -264,7 +270,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       member = match[3];
       logger.debug(`Changing description for source member: lib='${lib}', file='${file}', member='${member}'`);
 
-      const source_infos: source.ISourceInfos = await OBITools.get_source_infos();
+      const source_infos: source.ISourceInfos = await LocalSourceList.get_source_info_list();
       if (source_infos[`${source_path}/${member}`]) {
         description = typeof source_infos[`${source_path}/${member}`].description === 'string' ? source_infos[`${source_path}/${member}`].description : '';
       }
@@ -279,7 +285,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       throw new Error('Canceled by user. No source description provided');
     }
 
-    OBITools.update_source_infos(source_path, member, new_description);
+    LocalSourceList.update_source_infos(source_path, member, new_description);
 
     return;
   }
@@ -317,10 +323,12 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     const to_path = path.join(Workspace.get_workspace(),item.member_path, new_name)
     fs.renameSync(from_path, to_path);
 
-    const source_infos: source.ISourceInfos = await OBITools.get_source_infos();
-    if (source_infos[`${item.member_path_obi}/${item.src_member}`]) {
-        const description: string = typeof source_infos[`${item.member_path_obi}/${item.src_member}`].description === 'string' ? source_infos[`${item.member_path_obi}/${item.src_member}`].description : '';
-        OBITools.update_source_infos(item.member_path_obi, new_name, description);
+    const old_source = `${item.member_path_obi}/${item.src_member}`;
+    const source_infos: source.ISourceInfos = await LocalSourceList.get_source_info_list();
+    if (source_infos[old_source]) {
+        const description: string = typeof source_infos[old_source].description === 'string' ? source_infos[old_source].description : '';
+        LocalSourceList.update_source_infos(item.member_path_obi, item.src_member, undefined);
+        LocalSourceList.update_source_infos(item.member_path_obi, new_name, description);
     }
 
     return;

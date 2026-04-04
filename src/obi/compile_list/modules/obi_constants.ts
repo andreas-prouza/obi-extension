@@ -4,7 +4,7 @@ export class OBIConstants {
   static SOURCE_CONFIG_TOML = '.obi/etc/source-config.toml';
   static DEPENDEND_OBJECT_LIST = '.obi/tmp/dependend-object-list.json';
   static CHANGED_OBJECT_LIST = '.obi/tmp/changed-object-list.json';
-  static EXTENDED_SOURCE_PROCESS_CONFIG_TOML = '.obi/etc/extended-source-processing-config.toml';
+  static EXTENDED_SOURCE_PROCESS_CONFIG = '.obi/etc/extended-source-processing-config.toml';
   static ESP_SCRIPT_FOLDER='.obi/etc/scripts';
   static UPDATE_OBJECT_LIST = false;
   static JOB_LOG = '.obi/log/joblog.txt';

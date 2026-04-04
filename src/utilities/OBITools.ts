@@ -15,6 +15,8 @@ import { OBICommands } from '../obi/OBICommands';
 import { LocaleText } from './LocaleText';
 import { OBIStatus } from '../obi/OBIStatus';
 import { createBuildList } from '../obi/compile_list/createBuildList';
+import { Dependencies, DependencyList } from '../Dependency';
+import { LocalSourceList } from './LocalSourceList';
 
 
 
@@ -136,10 +138,11 @@ export class OBITools {
 
     OBITools.ext_context.workspaceState.update('obi.version', current_version);
 
-    const content: {['source']: string[]}  = OBITools.get_dependency_list();
-    if (!content || Object.keys(content).length === 0) {
-      vscode.window.showWarningMessage('Missing source dependencies');
-    }
+    DependencyList.get_dependencies().then(dependency_list => {;
+      if (!dependency_list || Object.keys(dependency_list).length === 0) {
+        vscode.window.showWarningMessage('Missing source dependencies');
+      }
+    });
 
 
   }
@@ -494,7 +497,7 @@ export class OBITools {
 
 
 
-  public static override_dict(from_dict: {}, to_dict: {}): any {
+  public static override_dict(from_dict: Record<string, any>, to_dict: Record<string, any>): any {
     if (to_dict == undefined)
       to_dict = {};
 
@@ -517,9 +520,9 @@ export class OBITools {
 
 
   public static update_compile_list(ignore_sources: string[], ignore_sources_cmd: { [key: string]: [string] | null }): void {
-    let compile_list = OBITools.get_compile_list(Workspace.get_workspace_uri());
+    let compile_list = OBITools.get_compile_list(Workspace.get_workspace_uri()) || {};
 
-    for (const level_item of (compile_list['compiles'] as any)) {
+    for (const level_item of compile_list['compiles']) {
       for (const source of level_item['sources']) {
         source['ignore'] = false;
         if (ignore_sources.includes(source['source'])) {
@@ -527,7 +530,7 @@ export class OBITools {
         }
         for (const cmd of source['cmds']) {
           cmd['ignore'] = false;
-          if (ignore_sources_cmd[source['source']] && ignore_sources_cmd[source['source']].includes(cmd['cmd'])) {
+          if (ignore_sources_cmd[source['source']] && ignore_sources_cmd[source['source']]?.includes(cmd['cmd'])) {
             cmd['ignore'] = true;
           }
         }
@@ -540,7 +543,7 @@ export class OBITools {
 
 
 
-  public static get_compile_list(workspaceUri: vscode.Uri, compileListFileName: string|undefined): {} | undefined {
+  public static get_compile_list(workspaceUri: vscode.Uri, compileListFileName: string|undefined=undefined): {} | undefined {
 
     if (AppConfig.attributes_missing())
       return undefined;
@@ -683,42 +686,19 @@ export class OBITools {
 
 
 
-  public static get_dependency_list(): { ['source']: string[] } {
-    
-    if (this._dependency_list && this._last_loading_time > (Date.now() - 10000)) { // Reuse if only 2 seconds old
-      return this._dependency_list;
-    }
-
-    const config = AppConfig.get_app_config();
-    this._dependency_list = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['dependency-list'])) || {};
-    this._last_loading_time = Date.now();
-    return this._dependency_list;
-
-  }
-
-
-
-  public static save_dependency_list(dependency_list: { ['source']: string[] }): void {
-
-    const config = AppConfig.get_app_config();
-    DirTool.write_json(path.join(Workspace.get_workspace(), config.general['dependency-list']), dependency_list);
-  }
-
-
-
-  public static get_dependend_sources(changed_sources: source.ISourceList): string[] {
+  public static async get_dependend_sources(changed_sources: source.ISourceList): Promise<string[]> {
 
     let dependend_sources: string[] = [];
     const config = AppConfig.get_app_config();
 
     const all_sources: string[] = Object.assign([], changed_sources['changed-sources'], changed_sources['new-objects']);
 
-    const dependency_list: { ['source']: string[] } = OBITools.get_dependency_list();
+    const dependency_list: Dependencies = await DependencyList.get_dependencies();
     for (const [k, v] of Object.entries(dependency_list)) {
       for (let i = 0; i < all_sources.length; i++) {
         if (v.includes(all_sources[i]) && !all_sources.includes(k) && !dependend_sources.includes(k)) {
           dependend_sources.push(k);
-          OBITools.add_all_dependend_sources(dependend_sources, k);
+          await OBITools.add_all_dependend_sources(dependend_sources, k);
         }
       }
     }
@@ -728,16 +708,17 @@ export class OBITools {
 
 
 
-  public static add_all_dependend_sources(dependend_sources: string[], source: string): string[] {
+  public static async add_all_dependend_sources(dependend_sources: string[], source: string): Promise<string[]> {
 
-    const dependency_list: { ['source']: string[] } = OBITools.get_dependency_list();
+    const dependency_list: Dependencies = await DependencyList.get_dependencies();
 
     for (const [k, v] of Object.entries(dependency_list)) {
       if (v.includes(source) && source !== k && !dependend_sources.includes(k)) {
         dependend_sources.push(k);
-        OBITools.add_all_dependend_sources(dependend_sources, k);
+        await OBITools.add_all_dependend_sources(dependend_sources, k);
       }
     }
+    return dependend_sources;
   }
 
 
@@ -758,9 +739,9 @@ export class OBITools {
       changed_sources = await OBITools.get_changed_sources();
 
     logger.info('Get dependend sources');
-    const dependend_sources: string[] = OBITools.get_dependend_sources(changed_sources);
+    const dependend_sources: string[] = await OBITools.get_dependend_sources(changed_sources);
 
-    createBuildList(source);
+    await createBuildList(source);
 
     logger.info('Clean dir');
     DirTool.clean_dir(path.join(Workspace.get_workspace(), '.obi', 'tmp'));
@@ -799,21 +780,6 @@ export class OBITools {
     const t7 = performance.now();
     logger.info(`Start check_source_change_item: It took ${((t7 - t6) / 1000).toFixed(2)} seconds.`);
 
-    //----
-    /*
-        let promise_list2: Promise<string|undefined>[] = [];
-    
-        // Check for old sources
-        const t4 = performance.now();
-      
-        for (const k in last_source_hashes) {
-          promise_list2.push(OBITools.check_old_source_item(k, results));
-        };
-    
-        const t5 = performance.now();
-        logger.info(`Start check_old_source_item: It took ${t5 - t4} milliseconds.`);
-      */
-
     //----------------------------------------
     // Then get the results
     //----------------------------------------
@@ -829,19 +795,6 @@ export class OBITools {
         new_sources.push(source_item_list['new-objects'][0]);
     });
 
-    //----
-    /*
-        const t2 = performance.now();
-        const all_promises2 = await Promise.all(promise_list2);
-        const t3 = performance.now();
-        logger.info(`Old check: It took ${t3 - t2} milliseconds.`);
-    
-        all_promises2.map((source_item: string|undefined) => {
-          if (source_item)
-            old_sources.push(source_item);
-        });
-    */
-
     logger.info(`new_sources: ${new_sources.length}, changed-sources: ${changed_sources.length}`);
 
     return {
@@ -853,28 +806,10 @@ export class OBITools {
 
 
 
-  private static async check_old_source_item(source_from_list: string, current_sources: source.ISource[]): Promise<string | undefined> {
-
-    let found = false;
-    current_sources.map((source_item: source.ISource) => {
-      if (source_item[source_from_list]) {
-        found = true;
-        return;
-      }
-    });
-
-    if (found)
-      return source_from_list;
-
-    return undefined;
-  }
-
-
-
   private static async check_source_change_item(source_item: source.ISource, last_source_hashes: source.ISource): Promise<source.ISourceList> {
 
     const source_name: string = Object.keys(source_item)[0];
-    const k_source: string = source_name.replaceAll('\\', '/');
+    const k_source: string = source_name.replace(/\\/g, '/');
     const v_hash: string = source_item[source_name];
     let source_changed = true;
 
@@ -967,21 +902,6 @@ export class OBITools {
       result.push(res);
     }
     return result.flat();
-  }
-
-
-
-  public static get_remote_compiled_object_list() {
-
-    const config = AppConfig.get_app_config();
-
-    if (!config.general['remote-base-dir'])
-      throw Error(`Config attribute 'config.general.remote_base_dir' missing`);
-
-    const local_file: string = path.join(Workspace.get_workspace(), config.general['compiled-object-list']);
-    const remote_file: string = `${config.general['remote-base-dir']}/${config.general['compiled-object-list']}`;
-
-    SSH_Tasks.getRemoteFile(local_file, remote_file);
   }
 
 
@@ -1079,154 +999,6 @@ export class OBITools {
     logger.info(`Transer local dir ${local_dir}/.obi to ${remote_dir}/.obi`);
     await SSH_Tasks.transfer_dir(`${local_dir}/.obi/etc`, `${remote_dir}/.obi/etc`);
     await SSH_Tasks.transfer_dir(`${local_dir}/${Constants.BUILD_OUTPUT_DIR}`, `${remote_dir}/${Constants.BUILD_OUTPUT_DIR}`);
-  }
-
-
-
-  public static async get_filtered_sources_with_details(source_list_file: string): Promise<source.IQualifiedSource[] | undefined> {
-
-    const sources = await OBITools.get_local_sources(false);
-
-    const source_filters: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, source_list_file)) || [];
-
-    const filtered_sources = OBITools.get_filtered_sources(sources, source_filters);
-    const filtered_sources_extended = OBITools.get_extended_source_infos(filtered_sources);
-
-    return filtered_sources_extended;
-  }
-
-
-
-  public static async get_local_sources(filter_supported_types: boolean = true): Promise<source.IQualifiedSource[] | undefined> {
-
-    const config = AppConfig.get_app_config();
-    const source_dir = path.join(Workspace.get_workspace(), config.general['source-dir'] || 'src');
-    const supported_types = filter_supported_types ? (config.general['supported-object-types'] || ['pgm', 'file', 'srvpgm']) : undefined;
-
-    const sources = await DirTool.get_all_files_in_dir3(
-      source_dir,
-      '.',
-      supported_types
-    );
-
-    return sources;
-  }
-
-
-
-  public static get_source_infos(): source.ISourceInfos {
-
-    const config: AppConfig = AppConfig.get_app_config();
-
-    const source_infos: source.ISourceInfos = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['source-infos'] || '.obi/etc/source-infos.json')) || [];
-
-    return source_infos;
-  }
-
-
-  public static update_source_infos(source_path: String, source_member: String, description: String): void {
-
-    const config: AppConfig = AppConfig.get_app_config();
-
-    const source_infos: source.ISourceInfos = OBITools.get_source_infos();
-
-    const full_name: string = `${source_path}/${source_member}`;
-    logger.info(`Update source info for ${full_name}`);
-
-    if (!(full_name in source_infos)) {
-      source_infos[full_name] = { 'description': '' };
-    }
-
-    source_infos[full_name]['description'] = description;
-
-    DirTool.write_file(path.join(Workspace.get_workspace(), config.general['source-infos'] || '.obi/etc/source-infos.json'), JSON.stringify(source_infos, undefined, 2));
-
-    return;
-  }
-
-
-
-  public static get_extended_source_infos(sources: source.IQualifiedSource[] | undefined): source.IQualifiedSource[] | undefined {
-
-    if (!sources)
-      return;
-
-    let new_list: source.IQualifiedSource[] = [];
-
-    const config: AppConfig = AppConfig.get_app_config();
-    const source_infos: source.ISourceInfos = OBITools.get_source_infos();
-
-    for (let source of sources) {
-
-      source.description = '';
-
-      const full_name: string = `${source['source-lib']}/${source['source-file']}/${source['source-member']}`;
-      if (full_name in source_infos) {
-        source.description = source_infos[full_name].description;
-      }
-      new_list.push(source);
-    }
-
-    return new_list;
-  }
-
-
-
-
-  private static get_filtered_sources(sources: source.IQualifiedSource[] | undefined, source_filters: source.IQualifiedSource[]): source.IQualifiedSource[] | undefined {
-
-    if (!sources)
-      return;
-
-    const wcmatch = require('wildcard-match');
-    let filtered_sources: source.IQualifiedSource[] = [];
-    let use_regex: boolean;
-    let show_empty_folders: boolean;
-    let lib: string;
-    let file: string;
-    let mbr: string;
-    let isMatch: boolean = false;
-
-    for (let source of sources) {
-
-      const src_mbr = source['source-member'];
-      const src_file = source['source-file'];
-      const src_lib = source['source-lib'];
-
-
-      for (const source_filter of source_filters) {
-
-        show_empty_folders = source_filter['show-empty-folders'];
-        use_regex = source_filter['use-regex'];
-        lib = (source_filter['source-lib'] || '').toLowerCase();
-        file = (source_filter['source-file'] || '').toLowerCase();
-        mbr = (source_filter['source-member'] || '').toLowerCase();
-        isMatch = false;
-
-        if ((!src_lib || !src_file || !src_mbr) && !show_empty_folders)
-          continue;
-
-        if (!src_lib && !src_file)
-          continue;
-
-        if (use_regex) {
-          const re_lib = new RegExp(`^${lib}$`);
-          const re_file = new RegExp(`^${file}$`);
-          const re_mbr = new RegExp(`^${mbr}$`);
-          isMatch = (src_lib.toLowerCase().match(re_lib) != null && src_file.toLowerCase().match(re_file) != null && src_mbr.toLowerCase().match(re_mbr) != null);
-        }
-        else {
-          const wc_lib = wcmatch(lib);
-          const wc_file = wcmatch(file);
-          const wc_mbr = wcmatch(mbr);
-          isMatch = wc_lib(src_lib.toLowerCase()) && wc_file(src_file.toLowerCase()) && wc_mbr(src_mbr.toLowerCase());
-        }
-        if (isMatch)
-          filtered_sources.push({ "source-lib": src_lib, "source-file": src_file, "source-member": src_mbr});
-      }
-    }
-
-    return filtered_sources;
   }
 
 

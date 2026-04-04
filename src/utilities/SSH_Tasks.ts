@@ -3,10 +3,8 @@ import {NodeSSH, SSHExecCommandResponse} from 'node-ssh';
 import { Workspace } from './Workspace';
 import * as path from 'path';
 import { AppConfig } from '../webview/controller/AppConfig';
-import { fail } from 'assert';
 import { Constants } from '../Constants';
 import { logger } from './Logger';
-import { config } from 'process';
 
 
 
@@ -24,17 +22,15 @@ export class SSH_Tasks {
   public static context: vscode.ExtensionContext;
 
   private static ssh_user: string | undefined = undefined;
+  private static host: string | undefined = undefined;
+  private static connectionPromise: Promise<boolean> | undefined = undefined;
 
 
   public static get_ssh_user(): string | undefined {
-    // Execute command in bash shell
-    if (!SSH_Tasks.ssh_user || SSH_Tasks.ssh_user.length == 0) {
-      const config = AppConfig.get_app_config();
-      SSH_Tasks.ssh_user = config.connection['ssh-user'];
-    }
-
     return SSH_Tasks.ssh_user;
   }
+
+
 
 
   public static get_finalized_command(cmd: string): string {
@@ -54,53 +50,92 @@ export class SSH_Tasks {
 
 
 
+  private static is_connection_valid(): boolean {
+    const config = AppConfig.get_app_config();
+    return this.ssh.isConnected() && this.ssh.connection.config.username == config.connection['ssh-user'] && this.ssh.connection.config.host == config.connection['remote-host'];
+  }
+
+
+
   public static async connect(callback?: Function) {
 
-    const config = AppConfig.get_app_config();
-    let host = config.connection['remote-host'];
-    let ssh_user = SSH_Tasks.get_ssh_user();
-    const ssh_key = config.connection['ssh-key'];
+    const config = AppConfig.get_app_config();;
 
-
-    if (!host || host.length == 0) {
-      host = await vscode.window.showInputBox({ title: `Enter an IBM i hostname/IP`, placeHolder: "my-ibm-i" });
-      if (! host)
-        throw new Error('Canceled by user. No host provided');
-    }
-
-    if (!ssh_user || ssh_user.length == 0) {
-      ssh_user = await vscode.window.showInputBox({ title: `Enter your user for ${host}`, placeHolder: "usrprf" });
-      if (! ssh_user)
-        throw new Error('Canceled by user. No user provided');
-    }
-
-    let pwd: string | undefined = await SSH_Tasks.context.secrets.get(`obi|${host}|${ssh_user}`);
-    if (! pwd && (!ssh_key || ssh_key.length == 0)) {
-      pwd = await vscode.window.showInputBox({ title: `Enter your password for ${ssh_user}@${host}`, placeHolder: "password", password: true });
-      if (! pwd)
-        throw new Error('Canceled by user. No password provided');
-    }
-
-    if (SSH_Tasks.ssh.isConnected())
+    if (this.is_connection_valid()) {
+      if (callback) return await callback();
       return;
+    }
 
-    await SSH_Tasks.ssh.connect({
-      host: host,
-      username: ssh_user,
-      password: pwd,
-      privateKeyPath: ssh_key,
-      keepaliveInterval: 3600
-    }).catch((reason) => {
-      vscode.window.showErrorMessage(reason.message);
-      logger.error(`Connection error: ${reason.message}`);
-      throw reason;
-    });
-    vscode.window.showInformationMessage(`Connected to ${host}`);
-    logger.info(`Connected to ${host}`);
+    // If a connection is ALREADY in progress, wait for that one
+    if (this.connectionPromise) {
+      logger.info("Connection already in progress, awaiting existing attempt...");
+      await this.connectionPromise;
+      if (callback) return await callback();
+      return;
+    }
+
+    // No connection in progress? Create a new one and store the promise
+    this.connectionPromise = (async () => {
+      try {
+        const config = AppConfig.get_app_config();
+        SSH_Tasks.host = config.connection['remote-host'];
+        SSH_Tasks.ssh_user = config.connection['ssh-user'];
+        const ssh_key = config.connection['ssh-key'];
+
+        if (!SSH_Tasks.host || SSH_Tasks.host.length == 0) {
+          SSH_Tasks.host = await vscode.window.showInputBox({ title: `Enter an IBM i hostname/IP`, placeHolder: "my-ibm-i" });
+          if (! SSH_Tasks.host)
+            throw new Error('Canceled by user. No host provided');
+        }
+
+        if (!SSH_Tasks.ssh_user || SSH_Tasks.ssh_user.length == 0) {
+          SSH_Tasks.ssh_user = await vscode.window.showInputBox({ title: `Enter your user for ${SSH_Tasks.host}`, placeHolder: "usrprf" });
+          if (! SSH_Tasks.ssh_user)
+            throw new Error('Canceled by user. No user provided');
+        }
+
+        let pwd: string | undefined = await SSH_Tasks.context.secrets.get(`obi|${SSH_Tasks.host}|${SSH_Tasks.ssh_user}`);
+        if (! pwd && (!ssh_key || ssh_key.length == 0)) {
+          pwd = await vscode.window.showInputBox({ title: `Enter your password for ${SSH_Tasks.ssh_user}@${SSH_Tasks.host}`, placeHolder: "password", password: true });
+          if (! pwd)
+            throw new Error('Canceled by user. No password provided');
+        }
+
+        if (this.is_connection_valid())
+          return;
+
+        await SSH_Tasks.ssh.connect({
+          host: SSH_Tasks.host,
+          username: SSH_Tasks.ssh_user,
+          password: pwd,
+          privateKeyPath: ssh_key,
+          keepaliveInterval: 3600
+        }).catch((reason) => {
+          vscode.window.showErrorMessage(reason.message);
+          logger.error(`Connection error: ${reason.message}`);
+          throw reason;
+        });
+        vscode.window.showInformationMessage(`Connected to ${SSH_Tasks.host}`);
+        logger.info(`Connected to ${SSH_Tasks.host}`);
+
+        if (callback) {
+          const result = await callback();
+          return result;
+        }
+      } catch (reason: any) {
+        vscode.window.showErrorMessage(reason.message);
+        logger.error(`Connection error: ${reason.message}`);
+        throw reason; // Bubble up
+      } finally {
+        // IMPORTANT: Clear the gatekeeper when done (success or fail)
+        this.connectionPromise = undefined;
+      }
+    })();
+
+    await this.connectionPromise;
 
     if (callback) {
-      const result = await callback();
-      return result;
+      return await callback();
     }
   }
 
@@ -108,15 +143,7 @@ export class SSH_Tasks {
 
   public static async executeCommand(cmd: string, again?: boolean) {
 
-    if (!SSH_Tasks.ssh.isConnected()) {
-      if (again) {
-        throw Error(`Could not connect to remote server`);
-      }
-      const func = ()=> {SSH_Tasks.executeCommand(cmd, true)};
-      await SSH_Tasks.connect(func);
-      return;
-    }
-
+    await this.connect();
     cmd = this.get_finalized_command(cmd);
 
     logger.info(`Execute: ${cmd}`);
@@ -136,15 +163,7 @@ export class SSH_Tasks {
 
   public static async getRemoteFile(local: string, remote: string, again?: boolean): Promise<void> {
 
-    if (!SSH_Tasks.ssh.isConnected()){
-      if (again) {
-        vscode.window.showErrorMessage("Still no connection available");
-        return;
-      }
-      const func = ()=> {SSH_Tasks.getRemoteFile(local, remote, true)};
-      await SSH_Tasks.connect(func);
-      return;
-    }
+    await this.connect();
 
     remote = SSH_Tasks.get_finalized_remote_path(remote);
     logger.info(`Get remote file. LOCAL: ${local}, REMOTE: ${remote}`);
@@ -155,15 +174,7 @@ export class SSH_Tasks {
 
   public static async getRemoteDir(local: string, remote: string, again?: boolean) {
 
-    if (!SSH_Tasks.ssh.isConnected()){
-      if (again) {
-        vscode.window.showErrorMessage("Still no connection available");
-        return;
-      }
-      const func = ()=> {SSH_Tasks.getRemoteDir(local, remote, true)};
-      await SSH_Tasks.connect(func);
-      return;
-    }
+    await this.connect();
 
     let failed: string[]=[];
     let successful: string[]=[];
@@ -201,14 +212,7 @@ export class SSH_Tasks {
 
   public static async check_remote_paths(files: string[], again?: boolean): Promise<boolean> {
 
-    if (!SSH_Tasks.ssh.isConnected()){
-      if (again) {
-        vscode.window.showErrorMessage("Still no connection available");
-        return false;
-      }
-      await SSH_Tasks.connect();
-      return SSH_Tasks.check_remote_paths(files, true);
-    }
+    await this.connect();
 
     let cmd = '';
     let first = true;
@@ -236,15 +240,7 @@ export class SSH_Tasks {
 
   public static async delete_sources(source_list: string[], again?: boolean) {
 
-    if (!SSH_Tasks.ssh.isConnected()){
-      if (again) {
-        vscode.window.showErrorMessage("Still no connection available");
-        return;
-      }
-      const func = ()=> {SSH_Tasks.delete_sources(source_list, true)};
-      await SSH_Tasks.connect(func);
-      return;
-    }
+    await this.connect();
     
     const config = AppConfig.get_app_config();
     if (!config.general['remote-base-dir'] || !config.general['local-base-dir'])
@@ -270,16 +266,7 @@ export class SSH_Tasks {
 
   public static async cleanup_directory(again?: boolean, return_value?: boolean): Promise<boolean> {
 
-    if (!SSH_Tasks.ssh.isConnected()){
-      if (again) {
-        vscode.window.showErrorMessage("Still no connection available");
-        return false;
-      }
-      let return_value2 = false;
-      const func = ()=> {SSH_Tasks.cleanup_directory(true, return_value2)};
-      await SSH_Tasks.connect(await func);
-      return return_value2;
-    }
+    await this.connect();
     
     const config = AppConfig.get_app_config();
     if (!config.general['remote-base-dir'] || config.general['remote-base-dir'].length < 4) // to be sure it's not root!
@@ -317,15 +304,7 @@ export class SSH_Tasks {
 
   public static async transferSources(source_list: string[], again?: boolean) {
 
-    if (!SSH_Tasks.ssh.isConnected()){
-      if (again) {
-        vscode.window.showErrorMessage("Still no connection available");
-        return;
-      }
-      const func = ()=> {SSH_Tasks.transferSources(source_list, true)};
-      await SSH_Tasks.connect(func);
-      return;
-    }
+    await this.connect();
     
     const config = AppConfig.get_app_config();
     if (!config.general['remote-base-dir'] || !config.general['local-base-dir'])
@@ -378,15 +357,7 @@ export class SSH_Tasks {
 
   public static async transfer_files(file_list: string[], again?: boolean) {
 
-    if (!SSH_Tasks.ssh.isConnected()){
-      if (again) {
-        vscode.window.showErrorMessage("Still no connection available");
-        return;
-      }
-      const func = ()=> {SSH_Tasks.transfer_files(file_list, true)};
-      await SSH_Tasks.connect(func);
-      return;
-    }
+    await this.connect();
     
     const config = AppConfig.get_app_config();
     if (!config.general['remote-base-dir'] || !config.general['local-base-dir'])
@@ -416,15 +387,7 @@ export class SSH_Tasks {
     // With Compression!!!!
     // https://stackoverflow.com/questions/15641243/need-to-zip-an-entire-directory-using-node-js
 
-    if (!SSH_Tasks.ssh.isConnected()){
-      if (again) {
-        vscode.window.showErrorMessage("Still no connection available");
-        return;
-      }
-      const func = ()=> {SSH_Tasks.transfer_dir(local_dir, remote_dir, true)};
-      await SSH_Tasks.connect(func);
-      return;
-    }
+    await this.connect();
 
     remote_dir = SSH_Tasks.get_finalized_remote_path(remote_dir);
 
@@ -466,15 +429,7 @@ export class SSH_Tasks {
 
   private static async ssh_put_dir(local_dir: string, remote_dir: string, failed: string[], successful: string[], again?: boolean) {
 
-    if (!SSH_Tasks.ssh.isConnected()){
-      if (again) {
-        vscode.window.showErrorMessage("Still no connection available");
-        return;
-      }
-      const func = ()=> {SSH_Tasks.ssh_put_dir(local_dir, remote_dir, failed, successful, true)};
-      await SSH_Tasks.connect(func);
-      return;
-    }
+    await this.connect();
 
     remote_dir = SSH_Tasks.get_finalized_remote_path(remote_dir);
     

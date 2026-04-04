@@ -11,6 +11,7 @@ import { Workspace } from '../../utilities/Workspace';
 import { logger } from '../../utilities/Logger';
 import { OBISourceConfiguration } from './OBISourceConfiguration';
 import { LocalSourceList } from '../../utilities/LocalSourceList';
+import { ExtendedSourceProcessing, ExtendedSourceProcessingList, Step } from './EspConfig';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -96,6 +97,11 @@ export class OBIConfiguration {
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
     
     const local_source_list: string[] = await LocalSourceList.get_source_list();
+    const esp_config_project = new ExtendedSourceProcessingList();
+    const esp_config_user = new ExtendedSourceProcessingList(true);
+    
+    const panel = await context.secrets.get('obi|config|panel');
+    const panel_tab = await context.secrets.get('obi|config|panel_tab');
 
     const html = nunjucks.render('controller/configuration.html', 
       {
@@ -109,11 +115,13 @@ export class OBIConfiguration {
         project_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_FILE),
         user_config_file: DirTool.get_encoded_file_URI(AppConfig.get_current_profile_app_config_file()),
         source_config_file: DirTool.get_encoded_file_URI(Constants.OBI_SOURCE_CONFIG_FILE),
-        panel: await context.secrets.get('obi|config|panel'),
-        panel_tab: await context.secrets.get('obi|config|panel_tab'),
+        panel: panel,
+        panel_tab: panel_tab,
         config_source_list: AppConfig.get_source_configs(),
         error_text: error_text,
-        source_list: local_source_list
+        source_list: local_source_list,
+        extended_source_processing_list_project: esp_config_project.extended_source_processing || [],
+        extended_source_processing_list_user: esp_config_user.extended_source_processing || []
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
         //object_list: this.get_object_list(workspaceUri),
         //compile_list: this.get_compile_list(workspaceUri)
@@ -290,6 +298,50 @@ export class OBIConfiguration {
         break;
 
       case "reload":
+        OBIConfiguration.update();
+        break;
+
+      case "add_esp_block":
+
+        const user_config_add_block = true ? message.user_project == 'user' : false;
+        const esp_block = new ExtendedSourceProcessing();
+        esp_block.conditions = {"SOURCE_FILE_NAME": ["*"], "TARGET_LIB": ["*"]};
+        esp_block.steps = [{add_default_steps: true, properties: {"TARGET_LIB": "PROUZALIB", "JOB_CCSID": "1141"}}];
+        const esp_config = new ExtendedSourceProcessingList(user_config_add_block);
+        esp_config.add_new_esp_block(esp_block);
+        OBIConfiguration.update();
+        break;
+
+      case "delete_esp_block":
+        const user_config_delete_block = true ? message.user_project == 'user' : false;
+        const esp_config_delete = new ExtendedSourceProcessingList(user_config_delete_block);
+        esp_config_delete.extended_source_processing.splice(message.index, 1);
+        esp_config_delete.save_to_file();
+        OBIConfiguration.update();
+        break;
+
+      case "delete_esp_step":
+        const user_config_delete_step = true ? message.user_project == 'user' : false;
+        const esp_config_delete_step = new ExtendedSourceProcessingList(user_config_delete_step);
+        esp_config_delete_step.extended_source_processing[message.esp_index].steps.splice(message.step_index, 1);
+        esp_config_delete_step.save_to_file();
+        OBIConfiguration.update();
+        break;
+
+      case "add_esp_step":
+        const user_config_add_step = true ? message.user_project == 'user' : false;
+        const esp_config_add_step = new ExtendedSourceProcessingList(user_config_add_step);
+        esp_config_add_step.extended_source_processing[message.index].steps.push(new Step());
+        esp_config_add_step.save_to_file();
+        OBIConfiguration.update();
+        break;
+
+      case "save_esp":
+
+        const data = message.data;
+        const user_config_save = true ? message.user_project == 'user' : false;
+        const esp_config_save = new ExtendedSourceProcessingList(user_config_save, message.data);
+        esp_config_save.save_to_file();
         OBIConfiguration.update();
         break;
 

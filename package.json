@@ -106,6 +106,12 @@
         "when": "obi.contains_obi_project && obi.valid-config && false"
       },
       {
+        "command": "obi.get-remote-build-results",
+        "title": "%obi.get-remote-build-results%",
+        "icon": "$(arrow-down)",
+        "when": "obi.contains_obi_project && obi.valid-config && false"
+      },
+      {
         "command": "obi.check-remote-sources",
         "title": "%obi.check-remote-sources%",
         "icon": "$(tasklist)",
@@ -274,11 +280,6 @@
           "group": "navigation@20"
         },
         {
-          "command": "obi.get-remote-compiled-object-list",
-          "when": "false && obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
-          "group": "navigation@30"
-        },
-        {
           "command": "obi.reset-compiled-object-list",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
           "group": "navigation@40"
@@ -292,6 +293,11 @@
           "command": "obi.transfer-all",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
           "group": "navigation@60"
+        },
+        {
+          "command": "obi.get-remote-build-results",
+          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
+          "group": "navigation@62"
         },
         {
           "command": "obi.controller.dependency-list",

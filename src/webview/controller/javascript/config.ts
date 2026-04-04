@@ -2,10 +2,12 @@ import {
   allComponents,
   provideVSCodeDesignSystem,
   Button,
-  TextField
+  TextField,
+  Checkbox
 } from "@vscode/webview-ui-toolkit";
 
 import { showAlert } from "../../tools/javascript/alertBox";
+import { json } from "stream/consumers";
 
 const deepmerge = require('deepmerge');
 
@@ -142,6 +144,58 @@ function main() {
 
   }
 
+  // Add new ESP block
+  const new_esp_button = document.getElementsByClassName('add_new_esp_block');
+  for (let i = 0; i < new_esp_button.length; i++) {
+    const el = new_esp_button[i];
+    el.addEventListener("click", (event) => {
+      const config: string = el.getAttribute('data-config') ?? '';
+      add_esp_block(config);
+      reload();
+    });
+  }
+  
+  // Delete ESP block
+  const delete_esp_buttons = document.getElementsByClassName('delete_esp_block');
+  for (let i = 0; i < delete_esp_buttons.length; i++) {
+    const el = delete_esp_buttons[i];
+    el.addEventListener("click", (event) => {
+      const config: string = (event.currentTarget as HTMLElement).getAttribute('data-config') ?? '';
+      const index: number = parseInt((event.currentTarget as HTMLElement).getAttribute('data-index') ?? '0', 0);
+      delete_esp_block(config, index);
+      reload();
+    });
+  }
+
+
+  // Add new ESP step
+  const new_esp_step_button = document.getElementsByClassName('add_step_to_esp');
+  for (let i = 0; i < new_esp_step_button.length; i++) {
+    const el = new_esp_step_button[i];
+    el.addEventListener("click", (event) => {
+      const config: string = el.getAttribute('data-config') ?? '';
+      const index: number = parseInt(el.getAttribute('data-index') ?? '0', 0);
+      add_step_to_esp(config, index);
+      reload();
+    });
+  }
+
+  // Delete ESP block step
+  const delete_esp_step_buttons = document.getElementsByClassName('delete_esp_step');
+  for (let i = 0; i < delete_esp_step_buttons.length; i++) {
+    const el = delete_esp_step_buttons[i];
+    el.addEventListener("click", (event) => {
+        const config: string = (event.currentTarget as HTMLElement).getAttribute('data-config') ?? '';
+        const espIndex: number = parseInt((event.currentTarget as HTMLElement).getAttribute('data-esp-index') ?? '0', 0);
+        const stepIndex: number = parseInt((event.currentTarget as HTMLElement).getAttribute('data-esp-step-index') ?? '0', 0);
+        delete_esp_step(config, espIndex, stepIndex);
+        reload();
+      }
+    );
+  }
+
+  //-----------------------
+
   const edit_source_config_button = document.getElementById('edit_source_config') as Button;
   edit_source_config_button.addEventListener("click", edit_source_config);
 
@@ -154,6 +208,64 @@ function main() {
   
   // Show configuration loaded message in the UI instead of alert
   showAlert('Configuration reloaded.', 'success');
+}
+
+
+
+function add_esp_block(config: string) {
+  
+  console.log(`Add new ESP block`);
+  vscode.postMessage({
+    command: "add_esp_block",
+    panel: panel,
+    panel_tab: panel_tab,
+    user_project: config
+  });
+
+}
+
+
+function add_step_to_esp(config: string, index: number) {
+  
+  console.log(`Add new ESP step to ESP block ${index}`);
+  vscode.postMessage({
+    command: "add_esp_step",
+    panel: panel,
+    panel_tab: panel_tab,
+    user_project: config,
+    index: index
+  });
+
+}
+
+
+function delete_esp_block(config: string, index: number) {
+  
+  console.log(`Delete ESP block`);
+  vscode.postMessage({
+    command: "delete_esp_block",
+    panel: panel,
+    panel_tab: panel_tab,
+    user_project: config,
+    index: index
+  });
+
+}
+
+
+function delete_esp_step(config: string, espIndex: number, stepIndex: number) {
+
+  console.log(`Delete ESP block step`);
+  vscode.postMessage({
+    command: "delete_esp_step",
+    panel: panel,
+    panel_tab: panel_tab,
+    user_project: config,
+    esp_index: espIndex,
+    step_index: stepIndex
+  });
+
+
 }
 
 
@@ -206,10 +318,11 @@ function delete_source_config() {
 
 
 function delete_global_cmd(config: string, key: string) {
+
+  console.log(`Delete command ${key} for ${config}`);
   
   save_config(config);
 
-  console.log(`Delete command ${key} for ${config}`);
 
   vscode.postMessage({
     command: "delete_global_cmd",
@@ -224,10 +337,10 @@ function delete_global_cmd(config: string, key: string) {
 
 
 function delete_compile_cmd(config: string, key: string) {
-  
-  save_config(config);
 
   console.log(`Delete command ${key} for ${config}`);
+  
+  save_config(config);
 
   vscode.postMessage({
     command: "delete_compile_cmd",
@@ -243,9 +356,9 @@ function delete_compile_cmd(config: string, key: string) {
 
 function delete_global_step(config: string, key: string) {
   
-  save_config(config);
-
   console.log(`Delete command ${key} for ${config}`);
+  
+  save_config(config);
 
   vscode.postMessage({
     command: "delete_global_step",
@@ -261,6 +374,8 @@ function delete_global_step(config: string, key: string) {
 function add_global_cmd(e: HTMLElement) {
   
   const config: string = e.getAttribute('config') ?? '';
+
+  console.log(`Add global command for ${config}`);
 
   save_config(config);
 
@@ -285,6 +400,8 @@ function add_compile_cmd(e: HTMLElement) {
   
   const config: string = e.getAttribute('config') ?? '';
 
+  console.log(`Add compile command for ${config}`);
+
   save_config(config);
 
   const key = document.getElementById("new_compile_cmd_key") as TextField;
@@ -307,6 +424,7 @@ function add_global_step(e: HTMLElement) {
   
   const config: string = e.getAttribute('config') ?? '';
 
+  console.log(`Add global step for ${config}`);
   save_config(config);
 
   const key = document.getElementById("new_global_step_key") as TextField;
@@ -329,8 +447,8 @@ function add_global_step(e: HTMLElement) {
 
 function add_language_attribute(class_prefix: string, language: string, attribute: string) {
   
-  save_config(class_prefix);
   console.log(`saved ${language}, ${attribute}`);
+  save_config(class_prefix);
 
   vscode.postMessage({
     command: "add_language_attribute",
@@ -345,9 +463,9 @@ function add_language_attribute(class_prefix: string, language: string, attribut
 
 
 
-
 function add_language_settings(class_prefix: string, language: string) {
   
+  console.log(`Add language settings for ${class_prefix}, ${language}`);
   save_config(class_prefix);
 
   vscode.postMessage({
@@ -427,23 +545,39 @@ function check_error_text() {
 function check_panel_missing(panel: string) {
 
   const panel_el = document.getElementById(panel);
+  const tab = `${panel?.split('_')[0]}`;
+  const tab_el = document.getElementById(`${tab}_cfg`);
+
   const missing_elements = document.getElementsByClassName('missing_value');
-  let found: boolean = false;
+  let found_panel: boolean = false;
+  let found_tab: boolean = false;
 
   for (let i = 0; i < missing_elements.length; i++) {
     const el = missing_elements[i];
-    if (el.getAttribute('panel') != panel)
-      continue;
-    found = true;
+    
+    if (el.getAttribute('panel') == panel)
+      found_panel = true;
+
+    if (el.getAttribute('panel')?.split('_')[0] == tab)
+      found_tab = true
   }
 
-  if (!found) {
-    panel_el?.classList.remove('missing_value');
-    return;
-  }
+  console.log(`Found: ${found_panel}, tab: ${found_tab}`);
 
-  if (!panel_el?.classList.contains('missing_value'))
+  if (found_panel) {
     panel_el?.classList.add('missing_value');
+  }
+  else {
+    panel_el?.classList.remove('missing_value');
+  }
+  
+  if (found_tab) {
+    tab_el?.classList.add('missing_value');
+  }
+  else {
+    tab_el?.classList.remove('missing_value');
+  }
+
   return;
 }
 
@@ -528,10 +662,14 @@ function set_element_missing_value(element: Element) {
   element.classList.add('missing_value');
   const panel = element.getAttribute('panel');
   const panel_el = document.getElementById(panel);
+  const tab_el = document.getElementById(`${panel?.split('_')[0]}_cfg`);
+
   if (!panel)
     return;
   if (!panel_el?.classList.contains('missing_value'))
     panel_el?.classList.add('missing_value');
+  if (tab_el)
+    tab_el.classList.add('missing_value');
 }
 
 
@@ -602,13 +740,89 @@ function reload() {
 
 
 
+function save_esp(config:string) {
+  
+  let results = [];
+  let steps = [];
+
+  const app_elements = document.getElementsByClassName(`${config}_esp_group`);
+
+  for (let i = 0; i < app_elements.length; i++) {
+
+    const el = app_elements[i];
+    const block_loop = el.getAttribute('data-index');
+    const steps_count = parseInt(el.getAttribute('data-step-count') || '0', 0);
+    const use_regex = (document.getElementById(`${config}|esp|${block_loop}|use_regex`) as Checkbox).checked;
+
+    const allow_multiple_matches = (document.getElementById(`${config}|esp|${block_loop}|allow_multiple_matches`) as Checkbox).checked;
+    const conditions = (document.getElementById(`${config}|esp|${block_loop}|conditions`) as TextField).value;
+
+    console.log(`${config}|esp|${block_loop}|conditions`);
+    console.log(conditions);
+
+    let conditionsDict: Record<string, string> = {};
+    try {
+      conditionsDict = JSON.parse(conditions);
+    } catch (e) {
+      console.error("Failed to parse properties as JSON:", conditions, e);
+    }
+
+    steps = [];
+
+    for (let i = 0; i < steps_count; i++) {
+
+      console.log(`${config}|esp|${block_loop}|steps|${i}|step`);
+      const add_default = (document.getElementById(`${config}|esp|${block_loop}|steps|${i}|add_default_steps`) as Checkbox).checked;
+      const step = (document.getElementById(`${config}|esp|${block_loop}|steps|${i}|step`) as TextField).value;
+      const properties = (document.getElementById(`${config}|esp|${block_loop}|steps|${i}|properties`) as TextField).value;
+      // Convert properties string to a valid dictionary
+      let propertiesDict: Record<string, string> = {};
+      try {
+        propertiesDict = JSON.parse(properties);
+      } catch (e) {
+        console.error("Failed to parse properties as JSON:", properties, e);
+      }
+      const exit_point_script = (document.getElementById(`${config}|esp|${block_loop}|steps|${i}|exit_point_script`) as TextField).value;
+      steps.push({ add_default_steps: add_default, 
+        step: step, 
+        properties: propertiesDict, 
+        exit_point_script: exit_point_script 
+      });
+    }
+    
+    results.push({ 
+      use_regex: use_regex,
+      allow_multiple_matches: allow_multiple_matches, 
+      conditions: conditionsDict, 
+      steps: steps 
+    });
+  };
+
+  console.log(results);
+  console.log(JSON.stringify(results));
+
+  vscode.postMessage({
+    command: `save_esp`,
+    user_project: config,
+    panel: panel,
+    panel_tab: panel_tab,
+    data: results
+  });
+
+}
+
+
+
 function save_config(class_prefix:string) {
 
   let app_config:{} = {};
 
+  console.log(`Save config for ${class_prefix}`);
+
   const global_cmds = get_global_cmds(class_prefix);
   const global_steps = get_global_steps(class_prefix);
   const compile_cmds = get_compile_cmds(class_prefix);
+  save_esp(class_prefix);
 
   app_config['global'] = { cmds: global_cmds, steps: global_steps, 'compile-cmds': compile_cmds };
 

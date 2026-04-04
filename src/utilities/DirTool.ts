@@ -131,7 +131,7 @@ export class DirTool {
         call_list.push(DirTool.get_all_files_in_dir3(rootdir, path.join(dir, file.name), file_extensions));
       } else {
         if (file_extensions == undefined || file_extensions.includes(file.name.split('.').pop())) {
-          const source: string = path.join(dir, file.name).replaceAll('\\', '/');
+          const source: string = path.join(dir, file.name).replace(/\\/g, '/');
           const source_arr: string[] = source.split('/').reverse();
           const src_mbr = source_arr[0];
           const src_file = source_arr[1];
@@ -439,7 +439,7 @@ export class DirTool {
     if (!content_list)
       return undefined;
 
-    let key_values: {['key']?: string} = {};
+    let key_values: { [key: string]: string } = {};
 
     for (var i=0; i < content_list.length; i++) {
       
@@ -488,16 +488,22 @@ export class DirTool {
     root = DirTool.resolve_env_in_path(root);
     file_path = DirTool.resolve_env_in_path(file_path);
 
+    return {[file_path] : await DirTool.get_file_hash(path.join(root, file_path))};
+  }
+
+
+  public static async get_file_hash(file: string): Promise<string> {
     return new Promise((resolve, reject) => {
       const hash = crypto.createHash('md5');
-      const stream = fs.createReadStream(path.join(root, file_path));
+      const stream = fs.createReadStream(file);
       stream.on('error', err => reject(err));
       stream.on('data', chunk => hash.update(chunk));
       stream.on('end', () => {
-        resolve({[file_path] : String(hash.digest('hex'))});
+        resolve(String(hash.digest('hex')));
       });
     });
   }
+
 
 
   public static delete_file(file: string): void {
@@ -522,5 +528,15 @@ export class DirTool {
 
       entry.isDirectory() ? DirTool.copy_dir(srcPath, destPath) : fs.copyFileSync(srcPath, destPath);
     }
+  }
+
+
+
+  public static copy_file(src: string, dest: string): void {
+    if (!DirTool.file_exists(src)) {
+      vscode.window.showErrorMessage(`Copy error: source file does not exist: ${src}`);
+      throw new Error(`Source file does not exist: ${src}`);
+    }
+    fs.copyFileSync(src, dest);
   }
 }
