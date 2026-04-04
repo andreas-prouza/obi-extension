@@ -26,18 +26,18 @@ const nunjucks = require('nunjucks');
 export class OBIController implements vscode.WebviewViewProvider {
 
 
-	public static readonly viewType = 'obi.controller';
+  public static readonly viewType = 'obi.controller';
   public static view_object: OBIController;
   public static current_run_type: string | undefined;
 
-	private _view?: vscode.WebviewView;
-	private _context?: vscode.WebviewViewResolveContext;
-	private _token?: vscode.CancellationToken;
+  private _view?: vscode.WebviewView;
+  private _context?: vscode.WebviewViewResolveContext;
+  private _token?: vscode.CancellationToken;
   private readonly _extensionUri: vscode.Uri
   private static is_config_watcher_set: boolean = false;
 
 
-	constructor(extensionUri: vscode.Uri) {
+  constructor(extensionUri: vscode.Uri) {
     this._extensionUri = extensionUri;
     OBIController.view_object = this;
 
@@ -58,7 +58,7 @@ export class OBIController implements vscode.WebviewViewProvider {
 
     const compile_list_file_path: string = path.join(Workspace.get_workspace(), config.general['compile-list']);
     // if compile-script changed, refresh the view
-    fs.watchFile(compile_list_file_path, {interval: 1000}, function (event, filename) {
+    fs.watchFile(compile_list_file_path, { interval: 1000 }, function (event, filename) {
       OBIController.update_build_summary_timestamp();
     });
   }
@@ -75,7 +75,7 @@ export class OBIController implements vscode.WebviewViewProvider {
         OBIController.view_object._token!
       );
     }
-    
+
   }
 
 
@@ -96,25 +96,25 @@ export class OBIController implements vscode.WebviewViewProvider {
             'An update for OBI backend is available.',
             'Update'
           ).then(async selection => {
-          if (selection === 'Update') {
-            const config = AppConfig.get_app_config();
+            if (selection === 'Update') {
+              const config = AppConfig.get_app_config();
 
-            const cmd = 'git pull';
-            try {
-              await SystemCmdExecution.run_system_cmd(config.general['local-obi-dir'], cmd, 'update_obi');
-              vscode.window.showInformationMessage('OBI backend updated successfully.');
-            } catch (error: any) {
-              if (error.signal === 'SIGTERM') {
-                vscode.window.showErrorMessage('Git pull command was aborted.');
+              const cmd = 'git pull';
+              try {
+                await SystemCmdExecution.run_system_cmd(config.general['local-obi-dir'], cmd, 'update_obi');
+                vscode.window.showInformationMessage('OBI backend updated successfully.');
+              } catch (error: any) {
+                if (error.signal === 'SIGTERM') {
+                  vscode.window.showErrorMessage('Git pull command was aborted.');
+                }
+                throw error;
               }
-              throw error;
             }
-          }
           });
         }
 
         if (status['message']) {
-        
+
           vscode.window.showErrorMessage(
             status['message'],
             'Open Details'
@@ -131,21 +131,21 @@ export class OBIController implements vscode.WebviewViewProvider {
   }
 
 
-  public static run_finished() {
-    OBIController.view_object._view?.webview.postMessage({command: 'run_finished'});
+  public static run_finished(process?: string) {
+    OBIController.view_object._view?.webview.postMessage({ command: 'run_finished', process: process });
     OBIController.check_obi_response();
     OBIController.update_build_summary_timestamp();
     BuildSummary.update();
     //webviewView.webview.postMessage();
   }
-  
-  
+
+
   public static update_build_summary_timestamp() {
 
     const rootPath =
       vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-      ? vscode.workspace.workspaceFolders[0].uri
-      : undefined;
+        ? vscode.workspace.workspaceFolders[0].uri
+        : undefined;
 
     if (!rootPath)
       return;
@@ -154,7 +154,7 @@ export class OBIController implements vscode.WebviewViewProvider {
       return;
 
     const compile_list = OBITools.get_compile_list(rootPath);
-     
+
     OBIController.view_object._view?.webview.postMessage(
       {
         command: 'update_build_summary_timestamp',
@@ -164,7 +164,7 @@ export class OBIController implements vscode.WebviewViewProvider {
 
   }
 
-  
+
   public static async update_current_profile() {
 
     //await OBIController.update();
@@ -175,44 +175,44 @@ export class OBIController implements vscode.WebviewViewProvider {
         profiles: AppConfig.get_profile_app_config_list(),
         current_profile: Workspace.get_workspace_settings().current_profile
       });
-    
+
   }
 
 
 
-	public resolveWebviewView(
-		webviewView: vscode.WebviewView,
-		context: vscode.WebviewViewResolveContext,
-		token: vscode.CancellationToken,
-	) {
-		this._view = webviewView;
+  public resolveWebviewView(
+    webviewView: vscode.WebviewView,
+    context: vscode.WebviewViewResolveContext,
+    token: vscode.CancellationToken,
+  ) {
+    this._view = webviewView;
     this._context = context;
     this._token = token;
 
-		webviewView.webview.options = {
-			// Allow scripts in the webview
-			enableScripts: true,
+    webviewView.webview.options = {
+      // Allow scripts in the webview
+      enableScripts: true,
       enableCommandUris: true,
-			localResourceRoots: [
+      localResourceRoots: [
         vscode.Uri.joinPath(this._extensionUri, "out"),
         vscode.Uri.joinPath(this._extensionUri, "asserts")
-			]
-		};
+      ]
+    };
     (webviewView as any).retainContextWhenHidden = true;
 
     if (vscode.workspace.workspaceFolders == undefined) {
       vscode.window.showErrorMessage('No workspace defined');
       return;
     }
-    
+
     const workspaceFolder = vscode.workspace.workspaceFolders[0].uri;
-    
+
     const html_template = 'controller/index.html';
 
-    const compile_list: {}|undefined = OBITools.get_compile_list(workspaceFolder);
+    const compile_list: {} | undefined = OBITools.get_compile_list(workspaceFolder);
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-    const html = nunjucks.render(html_template, 
+    const html = nunjucks.render(html_template,
       {
         global_stuff: OBITools.get_global_stuff(webviewView.webview, this._extensionUri),
         config_profiles: AppConfig.get_profile_app_config_list(),
@@ -221,17 +221,17 @@ export class OBIController implements vscode.WebviewViewProvider {
         builds_exist: compile_list ? compile_list['compiles'].length : undefined
       }
     );
-		webviewView.webview.html = html;
+    webviewView.webview.html = html;
 
     OBIController.update_build_summary_timestamp();
 
     // Listener
-		webviewView.webview.onDidReceiveMessage(data => {
+    webviewView.webview.onDidReceiveMessage(data => {
 
-			switch (data.command) {
-				case 'test':
-					vscode.window.showInformationMessage('Message from controller');
-					break;
+      switch (data.command) {
+        case 'test':
+          vscode.window.showInformationMessage('Message from controller');
+          break;
 
         case 'refresh':
           this.resolveWebviewView(webviewView, context, token);
@@ -279,34 +279,36 @@ export class OBIController implements vscode.WebviewViewProvider {
           DirTool.delete_file(path.join(Workspace.get_workspace(), current_profile));
           OBIController.update_current_profile();
           break;
-			}
-		});
+      }
+    });
 
-	}
+  }
 
 
-    // obi.source-filter.add-source-file
+  // obi.source-filter.add-source-file
   public static async copy_current_profile(): Promise<void> {
-  
+
     const ws = Workspace.get_workspace();
     const current_profile_config_file = path.join(ws, AppConfig.get_current_profile_app_config_file());
     const current_profile = Workspace.get_workspace_settings().current_profile;
     const profile_list = AppConfig.get_profile_app_config_list();
 
-    const new_profile: string | undefined = await vscode.window.showInputBox({ title: `Copy profile config ${current_profile}`, 
-                                                        placeHolder: 'profile-name', validateInput(value) {
-      if (value.trim() === '')
-        return 'Profile name cannot be empty';
+    const new_profile: string | undefined = await vscode.window.showInputBox({
+      title: `Copy profile config ${current_profile}`,
+      placeHolder: 'profile-name', validateInput(value) {
+        if (value.trim() === '')
+          return 'Profile name cannot be empty';
 
-      value = value.replace(' ', '-');
-      value = value.replace('.toml', '');
-      if (profile_list.some((profile: { alias: string }) => profile.alias === value))
-        return `Profile ${value} already exists`;
-      return null;
-    }});
+        value = value.replace(' ', '-');
+        value = value.replace('.toml', '');
+        if (profile_list.some((profile: { alias: string }) => profile.alias === value))
+          return `Profile ${value} already exists`;
+        return null;
+      }
+    });
     if (!new_profile)
       throw new Error('Canceled by user. No new profile name provided.');
-    
+
     let new_profile_config_file = AppConfig.convert_profile_alias_to_file(new_profile);
     new_profile_config_file = path.join(ws, Constants.OBI_CONFIGS_DIR, new_profile_config_file);
     DirTool.copy_file(current_profile_config_file, new_profile_config_file);

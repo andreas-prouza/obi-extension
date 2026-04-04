@@ -10,6 +10,7 @@ import { AppConfig, ConfigCompileSettings } from '../controller/AppConfig';
 import { Workspace } from '../../utilities/Workspace';
 import * as source from '../../obi/Source';
 import { SourceListProvider } from './SourceListProvider';
+import { logger } from '../../utilities/Logger';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -31,6 +32,8 @@ export class SourceInfos {
   private static _edit_infos: boolean;
   public static source_list_file: string;
 
+  private static source_list_infos: source.ISourceInfos|undefined = undefined;
+  private static loadPromise: Promise<void> | undefined = undefined;
 
 
   /**
@@ -48,6 +51,7 @@ export class SourceInfos {
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
   }
+
 
 
   /**

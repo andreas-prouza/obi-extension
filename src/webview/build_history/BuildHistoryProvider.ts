@@ -15,6 +15,7 @@ interface IBuildHistorys {
 
 export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistoryItem> {
 
+  private static _instance: BuildHistoryProvider;
   private workspaceRoot: string = '';
   private _onDidChangeTreeData: vscode.EventEmitter<BuildHistoryItem | undefined | null | void> = new vscode.EventEmitter<BuildHistoryItem | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<BuildHistoryItem | undefined | null | void> = this._onDidChangeTreeData.event;
@@ -23,6 +24,7 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
   constructor(workspaceRoot: string | undefined) {
     if (workspaceRoot !== undefined)
       this.workspaceRoot = workspaceRoot
+    BuildHistoryProvider._instance = this;
   }
 
 
@@ -173,10 +175,17 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
   }
 
 
-  refresh(): void {
+  async refresh(): Promise<void> {
     this._onDidChangeTreeData.fire();
   }
 
+
+  public static get_instance(): BuildHistoryProvider {
+    if (!BuildHistoryProvider._instance) {
+      throw new Error('BuildHistoryProvider instance not initialized');
+    }
+    return BuildHistoryProvider._instance;
+  }
 
 
   public register(context: vscode.ExtensionContext): any {
@@ -224,11 +233,8 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
       }
     });
 
-    // subscribe
-    context.subscriptions.push(tree);
-
-    const buildHistoryPath = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR, '**/*');
-    const buildHistoryRootPath = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR);
+//    const buildHistoryPath = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR, '**/*');
+  /*  const buildHistoryRootPath = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR);
     DirTool.dir_exists(buildHistoryRootPath) || fs.mkdirSync(buildHistoryRootPath);
     const watcherRootPath = vscode.workspace.createFileSystemWatcher(buildHistoryRootPath);
     const watcher = vscode.workspace.createFileSystemWatcher(buildHistoryPath);
@@ -237,12 +243,12 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
     watcher.onDidChange(() => this.refresh());
     watcher.onDidDelete(() => this.refresh());
 
-    watcherRootPath.onDidDelete(() => {
-      fs.mkdirSync(buildHistoryRootPath);
-      this.refresh();
-    });
+    watcherRootPath.onDidCreate(() => this.refresh());
+    watcherRootPath.onDidChange(() => this.refresh());
+    watcherRootPath.onDidDelete(() => this.refresh());
 
-    context.subscriptions.push(watcher);
+    context.subscriptions.push(watcher, watcherRootPath, tree);
+    */
   }
 
 

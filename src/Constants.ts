@@ -14,7 +14,8 @@ export class Constants {
   public static readonly OBI_BACKEND_VERSION: number = 3;
   public static readonly OBI_APP_CONFIG: string = 'app-config.toml';
   public static readonly OBI_APP_CONFIG_FILE: string = `${Constants.OBI_APP_CONFIG_DIR}/${Constants.OBI_APP_CONFIG}`;
-  public static readonly OBI_APP_CONFIG_USER: string = '.user-app-config.toml';
+  public static readonly OBI_APP_CONFIG_USER_PREFIX: string = '.user-app-config';
+  public static readonly OBI_APP_CONFIG_USER: string = `${Constants.OBI_APP_CONFIG_USER_PREFIX}.toml`;
   public static readonly OBI_APP_CONFIG_USER_FILE: string = `${Constants.OBI_APP_CONFIG_DIR}/${Constants.OBI_APP_CONFIG_USER}`;
   public static readonly OBI_SOURCE_CONFIG_FILE: string = ".obi/etc/source-config.toml";
   public static readonly OBI_TMP_DIR: string = ".obi/tmp";
@@ -30,6 +31,7 @@ export class Constants {
 
   public static readonly DEPENDENCY_LIST: string = ".obi/etc/dependency.json";
   public static readonly SOURCE_LIST: string = ".obi/etc/source-list.json";
+  public static readonly SOURCE_INFOS: string = ".obi/etc/source-infos.json";
   public static readonly REMOTE_SOURCE_LIST: string = '.obi/etc/source-list-remote.json';
   public static readonly COMPILED_OBJECT_LIST: string = '.obi/etc/object-builds.json';
   public static readonly EVFEVENT_OUTPUT_FOLDER: string = 'evfevent';
@@ -37,4 +39,13 @@ export class Constants {
 
   public static readonly EXTENDED_SOURCE_PROCESS_CONFIG_USER: string = `${Constants.OBI_CONFIGS_DIR}/.user-extended-source-processing-config.toml`;
   public static readonly EXTENDED_SOURCE_PROCESS_CONFIG: string = `${Constants.OBI_CONFIGS_DIR}/extended-source-processing-config.toml`;
+
+  public static readonly NEEDED_LIST_OF_PATH: string[] = [
+    Constants.OBI_CONFIGS_DIR,
+    Constants.SOURCE_FILTER_FOLDER_NAME,
+    Constants.BUILD_OUTPUT_DIR,
+    Constants.BUILD_HISTORY_DIR,
+    Constants.OBI_TMP_DIR
+  ];
+
 }

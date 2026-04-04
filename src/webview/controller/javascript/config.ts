@@ -545,23 +545,39 @@ function check_error_text() {
 function check_panel_missing(panel: string) {
 
   const panel_el = document.getElementById(panel);
+  const tab = `${panel?.split('_')[0]}`;
+  const tab_el = document.getElementById(`${tab}_cfg`);
+
   const missing_elements = document.getElementsByClassName('missing_value');
-  let found: boolean = false;
+  let found_panel: boolean = false;
+  let found_tab: boolean = false;
 
   for (let i = 0; i < missing_elements.length; i++) {
     const el = missing_elements[i];
-    if (el.getAttribute('panel') != panel)
-      continue;
-    found = true;
+    
+    if (el.getAttribute('panel') == panel)
+      found_panel = true;
+
+    if (el.getAttribute('panel')?.split('_')[0] == tab)
+      found_tab = true
   }
 
-  if (!found) {
-    panel_el?.classList.remove('missing_value');
-    return;
-  }
+  console.log(`Found: ${found_panel}, tab: ${found_tab}`);
 
-  if (!panel_el?.classList.contains('missing_value'))
+  if (found_panel) {
     panel_el?.classList.add('missing_value');
+  }
+  else {
+    panel_el?.classList.remove('missing_value');
+  }
+  
+  if (found_tab) {
+    tab_el?.classList.add('missing_value');
+  }
+  else {
+    tab_el?.classList.remove('missing_value');
+  }
+
   return;
 }
 
@@ -646,10 +662,14 @@ function set_element_missing_value(element: Element) {
   element.classList.add('missing_value');
   const panel = element.getAttribute('panel');
   const panel_el = document.getElementById(panel);
+  const tab_el = document.getElementById(`${panel?.split('_')[0]}_cfg`);
+
   if (!panel)
     return;
   if (!panel_el?.classList.contains('missing_value'))
     panel_el?.classList.add('missing_value');
+  if (tab_el)
+    tab_el.classList.add('missing_value');
 }
 
 

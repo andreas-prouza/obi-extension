@@ -40,11 +40,11 @@ export class Workspace {
 
 
 
-  public static get_workspace(): string | undefined {
+  public static get_workspace(): string {
 
     if (!vscode.workspace.workspaceFolders) {
       logger.error('No workspace available');
-      return undefined;
+      throw new Error('No workspace available');
     }
 
     return vscode.workspace.workspaceFolders[0].uri.fsPath;

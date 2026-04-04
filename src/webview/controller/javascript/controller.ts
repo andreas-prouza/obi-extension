@@ -85,7 +85,9 @@ function get_run_type() : string {
 function run_build() {
 
   let command: string = 'run_single_build';
-  const run_build_ring = document.getElementById("run_build_ring");
+  const run_build_ring = document.getElementById("running_ring");
+
+  run_build_ring?.setAttribute("data-process", "run_build");
 
   if (run_build_ring)
     run_build_ring.style.display='flex';
@@ -105,6 +107,9 @@ function show_changes() {
   let command: string = 'show_single_changes';
 
   const running_ring = document.getElementById("running_ring");
+
+  running_ring?.setAttribute("data-process", "show_changes");
+
   if (running_ring)
     running_ring.style.display='flex';
   
@@ -152,7 +157,7 @@ function receive_message(e: MessageEvent) {
 
     case 'run_finished':
       const running_ring = document.getElementById("running_ring");
-      if (running_ring) {
+      if (running_ring && running_ring.getAttribute("data-process") == e.data.process) {
         running_ring.style.display='none';
       }
       break;

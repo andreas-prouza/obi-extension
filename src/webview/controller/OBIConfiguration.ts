@@ -100,6 +100,8 @@ export class OBIConfiguration {
     const esp_config_project = new ExtendedSourceProcessingList();
     const esp_config_user = new ExtendedSourceProcessingList(true);
     
+    const panel = await context.secrets.get('obi|config|panel');
+    const panel_tab = await context.secrets.get('obi|config|panel_tab');
 
     const html = nunjucks.render('controller/configuration.html', 
       {
@@ -113,8 +115,8 @@ export class OBIConfiguration {
         project_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_FILE),
         user_config_file: DirTool.get_encoded_file_URI(AppConfig.get_current_profile_app_config_file()),
         source_config_file: DirTool.get_encoded_file_URI(Constants.OBI_SOURCE_CONFIG_FILE),
-        panel: await context.secrets.get('obi|config|panel'),
-        panel_tab: await context.secrets.get('obi|config|panel_tab'),
+        panel: panel,
+        panel_tab: panel_tab,
         config_source_list: AppConfig.get_source_configs(),
         error_text: error_text,
         source_list: local_source_list,

@@ -9,6 +9,7 @@ import { OBITools } from '../../utilities/OBITools';
 import { AppConfig } from '../controller/AppConfig';
 import { Workspace } from '../../utilities/Workspace';
 import * as source from '../../obi/Source';
+import { LocalSourceList } from '../../utilities/LocalSourceList';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -57,7 +58,7 @@ export class SourceList {
       SourceList.currentPanel._panel.dispose();
     }
 
-    let filtered_sources_extended = await OBITools.get_filtered_sources_with_details(source_list_file) || [];
+    let filtered_sources_extended = await LocalSourceList.get_filtered_sources_with_details(source_list_file) || [];
 
     for (let source of filtered_sources_extended) {
       source['path'] = DirTool.get_encoded_source_URI(workspaceUri, path.join(source['source-lib'], source['source-file'], source['source-member']));

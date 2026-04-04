@@ -17,13 +17,13 @@ import { Workspace } from './utilities/Workspace';
 import { OBISourceConfiguration } from './webview/controller/OBISourceConfiguration';
 import { DirTool } from './utilities/DirTool';
 import { I_Releaser } from './webview/deployment/I_Releaser';
-import { Constants } from './Constants';
 import { OBISourceDependency } from './webview/controller/OBISourceDependency';
 import { LocalSourceList } from './utilities/LocalSourceList';
 import { QuickSettings } from './webview/quick_settings/QuickSettings';
 import { BuildHistoryProvider } from './webview/build_history/BuildHistoryProvider';
 import { sourceQuickSearch } from './source-quick-search';
-import { clear_diagnostics, show_diagnostic_infos } from './source/compile-diagnostics';
+import { clear_diagnostics } from './source/compile-diagnostics';
+import { HealthyWatchdog } from './utilities/HealthyWatchdog';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -89,16 +89,17 @@ export function activate(context: vscode.ExtensionContext) {
 		OBITools.reload_obi_extension_on_config_change();
 		return;
 	}
-
+	
 	const config = AppConfig.get_app_config();
 	if (config.attributes_missing()) {
-		vscode.window.showErrorMessage("Config is not valid!");
+		vscode.window.showErrorMessage("Config not finished!");
 		vscode.commands.executeCommand('obi.controller.config');
-		OBITools.reload_obi_extension_on_config_change();
-		return;
+		//OBITools.reload_obi_extension_on_config_change();
+		//return;
 	}
-
+	
 	vscode.commands.executeCommand('setContext', 'obi.valid-config', true);
+	HealthyWatchdog.set_healthy_watchdog(context);
 
 
 	context.subscriptions.push(
@@ -184,9 +185,9 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.get-remote-compiled-object-list', () => {
+		vscode.commands.registerCommand('obi.get-remote-build-results', () => {
 			// Only available with workspaces
-			OBICommands.get_remote_compiled_object_list();
+			OBICommands.get_remote_build_results();
 		})
 	);
 

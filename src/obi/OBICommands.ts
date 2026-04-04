@@ -77,7 +77,7 @@ export class OBICommands {
           }
         }
 
-        if (! await OBITools.check_remote_pase()){
+        if (! await OBITools.check_remote_pase()) {
           vscode.window.showErrorMessage('Remote PASE is not configured correctly. Please check your configuration.');
           return false;
         }
@@ -219,7 +219,7 @@ export class OBICommands {
     await Promise.all(promise_list);
 
     if (DirTool.file_exists(path.join(ws, config.general['compile-list']))) {
-      
+
       const compile_list: {} = OBITools.get_compile_list(ws_uri) || {};
       const timestamp: string = compile_list['timestamp'] || new Date().toISOString();
 
@@ -281,7 +281,7 @@ export class OBICommands {
     const source = OBICommands.get_current_active_source();
 
     if (!source)
-      return OBIController.run_finished();
+      return OBIController.run_finished('run_build');
 
     OBICommands.run_build(context, source);
   }
@@ -296,9 +296,15 @@ export class OBICommands {
       return;
     }
 
-    await OBICommands.show_changes(context, source);
+    if (!await OBICommands.show_changes(context, source)) {
+      OBICommands.run_build_status = OBIStatus.READY;
+      OBIController.run_finished('run_build');
+      return;
+    }
 
     await OBICommands.rerun_build([], {});
+    OBICommands.run_build_status = OBIStatus.READY;
+    OBIController.run_finished('run_build');
 
     return;
   }
@@ -335,35 +341,49 @@ export class OBICommands {
     }
 
     OBICommands.run_build_status = OBIStatus.READY;
-    OBIController.run_finished();
+    OBIController.run_finished('run_build');
     return;
   }
 
 
 
-  public static async show_single_changes(context: vscode.ExtensionContext) {
+  public static async show_single_changes(context: vscode.ExtensionContext): Promise<boolean> {
     const source = OBICommands.get_current_active_source();
 
-    if (!source)
-      return OBIController.run_finished();
+    if (!source) {
+      OBIController.run_finished('show_changes');
+      return false;
+    }
 
-    OBICommands.show_changes(context, source);
+    return await OBICommands.show_changes(context, source);
   }
 
 
 
 
-  public static async show_changes(context: vscode.ExtensionContext, source?: string) {
+  public static async show_changes(context: vscode.ExtensionContext, source?: string): Promise<boolean> {
+
+    let is_success: boolean = false;
+    OBITools.self_check();
+
+    const ws: string = Workspace.get_workspace();
+    const config = AppConfig.get_app_config();
+
+    if (config.attributes_missing()) {
+      vscode.window.showErrorMessage('Missing config settings. Please check your configuration.');
+      vscode.commands.executeCommand('obi.controller.config');
+      OBIController.run_finished('show_changes');
+      return false;
+    }
 
     if (OBICommands.show_changes_status != OBIStatus.READY) {
       vscode.window.showErrorMessage('OBI process is already running');
-      return;
+      OBIController.run_finished('show_changes');
+      return false;
     }
 
     OBICommands.show_changes_status = OBIStatus.IN_PROCESS;
 
-    const ws: string = Workspace.get_workspace();
-    const config = AppConfig.get_app_config();
 
     try {
       if (OBITools.without_local_obi())
@@ -381,6 +401,7 @@ export class OBICommands {
       }
 
       BuildSummary.render(context.extensionUri, Workspace.get_workspace_uri());
+      is_success = true;
     }
     catch (error: any) {
 
@@ -389,10 +410,10 @@ export class OBICommands {
     }
 
     OBICommands.show_changes_status = OBIStatus.READY;
-    OBIController.run_finished();
+    OBIController.run_finished('show_changes');
     OBIController.update_build_summary_timestamp();
 
-    return;
+    return is_success;
   }
 
 
@@ -501,22 +522,28 @@ export class OBICommands {
 
 
 
-  public static async get_remote_compiled_object_list() {
+  public static async get_remote_build_results() {
 
-    const config = AppConfig.get_app_config();
-    const remote_base_dir: string | undefined = config.general['remote-base-dir'];
-    const remote_obi_dir: string | undefined = config.general['remote-obi-dir'];
+    await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: `Run build`,
+    },
+      async progress => {
+        
+        progress.report({
+          message: 'Get all outputs back to you'
+        });
+        await OBICommands.get_remote_build_output();
 
-    if (!remote_base_dir || !remote_obi_dir)
-      throw Error(`Missing config 'remote-base-dir' or 'remote-obi-dir'`);
+        progress.report({
+          message: 'Update screens'
+        });
 
-    if (!config.general['compiled-object-list'])
-      throw Error(`Missing config 'compiled-object-list'`);
+        BuildSummary.update();
+        OBIController.update_build_summary_timestamp();
+      });
 
-    await SSH_Tasks.getRemoteFile(path.join(Workspace.get_workspace(), config.general['compiled-object-list']), `${remote_base_dir}/${config.general['compiled-object-list']}`);
-
-    vscode.window.showInformationMessage('Compiled object list transfered from remote');
-
+    vscode.window.showInformationMessage('Finished retrieving of build results');
   }
 
 }
