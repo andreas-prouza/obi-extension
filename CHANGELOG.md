@@ -1,3 +1,8 @@
+## [1.2.1]
+
+* Bugfix load dependency list
+
+
 ## [1.2.0]
 
 * Maintain extended source processing config

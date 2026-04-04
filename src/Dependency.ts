@@ -18,7 +18,9 @@ export class DependencyList {
 
 
   public static async get_dependencies(): Promise<Dependencies> {
-    await DependencyList.loadPromise;
+    if (!DependencyList.dependency_list) {
+      await DependencyList.load_dependencies();
+    }
     return DependencyList.dependency_list || {};
   }
 
