@@ -1,3 +1,10 @@
+## [1.2.0]
+
+* Maintain extended source processing config
+* OBI is now watching several files
+* Some restructures
+
+
 ## [1.1.0]
 
 * Accept individual config parameters
