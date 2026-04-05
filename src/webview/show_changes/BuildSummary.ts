@@ -125,8 +125,8 @@ export class BuildSummary {
   }
 
 
-  public static get_compile_list(): {} {
-    let compile_list: {}|undefined;
+  public static get_compile_list(): any {
+    let compile_list: any|undefined;
     let compileListFileName: string|undefined = AppConfig.get_app_config().general['compile-list'];
     
     if (BuildSummary._current_compile_output_folder && compileListFileName) {
@@ -197,7 +197,7 @@ export class BuildSummary {
 
 
 
-  private static get_object_list(workspaceUri: vscode.Uri): {}|undefined {
+  private static get_object_list(workspaceUri: vscode.Uri): any|undefined {
 
 
 

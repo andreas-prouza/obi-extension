@@ -7,11 +7,11 @@ export interface IQualifiedSource {
   "use-regex"?: boolean
   "show-empty-folders"?: boolean
   path?: string
-  description?: String
+  description?: string
 }
 
 export interface ISourceInfo {
-  description?: String
+  description?: string
 }
 
 export interface ISourceInfos {

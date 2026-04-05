@@ -542,7 +542,7 @@ export class OBITools {
 
 
 
-  public static get_compile_list(workspaceUri: vscode.Uri, compileListFileName: string|undefined=undefined): {} | undefined {
+  public static get_compile_list(workspaceUri: vscode.Uri, compileListFileName: string|undefined=undefined): any | undefined {
 
     if (AppConfig.attributes_missing())
       return undefined;
@@ -581,7 +581,7 @@ export class OBITools {
 
     let sources: source.SourceCompileList[] = [];
 
-    const compile_list: {} | undefined = OBITools.get_compile_list(Workspace.get_workspace_uri());
+    const compile_list: any | undefined = OBITools.get_compile_list(Workspace.get_workspace_uri());
 
     if (!compile_list || !('compiles' in compile_list))
       return sources;
@@ -602,7 +602,7 @@ export class OBITools {
     let sources: string[] = [];
     let need_2_build: boolean = false;
 
-    const compile_list: {} | undefined = OBITools.get_compile_list(Workspace.get_workspace_uri());
+    const compile_list: any | undefined = OBITools.get_compile_list(Workspace.get_workspace_uri());
 
     if (!compile_list || !('compiles' in compile_list))
       return sources;
@@ -634,7 +634,7 @@ export class OBITools {
 
   public static is_compile_list_completed(workspaceUri: vscode.Uri): boolean {
 
-    const compile_list: {} | undefined = OBITools.get_compile_list(workspaceUri);
+    const compile_list: any | undefined = OBITools.get_compile_list(workspaceUri);
 
     if (!compile_list || !('compiles' in compile_list))
       return false;

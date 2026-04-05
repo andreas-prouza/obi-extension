@@ -9,6 +9,7 @@ import { AppConfig } from '../../shared/AppConfig';
 import { Workspace } from '../../extension/utilities/Workspace';
 import * as source from '../../shared/Source';
 import { SourceListProvider } from './SourceListProvider';
+import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -88,8 +89,8 @@ export class SourceInfos {
       html_template = 'source_list/source-infos-config.html';
     }
 
-    const sources = await OBITools.get_local_sources();
-    const source_list: source.IQualifiedSource[] = OBITools.get_extended_source_infos(sources)||[];
+    const sources = await LocalSourceList.get_local_sources();
+    const source_list: source.IQualifiedSource[] = await LocalSourceList.get_extended_source_infos(sources)||[];
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
     const html = nunjucks.render(html_template, 

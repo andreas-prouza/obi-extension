@@ -351,7 +351,7 @@ export class OBIConfiguration {
 
   private static add_source_config(source: string) {
     let source_configs: SourceConfigList = AppConfig.get_source_configs() || {};
-    source_configs[source] = {"compile-cmds": [], settings: {}, steps: []};
+    source_configs[source] = {"source-cmds": {}, settings: {} as any, steps: []};
     DirTool.write_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs);
   }
 
@@ -367,7 +367,7 @@ export class OBIConfiguration {
 
 
 
-  private static save_config(isUser: boolean, workspaceUri: Uri, data: {}) {
+  private static save_config(isUser: boolean, workspaceUri: Uri, data: any) {
 
     vscode.window.showInformationMessage('Configuration saved');
     const app_config: AppConfig = AppConfig.get_app_config();

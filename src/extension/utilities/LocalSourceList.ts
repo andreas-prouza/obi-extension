@@ -132,7 +132,7 @@ export class LocalSourceList {
 
 
 
-  public static async update_source_infos(source_path: String, source_member: String, description: String|undefined): Promise<void> {
+  public static async update_source_infos(source_path: string, source_member: string, description: string|undefined): Promise<void> {
 
     const config: AppConfig = AppConfig.get_app_config();
 

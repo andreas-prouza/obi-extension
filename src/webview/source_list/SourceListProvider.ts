@@ -73,7 +73,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       //OBITools.get_filtered_sources_with_details(element).then((result) => {
       //  SourceListProvider.source_lists[element] = result;
       //});
-      SourceListProvider.source_lists[element] = await LocalSourceList.get_filtered_sources_with_details(element);
+      SourceListProvider.source_lists[element] = LocalSourceList.get_filtered_sources_with_details(element);
 
       const new_child = new SourceListItem(
         element.replaceAll('.json', ''),
@@ -94,32 +94,39 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
   async get_child_elements(element: SourceListItem): Promise<any> {
 
-    let content_list: {}[] = [];
+    let content_list: any[] = [];
     let item: SourceListItem;
     let level: string = 'source-list';
-    let results: SourceListItem[] = [];
+    const results: SourceListItem[] = [];
     let description: string | undefined = undefined;
     let lib: string | undefined;
     let file: string | undefined;
     let member: string | undefined;
-    let path: string | undefined;
 
     let collapsibleState: vscode.TreeItemCollapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
 
     const sources: source.IQualifiedSource[] | undefined = await SourceListProvider.source_lists[element['source_list']];
+
+    let label: string = '';
+    if (!(typeof element.label === 'string')) {
+      label = element.label?.label || '';
+    }
+    else {
+      label = element.label;
+    }
 
     if (element.list_level == 'source-list') {
       level = 'source-lib';
     }
     if (element.list_level == 'source-lib') {
       level = 'source-file';
-      lib = element.label;
+      lib = label;
       collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
     }
     if (element.list_level == 'source-file') {
       level = 'source-member';
       lib = element.src_lib;
-      file = element.label;
+      file = label;
       collapsibleState = vscode.TreeItemCollapsibleState.None;
     }
 
@@ -189,7 +196,15 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       throw new Error('Canceled by user. No source folder name provided');
 
     const src_folder = app_config.general['source-dir']||'src';
-    const new_folder = path.join(Workspace.get_workspace(), src_folder, item.label, source_file_folder);
+    let label: string = '';
+    if (!(typeof item.label === 'string')) {
+      label = item.label?.label || '';
+    }
+    else {
+      label = item.label;
+    }
+
+    const new_folder = path.join(Workspace.get_workspace(), src_folder, label, source_file_folder);
 
     // Create the new directory if it doesn't exist
     if (!DirTool.dir_exists(new_folder)) {
@@ -223,7 +238,15 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       throw new Error('Canceled by user. No source member name provided');
 
     const src_folder = app_config.general['source-dir']||'src';
-    const new_file = path.join(Workspace.get_workspace(), src_folder, item.src_lib, item.label, source_member);
+    let label: string = '';
+    if (!(typeof item.label === 'string')) {
+      label = item.label?.label || '';
+    }
+    else {
+      label = item.label;
+    }
+
+    const new_file = path.join(Workspace.get_workspace(), src_folder, item.src_lib, label, source_member);
     DirTool.write_file(new_file, '');
     vscode.window.showTextDocument(vscode.Uri.file(new_file));
 
@@ -236,13 +259,11 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
   async change_source_description(item: SourceListItem | vscode.Uri): Promise<void> {
 
     const config: AppConfig = AppConfig.get_app_config();
-    let lib: String = '';
-    let file: String = '';
-    let member: String = '';
+    let lib: string = '';
+    let file: string = '';
+    let member: string = '';
     let source_path: string = '';
-    let description: string = '';
-
-    const src_dir: string = config.general['source-dir'] || 'src';
+    let description: string|undefined = '';
 
     logger.debug(`Changing source description for item: ${JSON.stringify(item, null, 2)}`);
 
@@ -292,14 +313,12 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
 
   // obi.source-filter.add-source-file
-  async rename_source_member(item: SourceListItem | vscode.Uri): Promise<void> {
+  async rename_source_member(item: SourceListItem): Promise<void> {
     
     const app_config = AppConfig.get_app_config();
 
-    if (item instanceof SourceListItem) {
-      if (!item.src_lib || !item.src_file || !item.src_member) {
-        throw new Error('Source member information missing');
-      }
+    if (!item.member_path || !item.src_member) {
+      throw new Error('Source member information missing');
     }
 
     const new_name: string | undefined = await vscode.window.showInputBox({ 
@@ -337,16 +356,19 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
   // obi.source-filter.add-source-file
   async delete_source_member(item: SourceListItem | vscode.Uri): Promise<void> {
-    
-    const app_config = AppConfig.get_app_config();
+
+    let from_path: string;
 
     if (item instanceof SourceListItem) {
-      if (!item.src_lib || !item.src_file || !item.src_member) {
+      if (!item.member_path || !item.src_member) {
         throw new Error('Source member information missing');
       }
+      from_path = path.join(Workspace.get_workspace(), item.member_path, item.src_member);
     }
-
-    const from_path = path.join(Workspace.get_workspace(), item.member_path, item.src_member);
+    else {
+      from_path = item.fsPath;
+    }
+    
     fs.unlinkSync(from_path);
 
     return;
@@ -449,10 +471,10 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
 
 
-  private static get_values_by_key(source_list: source.IQualifiedSource[], key: string, lib?: string, file?: string): {}[] {
+  private static get_values_by_key(source_list: source.IQualifiedSource[], key: string, lib?: string, file?: string): any[] {
 
-    let result: {}[] = [];
-    let item: {} = {};
+    let result: any[] = [];
+    let item: any = {};
 
     for (let i = 0; i < source_list.length; i++) {
       const element = source_list[i];
@@ -478,8 +500,6 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
 export class SourceListItem extends vscode.TreeItem {
 
-  public readonly label: string;
-  public readonly collapsibleState: vscode.TreeItemCollapsibleState;
   public readonly source_list: string;
   public readonly file_path: string | undefined;
   public readonly src_lib: string | undefined;
@@ -549,8 +569,8 @@ export class SourceListItem extends vscode.TreeItem {
     }
 
     this.iconPath = {
-      light: path.join(__filename, '..', '..', '..', '..', 'asserts', 'img', 'light', icon),
-      dark: path.join(__filename, '..', '..', '..', '..', 'asserts', 'img', 'dark', icon)
+      light: vscode.Uri.file(path.join(__filename, '..', '..', '..', '..', 'asserts', 'img', 'light', icon)),
+      dark: vscode.Uri.file(path.join(__filename, '..', '..', '..', '..', 'asserts', 'img', 'dark', icon))
     };
 
     if (list_level != 'source-member')

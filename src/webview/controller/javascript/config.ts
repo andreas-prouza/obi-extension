@@ -101,7 +101,7 @@ function main() {
   // Add new attributes for language settings
   const new_language_button = document.getElementById('add_language_settings');
   new_language_button?.addEventListener('click', () => {
-    const lang: string = document.getElementById('add_language_settings_name')?.value;
+    const lang: string = (document.getElementById('add_language_settings_name') as HTMLInputElement)?.value;
     const config: string = new_language_button.getAttribute('config') ?? '';
     add_language_settings(config, lang);
     reload();
@@ -111,7 +111,7 @@ function main() {
   new_property_buttons.forEach((e) => {
     e.addEventListener('click', () => {
       const attr: string = e.getAttribute('id_of_property') ?? '';
-      const value: string = document.getElementById(attr)?.value;
+      const value: string = (document.getElementById(attr) as HTMLInputElement)?.value;
       const config: string = e.getAttribute('config') ?? '';
       const attr_arr = attr.split('|');
       add_language_attribute(config, attr_arr[0], value);
@@ -587,7 +587,7 @@ function check_input(element: Element) {
 
   element.classList.remove('missing_value');
 
-  const elem_value: string = element.value;
+  const elem_value: string = (element as HTMLInputElement).value;
   let found_missing = false;
 
   // Array
@@ -815,7 +815,7 @@ function save_esp(config:string) {
 
 function save_config(class_prefix:string) {
 
-  let app_config:{} = {};
+  let app_config: any = {};
 
   console.log(`Save config for ${class_prefix}`);
 
@@ -842,7 +842,7 @@ function save_config(class_prefix:string) {
       json_string = `${json_string} { "${el2[i]}"`;
     }
 
-    const elem_value = app_elements[i].value.replaceAll('\\', '\\\\').replaceAll('"', '\\\"');
+    const elem_value = (app_elements[i] as HTMLInputElement).value.replaceAll('\\', '\\\\').replaceAll('"', '\\\"');
 
     if (elem_value.length == 0 || elem_value == 'NaN')
       continue;
@@ -856,7 +856,7 @@ function save_config(class_prefix:string) {
     // Checkbox element
     if (app_elements[i].classList.contains('type_checkbox')) {
       json_value = 'false';
-      if (app_elements[i].checked)
+      if ((app_elements[i] as Checkbox).checked)
         json_value = 'true';
     }
 

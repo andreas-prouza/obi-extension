@@ -161,7 +161,7 @@ export class ConfigCompileSettings {
   public RPGPPOPT?: string;
   public INCDIR_RPGLE?: string;
   public INCDIR_SQLRPGLE?: string;
-  public TARGET_LIB_MAPPING?: {};
+  public TARGET_LIB_MAPPING?: any;
   public INCLUDE_BNDDIR?: string;
   public ACTGRP?: string;
   public TARGET_LIB?: string;
@@ -468,8 +468,8 @@ export class AppConfig {
     
     const ws_uri = Workspace.get_workspace_uri();
 
-    const project_app_config: {} = AppConfig.get_project_app_config(ws_uri);
-    const user_app_config: {} = AppConfig.get_user_app_config(ws_uri);
+    const project_app_config: any = AppConfig.get_project_app_config(ws_uri);
+    const user_app_config: any = AppConfig.get_user_app_config(ws_uri);
 
     const config = OBITools.override_dict(user_app_config, project_app_config);
 

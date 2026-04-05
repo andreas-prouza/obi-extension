@@ -239,7 +239,7 @@ export class DirTool {
 
 
 
-  public static write_json(file: string, data: {}): any|undefined {
+  public static write_json(file: string, data: any): any|undefined {
     
     file = DirTool.resolve_env_in_path(file);
     
@@ -261,7 +261,7 @@ export class DirTool {
 
 
 
-  public static get_file_URI(file: string) : {} {
+  public static get_file_URI(file: string) : any {
 
     let scheme:string = 'file';
     let remote_ws_host:string = '';
@@ -333,7 +333,7 @@ export class DirTool {
   }
 
 
-  public static write_toml(file: string, data: {}): any|undefined {
+  public static write_toml(file: string, data: any): any|undefined {
 
     file = DirTool.resolve_env_in_path(file);
 
@@ -383,7 +383,7 @@ export class DirTool {
 
     file = DirTool.resolve_env_in_path(file);
 
-    let key_values: {}= {};
+    let key_values: any= {};
     if (!DirTool.file_exists(file))
       return undefined;
     
@@ -431,7 +431,7 @@ export class DirTool {
   }
 
 
-  public static get_shell_config(file: string): {}|undefined {
+  public static get_shell_config(file: string): any|undefined {
 
     file = DirTool.resolve_env_in_path(file);
 

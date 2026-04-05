@@ -21,12 +21,12 @@ suite('Extension Test Suite', () => {
 
 	test('Array merge test', () => {
 
-		let x: {} = {
+		let x: any = {
 			allg: "test 1",
 			x: "test x",
 		};
 
-		let y: {} = {
+		let y: any = {
 			allg: "test 2",
 			y: "test y",
 		};

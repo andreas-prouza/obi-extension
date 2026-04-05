@@ -249,7 +249,7 @@ export class OBISourceConfiguration {
 
 
 
-  private static save_config(settings:{}, source_cmds:{}, steps:string[]) {
+  private static save_config(settings: any, source_cmds: any, steps:string[]) {
 
     let source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
     let source_config: SourceConfig = {"source-cmds": source_cmds, settings: settings, steps: steps};

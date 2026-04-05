@@ -472,8 +472,9 @@
     "compile-tests": "tsc -p ./",
     "watch-tests": "tsc -watch -p ./",
     "pretest": "npm run compile-tests && npm run lint",
-    "lint": "eslint src/",
     "test": "node ./out/test/runTest.js",
+    "test:fast": "npm run compile-tests && node ./out/test/runTest.js",
+    "lint": "eslint src/",
     "postinstall": "rm -rf node_modules/ssh2/test"
   },
   "devDependencies": {

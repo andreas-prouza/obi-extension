@@ -207,7 +207,7 @@ export class OBIController implements vscode.WebviewViewProvider {
 
     const html_template = 'controller/index.html';
 
-    const compile_list: {} | undefined = OBITools.get_compile_list(workspaceFolder);
+    const compile_list: any | undefined = OBITools.get_compile_list(workspaceFolder);
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
     const html = nunjucks.render(html_template,

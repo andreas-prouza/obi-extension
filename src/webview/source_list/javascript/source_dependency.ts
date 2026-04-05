@@ -54,7 +54,7 @@ function main() {
 function delete_dependency(type: number, id: string) {
   
   const button = document.getElementById(id);
-  let source: string|null|undefined = button?.getAttribute('source');
+  const source: string|null|undefined = button?.getAttribute('source');
 
   console.log(`Delete dependency ${type} ${source}`);
 
