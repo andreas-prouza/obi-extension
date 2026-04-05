@@ -220,7 +220,7 @@ export class OBICommands {
 
     if (DirTool.file_exists(path.join(ws, config.general['compile-list']))) {
 
-      const compile_list: {} = OBITools.get_compile_list(ws_uri) || {};
+      const compile_list: any = OBITools.get_compile_list(ws_uri) || {};
       const timestamp: string = compile_list['timestamp'] || new Date().toISOString();
 
       compile_list['config'] = config;
@@ -259,7 +259,7 @@ export class OBICommands {
     if (source.charAt(0) == '/')
       source = source.substring(1);
 
-    if (!config.general['supported-object-types'].includes(source.split('.').pop())) {
+    if (!config.general['supported-object-types'].includes(source.split('.').pop() ?? '')) {
       vscode.window.showWarningMessage(`${source} is not a supported source type`);
       return undefined;
     }
@@ -386,7 +386,7 @@ export class OBICommands {
 
 
     try {
-      if (OBITools.without_local_obi())
+      if (OBITools.without_local_obi() || !config.general['local-obi-dir'])
         await OBITools.generate_source_change_lists(source);
       else {
         logger.info(`WS: ${Workspace.get_workspace()}`);
@@ -446,13 +446,14 @@ export class OBICommands {
         throw Error(`Invalid config for config.general['compiled-object-list']: ${config.general['compiled-object-list']}`);
 
       const object_list_file: string = config.general['compiled-object-list'];
-      let json_dict: {} = {};
+      let json_dict: any = {};
 
       const source_hashes: source.ISource[] = await OBITools.retrieve_current_source_hashes();
 
       source_hashes.map((source: source.ISource) => {
         const source_name: string = Object.keys(source)[0];
-        json_dict[source_name.replaceAll('\\', '/')] = source[source_name];
+        const source_name_fixed: string = source_name.replaceAll('\\', '/');
+        json_dict[source_name_fixed] = source[source_name];
       });
       DirTool.write_json(path.join(Workspace.get_workspace(), object_list_file), json_dict);
       vscode.window.showInformationMessage(`Object list created`);

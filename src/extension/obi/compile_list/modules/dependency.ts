@@ -45,7 +45,7 @@ export function getBuildOrder(
 
   DirTool.write_json(path.join(ws, '.obi/tmp/ordered_target_tree.json'), orderedTargetTree);
 
-  let newTargetTree = removeDuplicities(orderedTargetTree);
+  let newTargetTree: any = removeDuplicities(orderedTargetTree);
   DirTool.write_json(path.join(ws, '.obi/tmp/new_target_tree.json'), newTargetTree);
 
   if (!appConfig) {
@@ -189,7 +189,7 @@ export function removeDuplicities(targetTree: any[] = []): any[] {
   //  }
   //}
 
-  const optimizeTree = (sortedTree) => {
+  const optimizeTree = (sortedTree: any[]): any[] => {
     const seenSources = new Set();
     
     // 1. Reverse the tree to start from the highest level (Level 5 -> Level 1)
@@ -198,7 +198,7 @@ export function removeDuplicities(targetTree: any[] = []): any[] {
 
     for (const levelItem of reversedTree) {
       // 2. Filter sources: keep only those NOT seen in a higher level
-      levelItem.sources = levelItem.sources.filter(obj => {
+      levelItem.sources = levelItem.sources.filter((obj: any) => {
         if (seenSources.has(obj.source)) {
           return false; // Duplicate found at a higher level, remove from this lower level
         } else {

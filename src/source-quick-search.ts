@@ -7,7 +7,7 @@ import { ISourceInfos } from './shared/Source';
 
 
 export async function sourceQuickSearch() {
-    const quickPick = vscode.window.createQuickPick();
+    const quickPick: any = vscode.window.createQuickPick();
     quickPick.placeholder = 'Search for a source by name or description...';
     quickPick.matchOnDescription = true;
     // quickPick.matchOnDetail = true;
@@ -69,7 +69,7 @@ export async function sourceQuickSearch() {
         quickPick.busy = false;
     });
 */
-    quickPick.onDidChangeSelection(selection => {
+    quickPick.onDidChangeSelection((selection: any) => {
         if (selection[0]) {
             const config = AppConfig.get_app_config();
             const source_dir = path.join(Workspace.get_workspace(), config.general['source-dir'] || 'src');

@@ -11,7 +11,7 @@ export interface IQualifiedSource {
 }
 
 export interface ISourceInfo {
-  description: String
+  description?: String
 }
 
 export interface ISourceInfos {

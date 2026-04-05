@@ -1,12 +1,15 @@
 // file: esbuild.js
 
-const { build } = require("esbuild");
+const { context } = require("esbuild");
 
+// Check if the --watch flag was passed in the CLI
+const watch = process.argv.includes("--watch");
+const production = process.env.NODE_ENV === "production";
 
 const baseConfig = {
   bundle: true,
-  minify: process.env.NODE_ENV === "production",
-  sourcemap: process.env.NODE_ENV !== "production",
+  minify: production,
+  sourcemap: !production,
 };
 
 const extensionConfig = {
@@ -67,7 +70,6 @@ const configInvalidViewConfig = {
   outfile: "./out/config_invalid.js",
 };
 
-
 const source_config_ViewConfig = {
   ...baseConfig,
   target: "es2020",
@@ -76,7 +78,6 @@ const source_config_ViewConfig = {
   outfile: "./out/source_config.js",
 };
 
-
 const source_dependency_ViewConfig = {
   ...baseConfig,
   target: "es2020",
@@ -84,7 +85,6 @@ const source_dependency_ViewConfig = {
   entryPoints: ["./src/webview/source_list/javascript/source_dependency.ts"],
   outfile: "./out/source_dependency.js",
 };
-
 
 const sourceListConfigViewConfig = {
   ...baseConfig,
@@ -118,23 +118,38 @@ const deployment_config_ViewConfig = {
   outfile: "./out/deployment_config.js",
 };
 
+// Group all configurations into an array
+const configs = [
+  extensionConfig,
+  webviewConfig,
+  buildSummaryViewConfig,
+  controllerViewConfig,
+  welcomeViewConfig,
+  configViewConfig,
+  configInvalidViewConfig,
+  sourceListConfigViewConfig,
+  sourceInfosViewConfig,
+  source_config_ViewConfig,
+  source_dependency_ViewConfig,
+  i_releaser_ViewConfig,
+  deployment_config_ViewConfig,
+];
 
 (async () => {
   try {
-    await build(extensionConfig);
-    await build(webviewConfig);
-    await build(buildSummaryViewConfig);
-    await build(controllerViewConfig);
-    await build(welcomeViewConfig);
-    await build(configViewConfig);
-    await build(configInvalidViewConfig);
-    await build(sourceListConfigViewConfig);
-    await build(sourceInfosViewConfig);
-    await build(source_config_ViewConfig);
-    await build(source_dependency_ViewConfig);
-    await build(i_releaser_ViewConfig);
-    await build(deployment_config_ViewConfig);
-    console.log("build complete");
+    // Create an esbuild context for every configuration
+    const contexts = await Promise.all(configs.map((c) => context(c)));
+
+    if (watch) {
+      // If the --watch flag is present, start watching all contexts
+      await Promise.all(contexts.map((ctx) => ctx.watch()));
+      console.log("Watching for changes...");
+    } else {
+      // Otherwise, build once and dispose of the contexts
+      await Promise.all(contexts.map((ctx) => ctx.rebuild()));
+      await Promise.all(contexts.map((ctx) => ctx.dispose()));
+      console.log("Build complete");
+    }
   } catch (err) {
     console.error(err);
     process.exit(1);

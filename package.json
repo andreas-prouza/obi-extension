@@ -461,30 +461,46 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run package --omit=dev",
-    "compile": "node ./esbuild.js",
+    "clean": "shx rm -rf out/",
+    "copy-assets": "shx cp -r asserts out/asserts",
+    "copy-obi-media": "shx cp -r obi-media out/obi-media",
+    "copy-all": "npm run copy-assets && npm run copy-obi-media",
+    "vscode:prepublish": "npm run package",
+    "compile": "node ./esbuild.js && npm run copy-all",
     "package": "NODE_ENV=production node ./esbuild.js",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "vscode-test",
+    "watch": "node ./esbuild.js --watch",
+    "compile-tests": "tsc -p ./",
+    "watch-tests": "tsc -watch -p ./",
+    "pretest": "npm run compile-tests && npm run lint",
+    "lint": "eslint src/",
+    "test": "node ./out/test/runTest.js",
     "postinstall": "rm -rf node_modules/ssh2/test"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^22.14.0",
     "@types/vscode": "^1.66.0",
     "@types/vscode-webview": "^1.57.5",
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",
-    "eslint": "latest",
-    "ovsx": "latest"
+    "@vscode/test-electron": "^2.5.2",
+    "chai": "^6.2.2",
+    "esbuild": "^0.28.0",
+    "eslint": "^10.2.0",
+    "glob": "^13.0.6",
+    "mocha": "^11.7.5",
+    "ovsx": "latest",
+    "shx": "^0.4.0",
+    "typescript-eslint": "^8.58.0"
   },
   "dependencies": {
     "@emnapi/core": "^1.4.3",
     "@emnapi/runtime": "^1.4.3",
+    "@ibm/ibmi-eventf-parser": "^2.0.1",
     "@tybys/wasm-util": "^0.9.0",
     "@vscode/webview-ui-toolkit": "^1.4.0",
-    "@ibm/ibmi-eventf-parser": "^2.0.1",
     "deepmerge": "^4.3.1",
     "fs-extra": "^11.2.0",
     "hasha": "^6.0.0",
@@ -493,7 +509,6 @@
     "smol-toml": "^1.3.0",
     "wildcard-match": "latest",
     "winston": "latest",
-    "winston-transport": "latest",
-    "esbuild": "^0.25.10"
+    "winston-transport": "latest"
   }
 }

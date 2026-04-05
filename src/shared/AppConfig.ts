@@ -88,15 +88,15 @@ export class ConfigConnection {
 
 export class ConfigGeneral implements IConfigGeneralProperties {
 
-  'local-base-dir': string|undefined;
+  'local-base-dir': string = '.';
   'remote-base-dir': string|undefined;
   'source-dir': string = 'src';
   'local-obi-dir': string|undefined; // if not us, not necessary
   'remote-obi-dir': string|undefined;
-  'supported-object-types': string[]|undefined;
+  'supported-object-types': string[] = ['pgm', 'file', 'srvpgm', 'module', 'cpy', 'obj'];
   'file-system-encoding': string|undefined;
   'console-output-encoding': string|undefined;
-  'compiled-object-list': string|undefined;
+  'compiled-object-list': string = Constants.COMPILED_OBJECT_LIST;
   'source-list': string|undefined;
   'remote-source-list': string = Constants.REMOTE_SOURCE_LIST;
   'source-infos': string|undefined;

@@ -100,7 +100,7 @@ export function getCmdFromStep(
 }
 
 export function resolveCmdId(config: any, cmdid: string): string {
-  const cmdidList = cmdid.match(/"[^"]*"|[^.]+/g).map(s => s.replace(/"/g, ""));
+  const cmdidList = (cmdid.match(/"[^"]*"|[^.]+/g) || []).map(s => s.replace(/"/g, ""));
   const cmd = getTableElement(config, cmdidList);
 
   if (!cmd) {

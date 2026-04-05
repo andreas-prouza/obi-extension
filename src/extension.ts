@@ -122,10 +122,8 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	// Create new source list provider
-	const source_list_provider = new SourceListProvider(rootPath, context);
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(source_list_provider)
-	);
+	const source_list_provider = new SourceListProvider(rootPath);
+	source_list_provider.register(context);
 
 	//--------------------------------------------------------
 	// i-Releaser
@@ -252,11 +250,6 @@ export function activate(context: vscode.ExtensionContext) {
 	// Register Build History Tree View
 	const buildHistoryProvider = new BuildHistoryProvider(rootPath);
 	buildHistoryProvider.register(context);
-
-	// Register Source List Tree View
-	const sourceListProvider: SourceListProvider = new SourceListProvider(rootPath);
-	sourceListProvider.register(context);
-
 
 	if (config.general['check-remote-source-on-startup'] && config.general['check-remote-source-on-startup'] === true) {
 		OBITools.check_remote_sources().then((success) => {

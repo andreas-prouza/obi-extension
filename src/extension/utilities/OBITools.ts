@@ -519,7 +519,7 @@ export class OBITools {
 
 
   public static update_compile_list(ignore_sources: string[], ignore_sources_cmd: { [key: string]: [string] | null }): void {
-    let compile_list = OBITools.get_compile_list(Workspace.get_workspace_uri()) || {};
+    let compile_list: any = OBITools.get_compile_list(Workspace.get_workspace_uri()) || {};
 
     for (const level_item of compile_list['compiles']) {
       for (const source of level_item['sources']) {

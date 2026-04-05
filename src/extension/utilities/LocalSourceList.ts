@@ -213,12 +213,12 @@ export class LocalSourceList {
 
       for (const source_filter of source_filters) {
 
-        show_empty_folders = source_filter['show-empty-folders'];
-        use_regex = source_filter['use-regex'];
-        lib = (source_filter['source-lib'] || '').toLowerCase();
-        file = (source_filter['source-file'] || '').toLowerCase();
-        mbr = (source_filter['source-member'] || '').toLowerCase();
-        isMatch = false;
+        const show_empty_folders: boolean = source_filter['show-empty-folders'] || false;
+        const use_regex: boolean = source_filter['use-regex'] || false;
+        const lib: string = (source_filter['source-lib'] || '').toLowerCase();
+        const file: string = (source_filter['source-file'] || '').toLowerCase();
+        const mbr: string = (source_filter['source-member'] || '').toLowerCase();
+        let isMatch: boolean = false;
 
         if ((!src_lib || !src_file || !src_mbr) && !show_empty_folders)
           continue;
