@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { OBITools } from '../../utilities/OBITools';
-import { DirTool } from '../../utilities/DirTool';
+import { OBITools } from '../extension/utilities/OBITools';
+import { DirTool } from '../extension/utilities/DirTool';
 import * as path from 'path';
-import { Constants } from '../../Constants';
-import { Workspace, WorkspaceSettings } from '../../utilities/Workspace';
+import { Constants } from './Constants';
+import { Workspace, WorkspaceSettings } from '../extension/utilities/Workspace';
 
 
 

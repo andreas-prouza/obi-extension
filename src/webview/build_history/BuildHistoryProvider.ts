@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { DirTool } from '../../utilities/DirTool';
-import { Constants } from '../../Constants';
-import { logger } from '../../utilities/Logger';
-import * as source from '../../obi/Source';
-import { Workspace } from '../../utilities/Workspace';
-import { AppConfig } from '../controller/AppConfig';
+import { DirTool } from '../../extension/utilities/DirTool';
+import { Constants } from '../../shared/Constants';
+import { logger } from '../../extension/utilities/Logger';
+import * as source from '../../shared/Source';
+import { Workspace } from '../../extension/utilities/Workspace';
+import { AppConfig } from '../../shared/AppConfig';
 
 
 interface IBuildHistorys {

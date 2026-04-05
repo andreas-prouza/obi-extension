@@ -1,8 +1,6 @@
 import * as path from 'path';
 import { minimatch } from "minimatch";
-import { OBIConstants } from './obi_constants';
 import { getSourceProperties } from './properties';
-import { DirTool } from '../../../utilities/DirTool';
 
 export function getSteps(source: string, appConfig: any, extended_sources_config: any): Array<string | object> {
   let initSteps: Array<string | object> = [];

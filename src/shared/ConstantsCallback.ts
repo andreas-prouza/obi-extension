@@ -1,10 +1,10 @@
-import { Constants } from "./Constants";
-import { Dependencies, DependencyList } from "./Dependency";
-import { LocalSourceList } from "./utilities/LocalSourceList";
-import { Workspace, WorkspaceSettings } from "./utilities/Workspace";
-import { BuildHistoryProvider } from "./webview/build_history/BuildHistoryProvider";
-import { AppConfig } from "./webview/controller/AppConfig";
-import { SourceListProvider } from "./webview/source_list/SourceListProvider";
+import { Constants } from "../shared/Constants";
+import { DependencyList } from "./Dependency";
+import { LocalSourceList } from "../extension/utilities/LocalSourceList";
+import { Workspace } from "../extension/utilities/Workspace";
+import { BuildHistoryProvider } from "../webview/build_history/BuildHistoryProvider";
+import { AppConfig } from "./AppConfig";
+import { SourceListProvider } from "../webview/source_list/SourceListProvider";
 
 export class ConstantsCallback {
 

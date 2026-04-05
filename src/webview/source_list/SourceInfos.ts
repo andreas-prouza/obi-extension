@@ -1,16 +1,14 @@
 import * as vscode from 'vscode';
 import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
-import { getUri } from "../../utilities/getUri";
-import { getNonce } from "../../utilities/getNonce";
-import { DirTool } from '../../utilities/DirTool';
+import { getUri } from "../../extension/utilities/getUri";
+import { DirTool } from '../../extension/utilities/DirTool';
 import * as path from 'path';
-import { Constants } from '../../Constants';
-import { OBITools } from '../../utilities/OBITools';
-import { AppConfig, ConfigCompileSettings } from '../controller/AppConfig';
-import { Workspace } from '../../utilities/Workspace';
-import * as source from '../../obi/Source';
+import { Constants } from '../../shared/Constants';
+import { OBITools } from '../../extension/utilities/OBITools';
+import { AppConfig } from '../../shared/AppConfig';
+import { Workspace } from '../../extension/utilities/Workspace';
+import * as source from '../../shared/Source';
 import { SourceListProvider } from './SourceListProvider';
-import { logger } from '../../utilities/Logger';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc

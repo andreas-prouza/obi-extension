@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 import {NodeSSH, SSHExecCommandResponse} from 'node-ssh';
 import { Workspace } from './Workspace';
 import * as path from 'path';
-import { AppConfig } from '../webview/controller/AppConfig';
-import { Constants } from '../Constants';
+import { AppConfig } from '../../shared/AppConfig';
+import { Constants } from '../../shared/Constants';
 import { logger } from './Logger';
 
 

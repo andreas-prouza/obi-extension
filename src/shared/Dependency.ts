@@ -1,8 +1,8 @@
 import path from "path";
-import { AppConfig } from "./webview/controller/AppConfig";
-import { Workspace } from "./utilities/Workspace";
-import { DirTool } from "./utilities/DirTool";
-import { logger } from "./utilities/Logger";
+import { AppConfig } from "./AppConfig";
+import { Workspace } from "../extension/utilities/Workspace";
+import { DirTool } from "../extension/utilities/DirTool";
+import { logger } from "../extension/utilities/Logger";
 
 
 export class Dependencies { 

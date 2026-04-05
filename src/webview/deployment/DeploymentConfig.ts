@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
-import { getUri } from "../../utilities/getUri";
-import { DirTool } from '../../utilities/DirTool';
+import { getUri } from "../../extension/utilities/getUri";
+import { DirTool } from '../../extension/utilities/DirTool';
 import * as path from 'path';
-import { Constants } from '../../Constants';
-import { OBITools } from '../../utilities/OBITools';
-import { Workspace } from '../../utilities/Workspace';
+import { Constants } from '../../shared/Constants';
+import { OBITools } from '../../extension/utilities/OBITools';
+import { Workspace } from '../../extension/utilities/Workspace';
 import { I_Releaser } from './I_Releaser';
 
 /*

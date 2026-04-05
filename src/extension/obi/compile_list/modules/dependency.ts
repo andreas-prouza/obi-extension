@@ -3,7 +3,7 @@ import * as path from 'path';
 import { OBIConstants } from './obi_constants';
 import { deepListMerge } from './dict_tools';
 import { addBuildCmds } from './build_cmds';
-import { AppConfig } from '../../../webview/controller/AppConfig';
+import { AppConfig } from '../../../../shared/AppConfig';
 import { Workspace } from '../../../utilities/Workspace';
 import { DirTool } from '../../../utilities/DirTool';
 import { logger } from '../../../utilities/Logger';

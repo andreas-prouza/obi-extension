@@ -1,16 +1,16 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { DirTool } from '../../utilities/DirTool';
+import { DirTool } from '../../extension/utilities/DirTool';
 import { SourceList } from './SourceList';
-import { Constants } from '../../Constants';
-import { logger } from '../../utilities/Logger';
-import * as source from '../../obi/Source';
-import { AppConfig } from '../controller/AppConfig';
-import { Workspace } from '../../utilities/Workspace';
+import { Constants } from '../../shared/Constants';
+import { logger } from '../../extension/utilities/Logger';
+import * as source from '../../shared/Source';
+import { AppConfig } from '../../shared/AppConfig';
+import { Workspace } from '../../extension/utilities/Workspace';
 import { SourceListConfig } from './SourceListConfig';
-import { OBITools } from '../../utilities/OBITools';
-import { LocalSourceList } from '../../utilities/LocalSourceList';
+import { OBITools } from '../../extension/utilities/OBITools';
+import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
 
 
 interface ISourceLists {

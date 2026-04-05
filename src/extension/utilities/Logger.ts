@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as winston from "winston";
 import TransportStream, { TransportStreamOptions } from 'winston-transport';
 import * as path from 'path';
-import { Constants } from '../Constants';
+import { Constants } from '../../shared/Constants';
 import * as fs from 'fs';
 
 

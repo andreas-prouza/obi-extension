@@ -9,8 +9,6 @@ export class OBIConstants {
   static UPDATE_OBJECT_LIST = false;
   static JOB_LOG = '.obi/log/joblog.txt';
 
-  private static constants: Record<string, any> = {};
-
   static get(key: string, defaultValue: any = null): any {
     // In a real scenario, you might fetch this from a config file or environment variables
     if (key in OBIConstants) {

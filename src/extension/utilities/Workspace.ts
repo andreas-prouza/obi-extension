@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { DirTool } from './DirTool';
 import path from 'path';
-import { Constants } from '../Constants';
+import { Constants } from '../../shared/Constants';
 import { logger } from './Logger';
-import { OBIConfiguration } from '../webview/controller/OBIConfiguration';
+import { OBIConfiguration } from '../../webview/controller/OBIConfiguration';
 
 
 export class WorkspaceSettings {

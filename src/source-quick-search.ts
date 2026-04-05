@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { LocalSourceList } from './utilities/LocalSourceList';
-import { AppConfig } from './webview/controller/AppConfig';
+import { LocalSourceList } from './extension/utilities/LocalSourceList';
+import { AppConfig } from './shared/AppConfig';
 import * as path from 'path';
-import { Workspace } from './utilities/Workspace';
-import { ISourceInfos } from './obi/Source';
+import { Workspace } from './extension/utilities/Workspace';
+import { ISourceInfos } from './shared/Source';
 
 
 export async function sourceQuickSearch() {

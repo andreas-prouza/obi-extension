@@ -3,20 +3,19 @@ import { DirTool } from './DirTool';
 import * as path from 'path';
 import { getUri } from './getUri';
 import { getNonce } from './getNonce';
-import { Constants } from '../Constants';
+import { Constants } from '../../shared/Constants';
 
-import { AppConfig, IConfigProperties } from '../webview/controller/AppConfig';
+import { AppConfig } from '../../shared/AppConfig';
 import { SSH_Tasks } from './SSH_Tasks';
-import * as source from '../obi/Source';
+import * as source from '../../shared/Source';
 import { Workspace } from './Workspace';
 import * as fs from 'fs-extra';
 import { logger } from './Logger';
-import { OBICommands } from '../obi/OBICommands';
+import { OBICommands } from '../../extension/obi/OBICommands';
 import { LocaleText } from './LocaleText';
-import { OBIStatus } from '../obi/OBIStatus';
-import { createBuildList } from '../obi/compile_list/createBuildList';
-import { Dependencies, DependencyList } from '../Dependency';
-import { LocalSourceList } from './LocalSourceList';
+import { OBIStatus } from '../../shared/OBIStatus';
+import { createBuildList } from '../../extension/obi/compile_list/createBuildList';
+import { Dependencies, DependencyList } from '../../shared/Dependency';
 
 
 

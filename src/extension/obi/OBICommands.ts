@@ -1,22 +1,22 @@
 import * as vscode from 'vscode';
 
 import { fork, spawn } from "child_process";
-import { BuildSummary } from '../webview/show_changes/BuildSummary';
-import { OBIStatus } from './OBIStatus';
-import { OBIController } from '../webview/controller/OBIController';
+import { BuildSummary } from '../../webview/show_changes/BuildSummary';
+import { OBIStatus } from '../../shared/OBIStatus';
+import { OBIController } from '../../webview/controller/OBIController';
 import { OBITools } from '../utilities/OBITools';
 import { Workspace } from '../utilities/Workspace';
 
-import * as source from '../obi/Source';
+import * as source from '../../shared/Source';
 import { SSH_Tasks } from '../utilities/SSH_Tasks';
-import { AppConfig } from '../webview/controller/AppConfig';
+import { AppConfig } from '../../shared/AppConfig';
 import * as path from 'path';
 import { DirTool } from '../utilities/DirTool';
-import { Constants } from '../Constants';
+import { Constants } from '../../shared/Constants';
 import { logger } from '../utilities/Logger';
 import { SystemCmdExecution } from '../utilities/SystemCmdExecution';
 import { Uri } from 'vscode';
-import { BuildHistoryProvider } from '../webview/build_history/BuildHistoryProvider';
+import { BuildHistoryProvider } from '../../webview/build_history/BuildHistoryProvider';
 
 
 

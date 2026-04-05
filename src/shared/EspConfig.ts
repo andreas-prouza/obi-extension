@@ -1,10 +1,8 @@
 import * as vscode from 'vscode';
-import { OBITools } from '../../utilities/OBITools';
-import { DirTool } from '../../utilities/DirTool';
 import * as path from 'path';
-import { Constants } from '../../Constants';
-import { Workspace, WorkspaceSettings } from '../../utilities/Workspace';
-import { workspace } from 'vscode';
+import { DirTool } from '../extension/utilities/DirTool';
+import { Constants } from './Constants';
+import { Workspace, WorkspaceSettings } from '../extension/utilities/Workspace';
 
 
 // Define the shape of a single step

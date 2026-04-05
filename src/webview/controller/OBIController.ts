@@ -1,17 +1,15 @@
 import * as vscode from 'vscode';
-import { getUri } from "../../utilities/getUri";
-import { DirTool } from '../../utilities/DirTool';
-import { OBITools } from '../../utilities/OBITools';
-import { Constants } from '../../Constants';
 import * as path from 'path';
-import { BuildSummary } from '../show_changes/BuildSummary';
 import * as fs from 'fs';
-import { AppConfig } from './AppConfig';
-import { Workspace } from '../../utilities/Workspace';
-import { SystemCmdExecution } from '../../utilities/SystemCmdExecution';
-import { logger } from '../../utilities/Logger';
-import { log } from 'console';
-import { OBIConfiguration } from './OBIConfiguration';
+import { getUri } from "../../extension/utilities/getUri";
+import { DirTool } from '../../extension/utilities/DirTool';
+import { OBITools } from '../../extension/utilities/OBITools';
+import { Constants } from '../../shared/Constants';
+import { BuildSummary } from '../show_changes/BuildSummary';
+import { AppConfig } from '../../shared/AppConfig';
+import { Workspace } from '../../extension/utilities/Workspace';
+import { SystemCmdExecution } from '../../extension/utilities/SystemCmdExecution';
+import { logger } from '../../extension/utilities/Logger';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc

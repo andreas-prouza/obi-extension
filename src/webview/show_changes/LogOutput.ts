@@ -1,12 +1,7 @@
-import * as vscode from 'vscode';
-import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
-import { getUri } from "../../utilities/getUri";
-import { getNonce } from "../../utilities/getNonce";
-import { DirTool } from '../../utilities/DirTool';
-import { Constants } from '../../Constants';
-import { OBITools } from '../../utilities/OBITools';
-import * as path from 'path';
-import { AppConfig } from '../controller/AppConfig';
+
+import { Disposable, WebviewPanel, window, Uri, ViewColumn } from "vscode";
+import { Constants } from '../../shared/Constants';
+import { AppConfig } from '../../shared/AppConfig';
 import { BuildSummary } from './BuildSummary';
 
 /*

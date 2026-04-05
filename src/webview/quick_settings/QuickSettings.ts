@@ -1,16 +1,8 @@
 import * as vscode from 'vscode';
-import { getUri } from "../../utilities/getUri";
-import { DirTool } from '../../utilities/DirTool';
-import { OBITools } from '../../utilities/OBITools';
-import { Constants } from '../../Constants';
-import * as path from 'path';
-import { BuildSummary } from '../show_changes/BuildSummary';
-import * as fs from 'fs';
-import { AppConfig, ConfigCompileSettings } from '../controller/AppConfig';
-import { Workspace } from '../../utilities/Workspace';
-import { SystemCmdExecution } from '../../utilities/SystemCmdExecution';
-import { logger } from '../../utilities/Logger';
-
+import { getUri } from "../../extension/utilities/getUri";
+import { OBITools } from '../../extension/utilities/OBITools';
+import { Constants } from '../../shared/Constants';
+import { AppConfig } from '../../shared/AppConfig';
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
 https://mozilla.github.io/nunjucks/api.html

@@ -5,10 +5,9 @@ import { getBuildOrder } from './modules/dependency';
 import { orderBuilds } from './modules/build_cmds';
 import { OBIConstants } from './modules/obi_constants';
 import { DirTool } from '../../utilities/DirTool';
-import { AppConfig } from '../../webview/controller/AppConfig';
+import { AppConfig } from '../../../shared/AppConfig';
 import { Workspace } from '../../utilities/Workspace';
-import { OBITools } from '../../utilities/OBITools';
-import { DependencyList } from '../../Dependency';
+import { DependencyList } from '../../../shared/Dependency';
 
 
 

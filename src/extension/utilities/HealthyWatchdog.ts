@@ -1,13 +1,12 @@
 import * as vscode from 'vscode';
 import { Workspace } from "./Workspace";
-import { Constants } from '../Constants';
-import { ConstantsCallback } from '../ConstantsCallback';
+import { Constants } from '../../shared/Constants';
+import { ConstantsCallback } from '../../shared/ConstantsCallback';
 import { DirTool } from './DirTool';
 import * as path from 'path';
 import * as fs from 'fs';
 import { LocalSourceList } from './LocalSourceList';
-import { AppConfig } from '../webview/controller/AppConfig';
-import { logger } from './Logger';
+import { AppConfig } from '../../shared/AppConfig';
 
 
 

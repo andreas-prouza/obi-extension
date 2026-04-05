@@ -1,12 +1,11 @@
 import * as vscode from 'vscode';
 import path from "path";
-import { AppConfig } from "../webview/controller/AppConfig";
+import { AppConfig } from "../../shared/AppConfig";
 import { Workspace } from "./Workspace";
 import { DirTool } from "./DirTool";
 import { logger } from './Logger';
-import { OBITools } from './OBITools';
-import { IQualifiedSource, ISourceInfos } from '../obi/Source';
-import { Constants } from '../Constants';
+import { IQualifiedSource, ISourceInfos } from '../../shared/Source';
+import { Constants } from '../../shared/Constants';
 
 
 export class LocalSourceList {
