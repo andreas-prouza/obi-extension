@@ -1,47 +1,43 @@
-import * as assert from 'assert';
-
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
+import * as fs from 'fs-extra';
+import * as path from 'path';
 import * as vscode from 'vscode';
-import { AppConfigDict } from '../../shared/AppConfigDict';
-import { OBITools } from '../../extension/utilities/OBITools';
-// import * as myExtension from '../../extension';
+import { Workspace } from '../../extension/utilities/Workspace';
+import { AppConfig } from '../../shared/AppConfig';
+import assert from 'assert';
+import { DirTool } from '../../extension/utilities/DirTool';
+import { OBIConfiguration } from '../../webview/controller/OBIConfiguration';
 
+suite('AppConfig Integration', () => {
 
-suite('Extension Test Suite', () => {
-	vscode.window.showInformationMessage('Start all tests.');
+    // This is where your 'Gold Master' templates live
+    const masterTemplates = path.resolve(__dirname, '../../../test-resources/appconfig');
+    const ws_uri = Workspace.get_workspace_uri();
 
-	test('App config test', () => {
+    setup(async () => {
+        // Clear the active workspace
 
-		let x: AppConfigDict = Object.assign({'generalx': {'local-base-dirx': 'test' }});
+        const activeWsPath = Workspace.get_workspace(); 
+        await fs.emptyDir(activeWsPath);
+        DirTool.copy_dir(masterTemplates, activeWsPath)
+    });
 
-		assert.strictEqual(x['generalx']['local-base-dirx'], 'test');
-		
-	});
+    test('Verify AppConfig defaults', () => {
+        const config = AppConfig.get_app_config();
+        assert.ok(config.connection['remote-host'] === undefined);
+        assert.ok(config.attributes_missing);
+    });
 
-	test('Array merge test', () => {
+    test('No missing attributes when all fields are set', () => {
+        const config = AppConfig.get_app_config();
+        const user_config = AppConfig.get_user_app_config(ws_uri);
 
-		let x: any = {
-			allg: "test 1",
-			x: "test x",
-		};
+        config.connection['remote-host'] = 'example.com';
+        config.general['remote-obi-dir'] = '/home/user/obi';
+        OBIConfiguration.save_config(false, ws_uri, config);
 
-		let y: any = {
-			allg: "test 2",
-			y: "test y",
-		};
+        user_config.connection['ssh-user'] = 'User';
+        OBIConfiguration.save_config(true, ws_uri, user_config);
 
-		let z = {...x, ...y};
-
-		let z1 = {
-			allg: "test 2",
-			x: "test x",
-			y: "test y"
-		};
-
-		let z2 = OBITools.override_dict(x, y);
-
-		assert.strictEqual(z, z2);
-		
-	});
+        assert.ok(!AppConfig.get_app_config().attributes_missing());
+    });
 });

@@ -9,7 +9,7 @@ import { AppConfig } from '../../shared/AppConfig';
 import { SSH_Tasks } from './SSH_Tasks';
 import * as source from '../../shared/Source';
 import { Workspace } from './Workspace';
-import * as fs from 'fs-extra';
+import * as fs from 'fs';
 import { logger } from './Logger';
 import { OBICommands } from '../../extension/obi/OBICommands';
 import { LocaleText } from './LocaleText';
@@ -442,11 +442,11 @@ export class OBITools {
 
     let copies: Promise<void>[] = [];
 
-    const tmpDirs = await fs.readdir(template_ws, { withFileTypes: true });
+    const tmpDirs = await fs.promises.readdir(template_ws, { withFileTypes: true });
     for (const dirent of tmpDirs) {
       const srcDir = path.join(template_ws, dirent.name);
       const destDir = path.join(ws, dirent.name);
-      copies.push(fs.cp(srcDir, destDir, {
+      copies.push(fs.promises.cp(srcDir, destDir, {
         recursive: true,
         force: false,         // don't overwrite existing files
         errorOnExist: false,  // don't throw if file exists
@@ -558,12 +558,8 @@ export class OBITools {
 
     const file_path: string = compileListFileName ? path.join(workspaceUri.fsPath, compileListFileName) : path.join(workspaceUri.fsPath, config.general['compile-list']);
 
-    if (!DirTool.file_exists(file_path))
-      return undefined;
-
-    let compile_list_string: string = fs.readFileSync(file_path).toString();
     // Converting to JSON 
-    const compile_list = JSON.parse(compile_list_string);
+    const compile_list = DirTool.get_json(file_path);
 
     if (typeof compile_list != 'object' || compile_list == null || (compile_list instanceof Array) || (compile_list instanceof Date))
       return undefined;

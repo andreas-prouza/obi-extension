@@ -2,34 +2,39 @@ import * as path from 'path';
 import Mocha from 'mocha';
 import { glob } from 'glob';
 
-export async function run(): Promise<void> {
-    // Create the mocha test
+export function run(): Promise<void> {
+    // Create the mocha instance
     const mocha = new Mocha({
         ui: 'tdd',
         color: true,
-        timeout: 10000 // Give the extension host time to boot
+        timeout: 10000 // Extensions can be slow to load, 10s is safe
     });
 
-    const testsRoot = path.resolve(__dirname, '.');
+    const testsRoot = path.resolve(__dirname, '..');
 
-    try {
-        // Find all test files inside the suite directory
-        const files = await glob('**/**.test.js', { cwd: testsRoot });
+    return new Promise((c, e) => {
+        // Find all files ending in .test.js
+        glob('**/**.test.js', { cwd: testsRoot })
+            .then(files => {
+                // Add files to the mocha instance
+                files.forEach(f => mocha.addFile(path.resolve(testsRoot, f)));
 
-        // Add files to the test suite
-        files.forEach(f => mocha.addFile(path.resolve(testsRoot, f)));
-
-        // Run the mocha test
-        return new Promise((resolve, reject) => {
-            mocha.run(failures => {
-                if (failures > 0) {
-                    reject(new Error(`${failures} tests failed.`));
-                } else {
-                    resolve();
+                try {
+                    // Run the mocha test
+                    mocha.run(failures => {
+                        if (failures > 0) {
+                            e(new Error(`${failures} tests failed.`));
+                        } else {
+                            c();
+                        }
+                    });
+                } catch (err) {
+                    console.error(err);
+                    e(err);
                 }
+            })
+            .catch(err => {
+                return e(err);
             });
-        });
-    } catch (err) {
-        throw err;
-    }
+    });
 }

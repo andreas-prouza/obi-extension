@@ -1,0 +1,9 @@
+[
+  {
+    "source-lib": ".*",
+    "source-file": ".*",
+    "source-member": ".*",
+    "use-regex": true,
+    "show-empty-folders": true
+  }
+]

@@ -367,7 +367,7 @@ export class OBIConfiguration {
 
 
 
-  private static save_config(isUser: boolean, workspaceUri: Uri, data: any) {
+  public static save_config(isUser: boolean, workspaceUri: Uri, data: any) {
 
     vscode.window.showInformationMessage('Configuration saved');
     const app_config: AppConfig = AppConfig.get_app_config();
