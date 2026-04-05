@@ -6,23 +6,25 @@
       "script": "watch",
       "label": "npm: watch",
       "isBackground": true,
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated"
-      },
       "group": {
         "kind": "build",
         "isDefault": true
       },
       "problemMatcher": {
-        "owner": "custom",
+        "owner": "typescript",
+        "fileLocation": "relative",
         "pattern": {
-          "regexp": "^$"
+          "regexp": "^\\s*(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
         },
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "^.*$",
-          "endsPattern": "Watching for changes\\.\\.\\."
+          "beginsPattern": "Watching for changes...", 
+          "endsPattern": "Watching for changes..." 
         }
       }
     }

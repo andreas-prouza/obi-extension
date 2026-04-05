@@ -194,8 +194,10 @@ export class DirTool {
 
   public static is_file(path: string): boolean {
     path = DirTool.resolve_env_in_path(path);
-    const stats = fs.statSync(path);
-    return stats.isFile()
+    if (!fs.existsSync(path)) {
+        return false;
+    }
+    return fs.statSync(path).isFile();
   }
 
 

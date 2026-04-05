@@ -38,29 +38,7 @@ export class OBIController implements vscode.WebviewViewProvider {
   constructor(extensionUri: vscode.Uri) {
     this._extensionUri = extensionUri;
     OBIController.view_object = this;
-
-    OBIController.set_build_watcher();
   }
-
-
-
-  public static set_build_watcher() {
-
-    if (OBIController.is_config_watcher_set || !OBITools.contains_obi_project())
-      return;
-
-    const config = AppConfig.get_app_config();
-
-    if (AppConfig.attributes_missing())
-      return;
-
-    const compile_list_file_path: string = path.join(Workspace.get_workspace(), config.general['compile-list']);
-    // if compile-script changed, refresh the view
-    fs.watchFile(compile_list_file_path, { interval: 1000 }, function (event, filename) {
-      OBIController.update_build_summary_timestamp();
-    });
-  }
-
 
 
 

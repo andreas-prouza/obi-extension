@@ -26,7 +26,12 @@ export class SSH_Tasks {
   private static connectionPromise: Promise<boolean> | undefined = undefined;
 
 
-  public static get_ssh_user(): string | undefined {
+  public static async get_ssh_user(): Promise<string | undefined> {
+    if (!SSH_Tasks.ssh_user || SSH_Tasks.ssh_user.length == 0) {
+      SSH_Tasks.ssh_user = await vscode.window.showInputBox({ title: `Enter your user for ${SSH_Tasks.host}`, placeHolder: "usrprf" });
+      if (! SSH_Tasks.ssh_user)
+        throw new Error('Canceled by user. No user provided');
+    }
     return SSH_Tasks.ssh_user;
   }
 
@@ -40,9 +45,9 @@ export class SSH_Tasks {
   }
 
 
-  public static get_finalized_remote_path(path_string: string): string {
+  public static async get_finalized_remote_path(path_string: string): Promise<string> {
     // Execute command in bash shell
-    const ssh_user = SSH_Tasks.get_ssh_user() || 'UNKNOWN';
+    const ssh_user = await SSH_Tasks.get_ssh_user();
     return path_string.replace(/\$USER/g, ssh_user)
                .replace(/~/g, `/home/${ssh_user}`) // Replace ~ with /home/$USER
                .replace("${workspaceFolderBasename}", path.basename(Workspace.get_workspace() || 'workspace'));
@@ -88,11 +93,7 @@ export class SSH_Tasks {
             throw new Error('Canceled by user. No host provided');
         }
 
-        if (!SSH_Tasks.ssh_user || SSH_Tasks.ssh_user.length == 0) {
-          SSH_Tasks.ssh_user = await vscode.window.showInputBox({ title: `Enter your user for ${SSH_Tasks.host}`, placeHolder: "usrprf" });
-          if (! SSH_Tasks.ssh_user)
-            throw new Error('Canceled by user. No user provided');
-        }
+        await SSH_Tasks.get_ssh_user();
 
         let pwd: string | undefined = await SSH_Tasks.context.secrets.get(`obi|${SSH_Tasks.host}|${SSH_Tasks.ssh_user}`);
         if (! pwd && (!ssh_key || ssh_key.length == 0)) {
@@ -165,7 +166,7 @@ export class SSH_Tasks {
 
     await this.connect();
 
-    remote = SSH_Tasks.get_finalized_remote_path(remote);
+    remote = await SSH_Tasks.get_finalized_remote_path(remote);
     logger.info(`Get remote file. LOCAL: ${local}, REMOTE: ${remote}`);
     await SSH_Tasks.ssh.getFile(local, remote);
   }
@@ -179,7 +180,7 @@ export class SSH_Tasks {
     let failed: string[]=[];
     let successful: string[]=[];
     
-    remote = SSH_Tasks.get_finalized_remote_path(remote);
+    remote = await SSH_Tasks.get_finalized_remote_path(remote);
 
     await SSH_Tasks.ssh.getDirectory(local, remote, 
       { recursive: true, 
@@ -216,13 +217,13 @@ export class SSH_Tasks {
 
     let cmd = '';
     let first = true;
-    files.forEach((file) => {
+    for (const file of files) {
       if (!first)
         cmd = `${cmd} && `;
-      file = SSH_Tasks.get_finalized_remote_path(file);
-      cmd = `${cmd} ls "${file}"`;
+      const file_final = await SSH_Tasks.get_finalized_remote_path(file);
+      cmd = `${cmd} ls "${file_final}"`;
       first = false;
-    })
+    }
 
     logger.info(`Check path: ${cmd}`);
     const result = await SSH_Tasks.ssh.execCommand(cmd);
@@ -252,11 +253,11 @@ export class SSH_Tasks {
     
     let cmds: Promise<SSHExecCommandResponse>[] = [];
 
-    source_list.map((file: string) => {
+    for (const file of source_list) {
       let file_path = `${remote_source_dir}/${file}`;
-      file_path = SSH_Tasks.get_finalized_remote_path(file_path);
+      file_path = await SSH_Tasks.get_finalized_remote_path(file_path);
       cmds.push(SSH_Tasks.ssh.execCommand(`rm ${file_path}`));
-    })
+    }
 
     await Promise.all(cmds);
   }
@@ -272,7 +273,7 @@ export class SSH_Tasks {
     if (!config.general['remote-base-dir'] || config.general['remote-base-dir'].length < 4) // to be sure it's not root!
       throw Error(`Config attribute 'config.general.remote_base_dir' invalid: ${config.general['remote-base-dir']}`);
     
-    const remote_base_dir: string = SSH_Tasks.get_finalized_remote_path(config.general['remote-base-dir']);
+    const remote_base_dir: string = await SSH_Tasks.get_finalized_remote_path(config.general['remote-base-dir']);
     const answer = await vscode.window.showInformationMessage(`Process with remote folder: '${remote_base_dir}'?`, { modal: true }, ...['Yes', 'No']);
     switch (answer) {
       case 'No':
@@ -283,7 +284,7 @@ export class SSH_Tasks {
         break;
     }
 
-    let cmd = `cd ${remote_base_dir} 2> /dev/null || mkdir -p ${remote_base_dir} && cd ${remote_base_dir} && echo "pwd: $(pwd)" || exit 1; [ \`echo $(pwd) | wc -c\` -ge 3 ] &&  echo "Current dir: $(pwd)" ||  exit 1  ;  echo "Change back from $(pwd)" &&  cd  && echo "pwd 2: $(pwd)" && rm -rf ${remote_base_dir}`;
+    let cmd = `cd ${remote_base_dir} 2> /dev/null || ( mkdir -p ${remote_base_dir} && cd ${remote_base_dir} ) || exit 1; \n echo "pwd: $(pwd)" || exit 1; \n [ \`echo $(pwd) | wc -c\` -ge 3 ] &&  echo "Current dir: $(pwd)" ||  exit 1  ; \n echo "Change back from $(pwd)" &&  cd  && echo "pwd 2: $(pwd)" && rm -rf ${remote_base_dir}`;
     cmd = SSH_Tasks.get_finalized_command(cmd);
     logger.info(`Execute cmd: ${cmd}`);
     const result = await SSH_Tasks.ssh.execCommand(cmd);
@@ -312,7 +313,7 @@ export class SSH_Tasks {
     
     const source_dir: string = config.general['source-dir'] ?? 'src';
     const local_source_dir: string = path.join(Workspace.get_workspace(), config.general['local-base-dir'], source_dir);
-    let remote_base_dir: string = SSH_Tasks.get_finalized_remote_path(config.general['remote-base-dir']);
+    let remote_base_dir: string = await SSH_Tasks.get_finalized_remote_path(config.general['remote-base-dir']);
     let remote_source_dir: string = `${remote_base_dir}/${source_dir}`;
     
     let transfer_list: FileTransfer[] = [
@@ -346,10 +347,7 @@ export class SSH_Tasks {
 
     await SSH_Tasks.ssh.putFiles(transfer_list, {concurrency: config.connection['ssh-concurrency'] ?? 5 });
 
-    if (transfer_list.length == 1)
-      vscode.window.showInformationMessage(`1 source transfered`);
-    else
-      vscode.window.showInformationMessage(`${transfer_list.length} sources transfered`);
+    vscode.window.showInformationMessage(`${transfer_list.length - 4} source${(transfer_list.length - 4) > 1 ? 's' : ''} transfered`);
   }
 
 
@@ -363,7 +361,7 @@ export class SSH_Tasks {
     if (!config.general['remote-base-dir'] || !config.general['local-base-dir'])
       throw Error(`Config attribute 'config.general.remote_base_dir' missing`);
     const local_base_dir: string = path.join(Workspace.get_workspace(), config.general['local-base-dir']);
-    let remote_base_dir: string = SSH_Tasks.get_finalized_remote_path(config.general['remote-base-dir']);
+    let remote_base_dir: string = await SSH_Tasks.get_finalized_remote_path(config.general['remote-base-dir']);
 
     logger.info(`Transfer: ${file_list}`);
 
@@ -389,7 +387,7 @@ export class SSH_Tasks {
 
     await this.connect();
 
-    remote_dir = SSH_Tasks.get_finalized_remote_path(remote_dir);
+    remote_dir = await SSH_Tasks.get_finalized_remote_path(remote_dir);
 
     let final_message: string = "";
 
@@ -411,14 +409,13 @@ export class SSH_Tasks {
       // SSH transfer folder
       //##############################
       const status = await SSH_Tasks.ssh_put_dir(local_dir, remote_dir, failed, successful);
-      if (status)
-        vscode.window.showInformationMessage(`${successful.length} files were successfully transfered to ${remote_dir}`);
-      else
+      if (!status) {
         throw new Error(`${successful.length} of ${failed.length} failed transfered to ${remote_dir}`);
+      }
 
       var endTime = performance.now();
 
-      final_message = `Finished transfer in ${(endTime - startTime)/1000} seconds.`
+      final_message = `Finished transfer in ${((endTime - startTime)/1000).toFixed(2)} seconds.`
     });
 
     vscode.window.showInformationMessage(final_message);
@@ -431,7 +428,7 @@ export class SSH_Tasks {
 
     await this.connect();
 
-    remote_dir = SSH_Tasks.get_finalized_remote_path(remote_dir);
+    remote_dir = await SSH_Tasks.get_finalized_remote_path(remote_dir);
     
     logger.debug(`Send directory. Local: ${local_dir}, remote: ${remote_dir}`);
 
