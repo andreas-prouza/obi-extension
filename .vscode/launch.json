@@ -11,7 +11,11 @@
 			"request": "launch",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--disable-extensions"
+				// Remove --disable-extensions
+				// Redirect extensions to an empty temp folder
+				"--extensions-dir=${workspaceFolder}/.vscode-test/temp-extensions",
+				// Redirect settings/cache so it doesn't see your real VS Code setup
+				"--user-data-dir=${workspaceFolder}/.vscode-test/temp-user-data"
 			],
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
