@@ -1,16 +1,15 @@
 import * as vscode from 'vscode';
 import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
-import { getUri } from "../../utilities/getUri";
-import { getNonce } from "../../utilities/getNonce";
-import { DirTool } from '../../utilities/DirTool';
+import { getUri } from "../../extension/utilities/getUri";
+import { DirTool } from '../../extension/utilities/DirTool';
 import * as path from 'path';
-import { Constants } from '../../Constants';
-import { OBITools } from '../../utilities/OBITools';
-import { AppConfig, ConfigCompileSettings } from '../controller/AppConfig';
-import { Workspace } from '../../utilities/Workspace';
-import * as source from '../../obi/Source';
+import { Constants } from '../../shared/Constants';
+import { OBITools } from '../../extension/utilities/OBITools';
+import { AppConfig } from '../../shared/AppConfig';
+import { Workspace } from '../../extension/utilities/Workspace';
+import * as source from '../../shared/Source';
 import { SourceListProvider } from './SourceListProvider';
-import { logger } from '../../utilities/Logger';
+import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -90,8 +89,8 @@ export class SourceInfos {
       html_template = 'source_list/source-infos-config.html';
     }
 
-    const sources = await OBITools.get_local_sources();
-    const source_list: source.IQualifiedSource[] = OBITools.get_extended_source_infos(sources)||[];
+    const sources = await LocalSourceList.get_local_sources();
+    const source_list: source.IQualifiedSource[] = await LocalSourceList.get_extended_source_infos(sources)||[];
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
     const html = nunjucks.render(html_template, 

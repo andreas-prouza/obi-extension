@@ -5,7 +5,7 @@ import {
   TextField
 } from "@vscode/webview-ui-toolkit";
 
-import * as source from '../../../obi/Source';
+import * as source from '../../../shared/Source';
 import { showAlert } from "../../tools/javascript/alertBox";
 
 // In order to use all the Webview UI Toolkit web components they
@@ -37,19 +37,16 @@ function main() {
 
 function save_config() {
 
-  let sources: source.ISourceInfos = {};
-  let els  = document.getElementsByClassName('source_description');
-  let lib: string|null = '';
-  let file: string|null = '';
-  let member: string|null = '';
+  const sources: source.ISourceInfos = {};
+  const els  = document.getElementsByClassName('source_description');
 
   for (let i=0; i < els.length; i++) {
 
     const el = els[i];
 
-    lib = el.getAttribute('lib');
-    file = el.getAttribute('file');
-    member = el.getAttribute('member');
+    const lib: string|null = el.getAttribute('lib');
+    const file: string|null = el.getAttribute('file');
+    const member: string|null = el.getAttribute('member');
     console.log(`${lib} - ${file} - ${member}: ${(el as TextField).value}`);
 
     const full_name = `${lib||'UNKNOWN'}/${file||'UNKNOWN'}/${member||'UNKNOWN'}`;

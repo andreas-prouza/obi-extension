@@ -49,7 +49,7 @@ function main() {
   const drp_use_profile = document.getElementById("drp_use_profile") as Button;
   drp_use_profile?.addEventListener("change", change_profile);
   
-  const previousState = vscode.getState();
+  const previousState: any = vscode.getState();
   if (previousState && previousState.profiles) {
     update_profile_drp(previousState.profiles);
   }
@@ -225,7 +225,7 @@ function set_current_profile(profile_alias: string) {
 // A helpful wrapper function to safely update partial state
 function updateState(newData: any) {
     // 1. Get the current state. Fallback to an empty object if it's null/undefined.
-    const currentState = vscode.getState() || {};
+    const currentState: any = vscode.getState() || {};
 
     // 2. Merge the old state with the new data using the spread operator (...)
     const mergedState = {

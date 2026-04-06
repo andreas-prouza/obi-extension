@@ -1,14 +1,12 @@
 import * as vscode from 'vscode';
 import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
-import { getUri } from "../../utilities/getUri";
-import { getNonce } from "../../utilities/getNonce";
-import { DirTool } from '../../utilities/DirTool';
+import { getUri } from "../../extension/utilities/getUri";
+import { DirTool } from '../../extension/utilities/DirTool';
 import * as path from 'path';
-import { Constants } from '../../Constants';
-import { OBITools } from '../../utilities/OBITools';
-import { AppConfig, ConfigCompileSettings, SourceConfig, SourceConfigList } from './AppConfig';
-import { Workspace } from '../../utilities/Workspace';
-import { logger } from '../../utilities/Logger';
+import { Constants } from '../../shared/Constants';
+import { OBITools } from '../../extension/utilities/OBITools';
+import { AppConfig, SourceConfig, SourceConfigList } from '../../shared/AppConfig';
+import { Workspace } from '../../extension/utilities/Workspace';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -251,7 +249,7 @@ export class OBISourceConfiguration {
 
 
 
-  private static save_config(settings:{}, source_cmds:{}, steps:string[]) {
+  private static save_config(settings: any, source_cmds: any, steps:string[]) {
 
     let source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
     let source_config: SourceConfig = {"source-cmds": source_cmds, settings: settings, steps: steps};

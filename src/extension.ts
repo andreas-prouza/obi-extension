@@ -3,27 +3,27 @@ import * as vscode from 'vscode';
 import { BuildSummary } from './webview/show_changes/BuildSummary';
 import { OBIController } from './webview/controller/OBIController';
 import { SourceListItem, SourceListProvider } from './webview/source_list/SourceListProvider';
-import { OBICommands } from './obi/OBICommands';
+import { OBICommands } from './extension/obi/OBICommands';
 import { Welcome } from './webview/controller/Welcome';
-import { OBITools } from './utilities/OBITools';
+import { OBITools } from './extension/utilities/OBITools';
 import { OBIConfiguration } from './webview/controller/OBIConfiguration';
-import { SSH_Tasks } from './utilities/SSH_Tasks';
-import { AppConfig } from './webview/controller/AppConfig';
+import { SSH_Tasks } from './extension/utilities/SSH_Tasks';
+import { AppConfig } from './shared/AppConfig';
 import { ConfigInvalid } from './webview/controller/ConfigInvalid';
-import { logger } from './utilities/Logger';
+import { logger } from './extension/utilities/Logger';
 import { SourceInfos } from './webview/source_list/SourceInfos';
-import { LocaleText } from './utilities/LocaleText';
-import { Workspace } from './utilities/Workspace';
+import { LocaleText } from './extension/utilities/LocaleText';
+import { Workspace } from './extension/utilities/Workspace';
 import { OBISourceConfiguration } from './webview/controller/OBISourceConfiguration';
-import { DirTool } from './utilities/DirTool';
+import { DirTool } from './extension/utilities/DirTool';
 import { I_Releaser } from './webview/deployment/I_Releaser';
 import { OBISourceDependency } from './webview/controller/OBISourceDependency';
-import { LocalSourceList } from './utilities/LocalSourceList';
+import { LocalSourceList } from './extension/utilities/LocalSourceList';
 import { QuickSettings } from './webview/quick_settings/QuickSettings';
 import { BuildHistoryProvider } from './webview/build_history/BuildHistoryProvider';
 import { sourceQuickSearch } from './source-quick-search';
-import { clear_diagnostics } from './source/compile-diagnostics';
-import { HealthyWatchdog } from './utilities/HealthyWatchdog';
+import { clear_diagnostics } from './extension/source/compile-diagnostics';
+import { HealthyWatchdog } from './extension/utilities/HealthyWatchdog';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -122,10 +122,8 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	// Create new source list provider
-	const source_list_provider = new SourceListProvider(rootPath, context);
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(source_list_provider)
-	);
+	const source_list_provider = new SourceListProvider(rootPath);
+	source_list_provider.register(context);
 
 	//--------------------------------------------------------
 	// i-Releaser
@@ -252,11 +250,6 @@ export function activate(context: vscode.ExtensionContext) {
 	// Register Build History Tree View
 	const buildHistoryProvider = new BuildHistoryProvider(rootPath);
 	buildHistoryProvider.register(context);
-
-	// Register Source List Tree View
-	const sourceListProvider: SourceListProvider = new SourceListProvider(rootPath);
-	sourceListProvider.register(context);
-
 
 	if (config.general['check-remote-source-on-startup'] && config.general['check-remote-source-on-startup'] === true) {
 		OBITools.check_remote_sources().then((success) => {

@@ -1,8 +1,6 @@
 import {
   allComponents,
-  provideVSCodeDesignSystem,
-  Button,
-  TextField
+  provideVSCodeDesignSystem
 } from "@vscode/webview-ui-toolkit";
 
 
@@ -15,6 +13,10 @@ provideVSCodeDesignSystem().register(allComponents);
 
 export function showAlert(text: string, type: 'success' | 'info' | 'error' = 'info') {
   const box = document.getElementById('alertBox');
+  if (!box) {
+    console.error('Alert box element not found');
+    return;
+  }
   box.textContent = text;
   box.className = `alert ${type}`;
   box.style.display = 'block';

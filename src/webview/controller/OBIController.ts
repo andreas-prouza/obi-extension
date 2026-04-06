@@ -1,17 +1,15 @@
 import * as vscode from 'vscode';
-import { getUri } from "../../utilities/getUri";
-import { DirTool } from '../../utilities/DirTool';
-import { OBITools } from '../../utilities/OBITools';
-import { Constants } from '../../Constants';
 import * as path from 'path';
-import { BuildSummary } from '../show_changes/BuildSummary';
 import * as fs from 'fs';
-import { AppConfig } from './AppConfig';
-import { Workspace } from '../../utilities/Workspace';
-import { SystemCmdExecution } from '../../utilities/SystemCmdExecution';
-import { logger } from '../../utilities/Logger';
-import { log } from 'console';
-import { OBIConfiguration } from './OBIConfiguration';
+import { getUri } from "../../extension/utilities/getUri";
+import { DirTool } from '../../extension/utilities/DirTool';
+import { OBITools } from '../../extension/utilities/OBITools';
+import { Constants } from '../../shared/Constants';
+import { BuildSummary } from '../show_changes/BuildSummary';
+import { AppConfig } from '../../shared/AppConfig';
+import { Workspace } from '../../extension/utilities/Workspace';
+import { SystemCmdExecution } from '../../extension/utilities/SystemCmdExecution';
+import { logger } from '../../extension/utilities/Logger';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -40,29 +38,7 @@ export class OBIController implements vscode.WebviewViewProvider {
   constructor(extensionUri: vscode.Uri) {
     this._extensionUri = extensionUri;
     OBIController.view_object = this;
-
-    OBIController.set_build_watcher();
   }
-
-
-
-  public static set_build_watcher() {
-
-    if (OBIController.is_config_watcher_set || !OBITools.contains_obi_project())
-      return;
-
-    const config = AppConfig.get_app_config();
-
-    if (AppConfig.attributes_missing())
-      return;
-
-    const compile_list_file_path: string = path.join(Workspace.get_workspace(), config.general['compile-list']);
-    // if compile-script changed, refresh the view
-    fs.watchFile(compile_list_file_path, { interval: 1000 }, function (event, filename) {
-      OBIController.update_build_summary_timestamp();
-    });
-  }
-
 
 
 
@@ -209,7 +185,7 @@ export class OBIController implements vscode.WebviewViewProvider {
 
     const html_template = 'controller/index.html';
 
-    const compile_list: {} | undefined = OBITools.get_compile_list(workspaceFolder);
+    const compile_list: any | undefined = OBITools.get_compile_list(workspaceFolder);
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
     const html = nunjucks.render(html_template,

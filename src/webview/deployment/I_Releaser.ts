@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { getUri } from "../../utilities/getUri";
-import { OBITools } from '../../utilities/OBITools';
-import { Constants } from '../../Constants';
+import { getUri } from "../../extension/utilities/getUri";
+import { OBITools } from '../../extension/utilities/OBITools';
+import { Constants } from '../../shared/Constants';
 import * as DeploymentConfig from './DeploymentConfig';
-import { logger } from '../../utilities/Logger';
+import { logger } from '../../extension/utilities/Logger';
 
 
 const nunjucks = require('nunjucks');

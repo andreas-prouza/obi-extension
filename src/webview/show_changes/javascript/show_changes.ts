@@ -59,7 +59,7 @@ function run_build() {
   const build_source = document.getElementsByClassName("build_source");
   const build_source_cmd = document.getElementsByClassName("build_source_cmd");
   let ignore_sources: string[] = [];
-  let ignore_sources_cmd: { [key: string]: [string] | null } = {};
+  let ignore_sources_cmd: Record<string, string[]> = {};
 
   for (let i = 0; i < build_source.length; i++) {
     const checkbox = build_source[i] as HTMLInputElement;

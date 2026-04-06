@@ -1,0 +1,15 @@
+[connection]
+ssh-user = "User"
+
+[general]
+local-base-dir = "."
+source-dir = "src"
+supported-object-types = [ "pgm", "file", "srvpgm", "module", "cpy", "obj" ]
+compiled-object-list = ".obi/etc/object-builds.json"
+remote-source-list = ".obi/etc/source-list-remote.json"
+dependency-list = ".obi/etc/dependency.json"
+build-output-dir = ".obi/build-output"
+compile-list = ".obi/build-output/compile-list.json"
+evfevent-output-dir = ".obi/tmp/evfevent"
+
+[global]

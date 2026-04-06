@@ -10,12 +10,33 @@
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}"
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				// Remove --disable-extensions
+				// Redirect extensions to an empty temp folder
+				"--extensions-dir=${workspaceFolder}/.vscode-test/temp-extensions",
+				// Redirect settings/cache so it doesn't see your real VS Code setup
+				"--user-data-dir=${workspaceFolder}/.vscode-test/temp-user-data"
 			],
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
 			],
-			"preLaunchTask": "${defaultBuildTask}"
+			"preLaunchTask": "npm: watch"
+		},
+		{
+			"name": "Extension Tests",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index",
+				"--disable-extensions",
+				"${workspaceFolder}/test-workspace-active"
+			],
+			"outFiles": [
+				"${workspaceFolder}/out/test/**/*.js"
+			],
+			"preLaunchTask": "npm: watch"
 		}
 	]
 }

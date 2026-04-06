@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { DirTool } from '../../utilities/DirTool';
-import { Constants } from '../../Constants';
-import { logger } from '../../utilities/Logger';
-import * as source from '../../obi/Source';
-import { Workspace } from '../../utilities/Workspace';
-import { AppConfig } from '../controller/AppConfig';
+import { DirTool } from '../../extension/utilities/DirTool';
+import { Constants } from '../../shared/Constants';
+import { logger } from '../../extension/utilities/Logger';
+import * as source from '../../shared/Source';
+import { Workspace } from '../../extension/utilities/Workspace';
+import { AppConfig } from '../../shared/AppConfig';
 
 
 interface IBuildHistorys {
@@ -91,7 +91,13 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
             return null;
           })
           .filter((item): item is BuildHistoryItem => item !== null)
-          .sort((a, b) => b.label.localeCompare(a.label));
+          .sort((a, b) => {
+            // Extract the string value from either a string or a TreeItemLabel object
+            const labelA = typeof a.label === 'string' ? a.label : (a.label?.label ?? '');
+            const labelB = typeof b.label === 'string' ? b.label : (b.label?.label ?? '');
+
+            return labelB.localeCompare(labelA);
+          });
 
         return Promise.resolve(historyItems);
       }
@@ -259,8 +265,6 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
 
 export class BuildHistoryItem extends vscode.TreeItem {
 
-  public readonly label: string;
-  public readonly collapsibleState: vscode.TreeItemCollapsibleState;
   public readonly file_path: string;
   public readonly date?: string;
 

@@ -1,10 +1,11 @@
 import {
   allComponents,
   provideVSCodeDesignSystem,
-  Button
+  Button,
+  Checkbox
 } from "@vscode/webview-ui-toolkit";
 
-import * as source from '../../../obi/Source';
+import * as source from '../../../shared/Source';
 import { showAlert } from "../../tools/javascript/alertBox";
 
 // In order to use all the Webview UI Toolkit web components they
@@ -49,9 +50,9 @@ function main() {
 function delete_filter(id: string) {
   
   const button = document.getElementById(id);
-  let lib: string|null|undefined = button?.getAttribute('lib');
-  let file: string|null|undefined = button?.getAttribute('file');
-  let member: string|null|undefined = button?.getAttribute('member');
+  const lib: string|null|undefined = button?.getAttribute('lib');
+  const file: string|null|undefined = button?.getAttribute('file');
+  const member: string|null|undefined = button?.getAttribute('member');
 
   console.log(`Delete ${lib}, ${file}, ${member}`);
 
@@ -68,12 +69,13 @@ function delete_filter(id: string) {
 
 function add_filter() {
   
-  const new_libs: string[] = document.getElementById("new_lib").value.split(',');
-  const new_files: string[] = document.getElementById("new_file").value.split(',');
-  const new_members: string[] = document.getElementById("new_member").value.split(',');
-  const regex: boolean = document.getElementById("new_regex").checked;
+  const new_libs: string[] = (document.getElementById("new_lib") as HTMLInputElement)?.value.split(',');
+  const new_files: string[] = (document.getElementById("new_file") as HTMLInputElement)?.value.split(',');
+  const new_members: string[] = (document.getElementById("new_member") as HTMLInputElement)?.value.split(',');
+  const regex: boolean = (document.getElementById("new_regex") as Checkbox)?.checked;
+  const show_empty_folders: boolean = (document.getElementById("new_show_empty_folders") as Checkbox)?.checked;
 
-  console.log(`Add filter ${new_libs}, ${new_files}, ${new_members}, regex: ${regex}`);
+  console.log(`Add filter ${new_libs}, ${new_files}, ${new_members}, regex: ${regex}, show_empty_folders: ${show_empty_folders}`);
 
   for (let new_lib of new_libs) {
     for (let new_file of new_files) {
@@ -90,7 +92,8 @@ function add_filter() {
           lib: new_lib.trim(),
           file: new_file.trim(),
           member: new_member.trim(),
-          regex: regex
+          regex: regex,
+          show_empty_folders: show_empty_folders
         });
       }
     }
@@ -102,18 +105,17 @@ function add_filter() {
 
 function save_config() {
 
-  let filter: source.IQualifiedSource[] = [];
+  const filter: source.IQualifiedSource[] = [];
   let counter = 0;
   let els = document.getElementsByClassName(`source_filter_${counter}`);
-  let [lib, file, member] = '';
 
   while (els.length > 0) {
 
-    const libs = document.getElementById(`lib_${counter}`).value.split(',');
-    const files = document.getElementById(`file_${counter}`).value.split(',');
-    const members = document.getElementById(`member_${counter}`).value.split(',');
-    const regex = document.getElementById(`regex_${counter}`).checked;
-    const show_empty_folders = document.getElementById(`show_empty_folders_${counter}`).checked;
+    const libs = (document.getElementById(`lib_${counter}`) as HTMLInputElement)?.value.split(',');
+    const files = (document.getElementById(`file_${counter}`) as HTMLInputElement)?.value.split(',');
+    const members = (document.getElementById(`member_${counter}`) as HTMLInputElement)?.value.split(',');
+    const regex = (document.getElementById(`regex_${counter}`) as Checkbox)?.checked;
+    const show_empty_folders = (document.getElementById(`show_empty_folders_${counter}`) as Checkbox)?.checked;
     
     for (let lib of libs) {
       for (let file of files) {
@@ -136,7 +138,6 @@ function save_config() {
       }
     }
   
-
     counter++;
     els = document.getElementsByClassName(`source_filter_${counter}`);
   }

@@ -1,17 +1,16 @@
 import * as vscode from 'vscode';
-import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
-import { getUri } from "../../utilities/getUri";
-import { DirTool } from '../../utilities/DirTool';
-import { Constants } from '../../Constants';
-import { OBITools } from '../../utilities/OBITools';
 import * as path from 'path';
-import { LogOutput } from './LogOutput';
-import { AppConfig } from '../controller/AppConfig';
-import { Workspace } from '../../utilities/Workspace';
-import { logger } from '../../utilities/Logger';
-import { OBICommands } from '../../obi/OBICommands';
+//import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
+import { getUri } from "../../extension/utilities/getUri";
+import { DirTool } from '../../extension/utilities/DirTool';
+import { Constants } from '../../shared/Constants';
+import { OBITools } from '../../extension/utilities/OBITools';
+import { AppConfig } from '../../shared/AppConfig';
+import { Workspace } from '../../extension/utilities/Workspace';
+import { logger } from '../../extension/utilities/Logger';
+import { OBICommands } from '../../extension/obi/OBICommands';
 import { LogOutputProvider } from './LogOutputProvider';
-import { show_diagnostic_infos } from '../../source/compile-diagnostics';
+import { show_diagnostic_infos } from '../../extension/source/compile-diagnostics';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -34,9 +33,9 @@ interface Compile_list {
 export class BuildSummary {
 
   public static currentPanel: BuildSummary | undefined;
-  private readonly _panel: WebviewPanel;
-  private _disposables: Disposable[] = [];
-  private static _extensionUri: Uri;
+  private readonly _panel: vscode.WebviewPanel;
+  private _disposables: vscode.Disposable[] = [];
+  private static _extensionUri: vscode.Uri;
   private static _current_compile_output_folder: string | undefined;
 
 
@@ -46,7 +45,7 @@ export class BuildSummary {
    * @param panel A reference to the webview panel
    * @param extensionUri The URI of the directory containing the extension
    */
-  private constructor(panel: WebviewPanel, extensionUri: Uri) {
+  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
     this._panel = panel;
 
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
@@ -62,7 +61,7 @@ export class BuildSummary {
    *
    * @param extensionUri The URI of the directory containing the extension.
    */
-  public static render(extensionUri: Uri, workspaceUri: Uri|undefined, summary_file_path?: string) {
+  public static render(extensionUri: vscode.Uri, workspaceUri: vscode.Uri|undefined, summary_file_path?: string) {
 
     logger.info('Render BuildSummary');
     BuildSummary._extensionUri = extensionUri;
@@ -126,8 +125,8 @@ export class BuildSummary {
   }
 
 
-  public static get_compile_list(): {} {
-    let compile_list: {}|undefined;
+  public static get_compile_list(): any {
+    let compile_list: any|undefined;
     let compileListFileName: string|undefined = AppConfig.get_app_config().general['compile-list'];
     
     if (BuildSummary._current_compile_output_folder && compileListFileName) {
@@ -141,9 +140,9 @@ export class BuildSummary {
 
 
 
-  private static generate_html(extensionUri: Uri, webview: Webview): string {
+  private static generate_html(extensionUri: vscode.Uri, webview: vscode.Webview): string {
 
-    const ws: Uri = Workspace.get_workspace_uri();
+    const ws: vscode.Uri = Workspace.get_workspace_uri();
     const config = AppConfig.get_app_config();
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
@@ -198,7 +197,7 @@ export class BuildSummary {
 
 
 
-  private static get_object_list(workspaceUri: Uri): {}|undefined {
+  private static get_object_list(workspaceUri: vscode.Uri): any|undefined {
 
 
 
@@ -251,12 +250,12 @@ export class BuildSummary {
 
 
 
-  private static createNewPanel(extensionUri : Uri) {
-    return window.createWebviewPanel(
+  private static createNewPanel(extensionUri : vscode.Uri) {
+    return vscode.window.createWebviewPanel(
       'show_changes', // Identifies the type of the webview. Used internally
       'Build summary', // Title of the panel displayed to the user
       // The editor column the panel should be displayed in
-      ViewColumn.One,
+      vscode.ViewColumn.One,
       // Extra panel configurations
       {
         // Enable JavaScript in the webview
