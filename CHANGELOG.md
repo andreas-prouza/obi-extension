@@ -1,3 +1,9 @@
+## [1.2.2]
+
+* Bugfixes
+* Some improvements
+
+
 ## [1.2.1]
 
 * Bugfix load dependency list
