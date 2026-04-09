@@ -200,6 +200,7 @@ export class OBIController implements vscode.WebviewViewProvider {
     webviewView.webview.html = html;
 
     OBIController.update_build_summary_timestamp();
+    OBIController.update_current_profile();
 
     // Listener
     webviewView.webview.onDidReceiveMessage(data => {

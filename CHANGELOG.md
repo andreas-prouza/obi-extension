@@ -1,3 +1,9 @@
+## [1.2.3]
+
+* npm update
+* workspace check on startup
+
+
 ## [1.2.2]
 
 * Bugfixes

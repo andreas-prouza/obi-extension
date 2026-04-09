@@ -50,7 +50,7 @@
   "Local OBI path (if exist)": "Local OBI path (optional)",
   "Tip: Local OBI path": "Path to OBI on the local machine. \nOBI generates the build commands. \nExample (Win): %UserProfile%\\Documents\\obi",
   "Remote OBI path": "Remote OBI path",
-  "Tip: Remote OBI path": "Path in the IFS to OBI on the remote IBM i system. \nWe need OBI on our IBM i to run the build commands. \nExample: /apps/obi",
+  "Tip: Remote OBI path": "Path in the IFS to OBI on the remote IBM i system. \nWe need OBI on our IBM i to run the build commands. \nExample: /apps/obi\n\nSetup: https://github.com/andreas-prouza/obi?tab=readme-ov-file#server-side",
   "General": "General",
   "Individual language settings": "Individual language settings",
   "Add language": "Add language",

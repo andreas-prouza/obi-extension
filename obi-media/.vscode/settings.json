@@ -10,6 +10,10 @@
         "*.clle.srvpgm": "cl",
         "*.clle.pgm": "cl",
         "*.clp.pgm": "cl",
+        "*.prtf.file": "dds.prtf",
+        "*.dspf.file": "dds.dspf",
+        "*.pf.file": "dds.pf",
+        "*.lf.file": "dds.lf",
         "*.sqltable.file": "sql",
         "*.sqlview.file": "sql",
         "*.sqlproc.file": "sql"

@@ -40,6 +40,7 @@ export class OBITools {
   }
 
 
+
   /**
    * Self check of the extension
    */
@@ -476,7 +477,9 @@ export class OBITools {
     if (vscode.window.activeColorTheme.kind == vscode.ColorThemeKind.Dark)
       theme_mode = 'dark';
 
-    const ws: string | undefined = Workspace.get_workspace();
+    const ws: string = Workspace.get_workspace();
+    const current_profile = AppConfig.get_current_profile_app_config_name();
+    const ws_settings = Workspace.get_workspace_settings();
 
     return {
       asserts_uri: asserts_uri,
@@ -488,8 +491,8 @@ export class OBITools {
         return LocaleText.localeText?.get_Text(v);
       },
       locale: LocaleText.localeText?.current_locale,
-      current_profile: ws ? AppConfig.get_current_profile_app_config_name() : undefined,
-      workspace_settings: ws ? Workspace.get_workspace_settings() : undefined
+      current_profile: current_profile,
+      workspace_settings: ws_settings
     }
   }
 

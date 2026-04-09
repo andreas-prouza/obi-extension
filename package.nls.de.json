@@ -43,7 +43,7 @@
   "Use remote OBI (show changes)": "Verwende OBI auf IBM i (Anzeige Änderungen)",
   "Local OBI path (if exist)": "OBI Pfad lokal (optional)",
   "Remote OBI path": "OBI Pfad auf IBM i",
-  "Tip: Remote OBI path": "Pfad im IFS zu OBI auf dem Remote IBM i System. \nOBI wird benötigt, um die Build-Befehle der IBM i auszuführen. \nBeispiel: /apps/obi",
+  "Tip: Remote OBI path": "Pfad im IFS zu OBI auf dem Remote IBM i System. \nOBI wird benötigt, um die Build-Befehle der IBM i auszuführen. \nBeispiel: /apps/obi\n\nSetup: https://github.com/andreas-prouza/obi?tab=readme-ov-file#server-side",
   "General": "General",
   "Individual language settings": "Individuelle Sprach-Einstellungen",
   "Add language": "Sprache hinzufügen",

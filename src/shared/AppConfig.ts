@@ -8,6 +8,8 @@ import { Workspace, WorkspaceSettings } from '../extension/utilities/Workspace';
 
 
 
+
+
 export interface IConfigCompileSteps {
   ['extension'] : string[]
 }
@@ -110,7 +112,8 @@ export class ConfigGeneral implements IConfigGeneralProperties {
   'cloud-ws-ssh-remote-host': string|undefined; // This is the remote instead of local workspace not e IBM i server
   'evfevent-output-dir': string|undefined;
 
-  [key: string]: string | string[] | boolean | number | undefined;
+  [key: string]: string | string[] | boolean | number | undefined ;
+
 
 
   constructor(data: Partial<IConfigGeneralProperties> = {}) {
@@ -145,6 +148,12 @@ export class ConfigGeneral implements IConfigGeneralProperties {
       !this['evfevent-output-dir']
     
     );
+  }
+
+  public get remote_obi_dir_finalized(): string|undefined {
+    if (this['remote-obi-dir'])
+      return AppConfig.replace_env_variables(this['remote-obi-dir']);
+    return undefined
   }
 
 }
@@ -295,6 +304,20 @@ export class AppConfig {
     this.global = glob ?? new ConfigGlobal();
     this.current_profile = current_profile;
   }
+
+
+
+  public static replace_env_variables(input: string): string {
+    const config = AppConfig.get_app_config();
+    let result: string = input;
+
+    if (!config.connection['ssh-user']) {
+      result = result.replace(/~|\$USER/g, config.connection['ssh-user'] || 'user');
+    }
+    result = result.replace("${workspaceFolderBasename}", path.basename(Workspace.get_workspace() || 'workspace'));
+
+    return result;
+  }  
 
 
   public static reset() {
