@@ -51,6 +51,34 @@ function main() {
     openFileButton[i].addEventListener("click", function (e) {open_file(openFileButton[i]);});
   }
 
+
+  const headers = document.querySelectorAll('.collapsible-header');
+
+  headers.forEach(header => {
+    header.addEventListener('click', function() {
+      // Get the target class name from the data attribute (e.g., "level-1")
+      const targetClass = this.getAttribute('data-target');
+      // Find all rows with that class
+      const contentRows = document.querySelectorAll('.' + targetClass);
+      // Find the icon to toggle it
+      const icon = this.querySelector('.toggle-icon');
+
+      contentRows.forEach(row => {
+        // Toggle the display property
+        if (row.style.display === 'none') {
+          row.style.display = 'table-row'; // Show the row
+        } else {
+          row.style.display = 'none'; // Hide the row
+        }
+      });
+
+      // Optional: Flip the arrow icon
+      if (icon) {
+        icon.textContent = icon.textContent === '▼' ? '▶' : '▼';
+      }
+    });
+  });
+
 }
 
 

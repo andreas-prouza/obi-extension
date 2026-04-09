@@ -68,3 +68,7 @@ h3 {
   font-weight: bold;
   unicode-bidi: isolate;
 }
+
+table.show_changes td {
+  padding-right: 5px;
+}

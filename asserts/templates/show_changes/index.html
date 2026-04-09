@@ -67,7 +67,7 @@
 
     <vscode-divider role="presentation"></vscode-divider>
 
-    <table id="details">
+    <table class="show_changes" id="details">
     <thead>
       <tr>
         <th>{{ global_stuff['get_text']('level') | safe }}</th>
@@ -78,15 +78,16 @@
     </thead>
     <tbody>
       {% for level_item in compile_list['compiles'] %}
-        <tr>
-          <th>{{ level_item['level'] }}. {{ global_stuff['get_text']('level') | safe }}</th>
+        <tr class="collapsible-header" data-target="level-{{ level_item['level'] }}" style="cursor: pointer;">
+          <th colspan="2">
+            <span class="toggle-icon">▼</span>&nbsp;{{ level_item['level'] }}. {{ global_stuff['get_text']('level') | safe }}</th>
         </tr>
       {% for source_item in level_item['sources'] %}
         {% set source_splitted=source_item['source'].split('/') %}
         {% set lib = source_splitted[0] %}
         {% set file = source_splitted[1] %}
         {% set member = source_splitted[2] %}
-        <tr>
+        <tr class="collapsible-content level-{{ level_item['level'] }}">
           <td><vscode-checkbox class="type_checkbox build_source" source="{{ source_item['source'] }}" {% if 'ignore' not in source_item or source_item['ignore'] == false %}checked{% endif %}></vscode-checkbox></td>
           <!--td><a href='command:vscode.open?{{ source_item["file"] }}'>{{ lib }} / {{ file }} / {{ member }}</a></td-->
           <td><a class="open_file" data-file="{{ source_item["source"] }}">{{ lib }} / {{ file }} / {{ member }}</a></td>
