@@ -1,3 +1,9 @@
+## [1.2.4]
+
+* toggle levels in build-list
+* don't notify all missing json files
+
+
 ## [1.2.3]
 
 * npm update
