@@ -202,7 +202,7 @@ export class DirTool {
 
 
 
-  public static get_json(path: string): any|undefined {
+  public static get_json(path: string, showErrorMessage: boolean = true): any|undefined {
     
     path = DirTool.resolve_env_in_path(path);
     
@@ -220,11 +220,14 @@ export class DirTool {
       return JSON.parse(json_string);
     }
     catch (e: any) {
-      vscode.window.showErrorMessage(`Error in json file: ${path}: ${e.message}`);
+      if (showErrorMessage) {
+        vscode.window.showErrorMessage(`Error in json file: ${path}: ${e.message}`);
+      }
       logger.error(`JSON parse error for ${path}`);
       logger.debug(`JSON content: ${json_string}`);
       logger.error(`Parsing JSON content on line ${e.line}, column ${e.column}: ${e.message}`);
     }
+    return undefined;
     
   }
 
