@@ -26,34 +26,39 @@
     <br/>
     {% endif %}
     <hr />
-    <br/>
     
-    <table id="source_list">
-      <tr><th style="text-align: center;">{{ global_stuff['get_text']('New sources') | safe }}&nbsp;</th><th style="text-align: center;">{{ global_stuff['get_text']('Changed sources') | safe }}&nbsp;</th><th style="text-align: center;">{{ global_stuff['get_text']('Dependend objects') | safe }}</th></tr>
-      <tr>
-        <td>
-          <ul>
-            {% for source in object_list['new_sources'] %}
+    <div class="grid-container">
+      <div class="box box-1">
+        <details open>
+          <summary><h6>{{ object_list['new_sources'] | length}} {{ global_stuff['get_text']('New sources') | safe }}</h6></summary>
+        <ul>
+          {% for source in object_list['new_sources'] %}
+          <li><a href='command:vscode.open?{{ source["file"] }}'>{{ source["source"] }}</a></li>
+          {% endfor %}
+        </ul>
+        </details>
+      </div>
+      <div class="box box-2">
+        <details open>
+          <summary><h6>{{ object_list['changed_sources'] | length}} {{ global_stuff['get_text']('Changed sources') | safe }}</h6></summary>
+        <ul>
+          {% for source in object_list['changed_sources'] %}
+          <li><a href='command:vscode.open?{{ source["file"] }}'>{{ source["source"] }}</a></li>
+          {% endfor %}
+        </ul>
+        </details>
+      </div>
+      <div class="box box-3">
+        <details open>
+          <summary><h6>{{ object_list['dependend_sources'] | length}} {{ global_stuff['get_text']('Dependend objects') | safe }}</h6></summary>
+        <ul>
+          {% for source in object_list['dependend_sources'] %}
             <li><a href='command:vscode.open?{{ source["file"] }}'>{{ source["source"] }}</a></li>
-            {% endfor %}
-          </ul>
-        </td>
-        <td>
-          <ul>
-            {% for source in object_list['changed_sources'] %}
-            <li><a href='command:vscode.open?{{ source["file"] }}'>{{ source["source"] }}</a></li>
-            {% endfor %}
-          </ul>
-        </td>
-        <td>
-          <ul>
-            {% for source in object_list['dependend_sources'] %}
-              <li><a href='command:vscode.open?{{ source["file"] }}'>{{ source["source"] }}</a></li>
-            {% endfor %}
-          </ul>
-        </td>
-      </tr>
-    </table>
+          {% endfor %}
+        </ul>
+        </details>
+      </div>
+    </div>
 
     {% if compile_list %}
 

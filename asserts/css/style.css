@@ -69,6 +69,27 @@ h3 {
   unicode-bidi: isolate;
 }
 
+table.source_list {
+  padding-right: 5px;
+  border-collapse: collapse;
+  width: 100%;
+}
+
 table.show_changes td {
   padding-right: 5px;
 }
+
+
+.grid-container {
+  display: grid;
+  /* Creates 3 columns that each take up 1 fraction (1fr) of the space */
+  grid-template-columns: repeat(3, 1fr); 
+  width: 100%;
+}
+
+.box {
+  padding-right: 10px;
+  padding-left: 10px;
+  text-align: center;
+}
+
