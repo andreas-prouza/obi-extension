@@ -67,16 +67,16 @@
   </div>
   <br />
 
-  <div>
+  <!--div>
     <a id="open_build_summary" href='command:obi.open_build_summary'
       style="display: {% if builds_exist == 0 %}none{% else %}block{% endif %};">
       <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/file.svg">{{
       global_stuff['get_text']('Open build summary') | safe }}
     </a>
     <label id="build_summary_timestamp" style="display: {% if builds_exist == 0 %}none{% else %}block{% endif %};">
-      ({{ build_summary_timestamp }})
+      {{ build_summary_timestamp }}
     </label>
-  </div>
+  </div-->
 
   <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
 

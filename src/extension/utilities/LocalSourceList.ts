@@ -64,6 +64,9 @@ export class LocalSourceList {
 
 
     public static async get_source_info_list(): Promise<ISourceInfos> {
+        if (LocalSourceList.source_info_list == undefined) {
+            await LocalSourceList.load_source_infos();
+        }
         if (LocalSourceList.source_info_loading_promise)
             await LocalSourceList.source_info_loading_promise;
         return LocalSourceList.source_info_list || {};

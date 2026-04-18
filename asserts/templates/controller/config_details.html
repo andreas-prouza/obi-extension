@@ -48,7 +48,7 @@
       {% endif %}
       
       {% if class_prefix == 'user' %}
-        <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|connection|ssh-user"
+        <vscode-text-field class="{{ class_prefix }}_save_app mandatory" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|connection|ssh-user"
           value="{{ app_config['connection']['ssh-user'] }}">{{ global_stuff['get_text']('User') | safe }}</vscode-text-field>
 
         <br />

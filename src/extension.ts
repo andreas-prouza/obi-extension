@@ -24,6 +24,7 @@ import { BuildHistoryProvider } from './webview/build_history/BuildHistoryProvid
 import { sourceQuickSearch } from './source-quick-search';
 import { clear_diagnostics } from './extension/source/compile-diagnostics';
 import { HealthyWatchdog } from './extension/utilities/HealthyWatchdog';
+import { Constants } from './shared/Constants';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -186,6 +187,12 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('obi.get-remote-build-results', () => {
 			// Only available with workspaces
 			OBICommands.get_remote_build_results();
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.controller.dependency-list', () => {
+			vscode.commands.executeCommand('vscode.open', vscode.Uri.joinPath(ws_uri, Constants.DEPENDENCY_LIST));
 		})
 	);
 

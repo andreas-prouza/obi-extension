@@ -11,6 +11,7 @@
   "obi.check-remote-sources": "OBI: Check remote sources",
   "obi.controller.config": "OBI: Configuration",
   "obi.controller.dependency-list": "OBI: Dependency list",
+  "obi.get-remote-build-results": "OBI: Get last build results from IBM i",
   "obi.transfer-all": "OBI: Transfer all to remote",
   "obi.source-filter.show-view": "OBI: Show source filter",
   "obi.source-filter.edit-config": "OBI: Edit source filter config",

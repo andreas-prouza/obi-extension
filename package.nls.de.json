@@ -11,6 +11,7 @@
   "obi.check-remote-sources": "OBI: Sourcen auf IBM i prüfen",
   "obi.controller.config": "OBI: Konfiguration",
   "obi.controller.dependency-list": "OBI: Abhängigkeits-Liste",
+  "obi.get-remote-build-results": "OBI: Letzte Build-Ergebnisse von IBM i holen",
   "obi.transfer-all": "OBI: Gesamtes Projekt an IBM i übertragen",
   "obi.source-filter.show-view": "OBI: Source Filter anzeigen",
   "obi.source-filter.edit-config": "OBI: Source Filter bearbeiten",

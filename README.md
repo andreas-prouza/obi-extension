@@ -15,7 +15,11 @@ Final release will be available soon.
 
 * Use different profiles for your build settings (LIBL, target lib, build cmd, ...)
   
-  <img src="asserts/img/ext/controller-1.png" style="width: 200px">
+  ![img](asserts/img/ext/controller-1.png)
+
+* Quick search  
+  
+  ![img](asserts/img/ext/quick-search.png)
 
 * Individual source lists
   
@@ -90,13 +94,13 @@ Because you work locally, you need to sync your changes with other developers.
    You will see the welcome screen.  
    Here you can initialize the project with OBI
 
-    <img src="asserts/img/ext/welcome3.png" style="width: 300px">
+    ![img](asserts/img/ext/welcome3.png)
 
    This creates a new folder ```.obi``` including some initial config files
 
 4. Then OBI opens the config where you need to define some mandatory settings (server, user credentials, ifs locations, ...)
    
-     <img src="asserts/img/ext/config-minimum.png" style="width: 800px">
+     ![img](asserts/img/ext/config-minimum.png)
 
      >**```Project configuration```** contains settings shared with all team members
 
@@ -104,8 +108,9 @@ Because you work locally, you need to sync your changes with other developers.
 
      When you finished configuration, save it and your project gets reloaded automatically.
 
-5. Now, OBI is ready. It comes with an sample source in the ```Source Filters``` area
-   <img src="asserts/img/ext/obi-after-init.png" style="width: 800px">
+5. Now, OBI is ready. It comes with an sample source in the ```Source Filters``` area  
+   
+   ![img](asserts/img/ext/obi-after-init.png)
 
 
 6.  On your IBM i
@@ -119,7 +124,7 @@ Because you work locally, you need to sync your changes with other developers.
 
     (Copy the path in your project config)
 
-    <img src="asserts/img/ext/obi-path.png" style="width: 800px">
+    ![img](asserts/img/ext/obi-path.png)
 
 
 ### Start migrating your source to OBI
@@ -139,7 +144,7 @@ Because you work locally, you need to sync your changes with other developers.
    OBI can check which sources have changed and need to be built.  
    Therefore, a hash value is stored for each source.
    
-   <img src="asserts/img/ext/compiled-obj-list.png" style="width: 300px">
+   ![img](asserts/img/ext/compiled-obj-list.png)
 
    From now, the ```Show changes``` action only shows changed sources.
 

@@ -1,3 +1,11 @@
+## [1.2.5]
+
+* Toggle sources in build summary
+* Several improvements
+* Style
+* Docu
+
+
 ## [1.2.4]
 
 * toggle levels in build-list
