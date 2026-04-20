@@ -1,4 +1,17 @@
-# OBI README
+
+- [OBI: Object Builder for i](#obi-object-builder-for-i)
+- [Features](#features)
+- [Requirements](#requirements)
+- [The concept](#the-concept)
+- [Following steps you need to do](#following-steps-you-need-to-do)
+  - [First start](#first-start)
+  - [Start migrating your source to OBI](#start-migrating-your-source-to-obi)
+- [Further information](#further-information)
+
+
+
+
+# OBI: Object Builder for i
 
 Object builder for i (OBI) is an automatic build tool.
 
@@ -6,12 +19,8 @@ Object builder for i (OBI) is an automatic build tool.
   <a href="https://www.buymeacoffee.com/prouza"><img src="https://img.shields.io/badge/%F0%9F%8D%BA-Buy%20me%20a%20beer-red?style=flat" alt="Buy me a beer"></a>
 </p>
 
-> Notice:
-Currently only the Beta version is available.
-Final release will be available soon.
 
-
-## Features
+# Features
 
 * Use different profiles for your build settings (LIBL, target lib, build cmd, ...)
   
@@ -62,7 +71,7 @@ Final release will be available soon.
   ![img](asserts/img/ext/build-summary.png)
 
 
-## Requirements
+# Requirements
 
 * On IBM i SSH is necessary  
   https://github.com/andreas-prouza/ibm-i-build/blob/main/docs/pages/SSH.md
@@ -73,7 +82,7 @@ Final release will be available soon.
 
 ---
 
-## The concept
+# The concept
 
 The idea is to work with your **sources locally** on your PC.  
 Only for compile process, sources will be synchronised to the IFS.
@@ -83,9 +92,9 @@ Because you work locally, you need to sync your changes with other developers.
 
 ![img](asserts/img/ext/concept.png)
 
-## Following steps you need to do
+# Following steps you need to do
 
-### First start
+## First start
 
 1. On your PC create an empty project folder
 2. In vscode open that folder
@@ -127,7 +136,7 @@ Because you work locally, you need to sync your changes with other developers.
     ![img](asserts/img/ext/obi-path.png)
 
 
-### Start migrating your source to OBI
+## Start migrating your source to OBI
 
 1. **GIT**  
   If you are working in a Team you should use git
@@ -162,7 +171,7 @@ If no OBI config could be found, you will see the welcome screen:
 
 
 
-## For more information
+# Further information
 
 * [Source dependencies](asserts/docs/dependencies.md)
 * [SSH setup](asserts/docs/ssh.md)
