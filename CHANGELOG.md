@@ -1,3 +1,10 @@
+## [1.2.6]
+
+* Quick-search: check if source exist
+* Add button in editor for run/show build
+* npm updates
+
+
 ## [1.2.5]
 
 * Toggle sources in build summary
