@@ -85,6 +85,12 @@ export class LocalSourceList {
             try {
                 const config = AppConfig.get_app_config();
                 LocalSourceList.source_info_list = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['source-infos'] || '.obi/etc/source-infos.json')) || {};
+                for (const source in LocalSourceList.source_info_list) {
+                    if (!DirTool.file_exists(path.join(Workspace.get_workspace(), config.general['source-dir'] || 'src', source))) {
+                        delete LocalSourceList.source_info_list[source];
+                    }
+                }
+
             } catch (error) {
                 logger.error(`Error loading source list infos: ${error}`);
                 LocalSourceList.source_info_list = {};
