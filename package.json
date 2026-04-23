@@ -48,13 +48,13 @@
       {
         "command": "obi.show_changes",
         "title": "%obi.show_changes%",
-        "icon": "$(check-all)",
+        "icon": "$(loaded-scripts-view-icon)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
         "command": "obi.show_single_changes",
         "title": "%obi.show_single_changes%",
-        "icon": "$(check)",
+        "icon": "$(loaded-scripts-view-icon)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
@@ -244,6 +244,16 @@
       "editor/title": [
         {
           "command": "obi.clearDiagnostics",
+          "when": "obi.contains_obi_project && (resourceExtname == .pgm || resourceExtname == .srvpgm || resourceExtname == .module || resourceExtname == .file)",
+          "group": "navigation"
+        },
+        {
+          "command": "obi.show_single_changes",
+          "when": "obi.contains_obi_project && (resourceExtname == .pgm || resourceExtname == .srvpgm || resourceExtname == .module || resourceExtname == .file)",
+          "group": "navigation"
+        },
+        {
+          "command": "obi.run_single_build",
           "when": "obi.contains_obi_project && (resourceExtname == .pgm || resourceExtname == .srvpgm || resourceExtname == .module || resourceExtname == .file)",
           "group": "navigation"
         }
@@ -482,21 +492,21 @@
     "@types/chai": "^5.2.3",
     "@types/fs-extra": "^11.0.4",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^22.14.0",
+    "@types/node": "^25.6.0",
     "@types/sinon": "^21.0.1",
     "@types/vscode": "^1.66.0",
     "@types/vscode-webview": "^1.57.5",
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",
-    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
     "chai": "^6.2.2",
     "esbuild": "^0.28.0",
     "eslint": "^10.2.0",
     "fs-extra": "^11.3.4",
     "glob": "^13.0.6",
-    "mocha": "^11.7.5",
-    "ovsx": "latest",
+    "mocha": "^11.3.0",
+    "ovsx": "^0.9.4",
     "shx": "^0.4.0",
     "sinon": "^21.0.3",
     "typescript-eslint": "^8.58.0"
@@ -505,10 +515,10 @@
     "@emnapi/core": "^1.4.3",
     "@emnapi/runtime": "^1.4.3",
     "@ibm/ibmi-eventf-parser": "^2.0.1",
-    "@tybys/wasm-util": "^0.9.0",
+    "@tybys/wasm-util": "^0.10.1",
     "@vscode/webview-ui-toolkit": "^1.4.0",
     "deepmerge": "^4.3.1",
-    "hasha": "^6.0.0",
+    "hasha": "^7.0.0",
     "node-ssh": "^13.2.0",
     "nunjucks": "^3.2.4",
     "smol-toml": "^1.3.0",
