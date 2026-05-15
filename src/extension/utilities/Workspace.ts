@@ -20,6 +20,13 @@ export class Workspace {
   }
 
 
+  public static get_current_profile(): string | undefined {
+
+    const settings = Workspace.get_workspace_settings();
+    return settings.current_profile;
+  }
+
+  
 
   public static get_workspace_settings(): WorkspaceSettings {
 

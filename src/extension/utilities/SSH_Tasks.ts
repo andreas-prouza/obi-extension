@@ -94,8 +94,9 @@ export class SSH_Tasks {
         }
 
         await SSH_Tasks.get_ssh_user();
+        const current_profile = Workspace.get_current_profile() || 'default';
 
-        let pwd: string | undefined = await SSH_Tasks.context.secrets.get(`obi|${SSH_Tasks.host}|${SSH_Tasks.ssh_user}`);
+        let pwd: string | undefined = await SSH_Tasks.context.secrets.get(`obi|${current_profile}|${SSH_Tasks.host}|${SSH_Tasks.ssh_user}`);
         if (! pwd && (!ssh_key || ssh_key.length == 0)) {
           pwd = await vscode.window.showInputBox({ title: `Enter your password for ${SSH_Tasks.ssh_user}@${SSH_Tasks.host}`, placeHolder: "password", password: true });
           if (! pwd)

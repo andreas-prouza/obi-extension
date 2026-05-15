@@ -1,3 +1,16 @@
+## [1.2.8]
+
+* Icon color
+* Bugfixes
+* npm updates
+
+
+## [1.2.7]
+
+* npm updates
+* Bugfix in welcome view
+
+
 ## [1.2.6]
 
 * Quick-search: check if source exist

@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
   <link rel="stylesheet" href="{{ config_css }}">
+  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/codicons/codicon.css">
 </head>
 
 <body>
@@ -69,7 +70,7 @@
         </td>
         <td>
           <vscode-button class="delete_filter" lib="{{ row['source-lib'] }}" file="{{ row['source-file'] }}" member="{{ row['source-member'] }}" list_index="{{ loop.index0 }}" id="delete_filter_{{ loop.index0 }}">
-            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
+            <span class="codicon codicon-trash"></span>
           </vscode-button>
         </td>
       </tr>
@@ -94,7 +95,7 @@
         </td>
         <td>
           <vscode-button id="add_filter">
-            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
+            <span class="codicon codicon-add"></span>
           </vscode-button>
         </td>
       </tr>

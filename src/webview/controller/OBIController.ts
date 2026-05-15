@@ -288,7 +288,7 @@ export class OBIController implements vscode.WebviewViewProvider {
 
     let new_profile_config_file = AppConfig.convert_profile_alias_to_file(new_profile);
     new_profile_config_file = path.join(ws, Constants.OBI_CONFIGS_DIR, new_profile_config_file);
-    DirTool.copy_file(current_profile_config_file, new_profile_config_file);
+    DirTool.copy_file(current_profile_config_file, new_profile_config_file, true);
 
     Workspace.change_profile(new_profile);
 

@@ -18,7 +18,7 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
       <h3 style="margin: 0;">{{ global_stuff['get_text']('Extended Source Processing Block') | safe }} #{{ loop.index }}</h3>
       <vscode-button class="delete_esp_block" data-config="{{ class_prefix }}" data-index="{{ loop.index0 }}" data-project_user="{{ class_prefix }}" data-key="esp|{{ loop.index0 }}" id="delete_esp_{{ loop.index0 }}">
-        <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
+        <span class="codicon codicon-trash"></span>
       </vscode-button>
     </div>
 
@@ -99,7 +99,7 @@
                           data-config="{{ class_prefix }}"
                           data-esp-step-index="{{ loop.index0 }}" 
                           id="delete_esp_step_{{ outer_index }}_{{ loop.index0 }}">
-            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
+            <span class="codicon codicon-trash"></span>
           </vscode-button>
         </td>
       </tr>
@@ -130,7 +130,7 @@
         </td>
         <td>
           <vscode-button appearance="icon" class="add_step_to_esp" data-config="{{ class_prefix }}" data-index="{{ loop.index0 }}">
-            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
+            <span class="codicon codicon-add"></span>
           </vscode-button>
         </td>
       </tr>
@@ -141,7 +141,7 @@
 
   <div style="margin-top: 10px;">
     <vscode-button class="add_new_esp_block" data-config="{{ class_prefix }}">
-      <span slot="start"><img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg"></span>
+      <span slot="start"><span class="codicon codicon-add"></span></span>
       {{ global_stuff['get_text']('Add Processing Block') | safe }}
     </vscode-button>
   </div>

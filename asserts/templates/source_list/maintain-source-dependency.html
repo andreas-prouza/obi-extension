@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/css/choices.min.css">
   <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/css/choices-dark-overrides.css">
   <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/css/tom-select.min.css">
+  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/codicons/codicon.css">
 
 </head>
 
@@ -54,7 +55,7 @@
         <td><a href='command:vscode.open?{{ row["file"] }}'>{{ row["source"] }}</a></td>
         <td>
           <vscode-button class="delete_dependency_1" source='{{ row["source"] }}'' list_index="{{ loop.index0 }}" id="delete_dependency_1_{{ loop.index0 }}">
-            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
+            <span class="codicon codicon-trash"></span>
           </vscode-button>
         </td>
       </tr>
@@ -72,7 +73,7 @@
         </td>
         <td>
           <vscode-button id="add_dependency_1">
-            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
+            <span class="codicon codicon-add"></span>
           </vscode-button>
         </td>
       </tr>
@@ -110,7 +111,7 @@
         <td><a href='command:vscode.open?{{ row["file"] }}'>{{ row["source"] }}</a></td>
         <td>
           <vscode-button class="delete_dependency_2" source='{{ row["source"] }}' list_index="{{ loop.index0 }}" id="delete_dependency_2_{{ loop.index0 }}">
-            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/trash.svg">
+            <span class="codicon codicon-trash"></span>
           </vscode-button>
         </td>
       </tr>
@@ -128,7 +129,7 @@
         </td>
         <td>
           <vscode-button id="add_dependency_2">
-            <img src="{{ global_stuff['asserts_uri'] }}/img/{{ global_stuff['theme_mode'] }}/add.svg">
+            <span class="codicon codicon-add"></span>
           </vscode-button>
         </td>
       </tr>

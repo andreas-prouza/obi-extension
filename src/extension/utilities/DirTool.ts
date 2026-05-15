@@ -537,8 +537,12 @@ export class DirTool {
 
 
 
-  public static copy_file(src: string, dest: string): void {
+  public static copy_file(src: string, dest: string, create: boolean): void {
     if (!DirTool.file_exists(src)) {
+      if (create) {
+        DirTool.write_file(dest, '');
+        return;
+      }
       vscode.window.showErrorMessage(`Copy error: source file does not exist: ${src}`);
       throw new Error(`Source file does not exist: ${src}`);
     }

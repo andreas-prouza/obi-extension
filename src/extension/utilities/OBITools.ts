@@ -468,6 +468,7 @@ export class OBITools {
 
   public static get_global_stuff(webview: vscode.Webview, extensionUri: vscode.Uri) {
 
+    let result: any = {};
     const styleUri = getUri(webview, extensionUri, ["asserts/css", "style.css"]);
 
     const asserts_uri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'asserts'));
@@ -477,11 +478,7 @@ export class OBITools {
     if (vscode.window.activeColorTheme.kind == vscode.ColorThemeKind.Dark)
       theme_mode = 'dark';
 
-    const ws: string = Workspace.get_workspace();
-    const current_profile = AppConfig.get_current_profile_app_config_name();
-    const ws_settings = Workspace.get_workspace_settings();
-
-    return {
+    result = {
       asserts_uri: asserts_uri,
       styleUri: styleUri,
       nonce: nonce,
@@ -491,6 +488,18 @@ export class OBITools {
         return LocaleText.localeText?.get_Text(v);
       },
       locale: LocaleText.localeText?.current_locale,
+    }
+
+    if (!OBITools.contains_obi_project()) {
+      return result;
+    }
+
+    const ws: string = Workspace.get_workspace();
+    const current_profile = AppConfig.get_current_profile_app_config_name();
+    const ws_settings = Workspace.get_workspace_settings();
+
+    return {
+      ...result,
       current_profile: current_profile,
       workspace_settings: ws_settings
     }

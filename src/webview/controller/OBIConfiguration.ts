@@ -87,10 +87,11 @@ export class OBIConfiguration {
     const config = AppConfig.get_app_config();
     const host = config.connection['remote-host'];
     const user = config.connection['ssh-user'];
+    const current_profile = Workspace.get_current_profile() || 'default';
 
     const error_text = AppConfig.self_check();
 
-    const pwd = await context.secrets.get(`obi|${host}|${user}`);
+    const pwd = await context.secrets.get(`obi|${current_profile}|${host}|${user}`);
 
     nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
     
@@ -182,9 +183,10 @@ export class OBIConfiguration {
         config = AppConfig.get_app_config();
         const host = config['connection']['remote-host'];
         const user = config['connection']['ssh-user'];
-        OBIConfiguration._context.secrets.delete(`obi|${host}|${user}`);
+        const current_profile = Workspace.get_current_profile() || 'default';
+        OBIConfiguration._context.secrets.delete(`obi|${current_profile}|${host}|${user}`);
         if (message.password.length > 0)
-          OBIConfiguration._context.secrets.store(`obi|${host}|${user}`, message.password);
+          OBIConfiguration._context.secrets.store(`obi|${current_profile}|${host}|${user}`, message.password);
         break;
 
       case "add_language_attribute":
@@ -444,7 +446,8 @@ export class OBIConfiguration {
         // Restrict the webview to only load resources from the `out` directory
         localResourceRoots: [
           vscode.Uri.joinPath(extensionUri, "out"),
-          vscode.Uri.joinPath(extensionUri, "asserts")
+          vscode.Uri.joinPath(extensionUri, "asserts"),
+          vscode.Uri.joinPath(extensionUri, 'node_modules')
         ],
         retainContextWhenHidden: true
       }

@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "1.2.6",
+  "version": "1.2.8",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -516,6 +516,7 @@
     "@emnapi/runtime": "^1.4.3",
     "@ibm/ibmi-eventf-parser": "^2.0.1",
     "@tybys/wasm-util": "^0.10.1",
+    "@vscode/codicons": "^0.0.45",
     "@vscode/webview-ui-toolkit": "^1.4.0",
     "deepmerge": "^4.3.1",
     "hasha": "^7.0.0",
