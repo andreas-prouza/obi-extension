@@ -1,3 +1,8 @@
+## [1.2.9]
+
+* npm updates
+
+
 ## [1.2.8]
 
 * Icon color
