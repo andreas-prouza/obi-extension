@@ -1,3 +1,9 @@
+## [1.2.10]
+
+* Bugfix
+* npm updates
+
+
 ## [1.2.9]
 
 * npm updates

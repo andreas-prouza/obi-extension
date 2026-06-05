@@ -21,7 +21,7 @@ export function getSteps(source: string, appConfig: any, extended_sources_config
 function getGlobalSteps(source: string, appConfig: any): Array<string | object> {
   if (appConfig.global?.steps) {
     for (const extensionStep in appConfig.global.steps) {
-      if (source.endsWith(extensionStep)) {
+      if (source.endsWith(`.${extensionStep}`)) {
         return appConfig.global.steps[extensionStep];
       }
     }
