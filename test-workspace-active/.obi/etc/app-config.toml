@@ -1,10 +1,9 @@
 [connection]
 remote-host = "example.com"
-ssh-user = "User"
 
 [general]
 local-base-dir = "."
-remote-base-dir = "${workspaceFolderBasename}"
+remote-base-dir = "./${workspaceFolderBasename}"
 source-dir = "src"
 check-remote-source-on-startup = false
 use-remote-obi = false
@@ -13,7 +12,7 @@ file-system-encoding = "utf-8"
 console-output-encoding = "utf-8"
 compiled-object-list = ".obi/etc/object-builds.json"
 remote-source-list = ".obi/etc/source-list-remote.json"
-source-list = ".obi/etc/source-list.json"
+source-list = ".obi/etc/source-list-local.json"
 source-infos = ".obi/etc/source-infos.json"
 dependency-list = ".obi/etc/dependency.json"
 deployment-object-list = ".obi/build-output/object-list.txt"

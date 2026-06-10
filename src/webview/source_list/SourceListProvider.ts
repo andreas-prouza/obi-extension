@@ -54,6 +54,7 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       return this.get_child_elements(element);
     }
 
+    this.items = [];
     const source_list_path = path.join(this.workspaceRoot, Constants.SOURCE_FILTER_FOLDER_NAME);
     if (!DirTool.dir_exists(source_list_path)) {
       return [];
@@ -149,6 +150,28 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     }
     return results;
 
+  }
+
+
+  getParent(element: SourceListItem): vscode.ProviderResult<SourceListItem> {
+    if (element.list_level === 'source-list') {
+      return undefined;
+    }
+
+    const parent = this.items.find(i => {
+      if (element.list_level === 'source-lib') {
+        return i.list_level === 'source-list' && i.label === element.source_list.replace('.json', '');
+      }
+      if (element.list_level === 'source-file') {
+        return i.list_level === 'source-lib' && i.label === element.src_lib && i.source_list === element.source_list;
+      }
+      if (element.list_level === 'source-member') {
+        return i.list_level === 'source-file' && i.label === element.src_file && i.src_lib === element.src_lib && i.source_list === element.source_list;
+      }
+      return false;
+    });
+
+    return parent;
   }
 
 
@@ -388,6 +411,28 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
     // create
     const tree = vscode.window.createTreeView('obi.source-filter', options);
+
+    vscode.window.onDidChangeActiveTextEditor(editor => {
+      if (editor) {
+        const filePath = OBITools.convert_local_filepath_2_obi_filepath(editor.document.uri.fsPath);
+
+        const source_arr: string[] = filePath.split('/').reverse();
+        const src_mbr = source_arr[0];
+        const src_file = source_arr[1];
+        const src_lib = source_arr[2];
+
+        const item = this.items.find(i => {
+          if (i.list_level === 'source-member' && i.src_file == src_file && i.src_member == src_mbr && i.src_lib == src_lib) {
+            return true;
+          }
+          return false;
+        });
+
+        if (item) {
+          tree.reveal(item, { select: true, focus: false, expand: true });
+        }
+      }
+    });
 
     vscode.commands.registerCommand('obi.source-filter.update', () => {
       this.refresh();

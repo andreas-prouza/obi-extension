@@ -1,3 +1,10 @@
+## [1.2.11]
+
+* Automatically focus source in source-filter
+* npm updates
+* remove unsecure npm packages
+
+
 ## [1.2.10]
 
 * Bugfix

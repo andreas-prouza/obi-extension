@@ -1,0 +1,16 @@
+[[extended_source_processing]]
+use_regex = false
+allow_multiple_matches = true
+
+[extended_source_processing.conditions]
+SOURCE_FILE_NAME = [ "*" ]
+TARGET_LIB = [ "*" ]
+
+[[extended_source_processing.steps]]
+add_default_steps = true
+step = ""
+exit_point_script = ""
+
+[extended_source_processing.steps.properties]
+TARGET_LIB = "PROUZALIB"
+JOB_CCSID = "1141"
