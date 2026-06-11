@@ -1,3 +1,8 @@
+## [1.2.12]
+
+* npm updates
+
+
 ## [1.2.11]
 
 * Automatically focus source in source-filter

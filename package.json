@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "1.2.11",
+  "version": "1.2.12",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -496,15 +496,15 @@
     "@types/vscode-webview": "^1.57.5",
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",
-    "@vscode/test-electron": "^2.5.2",
+    "@vscode/test-electron": "^3.0.0",
     "chai": "^6.2.2",
     "esbuild": "^0.28.0",
     "eslint": "^10.2.0",
     "fs-extra": "^11.3.4",
     "glob": "^13.0.6",
-    "ovsx": "^0.9.4",
+    "ovsx": "^1.0.0",
     "shx": "^0.4.0",
-    "sinon": "^21.0.3",
+    "sinon": "^22.0.0",
     "typescript-eslint": "^8.58.0"
   },
   "dependencies": {
