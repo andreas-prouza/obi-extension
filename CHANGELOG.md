@@ -1,3 +1,18 @@
+## [1.2.15]
+
+* Add object compile level to `build-output/object-list.txt`
+
+
+## [1.2.14]
+
+* npm updates
+
+
+## [1.2.13]
+
+* npm updates
+
+
 ## [1.2.12]
 
 * npm updates

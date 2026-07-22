@@ -11,7 +11,7 @@ export function addBuildCmds(targetTree: any[], appConfig: any, extended_sources
 
   for (const targetItem of targetTree) {
     for (const sourceItem of targetItem.sources) {
-      objectList.push(getObjectList(sourceItem.source, appConfig));
+      objectList.push(getObjectList(targetItem.level, sourceItem.source, appConfig));
       sourceItem.cmds = getSourceBuildCmds(sourceItem.source, appConfig, extended_sources_config);
     }
   }
@@ -22,13 +22,13 @@ export function addBuildCmds(targetTree: any[], appConfig: any, extended_sources
   }
 }
 
-export function getObjectList(source: string, appConfig: any): string {
+export function getObjectList(level: string, source: string, appConfig: any): string {
   const variableDict = getSourceProperties(appConfig, source);
   const prodLib = source.split('/')[0];
   const parts = source.split('.');
   const objType = parts[parts.length - 1];
   const objAttr = parts[parts.length - 2];
-  return `prod_obj|${prodLib}|${variableDict.TARGET_LIB}|${variableDict.OBJ_NAME}|${objType}|${objAttr}|${source}`;
+  return `${level}|${prodLib}|${variableDict.TARGET_LIB}|${variableDict.OBJ_NAME}|${objType}|${objAttr}|${source}`;
 }
 
 export function getSourceBuildCmds(source: string, appConfig: any, extended_sources_config: any): any[] {
