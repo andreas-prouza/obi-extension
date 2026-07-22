@@ -208,5 +208,9 @@
   "Tip: Hook": "A hook is a custom python script that will be executed when generating the build commands for a source. \nYou can use it to adjust the build commands or to execute custom actions during the build process. \nThe script is stored in .obi/etc/scripts/\n\nYou need to use the python obi project for generating the build commands.",
   "List of steps and its properties": "List of steps and its properties",
   "Add default steps": "Add default steps",
-  "Tip: Add default steps": "This add all steps of the standard processing for the source.\nYou can adjust the properties and hook script for each step afterwards."
+  "Tip: Add default steps": "This add all steps of the standard processing for the source.\nYou can adjust the properties and hook script for each step afterwards.",
+  "Source name and path starting from source directory (src)": "Source name and path starting from source directory (src)",
+  "Source base file name (without path)": "Source base file name (without path)",
+  "Source attribute (dspf, pf, clle, rpgle, ...)": "Source attribute (dspf, pf, clle, rpgle, ...)",
+  "Source type (file, pgm, ...)": "Source type (file, pgm, ...)"
 }

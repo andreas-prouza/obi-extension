@@ -138,8 +138,16 @@
           <th>{{ global_stuff['get_text']('Description') | safe }}</th>
         </tr>
         <tr>
+          <td><code>$(SOURCE)</code></td>
+          <td>{{ global_stuff['get_text']('Source name and path starting from source directory (src)') | safe }}</td>
+        </tr>
+        <tr>
           <td><code>$(SOURCE_FILE_NAME)</code></td>
           <td>{{ global_stuff['get_text']('Source name and path starting from project directory') | safe }}</td>
+        </tr>
+        <tr>
+          <td><code>$(SOURCE_BASE_FILE_NAME)</code></td>
+          <td>{{ global_stuff['get_text']('Source base file name (without path)') | safe }}</td>
         </tr>
         <tr>
           <td><code>$(TARGET_LIB)</code></td>
@@ -152,6 +160,14 @@
         <tr>
           <td><code>$(OBJ_NAME)</code></td>
           <td>{{ global_stuff['get_text']('Object name') | safe }}</td>
+        </tr>
+        <tr>
+          <td><code>$(SRC_ATTR)</code></td>
+          <td>{{ global_stuff['get_text']('Source attribute (dspf, pf, clle, rpgle, ...)') | safe }}</td>
+        </tr>
+        <tr>
+          <td><code>$(SRC_TYPE)</code></td>
+          <td>{{ global_stuff['get_text']('Source type (file, pgm, ...)') | safe }}</td>
         </tr>
       </table>
 

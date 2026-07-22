@@ -22,7 +22,7 @@ export function getSourceProperties(config: any, source: string): any {
   }
 
   globalSettings = { ...globalSettings, ...typeSettings, ...generalSettings, ...globalCmds };
-  globalSettings['SOURCE'] = source;
+  globalSettings['SOURCE'] = source;  
   globalSettings['SOURCE_FILE_NAME'] = path.join(config['general']['source-dir'], source).replace(/\\/g, '/');
   globalSettings['SOURCE_BASE_FILE_NAME'] = path.basename(globalSettings['SOURCE_FILE_NAME']);
   globalSettings['TARGET_LIB'] = getTargetLib(
@@ -31,6 +31,8 @@ export function getSourceProperties(config: any, source: string): any {
     globalSettings.TARGET_LIB_MAPPING
   );
   globalSettings['OBJ_NAME'] = path.basename(source).split('.')[0];
+  [globalSettings['SRC_ATTR'], globalSettings['SRC_TYPE']] = path.basename(source).split('.').slice(-2); // file, pgm
+  
 
   globalSettings['SET_LIBL'] = getSetLiblCmd(config, globalSettings.LIBL || [], globalSettings.TARGET_LIB);
 

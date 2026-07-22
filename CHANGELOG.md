@@ -1,3 +1,8 @@
+## [1.2.16]
+
+* Add variables for compile commands
+
+
 ## [1.2.15]
 
 * Add object compile level to `build-output/object-list.txt`
