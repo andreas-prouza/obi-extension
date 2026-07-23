@@ -13,6 +13,7 @@ export function addBuildCmds(targetTree: any[], appConfig: any, extended_sources
     for (const sourceItem of targetItem.sources) {
       objectList.push(getObjectList(targetItem.level, sourceItem.source, appConfig));
       sourceItem.cmds = getSourceBuildCmds(sourceItem.source, appConfig, extended_sources_config);
+      sourceItem.variables = getSourceProperties(appConfig, sourceItem.source);
     }
   }
 
