@@ -1,6 +1,8 @@
-## Next: [1.2.16]
+## [1.2.17]
 
 * Define individual global variables
+* Support for individual webview integration
+* bugfix
 
 
 ## [1.2.16]
