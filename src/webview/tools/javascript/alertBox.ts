@@ -17,9 +17,16 @@ export function showAlert(text: string, type: 'success' | 'info' | 'error' = 'in
     console.error('Alert box element not found');
     return;
   }
+
+  const timeout = {
+    'success': 2000,
+    'info': 2000,
+    'error': 5000
+  }
+
   box.textContent = text;
   box.className = `alert ${type}`;
   box.style.display = 'block';
-  setTimeout(() => box.style.display = 'none', 2000);
+  setTimeout(() => box.style.display = 'none', timeout[type]);
 }
 

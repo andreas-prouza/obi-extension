@@ -1,3 +1,9 @@
+## [1.2.18]
+
+* Add source variables in compile list
+* bugfix
+
+
 ## [1.2.17]
 
 * Define individual global variables
