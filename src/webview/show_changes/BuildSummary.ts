@@ -47,6 +47,7 @@ export class BuildSummary {
    */
   private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
     this._panel = panel;
+    BuildSummary.currentPanel = this;
 
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
     // the panel or when the panel is closed programmatically)
@@ -116,6 +117,15 @@ export class BuildSummary {
               });
             });
             return;
+
+          case "file_content":
+
+            BuildSummary.currentPanel._panel.webview.postMessage(
+              {
+                command: 'file_content',
+                content: DirTool.get_file_content(message.path)
+              });
+            return;
         }
       }
     );
@@ -145,7 +155,10 @@ export class BuildSummary {
     const ws: vscode.Uri = Workspace.get_workspace_uri();
     const config = AppConfig.get_app_config();
 
-    nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
+    nunjucks.configure([
+      Constants.HTML_TEMPLATE_DIR,
+      path.join(ws.fsPath, path.dirname(Constants.VSCODE_COMPILE_COMPLETED_TEMPLATE))
+    ]);
 
     const compile_list = BuildSummary.get_compile_list();
 
@@ -170,10 +183,13 @@ export class BuildSummary {
       object_list: BuildSummary.get_object_list(ws),
       compile_list: compile_list,
       created_timestamp: created_timestamp,
-      compile_file: DirTool.get_encoded_file_URI(path.join(BuildSummary._current_compile_output_folder ?? Constants.BUILD_OUTPUT_DIR, 'compile-list.json')),
-      log_file: DirTool.get_encoded_file_URI(Constants.OBI_LOG_FILE),
-      run_build: !OBITools.is_compile_list_completed(ws),
-      app_config: compile_list['config'] ?? config
+      compile_file_uri: DirTool.get_encoded_file_URI(path.join(BuildSummary._current_compile_output_folder ?? Constants.BUILD_OUTPUT_DIR, 'compile-list.json')),
+      compile_file: path.join(ws.fsPath, BuildSummary._current_compile_output_folder ?? Constants.BUILD_OUTPUT_DIR, 'compile-list.json'),
+      log_file_uri: DirTool.get_encoded_file_URI(Constants.OBI_LOG_FILE),
+      is_compile_list_completed: OBITools.is_compile_list_completed(ws),
+      compile_app_config: compile_list['config'] ?? config,
+      app_config: config,
+      compile_completed_template: path.basename(Constants.VSCODE_COMPILE_COMPLETED_TEMPLATE)
       }
     );
 
@@ -251,6 +267,10 @@ export class BuildSummary {
 
 
   private static createNewPanel(extensionUri : vscode.Uri) {
+    const wsUri = Workspace.get_workspace_uri();
+    const templatePath = vscode.Uri.file(path.join(wsUri.fsPath, Constants.VSCODE_COMPILE_COMPLETED_TEMPLATE));
+    const templateDir = vscode.Uri.file(path.dirname(templatePath.fsPath));
+
     return vscode.window.createWebviewPanel(
       'show_changes', // Identifies the type of the webview. Used internally
       'Build summary', // Title of the panel displayed to the user
@@ -265,7 +285,8 @@ export class BuildSummary {
         // Restrict the webview to only load resources from the `out` directory
         localResourceRoots: [
           vscode.Uri.joinPath(extensionUri, "out"),
-          vscode.Uri.joinPath(extensionUri, "asserts")
+          vscode.Uri.joinPath(extensionUri, "asserts"),
+          templateDir
         ],
         retainContextWhenHidden: true
       }

@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    
+    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
+    
     <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
     <link rel="stylesheet" href="{{ config_css }}">
     <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/codicons/codicon.css">
 
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
+    <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
 
   </head>
   <body>
@@ -20,12 +23,16 @@
     {% if compile_list %}
     <div>
       {{ global_stuff['get_text']('Created at') | safe }} <b><u>{{ compile_list['timestamp'] }}</u></b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <a href='command:vscode.open?{{ compile_file }}'>{{ global_stuff['get_text']('open JSON file') | safe }}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <a href='command:vscode.open?{{ log_file }}'>{{ global_stuff['get_text']('open OBI log') | safe }}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      {% if run_build %}&nbsp;&nbsp;&nbsp;<vscode-button style="height:35px" onclick="run_build()" style="vertical-align: super;" id="run_build" appearance="primary">{{ global_stuff['get_text']('Run build') | safe }}</vscode-button>{% endif %}
+      <a href='command:vscode.open?{{ compile_file_uri }}'>{{ global_stuff['get_text']('open JSON file') | safe }}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <a href='command:vscode.open?{{ log_file_uri }}'>{{ global_stuff['get_text']('open OBI log') | safe }}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      {% if not is_compile_list_completed %}&nbsp;&nbsp;&nbsp;<vscode-button style="height:35px" onclick="run_build()" style="vertical-align: super;" id="run_build" appearance="primary">{{ global_stuff['get_text']('Run build') | safe }}</vscode-button>{% endif %}
+      {% if is_compile_list_completed %}{% include compile_completed_template %}{% endif %}
     </div>
     <br/>
     {% endif %}
+    <div class="save-button-wrapper">
+      {% include "tools/alertBox.html" %}
+    </div>
     <hr />
     
     <div class="grid-container">
@@ -67,7 +74,7 @@
 
     <h3>{{ global_stuff['get_text']('Details') | safe }}</h3>
 
-    <div>{{ global_stuff['get_text']('Remote host') | safe }}: <code>{{ app_config['connection']['ssh-user'] }}@{{ app_config['connection']['remote-host'] }}</code> &nbsp;&nbsp;&nbsp;&nbsp; {{ global_stuff['get_text']('IBM i IFS path') | safe }}: <code>{{ app_config['general']['remote-base-dir'] }}</code></div>
+    <div>{{ global_stuff['get_text']('Remote host') | safe }}: <code>{{ compile_app_config['connection']['ssh-user'] }}@{{ compile_app_config['connection']['remote-host'] }}</code> &nbsp;&nbsp;&nbsp;&nbsp; {{ global_stuff['get_text']('IBM i IFS path') | safe }}: <code>{{ compile_app_config['general']['remote-base-dir'] }}</code></div>
     <br/>
 
 
@@ -157,7 +164,6 @@
     <input type="hidden" id="source"\>
     <input type="hidden" id="cmd_index"\>
 
-    <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
 
   </body>
 </html>
