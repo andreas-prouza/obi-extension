@@ -207,11 +207,14 @@ function main() {
   // Add handler for global variable
   //----------------------------
   
-  button = document.getElementById("add_global_variable") as Button;
-  button?.addEventListener("click", () => {
-    add_global_variable(button);
+  buttons = document.getElementsByClassName("add_global_variable");
+  for (let i = 0; i < buttons.length; i++) {
+    const el = (buttons[i] as HTMLElement);
+    el.addEventListener("click", () => {
+    add_global_variable(el);
     reload();
-  });
+    });
+  }
   
   buttons = document.getElementsByClassName('delete_global_variable');
   for (let i = 0; i < buttons.length; i++) {
@@ -244,9 +247,9 @@ function add_global_variable(e: HTMLElement) {
   const config: string = e.getAttribute('config') ?? '';
   save_config(config);
 
-  const key:string = (document.getElementById("new_global_variable_key") as TextField).value;
-  const value:string = (document.getElementById("new_global_variable_value") as TextField).value;
-  const type:string = (document.getElementById("new_global_variable_type") as HTMLSelectElement).value;
+  const key:string = (document.getElementById(`new_global_variable_key_${config}`) as TextField).value;
+  const value:string = (document.getElementById(`new_global_variable_value_${config}`) as TextField).value;
+  const type:string = (document.getElementById(`new_global_variable_type_${config}`) as HTMLSelectElement).value;
 
 
   console.log(`add_global_variable: ${key} : ${value} : ${type}`);

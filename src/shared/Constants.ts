@@ -25,10 +25,9 @@ export class Constants {
   public static readonly CHANGED_OBJECT_LIST_FILE_NAME: string = 'changed-object-list.json';
   public static readonly CHANGED_OBJECT_LIST: string = `${Constants.OBI_TMP_DIR}/${Constants.CHANGED_OBJECT_LIST_FILE_NAME}`;
   public static readonly REMOTE_OBI_PYTHON_PATH: string = "venv/bin/python";
-  public static readonly DEPLOYMENT_CONFIG_FILE: string = ".obi/etc/deployment.toml";
   public static readonly CHANGED_OBJECT_LIST_NAME: string = "changed-object-list.json";
   public static readonly DEPENDEND_OBJECT_LIST_NAME: string = "dependend-object-list.json";
-
+  
   public static readonly DEPENDENCY_LIST: string = ".obi/etc/dependency.json";
   public static readonly SOURCE_LIST: string = ".obi/etc/source-list.json";
   public static readonly SOURCE_INFOS: string = ".obi/etc/source-infos.json";
@@ -36,10 +35,13 @@ export class Constants {
   public static readonly COMPILED_OBJECT_LIST: string = '.obi/etc/object-builds.json';
   public static readonly EVFEVENT_OUTPUT_FOLDER: string = 'evfevent';
   public static readonly EVFEVENT_OUTPUT_PATH: string = `${Constants.OBI_TMP_DIR}/${Constants.EVFEVENT_OUTPUT_FOLDER}`;
-
+  
   public static readonly EXTENDED_SOURCE_PROCESS_CONFIG_USER: string = `${Constants.OBI_CONFIGS_DIR}/.user-extended-source-processing-config.toml`;
   public static readonly EXTENDED_SOURCE_PROCESS_CONFIG: string = `${Constants.OBI_CONFIGS_DIR}/extended-source-processing-config.toml`;
 
+  public static readonly DEPLOYMENT_CONFIG_FILE: string = ".obi/etc/deployment.toml";
+  public static readonly VSCODE_COMPILE_COMPLETED_TEMPLATE: string = ".obi/.vscode/templates/compile_completed.html";
+  
   public static readonly NEEDED_LIST_OF_PATH: string[] = [
     Constants.OBI_CONFIGS_DIR,
     Constants.SOURCE_FILTER_FOLDER_NAME,

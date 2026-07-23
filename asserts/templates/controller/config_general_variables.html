@@ -31,21 +31,21 @@
       <tr><td>&nbsp;</td></tr>
       <tr>
         <td>
-          <vscode-text-field id="new_global_variable_key" placeholder="TARGET_LIB"></vscode-text-field>
+          <vscode-text-field id="new_global_variable_key_{{ class_prefix }}" placeholder="TARGET_LIB"></vscode-text-field>
         </td>
         <td>
           <!--vscode-text-field id="new_global_variable_value" placeholder="PROUZALIB"></vscode-text-field-->
-          <vscode-text-area id="new_global_variable_value" placeholder="PROUZALIB" rows="4" resize="both">
+          <vscode-text-area id="new_global_variable_value_{{ class_prefix }}" placeholder="PROUZALIB" rows="4" resize="both">
           </vscode-text-area>
         </td>
         <td>
-          <select id="new_global_variable_type" class="form-select">
+          <select id="new_global_variable_type_{{ class_prefix }}" class="form-select">
             <option selected value="string">String</option>
             <option value="list">List (separated by new line)</option>
           </select>
         </td>
         <td>
-          <vscode-button id="add_global_variable" config="{{ class_prefix }}">
+          <vscode-button class="add_global_variable" config="{{ class_prefix }}">
             <span class="codicon codicon-add"></span>
           </vscode-button>
         </td>

@@ -213,5 +213,6 @@
   "Source base file name (without path)": "Source base file name (without path)",
   "Source attribute (dspf, pf, clle, rpgle, ...)": "Source attribute (dspf, pf, clle, rpgle, ...)",
   "Source type (file, pgm, ...)": "Source type (file, pgm, ...)",
-  "Individual variables": "Individual variables"
+  "Individual variables": "Individual variables",
+  "Run deploy": "Run deploy"
 }

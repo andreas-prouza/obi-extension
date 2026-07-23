@@ -4,6 +4,11 @@ import {
   Button
 } from "@vscode/webview-ui-toolkit";
 
+import { showAlert } from "../../tools/javascript/alertBox";
+// Expose showAlert to the global scope for inline HTML handlers
+(window as any).showAlert = showAlert;
+
+
 // In order to use all the Webview UI Toolkit web components they
 // must be registered with the browser (i.e. webview) using the
 // syntax below.
@@ -80,6 +85,11 @@ function main() {
   });
 
 }
+
+
+
+
+
 
 
 function run_build() {
