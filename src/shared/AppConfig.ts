@@ -233,18 +233,21 @@ export class ConfigGlobal {
 
   public settings?: ConfigSettings;
   public cmds?: {["key"]: string};
+  public variables?: {["key"]: string};
   public "compile-cmds"?: {["key"]: string};
   public steps?: IConfigCompileSteps;
 
   constructor(settings?: ConfigSettings, 
     cmds?: {["key"]: string}, 
     compile_cmds?: {["key"]: string}, 
-    steps?: IConfigCompileSteps) {
+    steps?: IConfigCompileSteps,
+    variables?: {["key"]: string},) {
     
     if (settings?.general)
       this.settings = new ConfigSettings(settings?.general, settings?.language);
 
     this.cmds = cmds;
+    this.variables = variables;
     this['compile-cmds'] = compile_cmds;
     this.steps = steps ;
 
@@ -376,7 +379,7 @@ export class AppConfig {
 
     if (configs['global']) {
       const global: ConfigGlobal = configs['global'];
-      glob_obj = new ConfigGlobal(global['settings'], global['cmds'], global['compile-cmds'], global['steps']);
+      glob_obj = new ConfigGlobal(global['settings'], global['cmds'], global['compile-cmds'], global['steps'], global['variables']);
     }
 
     let app_config = new AppConfig(con_obj, gen_obj, glob_obj);

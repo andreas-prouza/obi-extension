@@ -18,7 +18,22 @@ https://www.11ty.dev/docs/languages/nunjucks/
 */
 const nunjucks = require('nunjucks');
 
+// configure() returns an Environment
+const env = nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
 
+// Register "typename" filter on the environment
+env.addFilter("typename", (obj: any) => {
+  if (obj === null) return "null";
+  if (obj === undefined) return "undefined";
+
+  // If it's a class instance or built-in
+  if (obj.constructor && obj.constructor.name) {
+    return obj.constructor.name;
+  }
+
+  // Fallback
+  return typeof obj;
+});
 
 
 export class OBIConfiguration {
@@ -93,8 +108,6 @@ export class OBIConfiguration {
 
     const pwd = await context.secrets.get(`obi|${current_profile}|${host}|${user}`);
 
-    nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-    
     const local_source_list: string[] = await LocalSourceList.get_source_list();
     const esp_config_project = new ExtendedSourceProcessingList();
     const esp_config_user = new ExtendedSourceProcessingList(true);
@@ -102,7 +115,7 @@ export class OBIConfiguration {
     const panel = await context.secrets.get('obi|config|panel');
     const panel_tab = await context.secrets.get('obi|config|panel_tab');
 
-    const html = nunjucks.render('controller/configuration.html', 
+    const html = env.render('controller/configuration.html', 
       {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),
         config_css: getUri(webview, extensionUri, ["asserts/css", "config.css"]),
@@ -218,6 +231,38 @@ export class OBIConfiguration {
 
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
         break;
+
+
+
+      case "add_global_variable":
+
+        if(message.user_project == 'user')
+          config = AppConfig.get_user_app_config(workspaceUri);
+        else
+          config = AppConfig.get_project_app_config(workspaceUri);
+        if (!config.global.variables)
+          config.global.variables = {};
+        switch(message.type) {
+          case "list":
+            message.value = message.value.split(/\r?\n/);
+            break;
+        }
+        config.global.variables[message.key]=message.value;
+        OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
+        break;
+
+      
+      case "delete_global_variable":
+
+        if(message.user_project == 'user')
+          config = AppConfig.get_user_app_config(workspaceUri);
+        else
+          config = AppConfig.get_project_app_config(workspaceUri);
+        delete config.global.variables[message.key];
+        OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
+        break;
+
+
 
       case "add_global_cmd":
       case "save_global_cmd":
@@ -342,7 +387,7 @@ export class OBIConfiguration {
         const user_config_save = true ? message.user_project == 'user' : false;
         const esp_config_save = new ExtendedSourceProcessingList(user_config_save, message.data);
         esp_config_save.save_to_file();
-        OBIConfiguration.update();
+        //OBIConfiguration.update();
         break;
 
     }
@@ -406,9 +451,12 @@ export class OBIConfiguration {
       //new_config['general'] = data['general'];
     }
     if ('global' in data && typeof data.global === 'object' && data.global !== null) {
+      delete new_config.global.variables;
       mergeRecursive(new_config.global, data.global);
       //new_config['global'] = data['global'];
     }
+    if (data['global'] && data['global']['variables'])
+      new_config.global.variables = data['global']['variables'];
     if (data['global'] && data['global']['cmds'])
       new_config.global.cmds = data['global']['cmds'];
     if (data['global'] && data['global']['steps'])

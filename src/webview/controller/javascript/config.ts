@@ -202,12 +202,85 @@ function main() {
   const delete_source_config_button = document.getElementById('delete_source_config') as Button;
   delete_source_config_button.addEventListener("click", delete_source_config);
 
+
+  //----------------------------
+  // Add handler for global variable
+  //----------------------------
+  
+  button = document.getElementById("add_global_variable") as Button;
+  button?.addEventListener("click", () => {
+    add_global_variable(button);
+    reload();
+  });
+  
+  buttons = document.getElementsByClassName('delete_global_variable');
+  for (let i = 0; i < buttons.length; i++) {
+    const el = buttons[i];
+    el.addEventListener("click", () => {
+      delete_global_variable(el.getAttribute('project_user'), el.getAttribute('key')?.split('|')[2]); 
+      reload();
+    });
+  }
+
+  
+  //----------------------------
+  
   window.addEventListener('message', receive_message);
 
   check_error_text();
   
   // Show configuration loaded message in the UI instead of alert
   showAlert('Configuration reloaded.', 'success');
+}
+
+
+
+
+
+
+
+function add_global_variable(e: HTMLElement) {
+  
+  const config: string = e.getAttribute('config') ?? '';
+  save_config(config);
+
+  const key:string = (document.getElementById("new_global_variable_key") as TextField).value;
+  const value:string = (document.getElementById("new_global_variable_value") as TextField).value;
+  const type:string = (document.getElementById("new_global_variable_type") as HTMLSelectElement).value;
+
+
+  console.log(`add_global_variable: ${key} : ${value} : ${type}`);
+  vscode.postMessage({
+    command: "add_global_variable",
+    panel: panel,
+    panel_tab: panel_tab,
+    user_project: config,
+    key: key,
+    value: value,
+    type: type
+  });
+
+  reload();
+
+}
+
+
+
+
+function delete_global_variable(config: string, key: string) {
+
+  console.log(`Delete command ${key} for ${config}`);
+  
+  save_config(config);
+
+  vscode.postMessage({
+    command: "delete_global_variable",
+    panel: panel,
+    panel_tab: panel_tab,
+    user_project: config,
+    key: key
+  });
+
 }
 
 

@@ -1,0 +1,57 @@
+
+    <h3>{{ global_stuff['get_text']('Individual variables') | safe }}</h3>
+    {% set settings = app_config['global']['variables'] %}
+
+    <table>
+      <tr>
+        <th>{{ global_stuff['get_text']('Variable') | safe }}</th>
+        <th>{{ global_stuff['get_text']('Value') | safe }}</th>
+      </tr>
+      {% for key, value in settings %}
+      <tr>
+        <td>{{ key }}{% if value | typename == "Array" %} (<code>List</code>){% endif %}</td>
+        <td>
+          {% if value | typename == "Array" %}
+            <vscode-text-area class="{{ class_prefix }}_save_app type_array" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|variables|{{ key }}" 
+              value='{{ value | join("\n") }}' rows="{{ value | length }}" resize="both">
+            </vscode-text-area>
+          {% else %}
+            <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|variables|{{ key }}"
+              value="{{ value }}">
+            </vscode-text-field>
+          {% endif %}
+        </td>
+        <td>
+          <vscode-button class="delete_global_variable" project_user="{{ class_prefix }}" key="global|variables|{{ key }}" id="delete_global_variable_{{ loop.index0 }}">
+            <span class="codicon codicon-trash"></span>
+          </vscode-button>
+        </td>
+      </tr>
+      {% endfor %}
+      <tr><td>&nbsp;</td></tr>
+      <tr>
+        <td>
+          <vscode-text-field id="new_global_variable_key" placeholder="TARGET_LIB"></vscode-text-field>
+        </td>
+        <td>
+          <!--vscode-text-field id="new_global_variable_value" placeholder="PROUZALIB"></vscode-text-field-->
+          <vscode-text-area id="new_global_variable_value" placeholder="PROUZALIB" rows="4" resize="both">
+          </vscode-text-area>
+        </td>
+        <td>
+          <select id="new_global_variable_type" class="form-select">
+            <option selected value="string">String</option>
+            <option value="list">List (separated by new line)</option>
+          </select>
+        </td>
+        <td>
+          <vscode-button id="add_global_variable" config="{{ class_prefix }}">
+            <span class="codicon codicon-add"></span>
+          </vscode-button>
+        </td>
+      </tr>
+    </table>
+
+
+  </body>
+</html>

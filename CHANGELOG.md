@@ -1,3 +1,8 @@
+## Next: [1.2.16]
+
+* Define individual global variables
+
+
 ## [1.2.16]
 
 * Add variables for compile commands
