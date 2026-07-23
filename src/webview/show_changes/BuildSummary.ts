@@ -157,7 +157,7 @@ export class BuildSummary {
 
     nunjucks.configure([
       Constants.HTML_TEMPLATE_DIR,
-      path.join(ws.fsPath, path.dirname(Constants.VSCODE_COMPILE_COMPLETED_TEMPLATE))
+      path.join(ws.fsPath, path.dirname(Constants.VSCODE_CUSTOM_BUILD_LIST_TEMPLATE))
     ]);
 
     const compile_list = BuildSummary.get_compile_list();
@@ -186,10 +186,10 @@ export class BuildSummary {
       compile_file_uri: DirTool.get_encoded_file_URI(path.join(BuildSummary._current_compile_output_folder ?? Constants.BUILD_OUTPUT_DIR, 'compile-list.json')),
       compile_file: path.join(ws.fsPath, BuildSummary._current_compile_output_folder ?? Constants.BUILD_OUTPUT_DIR, 'compile-list.json'),
       log_file_uri: DirTool.get_encoded_file_URI(Constants.OBI_LOG_FILE),
-      is_compile_list_completed: OBITools.is_compile_list_completed(ws),
+      is_compile_list_completed: OBITools.is_compile_list_completed(compile_list),
       compile_app_config: compile_list['config'] ?? config,
       app_config: config,
-      compile_completed_template: path.basename(Constants.VSCODE_COMPILE_COMPLETED_TEMPLATE)
+      custom_build_list_template: path.basename(Constants.VSCODE_CUSTOM_BUILD_LIST_TEMPLATE)
       }
     );
 
@@ -268,7 +268,7 @@ export class BuildSummary {
 
   private static createNewPanel(extensionUri : vscode.Uri) {
     const wsUri = Workspace.get_workspace_uri();
-    const templatePath = vscode.Uri.file(path.join(wsUri.fsPath, Constants.VSCODE_COMPILE_COMPLETED_TEMPLATE));
+    const templatePath = vscode.Uri.file(path.join(wsUri.fsPath, Constants.VSCODE_CUSTOM_BUILD_LIST_TEMPLATE));
     const templateDir = vscode.Uri.file(path.dirname(templatePath.fsPath));
 
     return vscode.window.createWebviewPanel(

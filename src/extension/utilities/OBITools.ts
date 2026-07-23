@@ -640,17 +640,17 @@ export class OBITools {
 
 
 
-  public static is_compile_list_completed(workspaceUri: vscode.Uri): boolean {
+  public static is_compile_list_completed(compile_list: any): boolean {
 
-    const compile_list: any | undefined = OBITools.get_compile_list(workspaceUri);
-
-    if (!compile_list || !('compiles' in compile_list))
+     if (!compile_list || !('compiles' in compile_list))
       return false;
 
     for (const level_item of (compile_list['compiles'] as any)) {
       for (const source of level_item['sources']) {
+        if (source['ignore'])
+          continue;
         for (const cmd of source['cmds']) {
-          if (cmd['status'] != 'success')
+          if (cmd['status'] != 'success' && !cmd['ignore'])
             return false;
         }
       }

@@ -15,6 +15,8 @@ import { showAlert } from "../../tools/javascript/alertBox";
 provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
+// Expose vscode to the global scope for inline HTML handlers
+(window as any).vscode = vscode;
 
 let loaded: boolean = false;
 
@@ -85,9 +87,6 @@ function main() {
   });
 
 }
-
-
-
 
 
 

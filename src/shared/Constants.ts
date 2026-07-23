@@ -40,7 +40,7 @@ export class Constants {
   public static readonly EXTENDED_SOURCE_PROCESS_CONFIG: string = `${Constants.OBI_CONFIGS_DIR}/extended-source-processing-config.toml`;
 
   public static readonly DEPLOYMENT_CONFIG_FILE: string = ".obi/etc/deployment.toml";
-  public static readonly VSCODE_COMPILE_COMPLETED_TEMPLATE: string = ".obi/.vscode/templates/compile_completed.html";
+  public static readonly VSCODE_CUSTOM_BUILD_LIST_TEMPLATE: string = ".obi/.vscode/templates/custom_build_list_template.html";
   
   public static readonly NEEDED_LIST_OF_PATH: string[] = [
     Constants.OBI_CONFIGS_DIR,
