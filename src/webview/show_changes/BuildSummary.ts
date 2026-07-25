@@ -126,6 +126,18 @@ export class BuildSummary {
                 content: DirTool.get_file_content(message.path)
               });
             return;
+
+          case "save_custom_data":
+
+            let compile_list: any = BuildSummary.get_compile_list();
+            if (!compile_list['custom_data']) {
+              compile_list['custom_data'] = {};
+            }
+            compile_list['custom_data'][message.type] = message.data;
+
+            DirTool.write_json(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), compile_list);
+
+            return;
         }
       }
     );
@@ -135,16 +147,23 @@ export class BuildSummary {
   }
 
 
-  public static get_compile_list(): any {
-    let compile_list: any|undefined;
-    let compileListFileName: string|undefined = AppConfig.get_app_config().general['compile-list'];
+
+  public static get_current_compile_list_name(): string {
     
+    let compileListFileName: string|undefined = AppConfig.get_app_config().general['compile-list'];
+
     if (BuildSummary._current_compile_output_folder && compileListFileName) {
       compileListFileName = path.basename(compileListFileName);
       compileListFileName = path.join(BuildSummary._current_compile_output_folder, compileListFileName);
     }
+    return compileListFileName;
+  }
 
-    compile_list = OBITools.get_compile_list(Workspace.get_workspace_uri(), compileListFileName);
+
+  public static get_compile_list(): any {
+    let compile_list: any|undefined;
+
+    compile_list = OBITools.get_compile_list(Workspace.get_workspace_uri(), BuildSummary.get_current_compile_list_name());
     return compile_list;
   }
 
@@ -184,7 +203,7 @@ export class BuildSummary {
       compile_list: compile_list,
       created_timestamp: created_timestamp,
       compile_file_uri: DirTool.get_encoded_file_URI(path.join(BuildSummary._current_compile_output_folder ?? Constants.BUILD_OUTPUT_DIR, 'compile-list.json')),
-      compile_file: path.join(ws.fsPath, BuildSummary._current_compile_output_folder ?? Constants.BUILD_OUTPUT_DIR, 'compile-list.json'),
+      compile_file: path.resolve(ws.fsPath, BuildSummary._current_compile_output_folder ?? Constants.BUILD_OUTPUT_DIR, 'compile-list.json').replace(/\\/g, '/'),
       log_file_uri: DirTool.get_encoded_file_URI(Constants.OBI_LOG_FILE),
       is_compile_list_completed: OBITools.is_compile_list_completed(compile_list),
       compile_app_config: compile_list['config'] ?? config,

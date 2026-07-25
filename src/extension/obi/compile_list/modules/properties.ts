@@ -18,6 +18,14 @@ export function getSourceProperties(config: any, source: string): any {
   const globalVariables = getTableElement(config, ['global', 'variables'], true);
   const globalCmds = getTableElement(config, ['global', 'cmds'], true);
 
+  if (globalVariables) {
+    for (const key in globalVariables) {
+      if (key.toLowerCase().startsWith('secret')) {
+        delete globalVariables[key];
+      }
+    }
+  }
+
   if (sourceConfig && source in sourceConfig && 'settings' in sourceConfig[source]) {
     globalSettings = { ...globalSettings, ...sourceConfig[source]['settings'] };
   }

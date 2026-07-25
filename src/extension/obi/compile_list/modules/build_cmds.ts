@@ -45,23 +45,26 @@ export function getSourceBuildCmds(source: string, appConfig: any, extended_sour
   }
 
   const variableDict = getSourceProperties(appConfig, source);
-  let varDictTmp: any = {};
+
   const cmds: any[] = [];
 
   for (const step of steps) {
+    
     let cmd: string;
+    let step_properties: any = {};
+
     if (typeof step === 'string') {
       if (step.trim() === '') continue;
       cmd = getCmdFromStep(step, source, variableDict, appConfig, sourceConfig);
     } else if (typeof step === 'object' && step !== null) {
-      varDictTmp = { ...variableDict, ...(step as any).properties };
-      cmd = (step as any).cmd || getCmdFromStep((step as any).step, source, varDictTmp, appConfig, sourceConfig);
+      step_properties = { ...variableDict, ...(step as any).properties };
+      cmd = (step as any).cmd || getCmdFromStep((step as any).step, source, step_properties, appConfig, sourceConfig);
     } else {
       continue;
     }
 
-    cmd = replaceCmdParameters(cmd, { ...variableDict, ...varDictTmp });
-    cmds.push({ cmd: cmd, status: 'new' });
+    cmd = replaceCmdParameters(cmd, { ...variableDict, ...step_properties });
+    cmds.push({ cmd: cmd, status: 'new', properties: step_properties });
   }
 
   return cmds;

@@ -1,3 +1,16 @@
+## [1.2.20]
+
+* Don't add variables starting with `secret` into the source properties
+* Ignore if custom html template for build summary does not exist
+* Build summary: `save_custom_data` can be called in custom html template to store individual data to compile list
+* Add step properties if exist
+
+
+## [1.2.19]
+
+* Windows bugfix
+
+
 ## [1.2.18]
 
 * Add source variables in compile list
