@@ -1,3 +1,8 @@
+## [1.2.21]
+
+* Remove property path for command list
+
+
 ## [1.2.20]
 
 * Don't add variables starting with `secret` into the source properties

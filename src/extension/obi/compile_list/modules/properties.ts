@@ -15,7 +15,7 @@ export function getSourceProperties(config: any, source: string): any {
   let globalSettings = getTableElement(config, ['global', 'settings', 'general']);
   const typeSettings = getTableElement(config, ['global', 'settings', 'language'])?.[fileExtensions] || {};
   const generalSettings = getTableElement(config, ['general']);
-  const globalVariables = getTableElement(config, ['global', 'variables'], true);
+  const globalVariables = getTableElement(config, ['global', 'variables']);
   const globalCmds = getTableElement(config, ['global', 'cmds'], true);
 
   if (globalVariables) {
