@@ -154,7 +154,9 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
         // The dir name is the timestamp
         try {
           const date: Date = BuildHistoryProvider.escaped_date2date(dir);
-          dateGroups.add(date.toISOString().split('T')[0]);
+          const tzOffset = date.getTimezoneOffset() * 60000;
+          
+          dateGroups.add(new Date(date.getTime() - tzOffset).toISOString().split('T')[0]);
         } catch (e) {
           logger.error(`Invalid date format for build history directory: ${dir}`);
         }
