@@ -76,8 +76,9 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
             
             if (DirTool.dir_exists(dirPath)) {
               const date: Date = BuildHistoryProvider.escaped_date2date(dir);
-              const dirDate = date.toISOString().split('T')[0];
-              
+              const tzOffset = date.getTimezoneOffset() * 60000;
+              const dirDate = new Date(date.getTime() - tzOffset).toISOString().split('T')[0];
+
               if (dirDate === element.label) {
                 return new BuildHistoryItem(
                   date.toLocaleTimeString(),
