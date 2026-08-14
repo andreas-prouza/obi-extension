@@ -87,7 +87,7 @@ export class HealthyWatchdog {
 
   public static async check_dir_change_callback(dir_name: string) {
 
-    const base_dir_name = dir_name.replace(`${Workspace.get_workspace()}/`, '');
+    let base_dir_name: string = dir_name.replace(`${Workspace.get_workspace()}/`, '');
 
     if (DirTool.is_file(dir_name)) {
       const checksum = await DirTool.get_file_hash(dir_name);
@@ -98,7 +98,7 @@ export class HealthyWatchdog {
       HealthyWatchdog.file_hashes[dir_name] = checksum;
     }
 
-
+    base_dir_name = base_dir_name.replace(/\\/g, '/'); // Normalize to forward slashes for consistency
     Object.keys(ConstantsCallback.DIR_CHANGE_CALLBACK).forEach((dir: string) => {
       if (base_dir_name.startsWith(dir)) {
         ConstantsCallback.DIR_CHANGE_CALLBACK[dir]();

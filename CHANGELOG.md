@@ -1,3 +1,9 @@
+## [1.2.22]
+
+* Bugfix directory listener (Windows)
+* npm updates
+
+
 ## [1.2.21]
 
 * Remove property path for command list

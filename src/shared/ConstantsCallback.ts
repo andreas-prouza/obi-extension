@@ -9,6 +9,7 @@ import { SourceListProvider } from "../webview/source_list/SourceListProvider";
 export class ConstantsCallback {
 
   public static readonly DIR_CHANGE_CALLBACK: { [key: string]: () => void } = {
+
     [Constants.BUILD_HISTORY_DIR as string]: () => {
       BuildHistoryProvider.get_instance().refresh();
     },
