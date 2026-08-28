@@ -675,6 +675,33 @@ export class OBITools {
   }
 
 
+  public static rename_source_in_object_list(old_source: string, new_source: string): void {
+
+    if (old_source === new_source) {
+      return;
+    }
+
+    const config = AppConfig.get_app_config();
+    if (!config.general['compiled-object-list']) {
+      return;
+    }
+
+    const file: string = path.join(Workspace.get_workspace(), config.general['compiled-object-list']);
+    const source_hash_list: source.ISource = DirTool.get_json(file) || {};
+
+    if (!(old_source in source_hash_list)) {
+      return;
+    }
+
+    if (!(new_source in source_hash_list)) {
+      source_hash_list[new_source] = source_hash_list[old_source];
+    }
+    delete source_hash_list[old_source];
+
+    DirTool.write_json(file, source_hash_list);
+  }
+
+
 
   public static async get_changed_sources(): Promise<source.ISourceList> { // results: source.Source[]
 

@@ -86,8 +86,8 @@ export class HealthyWatchdog {
 
 
   public static async check_dir_change_callback(dir_name: string) {
-
-    let base_dir_name: string = dir_name.replace(`${Workspace.get_workspace()}/`, '');
+    const workspace_path = Workspace.get_workspace();
+    let base_dir_name: string = path.relative(workspace_path, dir_name);
 
     if (DirTool.is_file(dir_name)) {
       const checksum = await DirTool.get_file_hash(dir_name);
@@ -99,8 +99,13 @@ export class HealthyWatchdog {
     }
 
     base_dir_name = base_dir_name.replace(/\\/g, '/'); // Normalize to forward slashes for consistency
+    if (base_dir_name === '' || base_dir_name.startsWith('../')) {
+      return;
+    }
+
     Object.keys(ConstantsCallback.DIR_CHANGE_CALLBACK).forEach((dir: string) => {
-      if (base_dir_name.startsWith(dir)) {
+      const normalized_dir = dir.replace(/\\/g, '/').replace(/\/+$/, '');
+      if (base_dir_name === normalized_dir || base_dir_name.startsWith(`${normalized_dir}/`)) {
         ConstantsCallback.DIR_CHANGE_CALLBACK[dir]();
       }
     });

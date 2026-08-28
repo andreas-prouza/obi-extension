@@ -111,6 +111,32 @@ export class DependencyList {
   }
 
 
+  public static async rename_source(old_source: string, new_source: string): Promise<void> {
+    if (old_source === new_source) {
+      return;
+    }
+
+    const dependency_list: Dependencies = await DependencyList.get_dependencies();
+    const updated_dependency_list: Dependencies = {};
+
+    for (const [source, dependencies] of Object.entries(dependency_list)) {
+      const next_source = source === old_source ? new_source : source;
+      const next_dependencies = dependencies.map((dep) => dep === old_source ? new_source : dep);
+
+      if (!updated_dependency_list[next_source]) {
+        updated_dependency_list[next_source] = [];
+      }
+      updated_dependency_list[next_source].push(...next_dependencies);
+    }
+
+    for (const source of Object.keys(updated_dependency_list)) {
+      updated_dependency_list[source] = Array.from(new Set(updated_dependency_list[source]));
+    }
+
+    DependencyList.save_dependency_list(updated_dependency_list);
+  }
+
+
 
 
 }

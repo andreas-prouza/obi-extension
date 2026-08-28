@@ -6,11 +6,12 @@ import { SourceList } from './SourceList';
 import { Constants } from '../../shared/Constants';
 import { logger } from '../../extension/utilities/Logger';
 import * as source from '../../shared/Source';
-import { AppConfig } from '../../shared/AppConfig';
+import { AppConfig, SourceConfigList } from '../../shared/AppConfig';
 import { Workspace } from '../../extension/utilities/Workspace';
 import { SourceListConfig } from './SourceListConfig';
 import { OBITools } from '../../extension/utilities/OBITools';
 import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
+import { DependencyList } from '../../shared/Dependency';
 
 
 interface ISourceLists {
@@ -361,19 +362,59 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
       throw new Error('Canceled by user. No source name provided');
     }
 
+    // Rename the source member file
     const from_path = path.join(Workspace.get_workspace(), item.member_path, item.src_member);
     const to_path = path.join(Workspace.get_workspace(),item.member_path, new_name)
+    
     fs.renameSync(from_path, to_path);
 
     const old_source = `${item.member_path_obi}/${item.src_member}`;
-    const source_infos: source.ISourceInfos = await LocalSourceList.get_source_info_list();
-    if (source_infos[old_source]) {
-        const description: string = typeof source_infos[old_source].description === 'string' ? source_infos[old_source].description : '';
-        LocalSourceList.update_source_infos(item.member_path_obi, item.src_member, undefined);
-        LocalSourceList.update_source_infos(item.member_path_obi, new_name, description);
-    }
+    const new_source = `${item.member_path_obi}/${new_name}`;
+    await SourceListProvider.sync_renamed_source_member(old_source, new_source);
 
     return;
+  }
+
+
+  public static async sync_renamed_source_member(old_source: string, new_source: string): Promise<void> {
+
+    const old_source_normalized = old_source.replace(/\\/g, '/').replace(/^\/+/, '');
+    const new_source_normalized = new_source.replace(/\\/g, '/').replace(/^\/+/, '');
+
+    if (!old_source_normalized || !new_source_normalized || old_source_normalized === new_source_normalized) {
+      return;
+    }
+
+    // Rename source-specific configuration key in source-config.toml if present.
+    const source_configs: SourceConfigList | undefined = AppConfig.get_source_configs();
+    if (source_configs && source_configs[old_source_normalized]) {
+      source_configs[new_source_normalized] = source_configs[old_source_normalized];
+      delete source_configs[old_source_normalized];
+      DirTool.write_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs);
+    }
+
+    // Keep dependency.json in sync with source rename.
+    await DependencyList.rename_source(old_source_normalized, new_source_normalized);
+
+    // Keep object-list.json (compiled-object-list) in sync with source rename.
+    OBITools.rename_source_in_object_list(old_source_normalized, new_source_normalized);
+
+    // Update source-infos entry.
+    const source_infos: source.ISourceInfos = await LocalSourceList.get_source_info_list();
+    if (source_infos[old_source_normalized]) {
+      const description: string = typeof source_infos[old_source_normalized].description === 'string' ? source_infos[old_source_normalized].description : '';
+      const old_parts = old_source_normalized.split('/');
+      const new_parts = new_source_normalized.split('/');
+      const old_member = old_parts.pop();
+      const new_member = new_parts.pop();
+      const old_member_path_obi = old_parts.join('/');
+      const new_member_path_obi = new_parts.join('/');
+
+      if (old_member && new_member) {
+        LocalSourceList.update_source_infos(old_member_path_obi, old_member, undefined);
+        LocalSourceList.update_source_infos(new_member_path_obi, new_member, description);
+      }
+    }
   }
 
 

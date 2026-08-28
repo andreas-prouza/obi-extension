@@ -1,3 +1,10 @@
+## [1.2.23]
+
+* Update config when doing a rename. Also support renames in vscode explorer view
+* Bugfix for Windows
+* npm updates
+
+
 ## [1.2.22]
 
 * Bugfix directory listener (Windows)

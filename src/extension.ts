@@ -342,5 +342,37 @@ export function activate(context: vscode.ExtensionContext) {
 	LocalSourceList.load_source_list();
 
 
+	// Watch for file renames in the workspace
+	const renameListener = vscode.workspace.onDidRenameFiles(async event => {
+		const app_config = AppConfig.get_app_config();
+		const src_dir = (app_config.general['source-dir'] || 'src').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+		const src_prefix = `${src_dir}/`;
+
+		for (const renamedFile of event.files) {
+			const old_path = OBITools.convert_local_filepath_2_obi_filepath(renamedFile.oldUri.fsPath).replace(/\\/g, '/').replace(/^\/+/, '');
+			const new_path = OBITools.convert_local_filepath_2_obi_filepath(renamedFile.newUri.fsPath).replace(/\\/g, '/').replace(/^\/+/, '');
+
+			if (!old_path.startsWith(src_prefix) || !new_path.startsWith(src_prefix)) {
+				continue;
+			}
+
+			const old_source = old_path.substring(src_prefix.length);
+			const new_source = new_path.substring(src_prefix.length);
+			const old_ext = path.extname(old_source).replace('.', '').toLowerCase();
+			const new_ext = path.extname(new_source).replace('.', '').toLowerCase();
+
+			if (!app_config.general['supported-object-types'].includes(old_ext) || !app_config.general['supported-object-types'].includes(new_ext)) {
+				continue;
+			}
+
+			await SourceListProvider.sync_renamed_source_member(old_source, new_source);
+		}
+
+		SourceListProvider.get_instance().refresh();
+	});
+
+    context.subscriptions.push(renameListener);
+
+
 }
 
