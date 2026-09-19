@@ -323,7 +323,7 @@ export class OBICommands {
 
     try {
 
-      OBITools.update_compile_list(ignore_sources, ignore_sources_cmd);
+      OBITools.update_compile_list(ignore_sources, ignore_sources_cmd, BuildSummary.get_current_compile_list_name());
 
       const sources: string[] = OBITools.get_sources_2_build_from_compile_list(true);
       if (sources.length > 0) {
@@ -333,7 +333,7 @@ export class OBICommands {
         vscode.window.showInformationMessage('No sources to build');
       }
 
-      BuildSummary.update();
+      await BuildSummary.show_current_results();
       OBIController.update_build_summary_timestamp();
     }
     catch (e: any) {

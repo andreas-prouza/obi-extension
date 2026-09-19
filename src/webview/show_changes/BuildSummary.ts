@@ -13,7 +13,7 @@ import { LogOutputProvider } from './LogOutputProvider';
 import { show_diagnostic_infos } from '../../extension/source/compile-diagnostics';
 import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
 import { DependencyList } from '../../shared/Dependency';
-import { mergeSourcesIntoCompileList } from '../../extension/obi/compile_list/modules/add_sources';
+import { mergeSourcesIntoCompileList, resetDependentStatuses } from '../../extension/obi/compile_list/modules/add_sources';
 import { ISourceInfos } from '../../shared/Source';
 
 /*
@@ -146,6 +146,10 @@ export class BuildSummary {
           case "add_source":
             BuildSummary.add_sources();
             return;
+
+          case "edit_cmd":
+            BuildSummary.edit_cmd(message.level, message.source, message.cmd_index);
+            return;
         }
       }
     );
@@ -230,6 +234,63 @@ export class BuildSummary {
 
 
 
+  /**
+   * Lets the user modify a build command's text, recording the previous value in the cmd's change-history.
+   */
+  public static async edit_cmd(level: string, source: string, cmd_index: number): Promise<void> {
+
+    const compile_list: any = BuildSummary.get_compile_list();
+    if (!compile_list) {
+      return;
+    }
+
+    const level_item = compile_list['compiles'].find((item: any) => String(item['level']) === String(level));
+    const source_item = level_item?.['sources'].find((item: any) => item['source'] === source);
+    const cmd_entry = source_item?.['cmds']?.[cmd_index];
+
+    if (!cmd_entry) {
+      vscode.window.showErrorMessage('Command not found.');
+      return;
+    }
+
+    const new_cmd = await vscode.window.showInputBox({
+      title: `Edit build command for ${source}`,
+      value: cmd_entry['cmd'],
+      ignoreFocusOut: true
+    });
+
+    if (new_cmd === undefined || new_cmd === cmd_entry['cmd']) {
+      return;
+    }
+
+    if (!cmd_entry['change-history']) {
+      cmd_entry['change-history'] = [];
+    }
+    cmd_entry['change-history'].push({
+      type: 'cmd-change',
+      user: AppConfig.get_app_config().connection['ssh-user'] || 'unknown',
+      original: cmd_entry['cmd'],
+      timestamp: new Date().toISOString()
+    });
+    cmd_entry['cmd'] = new_cmd;
+    if (cmd_entry['status'] === 'success') {
+      cmd_entry['status'] = 'new';
+    }
+
+    const dependency_dict = await DependencyList.get_dependencies();
+    const reset = resetDependentStatuses(compile_list, [source], dependency_dict);
+
+    DirTool.write_json(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), compile_list);
+
+    await BuildSummary.update();
+
+    if (reset.length > 0) {
+      vscode.window.showInformationMessage(`${reset.length} source(s) had their status reset due to the command change.`);
+    }
+  }
+
+
+
   public static get_current_compile_list_name(): string {
     
     let compileListFileName: string|undefined = AppConfig.get_app_config().general['compile-list'];
@@ -310,6 +371,27 @@ export class BuildSummary {
 
     panel._panel.webview.html = BuildSummary.generate_html(BuildSummary._extensionUri, BuildSummary.currentPanel?._panel.webview);
     
+  }
+
+
+  /**
+   * Switches the webview back to the live (non-history) compile-list, so the freshly built results
+   * are shown even if a build-history entry was open when the build was triggered.
+   */
+  public static async show_current_results(extensionUri?: vscode.Uri, workspaceUri?: vscode.Uri): Promise<void> {
+
+    BuildSummary._current_compile_output_folder = undefined;
+
+    if (BuildSummary.currentPanel) {
+      await BuildSummary.update();
+      return;
+    }
+
+    const ext_uri = extensionUri || BuildSummary._extensionUri;
+    const ws_uri = workspaceUri || Workspace.get_workspace_uri();
+    if (ext_uri) {
+      BuildSummary.render(ext_uri, ws_uri);
+    }
   }
 
 

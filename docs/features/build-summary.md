@@ -32,3 +32,7 @@ As a user I want to modify the build command in the build summary
     "timestamp": "2026-08-14T19:48:46.664582"
   }
   ```
+* If sources already have status `success`, reset status and also the status of all dependend sources
+* If command already have status `success`, reset status
+* Run build button should alsways run the current opened `compile-list.json`. Even if it's in `build-history` folder
+* After build open the new results. Specially if an older build was rebuild.

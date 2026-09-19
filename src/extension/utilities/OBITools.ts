@@ -530,8 +530,14 @@ export class OBITools {
   }
 
 
-  public static update_compile_list(ignore_sources: string[], ignore_sources_cmd: { [key: string]: [string] | null }): void {
-    let compile_list: any = OBITools.get_compile_list(Workspace.get_workspace_uri()) || {};
+  public static update_compile_list(ignore_sources: string[], ignore_sources_cmd: { [key: string]: [string] | null }, compileListFileName?: string): void {
+    let compile_list: any = OBITools.get_compile_list(Workspace.get_workspace_uri(), compileListFileName) || {};
+
+    const default_path = path.join(Workspace.get_workspace(), AppConfig.get_app_config().general['compile-list']);
+    const current_path = compileListFileName ? path.join(Workspace.get_workspace(), compileListFileName) : default_path;
+    // Rebuilding a build-history snapshot: its commands are already 'success', force them back to
+    // 'new' so the rebuild actually re-executes them instead of being filtered out as already done.
+    const force_rebuild = current_path !== default_path;
 
     for (const level_item of compile_list['compiles']) {
       for (const source of level_item['sources']) {
@@ -539,16 +545,28 @@ export class OBITools {
         if (ignore_sources.includes(source['source'])) {
           source['ignore'] = true;
         }
+        if (force_rebuild) {
+          delete source['status'];
+        }
         for (const cmd of source['cmds']) {
           cmd['ignore'] = false;
           if (ignore_sources_cmd[source['source']] && ignore_sources_cmd[source['source']]?.includes(cmd['cmd'])) {
             cmd['ignore'] = true;
           }
+          if (force_rebuild) {
+            cmd['status'] = 'new';
+          }
         }
       }
     }
 
-    DirTool.write_json(path.join(Workspace.get_workspace(), AppConfig.get_app_config().general['compile-list']), compile_list);
+    DirTool.write_json(current_path, compile_list);
+
+    // The build pipeline always reads/transfers the default compile-list path, even when the user
+    // currently has a build-history compile-list.json opened in the webview.
+    if (current_path !== default_path) {
+      DirTool.write_json(default_path, compile_list);
+    }
 
   }
 
