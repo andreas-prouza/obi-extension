@@ -16,6 +16,8 @@ As a user I want to add specific sources to the build summary.
 * If sources already have status `success`, reset status if the source is affected due to dependencies
 * Put the button under `Created at`
 * Use a plus symbol for button
+* Consider ESP (extended source processing) feature
+* consider that external obi can be used (config `local-obi-dir`)
 
 
 ## Modify build command

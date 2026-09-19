@@ -16,6 +16,7 @@ interface IBuildHistorys {
 export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistoryItem> {
 
   private static _instance: BuildHistoryProvider;
+  private static _treeView: vscode.TreeView<BuildHistoryItem> | undefined;
   private workspaceRoot: string = '';
   private _onDidChangeTreeData: vscode.EventEmitter<BuildHistoryItem | undefined | null | void> = new vscode.EventEmitter<BuildHistoryItem | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<BuildHistoryItem | undefined | null | void> = this._onDidChangeTreeData.event;
@@ -44,6 +45,14 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
 
   getTreeItem(element: BuildHistoryItem): vscode.TreeItem {
     return element;
+  }
+
+
+  getParent(element: BuildHistoryItem): vscode.ProviderResult<BuildHistoryItem> {
+    if (element.contextValue === 'buildHistoryBuild' && element.dateLabel) {
+      return new BuildHistoryItem(element.dateLabel, vscode.TreeItemCollapsibleState.Collapsed, '', 'date');
+    }
+    return undefined;
   }
 
 
@@ -85,7 +94,8 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
                   vscode.TreeItemCollapsibleState.Collapsed,
                   dirPath,
                   'build',
-                  dir
+                  dir,
+                  dirDate
                 );
               }
             }
@@ -197,6 +207,47 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
   }
 
 
+  /**
+   * Selects and reveals the tree item for the given build-history folder (e.g. after a rebuild).
+   */
+  public static async reveal_build(historyDirName: string): Promise<void> {
+
+    const instance = BuildHistoryProvider._instance;
+    if (!instance || !BuildHistoryProvider._treeView) {
+      logger.warn(`reveal_build('${historyDirName}'): no provider instance or tree view registered yet`);
+      return;
+    }
+
+    const date = BuildHistoryProvider.escaped_date2date(historyDirName);
+    const tzOffset = date.getTimezoneOffset() * 60000;
+    const dateLabel = new Date(date.getTime() - tzOffset).toISOString().split('T')[0];
+
+    // force the provider's internal model in sync with disk before looking the new node up
+    await instance.refresh();
+
+    // reveal() must be given the exact instances getChildren produces, a look-alike object won't match
+    const dateItems = await instance.getChildren();
+    const dateItem = dateItems.find(item => item.date === dateLabel);
+    if (!dateItem) {
+      logger.warn(`reveal_build('${historyDirName}'): no date group found for '${dateLabel}' (have: ${dateItems.map(i => i.date).join(', ')})`);
+      return;
+    }
+
+    const buildItems = await instance.getChildren(dateItem);
+    const buildItem = buildItems.find(item => item.dirName === historyDirName);
+    if (!buildItem) {
+      logger.warn(`reveal_build('${historyDirName}'): no build item found under '${dateLabel}' (have: ${buildItems.map(i => i.dirName).join(', ')})`);
+      return;
+    }
+
+    try {
+      await BuildHistoryProvider._treeView.reveal(buildItem, { select: true, focus: false, expand: true });
+    } catch (e) {
+      logger.error(`Failed to reveal build history item '${historyDirName}': ${e}`);
+    }
+  }
+
+
   public register(context: vscode.ExtensionContext): any {
     // setup
     const options = {
@@ -204,11 +255,9 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
       showCollapseAll: true
     };
 
-    // build
-    vscode.window.registerTreeDataProvider('obi.build-history', this);
-
-    // create
+    // create (registerTreeDataProvider is not needed in addition to createTreeView for the same view id)
     const tree = vscode.window.createTreeView('obi.build-history', options);
+    BuildHistoryProvider._treeView = tree;
 
     vscode.commands.registerCommand('obi.build-history.update', () => {
       this.refresh();
@@ -270,13 +319,16 @@ export class BuildHistoryItem extends vscode.TreeItem {
 
   public readonly file_path: string;
   public readonly date?: string;
+  public readonly dirName?: string;
+  public readonly dateLabel?: string;
 
   constructor(
     label: string,
     collapsibleState: vscode.TreeItemCollapsibleState,
     file_path: string,
     type: 'date' | 'build' | 'source',
-    fileName?: string
+    fileName?: string,
+    dateLabel?: string
   ) {
     super(label, collapsibleState);
     this.label = label;
@@ -288,9 +340,13 @@ export class BuildHistoryItem extends vscode.TreeItem {
       this.contextValue = 'buildHistoryDate';
       this.iconPath = new vscode.ThemeIcon('calendar');
       this.date = label;
+      this.id = `date-${label}`;
     } else if (type === 'build') {
       this.tooltip = `Build history: ${fileName}`;
       this.contextValue = 'buildHistoryBuild';
+      this.dirName = fileName;
+      this.dateLabel = dateLabel;
+      this.id = `build-${fileName}`;
 
       this.command = {
         command: 'obi.open_build_summary',
