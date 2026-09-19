@@ -15,6 +15,7 @@ import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
 import { DependencyList } from '../../shared/Dependency';
 import { mergeSourcesIntoCompileList, resetDependentStatuses } from '../../extension/obi/compile_list/modules/add_sources';
 import { ISourceInfos } from '../../shared/Source';
+import { SystemCmdExecution } from '../../extension/utilities/SystemCmdExecution';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -215,7 +216,9 @@ export class BuildSummary {
     const dependency_dict = await DependencyList.get_dependencies();
     const app_config = AppConfig.get_app_config();
 
-    const { compileList: merged_compile_list, added, reset } = mergeSourcesIntoCompileList(compile_list, selected_sources, dependency_dict, app_config);
+    const { compileList: merged_compile_list, added, reset } = (!OBITools.without_local_obi() && app_config.general['local-obi-dir'])
+      ? await BuildSummary.add_sources_via_local_obi(selected_sources, dependency_dict, app_config)
+      : mergeSourcesIntoCompileList(compile_list, selected_sources, dependency_dict, app_config);
 
     DirTool.write_json(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), merged_compile_list);
 
@@ -230,6 +233,51 @@ export class BuildSummary {
       message += ` ${reset.length} source(s) had their status reset due to dependency changes.`;
     }
     vscode.window.showInformationMessage(message);
+  }
+
+
+  /**
+   * Adds sources by calling the local OBI (python) project's dedicated add-source action,
+   * one source at a time, pointed at the directory of the currently-displayed compile-list.json
+   * (works whether that's the live build-output list or one opened from build-history), then
+   * reloads the resulting (incrementally updated) list from that same location.
+   */
+  private static async add_sources_via_local_obi(
+    selected_sources: string[],
+    dependency_dict: Record<string, string[]>,
+    app_config: any
+  ): Promise<{ compileList: any; added: string[]; reset: string[] }> {
+
+    const compile_list_name = BuildSummary.get_current_compile_list_name();
+    const compile_list_dir = path.dirname(compile_list_name);
+
+    await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: 'Adding sources via local OBI...',
+      cancellable: false
+    }, async (progress) => {
+      for (const source of selected_sources) {
+        progress.report({ message: source });
+        const quote = process.platform === 'win32' ? '"' : "'";
+        const cmd = `${OBITools.get_local_obi_python_path()} -X utf8 ${path.join(app_config.general['local-obi-dir'], 'main.py')} -a add_source -p . --source=${quote}${source}${quote} --compile-list-dir=${quote}${compile_list_dir}${quote}`;
+        logger.info(`CMD: ${cmd}`);
+        await SystemCmdExecution.run_system_cmd(Workspace.get_workspace(), cmd, 'add_sources');
+      }
+    });
+
+    const live_compile_list = OBITools.get_compile_list(Workspace.get_workspace_uri(), compile_list_name);
+    if (!live_compile_list) {
+      throw new Error('Local OBI did not produce a valid compile-list.');
+    }
+
+    const added = selected_sources.filter(source =>
+      (live_compile_list['compiles'] || []).some((level_item: any) =>
+        level_item['sources'].some((source_item: any) => source_item['source'] === source)
+      )
+    );
+    const reset = resetDependentStatuses(live_compile_list, selected_sources, dependency_dict);
+
+    return { compileList: live_compile_list, added, reset };
   }
 
 

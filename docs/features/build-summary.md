@@ -17,7 +17,8 @@ As a user I want to add specific sources to the build summary.
 * Put the button under `Created at`
 * Use a plus symbol for button
 * Consider ESP (extended source processing) feature
-* consider that external obi can be used (config `local-obi-dir`)
+* Consider if config `local-obi-dir` is set. In such case the python project will be called to generate `compile-list` otherwise the vscode extension can handle it.
+* When using python obi, use `-a add_source -p . --source {source} --compile-list-dir {directory of compile-list.json}` parameter
 
 
 ## Modify build command
