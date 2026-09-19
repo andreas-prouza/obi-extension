@@ -211,7 +211,7 @@ export class BuildSummary {
     const dependency_dict = await DependencyList.get_dependencies();
     const app_config = AppConfig.get_app_config();
 
-    const { compileList: merged_compile_list, added } = mergeSourcesIntoCompileList(compile_list, selected_sources, dependency_dict, app_config);
+    const { compileList: merged_compile_list, added, reset } = mergeSourcesIntoCompileList(compile_list, selected_sources, dependency_dict, app_config);
 
     DirTool.write_json(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), merged_compile_list);
 
@@ -221,7 +221,11 @@ export class BuildSummary {
       BuildSummary.render(ext_uri, ws_uri, BuildSummary._current_compile_output_folder);
     }
 
-    vscode.window.showInformationMessage(`Added ${added.length} source(s) to the build summary.`);
+    let message = `Added ${added.length} source(s) to the build summary.`;
+    if (reset.length > 0) {
+      message += ` ${reset.length} source(s) had their status reset due to dependency changes.`;
+    }
+    vscode.window.showInformationMessage(message);
   }
 
 

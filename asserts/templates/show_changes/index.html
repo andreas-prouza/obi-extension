@@ -17,19 +17,18 @@
 
   </head>
   <body>
-
-    <h3>{{ global_stuff['get_text']('Summary') | safe }}</h3>
-
+    <br/>
     {% if compile_list %}
     <div>
       {{ global_stuff['get_text']('Created at') | safe }} <b><u>{{ compile_list['timestamp'] }}</u></b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <a href='command:vscode.open?{{ compile_file_uri }}'>{{ global_stuff['get_text']('open JSON file') | safe }}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <a href='command:vscode.open?{{ log_file_uri }}'>{{ global_stuff['get_text']('open OBI log') | safe }}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       {% if not is_compile_list_completed %}&nbsp;&nbsp;&nbsp;<vscode-button style="height:35px" onclick="run_build()" style="vertical-align: super;" id="run_build" appearance="primary">{{ global_stuff['get_text']('Run build') | safe }}</vscode-button>{% endif %}
-      &nbsp;&nbsp;&nbsp;<vscode-button style="height:35px; vertical-align: super;" id="add_source" appearance="secondary">{{ global_stuff['get_text']('Add source') | safe }}</vscode-button>
+      &nbsp;&nbsp;&nbsp;
       {% include custom_build_list_template ignore missing %}
     </div>
-    <br/>
+    <div><vscode-button style="height:35px; vertical-align: super;" id="add_source" appearance="primary"><span slot="start"><span class="codicon codicon-add"></span></span>{{ global_stuff['get_text']('Add source') | safe }}</vscode-button></div>
+
     {% endif %}
     <div class="save-button-wrapper">
       {% include "tools/alertBox.html" %}
