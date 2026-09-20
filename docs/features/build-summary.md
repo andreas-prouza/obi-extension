@@ -26,7 +26,7 @@ As a user I want to add specific sources to the build summary.
 As a user I want to modify the build command in the build summary
 
 ### Definition of done
-* In `compile-list.json` add a new key `compiles[].sources[].cmds[].change-history[]` and add a history entry:
+* In `compile-list.json` add new key `compiles[].sources[].cmds[].change-history[]` and add a history entry:
   ```json
   {
     "type": "cmd-change",
@@ -39,3 +39,21 @@ As a user I want to modify the build command in the build summary
 * If command already have status `success`, reset status
 * Run build button should alsways run the current opened `compile-list.json`. Even if it's in `build-history` folder
 * After build open the new results. Specially if an older build was rebuild.
+
+
+## Add git branch name in compile-list
+
+In `compile-list.json` add a new key:
+
+```json
+"git": {
+  "branch": "{branchname}",
+  "commit": "{commit-hash}"
+}
+```
+
+### Definition of done
+* If project is based on GIT, add the current branch name and commit hash
+* If HEAD is detached (no branch, e.g. a tag/commit is checked out), omit `branch` and only add `commit`
+* If project is not based on GIT, don't add the `git` key at all
+* Refresh `git` on every compile-list write (unlike `timestamp`, which is set once at creation)
