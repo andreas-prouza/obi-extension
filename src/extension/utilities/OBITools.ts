@@ -16,6 +16,7 @@ import { LocaleText } from './LocaleText';
 import { OBIStatus } from '../../shared/OBIStatus';
 import { createBuildList } from '../../extension/obi/compile_list/createBuildList';
 import { Dependencies, DependencyList } from '../../shared/Dependency';
+import { GitInfo } from './GitInfo';
 
 
 
@@ -530,6 +531,13 @@ export class OBITools {
   }
 
 
+  /** Writes a compile-list object to disk, refreshing its `git` branch/commit info first. */
+  public static write_compile_list(file_path: string, compile_list: Record<string, unknown>): void {
+    GitInfo.attach_git_info(compile_list, Workspace.get_workspace());
+    DirTool.write_json(file_path, compile_list);
+  }
+
+
   public static update_compile_list(ignore_sources: string[], ignore_sources_cmd: { [key: string]: [string] | null }, compileListFileName?: string): void {
     let compile_list: any = OBITools.get_compile_list(Workspace.get_workspace_uri(), compileListFileName) || {};
 
@@ -560,12 +568,12 @@ export class OBITools {
       }
     }
 
-    DirTool.write_json(current_path, compile_list);
+    OBITools.write_compile_list(current_path, compile_list);
 
     // The build pipeline always reads/transfers the default compile-list path, even when the user
     // currently has a build-history compile-list.json opened in the webview.
     if (current_path !== default_path) {
-      DirTool.write_json(default_path, compile_list);
+      OBITools.write_compile_list(default_path, compile_list);
     }
 
   }

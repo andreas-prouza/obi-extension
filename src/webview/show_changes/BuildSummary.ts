@@ -140,7 +140,7 @@ export class BuildSummary {
             }
             compile_list['custom_data'][message.type] = message.data;
 
-            DirTool.write_json(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), compile_list);
+            OBITools.write_compile_list(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), compile_list);
 
             return;
 
@@ -220,7 +220,7 @@ export class BuildSummary {
       ? await BuildSummary.add_sources_via_local_obi(selected_sources, dependency_dict, app_config)
       : mergeSourcesIntoCompileList(compile_list, selected_sources, dependency_dict, app_config);
 
-    DirTool.write_json(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), merged_compile_list);
+    OBITools.write_compile_list(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), merged_compile_list);
 
     if (BuildSummary.currentPanel) {
       await BuildSummary.update();
@@ -328,7 +328,7 @@ export class BuildSummary {
     const dependency_dict = await DependencyList.get_dependencies();
     const reset = resetDependentStatuses(compile_list, [source], dependency_dict);
 
-    DirTool.write_json(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), compile_list);
+    OBITools.write_compile_list(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), compile_list);
 
     await BuildSummary.update();
 

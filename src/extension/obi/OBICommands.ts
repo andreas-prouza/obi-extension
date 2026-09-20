@@ -228,7 +228,7 @@ export class OBICommands {
       // Windows compatibility for directory name
       const historyDirName = BuildHistoryProvider.date2escaped_date(timestamp);
       const historyDir = path.join(ws, Constants.BUILD_HISTORY_DIR, historyDirName);
-      DirTool.write_json(path.join(historyDir, 'compile-list.json'), compile_list);
+      OBITools.write_compile_list(path.join(historyDir, 'compile-list.json'), compile_list);
       DirTool.copy_dir(path.join(ws, Constants.OBI_TMP_DIR), historyDir);
 
       const sources: source.SourceCompileList[] = OBITools.get_sources_info_from_compile_list();
@@ -406,6 +406,12 @@ export class OBICommands {
         logger.info(`CMD: ${cmd}`);
 
         await SystemCmdExecution.run_system_cmd(Workspace.get_workspace(), cmd, 'show_changes');
+
+        // Python OBI doesn't know about git info; refresh the compile-list it just wrote.
+        const created_compile_list = OBITools.get_compile_list(Workspace.get_workspace_uri());
+        if (created_compile_list) {
+          OBITools.write_compile_list(path.join(Workspace.get_workspace(), config.general['compile-list']), created_compile_list);
+        }
       }
 
       BuildSummary.render(context.extensionUri, Workspace.get_workspace_uri());

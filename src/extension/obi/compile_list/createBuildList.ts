@@ -8,6 +8,7 @@ import { DirTool } from '../../utilities/DirTool';
 import { AppConfig } from '../../../shared/AppConfig';
 import { Workspace } from '../../utilities/Workspace';
 import { DependencyList } from '../../../shared/Dependency';
+import { GitInfo } from '../../utilities/GitInfo';
 
 
 
@@ -43,6 +44,7 @@ export async function createBuildList(source?: string): Promise<void> {
   ]);
   buildTargets = orderBuilds(buildTargets);
 
+  GitInfo.attach_git_info(buildTargets, ws);
   DirTool.write_json(path.join(ws, generalConfig['compile-list']), buildTargets);
 
 }
