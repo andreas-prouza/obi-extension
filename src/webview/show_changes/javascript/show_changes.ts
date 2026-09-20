@@ -37,6 +37,10 @@ function main() {
   if (run_button)
     run_button.addEventListener('click', run_build);  
   
+  const add_source_button = document.getElementById('add_source') as Button;
+  if (add_source_button)
+    add_source_button.addEventListener('click', add_source);
+  
   const joblogButton = document.getElementsByClassName("joblog");
   console.log(`joblog.addEventListener ${joblogButton.length}`);
   for (let i = 0; i < joblogButton.length; i++) {
@@ -122,6 +126,13 @@ function run_build() {
     command: "run_build",
     ignore_sources: ignore_sources,
     ignore_sources_cmd: ignore_sources_cmd
+  });
+}
+
+
+function add_source() {
+  vscode.postMessage({
+    command: "add_source"
   });
 }
 

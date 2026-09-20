@@ -1,0 +1,34 @@
+# Current situation
+
+In the build summary the source which needs to be build and all it's dependencies were listed.
+
+All informations for the current build is stored in `compile-list.json`.
+
+
+# New feature
+
+## Add new sources
+
+As a user I want to add specific sources to the build summary.
+
+### Definition of done
+* Consider the dependencies and build order
+* If sources already have status `success`, reset status if the source is affected due to dependencies
+* Put the button under `Created at`
+* Use a plus symbol for button
+
+
+## Modify build command
+
+As a user I want to modify the build command in the build summary
+
+### Definition of done
+* In `compile-list.json` add a new key `compiles[].sources[].cmds[].change-history[]` and add a history entry:
+  ```json
+  {
+    "type": "cmd-change",
+    "user": "ibm-i-user",
+    "original": "previous cmd",
+    "timestamp": "2026-08-14T19:48:46.664582"
+  }
+  ```

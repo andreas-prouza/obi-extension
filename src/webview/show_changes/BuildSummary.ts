@@ -11,6 +11,10 @@ import { logger } from '../../extension/utilities/Logger';
 import { OBICommands } from '../../extension/obi/OBICommands';
 import { LogOutputProvider } from './LogOutputProvider';
 import { show_diagnostic_infos } from '../../extension/source/compile-diagnostics';
+import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
+import { DependencyList } from '../../shared/Dependency';
+import { mergeSourcesIntoCompileList } from '../../extension/obi/compile_list/modules/add_sources';
+import { ISourceInfos } from '../../shared/Source';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -138,12 +142,90 @@ export class BuildSummary {
             DirTool.write_json(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), compile_list);
 
             return;
+
+          case "add_source":
+            BuildSummary.add_sources();
+            return;
         }
       }
     );
 
     BuildSummary.currentPanel = new BuildSummary(panel, extensionUri);
   
+  }
+
+
+
+  /**
+   * Lets the user pick sources not yet part of the current compile list and merges them
+   * (together with their computed dependents) into it, preserving already existing entries.
+   */
+  public static async add_sources(extensionUri?: vscode.Uri, workspaceUri?: vscode.Uri): Promise<void> {
+
+    const ws_uri = workspaceUri || Workspace.get_workspace_uri();
+    const ext_uri = extensionUri || BuildSummary._extensionUri;
+
+    const compile_list: any = BuildSummary.get_compile_list();
+    if (!compile_list) {
+      vscode.window.showErrorMessage('No build summary found. Run "Show changes" first.');
+      return;
+    }
+
+    const existing_sources = new Set<string>();
+    for (const level_item of compile_list['compiles']) {
+      for (const source_item of level_item['sources']) {
+        existing_sources.add(source_item['source']);
+      }
+    }
+
+    const source_info_list: ISourceInfos = await LocalSourceList.get_source_info_list();
+    const candidates = Object.entries(source_info_list).filter(([source]) => !existing_sources.has(source));
+
+    if (candidates.length === 0) {
+      vscode.window.showInformationMessage('All sources are already part of the build summary.');
+      return;
+    }
+
+    const quick_pick = vscode.window.createQuickPick();
+    quick_pick.placeholder = 'Select sources to add to the build summary...';
+    quick_pick.canSelectMany = true;
+    quick_pick.matchOnDescription = true;
+    quick_pick.items = candidates.map(([source, info]) => ({ label: source, description: (info || {}).description || '' }));
+
+    const selected_sources: string[] = await new Promise((resolve) => {
+      quick_pick.onDidAccept(() => {
+        resolve(quick_pick.selectedItems.map(item => item.label));
+        quick_pick.hide();
+      });
+      quick_pick.onDidHide(() => {
+        resolve([]);
+        quick_pick.dispose();
+      });
+      quick_pick.show();
+    });
+
+    if (selected_sources.length === 0) {
+      return;
+    }
+
+    const dependency_dict = await DependencyList.get_dependencies();
+    const app_config = AppConfig.get_app_config();
+
+    const { compileList: merged_compile_list, added, reset } = mergeSourcesIntoCompileList(compile_list, selected_sources, dependency_dict, app_config);
+
+    DirTool.write_json(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), merged_compile_list);
+
+    if (BuildSummary.currentPanel) {
+      await BuildSummary.update();
+    } else if (ext_uri) {
+      BuildSummary.render(ext_uri, ws_uri, BuildSummary._current_compile_output_folder);
+    }
+
+    let message = `Added ${added.length} source(s) to the build summary.`;
+    if (reset.length > 0) {
+      message += ` ${reset.length} source(s) had their status reset due to dependency changes.`;
+    }
+    vscode.window.showInformationMessage(message);
   }
 
 

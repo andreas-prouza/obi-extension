@@ -70,6 +70,12 @@
         "when": "obi.contains_obi_project && obi.valid-config"
       },
       {
+        "command": "obi.add-source-to-build-summary",
+        "title": "%obi.add-source-to-build-summary%",
+        "icon": "$(add)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
         "command": "obi.source-filter.update",
         "title": "%obi.source-filter.update%",
         "icon": "$(refresh)",

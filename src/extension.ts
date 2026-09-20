@@ -225,6 +225,13 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
+		vscode.commands.registerCommand('obi.add-source-to-build-summary', () => {
+			// Only available with workspaces
+			BuildSummary.add_sources(context.extensionUri, ws_uri);
+		})
+	);
+
+	context.subscriptions.push(
 		vscode.commands.registerCommand('obi.open_build_summary', (summary_file_path?: string) => {
 			// Only available with workspaces
 			if (summary_file_path) {
