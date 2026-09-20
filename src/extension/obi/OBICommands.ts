@@ -30,7 +30,7 @@ export class OBICommands {
 
 
 
-  public static async run_build_process(sources?: string[], generate_compile_list?: boolean) {
+  public static async run_build_process(sources?: string[], generate_compile_list?: boolean): Promise<string | undefined> {
 
     const ws = Workspace.get_workspace();
     const config = AppConfig.get_app_config();
@@ -44,11 +44,11 @@ export class OBICommands {
     if (!remote_obi)
       throw Error(`OBI path is not korrekt`);
 
-    await vscode.window.withProgress({
+    return await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
       title: `Run build`,
     },
-      async progress => {
+      async (progress): Promise<string | undefined> => {
 
         let ssh_cmd: string = '';
 
@@ -62,7 +62,7 @@ export class OBICommands {
 
         if (source_list.length == 0) {
           vscode.window.showWarningMessage("No changed sources to build");
-          return;
+          return undefined;
         }
 
         // Ask if they should be build
@@ -71,15 +71,15 @@ export class OBICommands {
           const answer = await vscode.window.showInformationMessage(`${source_list.length} ${source} will be build. Do you want to proceed?`, { modal: true }, ...['Yes', 'No']);
           switch (answer) {
             case 'No':
-              return;
+              return undefined;
             case undefined: // Canceled
-              return;
+              return undefined;
           }
         }
 
         if (! await OBITools.check_remote_pase()) {
           vscode.window.showErrorMessage('Remote PASE is not configured correctly. Please check your configuration.');
-          return false;
+          return undefined;
         }
 
         progress.report({
@@ -89,7 +89,7 @@ export class OBICommands {
         let check: boolean = await OBITools.check_remote();
 
         if (!check) {
-          return false;
+          return undefined;
         }
 
         progress.report({
@@ -113,7 +113,7 @@ export class OBICommands {
           message: `Get all outputs back to you`
         });
 
-        await OBICommands.get_remote_build_output();
+        return await OBICommands.get_remote_build_output();
 
       });
   }
@@ -203,7 +203,7 @@ export class OBICommands {
 
 
 
-  public static async get_remote_build_output() {
+  public static async get_remote_build_output(): Promise<string | undefined> {
 
     const config = AppConfig.get_app_config();
     const remote_base_dir: string | undefined = config.general['remote-base-dir'];
@@ -240,7 +240,11 @@ export class OBICommands {
         }
       }
       DirTool.write_json(path.join(ws, config.general['compiled-object-list']), source_hashes);
+
+      return historyDirName;
     }
+
+    return undefined;
   }
 
 
@@ -323,17 +327,21 @@ export class OBICommands {
 
     try {
 
-      OBITools.update_compile_list(ignore_sources, ignore_sources_cmd);
+      OBITools.update_compile_list(ignore_sources, ignore_sources_cmd, BuildSummary.get_current_compile_list_name());
 
       const sources: string[] = OBITools.get_sources_2_build_from_compile_list(true);
+      let history_dir_name: string | undefined;
       if (sources.length > 0) {
-        await OBICommands.run_build_process(sources, false);
+        history_dir_name = await OBICommands.run_build_process(sources, false);
       }
       else {
         vscode.window.showInformationMessage('No sources to build');
       }
 
-      BuildSummary.update();
+      await BuildSummary.show_current_results();
+      if (history_dir_name) {
+        await BuildHistoryProvider.reveal_build(history_dir_name);
+      }
       OBIController.update_build_summary_timestamp();
     }
     catch (e: any) {

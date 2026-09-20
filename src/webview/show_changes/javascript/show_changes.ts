@@ -57,6 +57,11 @@ function main() {
     errorButton[i].addEventListener("click", function (e) {show_log('stderr', errorButton[i]);});
   }
 
+  const editCmdButton = document.getElementsByClassName("edit_cmd");
+  for (let i = 0; i < editCmdButton.length; i++) {
+    editCmdButton[i].addEventListener("click", function (e) {edit_cmd(editCmdButton[i]);});
+  }
+
   const openFileButton = document.getElementsByClassName("open_file");
   for (let i = 0; i < openFileButton.length; i++) {
     openFileButton[i].addEventListener("click", function (e) {open_file(openFileButton[i]);});
@@ -133,6 +138,20 @@ function run_build() {
 function add_source() {
   vscode.postMessage({
     command: "add_source"
+  });
+}
+
+
+function edit_cmd(e: Element) {
+  const level: string = e.getAttribute('level') || '';
+  const source: string = e.getAttribute('source') || '';
+  const cmd_index: number = Number(e.getAttribute('cmd_index'));
+
+  vscode.postMessage({
+    command: "edit_cmd",
+    level: level,
+    cmd_index: cmd_index,
+    source: source
   });
 }
 

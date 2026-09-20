@@ -1,6 +1,20 @@
 import * as path from 'path';
 import { minimatch } from "minimatch";
 import { getSourceProperties } from './properties';
+import { ExtendedSourceProcessingList } from '../../../../shared/EspConfig';
+
+// Combines the project-level ESP config with the active user/profile ESP config,
+// mirroring how they are both applied in src/webview/controller/OBIConfiguration.ts.
+export function getActiveExtendedSourcesConfig(): any {
+  const project_config = new ExtendedSourceProcessingList();
+  const user_config = new ExtendedSourceProcessingList(true);
+  return {
+    extended_source_processing: [
+      ...(project_config.extended_source_processing || []),
+      ...(user_config.extended_source_processing || [])
+    ]
+  };
+}
 
 export function getSteps(source: string, appConfig: any, extended_sources_config: any): Array<string | object> {
   let initSteps: Array<string | object> = [];

@@ -13,8 +13,9 @@ import { LogOutputProvider } from './LogOutputProvider';
 import { show_diagnostic_infos } from '../../extension/source/compile-diagnostics';
 import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
 import { DependencyList } from '../../shared/Dependency';
-import { mergeSourcesIntoCompileList } from '../../extension/obi/compile_list/modules/add_sources';
+import { mergeSourcesIntoCompileList, resetDependentStatuses } from '../../extension/obi/compile_list/modules/add_sources';
 import { ISourceInfos } from '../../shared/Source';
+import { SystemCmdExecution } from '../../extension/utilities/SystemCmdExecution';
 
 /*
 https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
@@ -146,6 +147,10 @@ export class BuildSummary {
           case "add_source":
             BuildSummary.add_sources();
             return;
+
+          case "edit_cmd":
+            BuildSummary.edit_cmd(message.level, message.source, message.cmd_index);
+            return;
         }
       }
     );
@@ -211,7 +216,9 @@ export class BuildSummary {
     const dependency_dict = await DependencyList.get_dependencies();
     const app_config = AppConfig.get_app_config();
 
-    const { compileList: merged_compile_list, added, reset } = mergeSourcesIntoCompileList(compile_list, selected_sources, dependency_dict, app_config);
+    const { compileList: merged_compile_list, added, reset } = (!OBITools.without_local_obi() && app_config.general['local-obi-dir'])
+      ? await BuildSummary.add_sources_via_local_obi(selected_sources, dependency_dict, app_config)
+      : mergeSourcesIntoCompileList(compile_list, selected_sources, dependency_dict, app_config);
 
     DirTool.write_json(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), merged_compile_list);
 
@@ -226,6 +233,108 @@ export class BuildSummary {
       message += ` ${reset.length} source(s) had their status reset due to dependency changes.`;
     }
     vscode.window.showInformationMessage(message);
+  }
+
+
+  /**
+   * Adds sources by calling the local OBI (python) project's dedicated add-source action,
+   * one source at a time, pointed at the directory of the currently-displayed compile-list.json
+   * (works whether that's the live build-output list or one opened from build-history), then
+   * reloads the resulting (incrementally updated) list from that same location.
+   */
+  private static async add_sources_via_local_obi(
+    selected_sources: string[],
+    dependency_dict: Record<string, string[]>,
+    app_config: any
+  ): Promise<{ compileList: any; added: string[]; reset: string[] }> {
+
+    const compile_list_name = BuildSummary.get_current_compile_list_name();
+    const compile_list_dir = path.dirname(compile_list_name);
+
+    await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: 'Adding sources via local OBI...',
+      cancellable: false
+    }, async (progress) => {
+      for (const source of selected_sources) {
+        progress.report({ message: source });
+        const quote = process.platform === 'win32' ? '"' : "'";
+        const cmd = `${OBITools.get_local_obi_python_path()} -X utf8 ${path.join(app_config.general['local-obi-dir'], 'main.py')} -a add_source -p . --source=${quote}${source}${quote} --compile-list-dir=${quote}${compile_list_dir}${quote}`;
+        logger.info(`CMD: ${cmd}`);
+        await SystemCmdExecution.run_system_cmd(Workspace.get_workspace(), cmd, 'add_sources');
+      }
+    });
+
+    const live_compile_list = OBITools.get_compile_list(Workspace.get_workspace_uri(), compile_list_name);
+    if (!live_compile_list) {
+      throw new Error('Local OBI did not produce a valid compile-list.');
+    }
+
+    const added = selected_sources.filter(source =>
+      (live_compile_list['compiles'] || []).some((level_item: any) =>
+        level_item['sources'].some((source_item: any) => source_item['source'] === source)
+      )
+    );
+    const reset = resetDependentStatuses(live_compile_list, selected_sources, dependency_dict);
+
+    return { compileList: live_compile_list, added, reset };
+  }
+
+
+
+  /**
+   * Lets the user modify a build command's text, recording the previous value in the cmd's change-history.
+   */
+  public static async edit_cmd(level: string, source: string, cmd_index: number): Promise<void> {
+
+    const compile_list: any = BuildSummary.get_compile_list();
+    if (!compile_list) {
+      return;
+    }
+
+    const level_item = compile_list['compiles'].find((item: any) => String(item['level']) === String(level));
+    const source_item = level_item?.['sources'].find((item: any) => item['source'] === source);
+    const cmd_entry = source_item?.['cmds']?.[cmd_index];
+
+    if (!cmd_entry) {
+      vscode.window.showErrorMessage('Command not found.');
+      return;
+    }
+
+    const new_cmd = await vscode.window.showInputBox({
+      title: `Edit build command for ${source}`,
+      value: cmd_entry['cmd'],
+      ignoreFocusOut: true
+    });
+
+    if (new_cmd === undefined || new_cmd === cmd_entry['cmd']) {
+      return;
+    }
+
+    if (!cmd_entry['change-history']) {
+      cmd_entry['change-history'] = [];
+    }
+    cmd_entry['change-history'].push({
+      type: 'cmd-change',
+      user: AppConfig.get_app_config().connection['ssh-user'] || 'unknown',
+      original: cmd_entry['cmd'],
+      timestamp: new Date().toISOString()
+    });
+    cmd_entry['cmd'] = new_cmd;
+    if (cmd_entry['status'] === 'success') {
+      cmd_entry['status'] = 'new';
+    }
+
+    const dependency_dict = await DependencyList.get_dependencies();
+    const reset = resetDependentStatuses(compile_list, [source], dependency_dict);
+
+    DirTool.write_json(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), compile_list);
+
+    await BuildSummary.update();
+
+    if (reset.length > 0) {
+      vscode.window.showInformationMessage(`${reset.length} source(s) had their status reset due to the command change.`);
+    }
   }
 
 
@@ -310,6 +419,27 @@ export class BuildSummary {
 
     panel._panel.webview.html = BuildSummary.generate_html(BuildSummary._extensionUri, BuildSummary.currentPanel?._panel.webview);
     
+  }
+
+
+  /**
+   * Switches the webview back to the live (non-history) compile-list, so the freshly built results
+   * are shown even if a build-history entry was open when the build was triggered.
+   */
+  public static async show_current_results(extensionUri?: vscode.Uri, workspaceUri?: vscode.Uri): Promise<void> {
+
+    BuildSummary._current_compile_output_folder = undefined;
+
+    if (BuildSummary.currentPanel) {
+      await BuildSummary.update();
+      return;
+    }
+
+    const ext_uri = extensionUri || BuildSummary._extensionUri;
+    const ws_uri = workspaceUri || Workspace.get_workspace_uri();
+    if (ext_uri) {
+      BuildSummary.render(ext_uri, ws_uri);
+    }
   }
 
 

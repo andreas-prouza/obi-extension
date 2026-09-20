@@ -3,6 +3,7 @@ import * as path from 'path';
 import { OBIConstants } from './obi_constants';
 import { deepListMerge } from './dict_tools';
 import { addBuildCmds } from './build_cmds';
+import { getActiveExtendedSourcesConfig } from './app_config_tools';
 import { AppConfig } from '../../../../shared/AppConfig';
 import { Workspace } from '../../../utilities/Workspace';
 import { DirTool } from '../../../utilities/DirTool';
@@ -51,7 +52,7 @@ export function getBuildOrder(
   if (!appConfig) {
     appConfig = AppConfig.get_app_config();
   }
-  const extended_sources_config = DirTool.get_toml(OBIConstants.get('EXTENDED_SOURCE_PROCESS_CONFIG'));
+  const extended_sources_config = getActiveExtendedSourcesConfig();
 
   addBuildCmds(newTargetTree, appConfig, extended_sources_config);
 
