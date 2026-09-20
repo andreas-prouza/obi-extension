@@ -222,6 +222,21 @@
         "title": "Update Build History"
       },
       {
+        "command": "obi.build-history.search",
+        "title": "Filter Build History by Source",
+        "icon": "$(search)"
+      },
+      {
+        "command": "obi.build-history.switch-to-source-view",
+        "title": "Switch to Source-based View",
+        "icon": "$(references)"
+      },
+      {
+        "command": "obi.build-history.switch-to-date-view",
+        "title": "Switch to Date-based View",
+        "icon": "$(calendar)"
+      },
+      {
         "command": "obi.build-history.delete-item",
         "title": "Delete Build History Item",
         "icon": "$(trash)"
@@ -329,6 +344,21 @@
           "command": "obi.deployment.maintain",
           "when": "obi.contains_obi_project && obi.valid-config && view == obi.deployment",
           "group": "navigation@1"
+        },
+        {
+          "command": "obi.build-history.switch-to-source-view",
+          "when": "view == obi.build-history && obi.build-history.view-mode == date",
+          "group": "navigation@1"
+        },
+        {
+          "command": "obi.build-history.switch-to-date-view",
+          "when": "view == obi.build-history && obi.build-history.view-mode == source",
+          "group": "navigation@1"
+        },
+        {
+          "command": "obi.build-history.search",
+          "when": "view == obi.build-history",
+          "group": "navigation@0"
         }
       ],
       "editor/title/context": [

@@ -7,6 +7,7 @@ import { logger } from '../../extension/utilities/Logger';
 import * as source from '../../shared/Source';
 import { Workspace } from '../../extension/utilities/Workspace';
 import { AppConfig } from '../../shared/AppConfig';
+import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
 
 
 interface IBuildHistorys {
@@ -18,6 +19,8 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
   private static _instance: BuildHistoryProvider;
   private static _treeView: vscode.TreeView<BuildHistoryItem> | undefined;
   private workspaceRoot: string = '';
+  private view_mode: 'date' | 'source' = 'date';
+  private source_filter: Set<string> | undefined;
   private _onDidChangeTreeData: vscode.EventEmitter<BuildHistoryItem | undefined | null | void> = new vscode.EventEmitter<BuildHistoryItem | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<BuildHistoryItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
@@ -57,17 +60,23 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
 
 
 
-  getChildren(element?: BuildHistoryItem): Thenable<BuildHistoryItem[]> {
+  async getChildren(element?: BuildHistoryItem): Promise<BuildHistoryItem[]> {
     if (!this.workspaceRoot) {
-      return Promise.resolve([]);
+      return [];
     }
 
     const build_history_path = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR);
     if (!DirTool.dir_exists(build_history_path)) {
-      return Promise.resolve([]);
+      return [];
     }
 
     const config = AppConfig.get_app_config();
+    const build_history_dirs = DirTool.list_dir(build_history_path);
+    const source_info_list = await LocalSourceList.get_source_info_list();
+
+    if (this.view_mode === 'source') {
+      return this.get_source_view_children(element, build_history_path, build_history_dirs, source_info_list);
+    }
 
     if (element) {
       
@@ -75,15 +84,13 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
       if (element.contextValue === 'buildHistoryDate') {
         
         // Children of a date group: these are the timestamped build folders
-        const build_history_dirs = DirTool.list_dir(build_history_path);
-
         // Convert back timestamp folder names to a valid timestamp format
         const historyItems = build_history_dirs
           .map(dir => {
             
             const dirPath = path.join(build_history_path, dir);
             
-            if (DirTool.dir_exists(dirPath)) {
+            if (DirTool.dir_exists(dirPath) && this.matches_filter(dirPath)) {
               const date: Date = BuildHistoryProvider.escaped_date2date(dir);
               const tzOffset = date.getTimezoneOffset() * 60000;
               const dirDate = new Date(date.getTime() - tzOffset).toISOString().split('T')[0];
@@ -135,7 +142,11 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
                     src.source,
                     vscode.TreeItemCollapsibleState.None,
                     '',
-                    'source'
+                    'source',
+                    undefined,
+                    undefined,
+                    undefined,
+                    (source_info_list[src.source] || {}).description
                   );
 
                   item.command = {
@@ -156,12 +167,11 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
     }
 
     // Top-level items (date groups)
-    const build_history_dirs = DirTool.list_dir(build_history_path);
     const dateGroups = new Set<string>();
 
     build_history_dirs.forEach(dir => {
       const dirPath = path.join(build_history_path, dir);
-      if (DirTool.dir_exists(dirPath)) {
+      if (DirTool.dir_exists(dirPath) && this.matches_filter(dirPath)) {
         // The dir name is the timestamp
         try {
           const date: Date = BuildHistoryProvider.escaped_date2date(dir);
@@ -189,6 +199,138 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
   }
 
 
+  /**
+   * True when no source filter is active, or the build at dirPath contains at least one filtered source.
+   */
+  private matches_filter(dirPath: string): boolean {
+    if (!this.source_filter || this.source_filter.size === 0) {
+      return true;
+    }
+    const sources = BuildHistoryProvider.get_sources_from_build(dirPath);
+    for (const source of this.source_filter) {
+      if (sources.has(source)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+
+  /**
+   * Reads the distinct source names referenced by a single build-history folder's compile-list.json.
+   */
+  private static get_sources_from_build(dirPath: string): Set<string> {
+    const sources = new Set<string>();
+    const compileListPath = path.join(dirPath, 'compile-list.json');
+
+    if (!fs.existsSync(compileListPath)) {
+      return sources;
+    }
+
+    try {
+      const compileList = JSON.parse(fs.readFileSync(compileListPath, 'utf-8'));
+      for (const compile of compileList.compiles || []) {
+        for (const src of compile.sources || []) {
+          if (src.source) {
+            sources.add(src.source);
+          }
+        }
+      }
+    } catch (e) {
+      logger.error(`Failed to parse compile-list.json in ${dirPath}: ${e}`);
+    }
+    return sources;
+  }
+
+
+  /**
+   * Builds the source-based tree: source -> build date -> build time.
+   */
+  private get_source_view_children(
+    element: BuildHistoryItem | undefined,
+    build_history_path: string,
+    build_history_dirs: string[],
+    source_info_list: source.ISourceInfos
+  ): BuildHistoryItem[] {
+
+    // Level 2: builds on that date containing this source
+    if (element?.contextValue === 'buildHistoryDateBySource' && element.sourceFilter) {
+      const source_filter = element.sourceFilter;
+      return build_history_dirs
+        .map(dir => {
+          const dirPath = path.join(build_history_path, dir);
+          if (!DirTool.dir_exists(dirPath) || !BuildHistoryProvider.get_sources_from_build(dirPath).has(source_filter)) {
+            return null;
+          }
+          const date = BuildHistoryProvider.escaped_date2date(dir);
+          const tzOffset = date.getTimezoneOffset() * 60000;
+          const dirDate = new Date(date.getTime() - tzOffset).toISOString().split('T')[0];
+          if (dirDate !== element.label) {
+            return null;
+          }
+          return new BuildHistoryItem(date.toLocaleTimeString(), vscode.TreeItemCollapsibleState.Collapsed, dirPath, 'build', dir, dirDate);
+        })
+        .filter((item): item is BuildHistoryItem => item !== null)
+        .sort((a, b) => {
+          const labelA = typeof a.label === 'string' ? a.label : (a.label?.label ?? '');
+          const labelB = typeof b.label === 'string' ? b.label : (b.label?.label ?? '');
+          return labelB.localeCompare(labelA);
+        });
+    }
+
+    // Level 1: distinct build dates that contain this source
+    if (element?.contextValue === 'buildHistorySourceRoot' && element.sourceFilter) {
+      const source_filter = element.sourceFilter;
+      const dates = new Set<string>();
+      for (const dir of build_history_dirs) {
+        const dirPath = path.join(build_history_path, dir);
+        if (!DirTool.dir_exists(dirPath) || !BuildHistoryProvider.get_sources_from_build(dirPath).has(source_filter)) {
+          continue;
+        }
+        try {
+          const date = BuildHistoryProvider.escaped_date2date(dir);
+          const tzOffset = date.getTimezoneOffset() * 60000;
+          dates.add(new Date(date.getTime() - tzOffset).toISOString().split('T')[0]);
+        } catch (e) {
+          logger.error(`Invalid date format for build history directory: ${dir}`);
+        }
+      }
+      return Array.from(dates)
+        .sort((a, b) => b.localeCompare(a))
+        .map(date => new BuildHistoryItem(date, vscode.TreeItemCollapsibleState.Collapsed, '', 'date-by-source', undefined, undefined, source_filter));
+    }
+
+    // Root level: distinct sources across all builds
+    if (!element) {
+      const sources = new Set<string>();
+      for (const dir of build_history_dirs) {
+        const dirPath = path.join(build_history_path, dir);
+        if (!DirTool.dir_exists(dirPath)) {
+          continue;
+        }
+        for (const src of BuildHistoryProvider.get_sources_from_build(dirPath)) {
+          sources.add(src);
+        }
+      }
+      return Array.from(sources)
+        .filter(source => !this.source_filter || this.source_filter.size === 0 || this.source_filter.has(source))
+        .sort()
+        .map(source => new BuildHistoryItem(
+          source,
+          vscode.TreeItemCollapsibleState.Collapsed,
+          '',
+          'source-root',
+          undefined,
+          undefined,
+          undefined,
+          (source_info_list[source] || {}).description
+        ));
+    }
+
+    return [];
+  }
+
+
   async get_child_elements(element: BuildHistoryItem): Promise<any> {
     return Promise.resolve([]);
   }
@@ -208,6 +350,94 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
 
 
   /**
+   * Switches the tree between date-based and source-based layout and refreshes.
+   */
+  private async set_view_mode(mode: 'date' | 'source'): Promise<void> {
+    if (this.view_mode === mode) {
+      return;
+    }
+    this.view_mode = mode;
+    await vscode.commands.executeCommand('setContext', 'obi.build-history.view-mode', mode);
+    await this.refresh();
+  }
+
+
+  /**
+   * Applies (or clears) the source filter, independent of the active view mode.
+   */
+  private async set_source_filter(sources: string[]): Promise<void> {
+    this.source_filter = sources.length > 0 ? new Set(sources) : undefined;
+
+    if (BuildHistoryProvider._treeView) {
+      BuildHistoryProvider._treeView.message = this.source_filter
+        ? `Filtered by source: ${Array.from(this.source_filter).join(', ')}`
+        : undefined;
+    }
+
+    await vscode.commands.executeCommand('setContext', 'obi.build-history.filter-active', !!this.source_filter);
+    await this.refresh();
+  }
+
+
+  /**
+   * Shows a multi-select QuickPick of all sources found in the build history and applies it as a filter.
+   */
+  private async search(): Promise<void> {
+    const build_history_path = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR);
+    if (!DirTool.dir_exists(build_history_path)) {
+      vscode.window.showInformationMessage('No build history found.');
+      return;
+    }
+
+    const all_sources = new Set<string>();
+    for (const dir of DirTool.list_dir(build_history_path)) {
+      const dirPath = path.join(build_history_path, dir);
+      if (!DirTool.dir_exists(dirPath)) {
+        continue;
+      }
+      for (const src of BuildHistoryProvider.get_sources_from_build(dirPath)) {
+        all_sources.add(src);
+      }
+    }
+
+    if (all_sources.size === 0) {
+      vscode.window.showInformationMessage('No sources found in build history.');
+      return;
+    }
+
+    const source_info_list = await LocalSourceList.get_source_info_list();
+
+    const quick_pick = vscode.window.createQuickPick();
+    quick_pick.placeholder = 'Select sources to filter the build history...';
+    quick_pick.canSelectMany = true;
+    quick_pick.matchOnDescription = true;
+    quick_pick.items = Array.from(all_sources).sort().map(source => ({
+      label: source,
+      description: (source_info_list[source] || {}).description || ''
+    }));
+    quick_pick.selectedItems = quick_pick.items.filter(item => this.source_filter?.has(item.label));
+
+    const selected_sources: string[] | undefined = await new Promise((resolve) => {
+      quick_pick.onDidAccept(() => {
+        resolve(quick_pick.selectedItems.map(item => item.label));
+        quick_pick.hide();
+      });
+      quick_pick.onDidHide(() => {
+        resolve(undefined);
+        quick_pick.dispose();
+      });
+      quick_pick.show();
+    });
+
+    if (selected_sources === undefined) {
+      return;
+    }
+
+    await this.set_source_filter(selected_sources);
+  }
+
+
+  /**
    * Selects and reveals the tree item for the given build-history folder (e.g. after a rebuild).
    */
   public static async reveal_build(historyDirName: string): Promise<void> {
@@ -217,6 +447,9 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
       logger.warn(`reveal_build('${historyDirName}'): no provider instance or tree view registered yet`);
       return;
     }
+
+    // reveal() is only wired up for the date-based hierarchy
+    await instance.set_view_mode('date');
 
     const date = BuildHistoryProvider.escaped_date2date(historyDirName);
     const tzOffset = date.getTimezoneOffset() * 60000;
@@ -258,6 +491,21 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
     // create (registerTreeDataProvider is not needed in addition to createTreeView for the same view id)
     const tree = vscode.window.createTreeView('obi.build-history', options);
     BuildHistoryProvider._treeView = tree;
+
+    vscode.commands.executeCommand('setContext', 'obi.build-history.view-mode', this.view_mode);
+    vscode.commands.executeCommand('setContext', 'obi.build-history.filter-active', false);
+
+    vscode.commands.registerCommand('obi.build-history.switch-to-source-view', () => {
+      this.set_view_mode('source');
+    });
+
+    vscode.commands.registerCommand('obi.build-history.switch-to-date-view', () => {
+      this.set_view_mode('date');
+    });
+
+    vscode.commands.registerCommand('obi.build-history.search', () => {
+      this.search();
+    });
 
     vscode.commands.registerCommand('obi.build-history.update', () => {
       this.refresh();
@@ -321,14 +569,17 @@ export class BuildHistoryItem extends vscode.TreeItem {
   public readonly date?: string;
   public readonly dirName?: string;
   public readonly dateLabel?: string;
+  public readonly sourceFilter?: string;
 
   constructor(
     label: string,
     collapsibleState: vscode.TreeItemCollapsibleState,
     file_path: string,
-    type: 'date' | 'build' | 'source',
+    type: 'date' | 'build' | 'source' | 'source-root' | 'date-by-source',
     fileName?: string,
-    dateLabel?: string
+    dateLabel?: string,
+    sourceFilter?: string,
+    source_description?: string
   ) {
     super(label, collapsibleState);
     this.label = label;
@@ -355,10 +606,25 @@ export class BuildHistoryItem extends vscode.TreeItem {
       };
 
       this.iconPath = new vscode.ThemeIcon('file-text');
+    } else if (type === 'source-root') {
+      this.tooltip = `Builds containing ${label}`;
+      this.contextValue = 'buildHistorySourceRoot';
+      this.iconPath = new vscode.ThemeIcon('file-code');
+      this.sourceFilter = label;
+      this.id = `source-root-${label}`;
+      this.description = source_description;
+    } else if (type === 'date-by-source') {
+      this.tooltip = `Builds from ${label} containing ${sourceFilter}`;
+      this.contextValue = 'buildHistoryDateBySource';
+      this.iconPath = new vscode.ThemeIcon('calendar');
+      this.date = label;
+      this.sourceFilter = sourceFilter;
+      this.id = `date-by-source-${sourceFilter}-${label}`;
     } else { // source
-      this.tooltip = `Source: ${label}`;
+      this.tooltip = source_description ? `Source: ${label} (${source_description})` : `Source: ${label}`;
       this.contextValue = 'buildHistorySource';
       this.iconPath = new vscode.ThemeIcon('file-code');
+      this.description = source_description;
     }
   }
 
