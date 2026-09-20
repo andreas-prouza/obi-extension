@@ -1,3 +1,8 @@
+## [1.3.2]
+
+* Add git info to compile-list
+
+
 ## [1.3.1]
 
 ### Build summary
@@ -7,7 +12,6 @@
 ### Build history
 * Switch tree view: based on source or timestamp
 * Search objects in builds
-
 
 
 ## [1.2.23]
