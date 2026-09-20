@@ -26,3 +26,7 @@ Root is source -> build date -> build time
 * Multiple sources can be selected
 * Change the tree based on selected sources
 * The filter should affect independend which view is activated (source base or date based)
+* Preselect in the list of sources, items which are already in filter
+* Replace current filter with the new one
+* In list of sources, show also source description like in `obi.source-quick-search`
+* Also show source description for each source element in tree
