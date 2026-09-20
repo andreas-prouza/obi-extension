@@ -1,3 +1,15 @@
+## [1.3.1]
+
+### Build summary
+* Add source
+* Modify build command
+
+### Build history
+* Switch tree view: based on source or timestamp
+* Search objects in builds
+
+
+
 ## [1.2.23]
 
 * Update config when doing a rename. Also support renames in vscode explorer view
