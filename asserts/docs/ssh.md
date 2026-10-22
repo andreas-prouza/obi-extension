@@ -1,54 +1,56 @@
-- [SSH](#ssh)
-  - [IBM i requirements](#ibm-i-requirements)
-    - [Bash Shell](#bash-shell)
-    - [Home directory](#home-directory)
-    - [User profile set up](#user-profile-set-up)
-  - [SSH key authentication](#ssh-key-authentication)
+[← Back to README](../../README.md)
 
+# SSH setup
 
-# SSH
+- [IBM i requirements](#ibm-i-requirements)
+  - [SSH daemon and open source packages](#ssh-daemon-and-open-source-packages)
+  - [Bash shell](#bash-shell)
+  - [Home directory](#home-directory)
+  - [User profile setup](#user-profile-setup)
+- [SSH key authentication](#ssh-key-authentication)
+- [Using the key in OBI](#using-the-key-in-obi)
+- [Troubleshooting](#troubleshooting)
+
+OBI communicates with your IBM i via SSH. Every remote command is executed with `bash`.
 
 
 ## IBM i requirements
 
-Sicne we use the SSH protocoll to communicate with IBM i we need:
-* SSH Deamon is up and running
+### SSH daemon and open source packages
 
-    ```STRTCPSVR *SSHD```
+* The SSH daemon must be running:
 
-* The open source package manager (YUM) is installed on IBM i
+  ```
+  STRTCPSVR *SSHD
+  ```
 
-    You can do this using ACS
+* The open source package manager (YUM) must be installed. You can install it with IBM i Access Client Solutions (ACS).
 
 
-### Bash Shell
+### Bash shell
 
-Recommended: BASH is installed and set to your profile
-    
-In shell:
+Install bash:
 
 ```sh
 yum install bash
 ```
 
-Set BASH as default shell to your profile via SQL (instead of ```*CURRENT``` you can also provide the profile name):
+Recommended: set bash as default shell of your user profile via SQL (instead of `*CURRENT` you can also provide the profile name):
 
 ```sql
 CALL QSYS2.SET_PASE_SHELL_INFO('*CURRENT', '/QOpenSys/pkgs/bin/bash')
 ```
 
-Or do it in shell:
+Or in a shell:
 
-```bash
+```sh
 cl "RUNSQL ('CALL QSYS2.SET_PASE_SHELL_INFO(''*CURRENT'', ''/QOpenSys/pkgs/bin/bash'')')"
 ```
 
 
 ### Home directory
 
-Home- & ```.ssh``` directory for your user profile should exist.
-
-You also need the correct permission set for both directories because of security reasons
+The home directory and its `.ssh` directory must exist, with strict permissions:
 
 ```sh
 mkdir -p /home/$USER/.ssh
@@ -56,60 +58,92 @@ chmod 755 /home/$USER
 chmod 700 /home/$USER/.ssh
 ```
 
-### User profile set up
+> If the home directory is missing, OBI offers to create it before the first build.
 
-Define ```~/.profile```, ```~/.bashrc``` and ```~/.bash_profile``` file:
+
+### User profile setup
+
+Add the open source packages to the `PATH` in `~/.profile`, `~/.bashrc` and `~/.bash_profile`:
 
 ```sh
-echo 'export PATH="/QOpenSys/pkgs/bin:$PATH"' >> ~/.profile
-echo 'export TERM=xterm' >> ~/.profile
-echo 'export PATH="/QOpenSys/pkgs/bin:$PATH"' >> ~/.bashrc
-echo 'export TERM=xterm' >> ~/.bashrc
-echo "PS1='\u@\H:\w $ " >> ~/.bashrc   # Bash-Prompt with system name
-echo 'export PATH="/QOpenSys/pkgs/bin:$PATH"' >> ~/.bash_profile
-echo 'export TERM=xterm' >> ~/.bash_profile
+for f in ~/.profile ~/.bashrc ~/.bash_profile; do
+  echo 'export PATH="/QOpenSys/pkgs/bin:$PATH"' >> $f
+  echo 'export TERM=xterm' >> $f
+done
+echo "PS1='\u@\H:\w $ '" >> ~/.bashrc   # prompt showing user, system and path
 ```
 
-This is neseccary to have the correct ```PATH``` in the IBM i shell.
+This is necessary to have the correct `PATH` in the IBM i shell.
+
+> If `~/.bashrc` is missing, OBI offers to create it (with the `PATH` above) before the first build.
+
 
 ## SSH key authentication
-  
-* Linux
 
-    ```sh
-    ssh-keygen -b 4096
-    ```
-  * Enter your key name full qualified (e.g. /home/prouza/.ssh/academy_rsa)
-  * Then you will be asked for a password. If you set one, you will be asked for it on each Login. If not you will be logged in without any prompt.
+With a key you don't need to enter a password.
 
-  On Linux you can simple use ```ssh-copy-id``` to copy the public key to your remote system.
-  ```sh
-  ssh-copy-id -i ~/.ssh/academy_rsa.pub prouza@academy
-  ```
+**Linux / macOS**
 
-* Windows
+1. Create a key pair:
 
-    Do the same as for Linux, but open a WSL session for that, because this needs to be done in your WSL environment
-    
+   ```sh
+   ssh-keygen -t ed25519 -f ~/.ssh/ibmi_ed25519
+   ```
 
-On your local machine create the ```~/.ssh/config``` file (and directory) if not exist and add the following:
+   If you set a passphrase, you will be asked for it on each login. OBI does not support keys with a passphrase.
+
+2. Copy the public key to your IBM i:
+
+   ```sh
+   ssh-copy-id -i ~/.ssh/ibmi_ed25519.pub myuser@my-ibmi
+   ```
+
+**Windows**
+
+Do the same in PowerShell (OpenSSH is included in Windows 10/11) or in WSL.
+Without `ssh-copy-id`, append the content of the `.pub` file to `/home/<user>/.ssh/authorized_keys` on your IBM i.
+
+**SSH config** (optional, for convenient command line use)
+
+Create `~/.ssh/config` on your PC if it does not exist and add:
 
 ```
-Host academy
-  HostName academy
-  IdentitiesOnly=yes
-  User prouza
-  IdentityFile ~/.ssh/academy_rsa
+Host my-ibmi
+  HostName my-ibmi.example.com
+  User myuser
+  IdentitiesOnly yes
+  IdentityFile ~/.ssh/ibmi_ed25519
 ```
 
-Now you should be able to login without a prompt: 
-```ssh
-[andreas@Andreas-Linux ~]$ ssh academy 
--bash-5.1$ 
+Now you should be able to log in without a prompt:
+
+```sh
+$ ssh my-ibmi
+-bash-5.2$
 ```
 
-  * Most problems here are
-    * Home directory does not exist
-    * Home directory does not match with user profile name
-    * Owner of home directory is someone else
-    * Permission of the home directory is not strict enough
+
+## Using the key in OBI
+
+In the **User configuration**, set:
+
+* **User**: your IBM i user profile
+* **SSH Key**: the **absolute** path to the private key, e.g. `/home/me/.ssh/ibmi_ed25519` or `C:\Users\me\.ssh\ibmi_ed25519`.
+  `~` and environment variables are not expanded.
+
+Without a key you can enter a **Password** instead. It is stored in VS Code's secret storage, not in the configuration file.
+If neither is set, OBI asks for the password on each connection.
+
+OBI does not read `~/.ssh/config`; host, user and key must be set in the OBI configuration.
+
+
+## Troubleshooting
+
+Most login problems are caused by the home directory:
+
+* The home directory does not exist.
+* The home directory does not match the user profile name.
+* The owner of the home directory is someone else.
+* The permissions of the home directory or `.ssh` are not strict enough (see [Home directory](#home-directory)).
+
+If commands work in your shell but fail in OBI, check the `PATH` in `~/.bashrc` (see [User profile setup](#user-profile-setup)).

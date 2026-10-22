@@ -1,3 +1,9 @@
+## [1.3.3]
+
+* Docu
+* npm update
+
+
 ## [1.3.2]
 
 * Add git info to compile-list

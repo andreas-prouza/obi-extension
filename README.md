@@ -1,182 +1,130 @@
-
-- [OBI: Object Builder for i](#obi-object-builder-for-i)
-- [Features](#features)
-- [Requirements](#requirements)
-- [The concept](#the-concept)
-- [Following steps you need to do](#following-steps-you-need-to-do)
-  - [First start](#first-start)
-  - [Start migrating your source to OBI](#start-migrating-your-source-to-obi)
-- [Further information](#further-information)
-
-
-
-
 # OBI: Object Builder for i
 
-Object builder for i (OBI) is an automatic build tool.
-
 <p align="center">
+  <img src="asserts/img/ext/logo.png" alt="OBI logo" width="96"><br>
   <a href="https://www.buymeacoffee.com/prouza"><img src="https://img.shields.io/badge/%F0%9F%8D%BA-Buy%20me%20a%20beer-red?style=flat" alt="Buy me a beer"></a>
 </p>
+
+**OBI** is a VS Code extension that builds IBM i objects from sources you keep **locally** (and in git).
+It detects which sources changed, resolves everything that depends on them, generates the build commands in the correct order and runs them on your IBM i via SSH.
+Joblogs, spool files and compile errors come back into VS Code.
+
+- [Features](#features)
+- [How it works](#how-it-works)
+- [Requirements](#requirements)
+- [Quick start](#quick-start)
+- [Documentation](#documentation)
+- [Related projects](#related-projects)
 
 
 # Features
 
-* Use different profiles for your build settings (LIBL, target lib, build cmd, ...)
-  
-  ![img](asserts/img/ext/controller-1.png)
+* **Build profiles**  
+  Build only the current source (`*CURRENT`) or all changes (`*ALL`).
+  Switch between user profiles (e.g. different target libraries or users) with one click.
 
-* Quick search  
-  
-  ![img](asserts/img/ext/quick-search.png)
+  ![OBI build view](asserts/img/ext/controller-1.png)
 
-* Individual source lists
-  
-  ![img](asserts/img/ext/source-filter-1.png)
+* **Change detection**  
+  OBI stores a hash of every successfully built source and only builds what changed since then.
 
-* Open source filter as table  
-  There you can filter, sort
+* **Dependency-aware build order**  
+  All objects depending on a changed source are rebuilt as well, in the correct order (e.g. tables before programs).
+  See [Dependencies](asserts/docs/dependencies.md).
 
-  ![img](asserts/img/ext/source-filter-2.png)
+  ![Show changes](asserts/img/ext/show-changes.png)
 
-* Maintain source descriptions
-  
-  ![img](asserts/img/ext/source-filter-3.png)
-  
-* Check for changes
-  
-  It checks all sources which have changed since last compilie.  
-  The hash value of the source will be used to check if it has changed.
-  
-* Check for dependencies
-  
-  All objects which depend on the changed source will also be compiled (in correct order)
+* **Build summary**  
+  See every object, its commands and status. Exclude sources or single commands, add sources, edit a command before running it,
+  and open the **joblog**, **spool file** and **error output** of each command.
 
-  E.g. if a table or view has changed, all objects which use them will be compiled too
+  ![Build summary](asserts/img/ext/build-summary.png)
 
-  ![img](asserts/img/ext/show-changes.png)
+* **Compile errors in the Problems view**  
+  Compiler messages (`*EVENTF`) are shown directly in your source.
+
+* **Build history**  
+  Every build is kept. Browse by date or by source and filter for specific sources.
+
+* **Source filters**  
+  Individual source trees with descriptions, a sortable/filterable table view and a quick search over names and descriptions.
+
+  ![Source filters](asserts/img/ext/source-filter-1.png)
+
+* **Per-source build settings**  
+  Override settings (e.g. `ACTGRP`, `TARGET_LIB`) or the whole list of build steps for single sources.
+
+* **Fully configurable build commands**  
+  Commands per source type, with variables such as `$(TARGET_LIB)`, `$(OBJ_NAME)` or your own.
+
+* **Git information** (branch and commit) is stored with each build.
+
+* UI available in **English** and **German**.
 
 
-* Compile in correct order
-  
-  Tables before programs etc. based on the [dependency list](asserts/docs/dependencies.md)
+# How it works
 
+You work with your sources **locally** on your PC and share them with your team via **git**.
+The IFS is only used to compile.
 
-* See which objects has been compiled and their details  
-  * Command
-  * joblog
-  * spool file
-  * error output
+![Concept](asserts/img/ext/concept.png)
 
-  ![img](asserts/img/ext/build-summary.png)
+1. **Show changes**: OBI compares the local sources with the last successful build and creates a build list (including all dependent objects).
+2. **Run build**: the configuration and the sources to build are transferred to the IFS via SSH.
+3. The [OBI backend](https://github.com/andreas-prouza/obi) on your IBM i runs the build commands.
+4. Results (status, joblog, spool files, compile errors) are downloaded and shown in the build summary.
 
 
 # Requirements
 
-* On IBM i SSH is necessary  
-  https://github.com/andreas-prouza/ibm-i-build/blob/main/docs/pages/SSH.md
-* You need to clone the OBI project on your IBM i:  
-  https://github.com/andreas-prouza/obi
+**On IBM i**
+* SSH daemon running (`STRTCPSVR *SSHD`)
+* Open source package manager (YUM) with `bash`
+* Python 3.12 or higher
+* The [OBI backend](https://github.com/andreas-prouza/obi) cloned into the IFS and set up (`setup.sh`)
+* A home directory for your user profile (see the [SSH setup](asserts/docs/ssh.md))
+
+**On your PC**
+* VS Code 1.66 or higher
+* SSH access to your IBM i (SSH key recommended, password also possible)
+* Optional: git
+
+A local Python installation is **not** required. The build list is generated by the extension itself.
 
 
+# Quick start
 
----
+1. Set up SSH and your user profile on IBM i: [SSH setup](asserts/docs/ssh.md)
+2. Install the OBI backend on IBM i:
+   ```sh
+   git clone https://github.com/andreas-prouza/obi /path/to/obi
+   cd /path/to/obi
+   ./setup.sh
+   ```
+3. Open an (empty) project folder in VS Code, switch to the **Object Builder for i** view and click **Initialize**.
+4. Fill in the mandatory settings (remote host, SSH user, remote OBI path, ...) and save.
+5. Put your sources into `src/<library>/<source file>/<member>.<attribute>.<type>` (e.g. `src/mylib/qrpglesrc/hello.rpgle.pgm`).
+6. Click **Show changes**, then **Run build**.
 
-# The concept
-
-The idea is to work with your **sources locally** on your PC.  
-Only for compile process, sources will be synchronised to the IFS.
-
-Because you work locally, you need to sync your changes with other developers.
---> This is where **git** came in.
-
-![img](asserts/img/ext/concept.png)
-
-# Following steps you need to do
-
-## First start
-
-1. On your PC create an empty project folder
-2. In vscode open that folder
-3. Switch to the OBI view
-   
-   You will see the welcome screen.  
-   Here you can initialize the project with OBI
-
-    ![img](asserts/img/ext/welcome3.png)
-
-   This creates a new folder ```.obi``` including some initial config files
-
-4. Then OBI opens the config where you need to define some mandatory settings (server, user credentials, ifs locations, ...)
-   
-     ![img](asserts/img/ext/config-minimum.png)
-
-     >**```Project configuration```** contains settings shared with all team members
-
-     >The **```User configuration```** area overwrites the ```Project configuration``` with the users specific settings (like SSH user & password, ...).
-
-     When you finished configuration, save it and your project gets reloaded automatically.
-
-5. Now, OBI is ready. It comes with an sample source in the ```Source Filters``` area  
-   
-   ![img](asserts/img/ext/obi-after-init.png)
+The detailed walkthrough is in [Getting started](asserts/docs/getting-started.md).
 
 
-6.  On your IBM i
-    Clone OBI from GitHub somewhere in the IFS and run the setup script.
-    
-    ```sh
-    git clone https://github.com/andreas-prouza/obi /ifs/path/obi
-    cd /ifs/path/obi
-    ./setup.sh
-    ```
+# Documentation
 
-    (Copy the path in your project config)
-
-    ![img](asserts/img/ext/obi-path.png)
+| Guide | Content |
+|---|---|
+| [Getting started](asserts/docs/getting-started.md) | IBM i setup, project initialization, minimum configuration, migrating existing sources |
+| [SSH setup](asserts/docs/ssh.md) | SSH daemon, bash, home directory, key authentication |
+| [Building](asserts/docs/building.md) | Show changes, build summary, run build, compile errors, build history |
+| [Sources](asserts/docs/sources.md) | Folder layout, source filters, quick search, descriptions |
+| [Dependencies](asserts/docs/dependencies.md) | Defining dependencies between sources and how they affect the build order |
+| [Configuration](asserts/docs/configuration.md) | All config files, settings, profiles, build commands, variables, per-source settings |
 
 
-## Start migrating your source to OBI
+# Related projects
 
-1. **GIT**  
-  If you are working in a Team you should use git
-   1. Create a git repository (on your IBM i, gitlab, github, gitea, ...)
-   2. Add the project folder to this git repository
-   3. Clone the git repo on your PC
+* [OBI](https://github.com/andreas-prouza/obi): the build backend running on IBM i
+* [ibm-i-build-obi](https://github.com/andreas-prouza/ibm-i-build-obi): using OBI without VS Code (RDi, other IDEs) and further examples
+* [cpysrc2ifs](https://github.com/andreas-prouza/ibm-i-build-obi/blob/main/src/prouzalib/qrpglesrc/cpysrc2ifs.sqlrpgle.pgm): RPG program to copy source members into the IFS
 
-2. **Copy source to IFS**  
-   Get your Sources to IFS (to your project folder)
-   You can use my RPG program to get this job done: 
-   https://github.com/andreas-prouza/ibm-i-build-obi/blob/main/src/prouzalib/qrpglesrc/cpysrc2ifs.sqlrpgle.pgm
-
-3. Reset the compiled object list
-   OBI can check which sources have changed and need to be built.  
-   Therefore, a hash value is stored for each source.
-   
-   ![img](asserts/img/ext/compiled-obj-list.png)
-
-   From now, the ```Show changes``` action only shows changed sources.
-
-4.   When you are motivated, you can create a dependency list.
-    
-     With a dependency list OBI creates the correct build order and includes all dependend objects. (E.g. for SRVPGM, files, ...)
-     (See [dependency list](https://github.com/andreas-prouza/ibm-i-build-obi/blob/main/docs/pages/configuration.md#etcdependencytoml))
-    
-5.  Sync all changes to your git repo
-
-If no OBI config could be found, you will see the welcome screen:
-
-<img src="asserts/img/ext/welcome.png" style="width: 300px">
-
-
-
-
-# Further information
-
-* [Source dependencies](asserts/docs/dependencies.md)
-* [SSH setup](asserts/docs/ssh.md)
-* [OBI: the build tool running on IBM i](https://github.com/andreas-prouza/obi)
-* [OBI: detailed description](https://github.com/andreas-prouza/ibm-i-build-obi)
-* [OBI: vscode extension](https://github.com/andreas-prouza/obi-extension)
-
-**Happy ever after!**
+**Happy building!**
