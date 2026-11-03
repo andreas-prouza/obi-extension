@@ -182,18 +182,34 @@ export class OBITools {
 
 
 
-  public static get_local_obi_python_path(): string | undefined {
+  /**
+   * local-obi-dir with environment variables resolved (e.g. %UserProfile%, $HOME).
+   * Local programs run without a shell, so nothing else would expand them.
+   */
+  public static get_local_obi_dir(): string | undefined {
 
     const config = AppConfig.get_app_config();
 
     if (!config.general['local-obi-dir'])
       return undefined;
 
+    return DirTool.resolve_env_in_path(config.general['local-obi-dir']);
+  }
+
+
+
+  public static get_local_obi_python_path(): string | undefined {
+
+    const local_obi_dir = OBITools.get_local_obi_dir();
+
+    if (!local_obi_dir)
+      return undefined;
+
     let venv_bin = path.join('venv', 'bin', 'python');
     if (process.platform == 'win32')
       venv_bin = path.join('venv', 'Scripts', 'python.exe');
 
-    const local_obi_python: string = path.join(config.general['local-obi-dir'], venv_bin);
+    const local_obi_python: string = path.join(local_obi_dir, venv_bin);
 
     logger.info(`Check OBI path ${local_obi_python}: ${DirTool.file_exists(local_obi_python)}`);
     if (!DirTool.file_exists(local_obi_python))

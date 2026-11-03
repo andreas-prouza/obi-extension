@@ -201,7 +201,8 @@ export class OBICommands {
 
   /** Arguments for the local OBI's main.py. Passed without a shell; the source is still validated. */
   public static local_obi_args(config: AppConfig, action: string, source?: string, extra: string[] = []): string[] {
-    const args = ['-X', 'utf8', path.join(config.general['local-obi-dir'] ?? '', 'main.py'), '-a', action, '-p', '.'];
+    const local_obi_dir = config.general['local-obi-dir'] ? DirTool.resolve_env_in_path(config.general['local-obi-dir']) : '';
+    const args = ['-X', 'utf8', path.join(local_obi_dir, 'main.py'), '-a', action, '-p', '.'];
     if (source) {
       assert_valid_source_path(source);
       args.push(`--source=${source}`);

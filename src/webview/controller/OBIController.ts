@@ -77,12 +77,11 @@ export class OBIController implements vscode.WebviewViewProvider {
             update
           ).then(async selection => {
             if (selection === update) {
-              const config = AppConfig.get_app_config();
               if (!require_trust(vscode.l10n.t('Updating the OBI backend')))
                 return;
 
               try {
-                await SystemCmdExecution.run_system_cmd(config.general['local-obi-dir'] ?? '', 'git', ['pull'], 'update_obi');
+                await SystemCmdExecution.run_system_cmd(OBITools.get_local_obi_dir() ?? '', 'git', ['pull'], 'update_obi');
                 vscode.window.showInformationMessage(vscode.l10n.t('OBI backend updated successfully.'));
               } catch (error: unknown) {
                 if (error instanceof UserCancelledError)

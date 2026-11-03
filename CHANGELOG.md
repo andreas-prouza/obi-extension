@@ -1,4 +1,11 @@
+## [1.4.2]
+
+### Bugfixes
+* Windows: the local OBI could not be started (`spawn … ENOENT`) when `local-obi-dir` contains environment variables such as `%UserProfile%`. Since local commands run without a shell (1.4.1), the extension resolves them itself.
+
+
 ## [1.4.1]
+
 
 **Requires VS Code 1.90 or newer** (before: 1.66).
 

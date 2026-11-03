@@ -4,6 +4,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Version updates are handled manually; security updates still apply.
+    open-pull-requests-limit: 0
     groups:
       minor-and-patch:
         update-types: [minor, patch]
@@ -12,3 +14,5 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    # Version updates are handled manually; security updates still apply.
+    open-pull-requests-limit: 0
