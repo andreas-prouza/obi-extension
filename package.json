@@ -744,7 +744,7 @@
     "bootstrap": "5.3.3",
     "bootstrap-table": "1.23.2",
     "deepmerge": "^4.3.1",
-    "jquery": "3.7.1",
+    "jquery": "4.0.0",
     "minimatch": "^10.2.6",
     "node-ssh": "^13.2.0",
     "nunjucks": "^3.2.4",
