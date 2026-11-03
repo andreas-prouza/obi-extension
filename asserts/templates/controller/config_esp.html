@@ -53,8 +53,9 @@
       <tr style="text-align: left; border-bottom: 1px solid var(--vscode-editorGroup-border);">
         <th style="padding-bottom: 5px; width: 10%;"><span title="{{ global_stuff['get_text']('Tip: Add default steps') | safe }}">💡 {{ global_stuff['get_text']('Add default steps') | safe }}</span></th>
         <th style="padding-bottom: 5px; width: 20%;">{{ global_stuff['get_text']('Step') | safe }}</th>
-        <th style="padding-bottom: 5px; width: 40%;">{{ global_stuff['get_text']('Properties (Free Text)') | safe }}</th>
-        <th style="padding-bottom: 5px; width: 20%;"><span title="{{ global_stuff['get_text']('Tip: Hook') | safe }}">💡 {{ global_stuff['get_text']('Hook') | safe }}</span></th>
+        <th style="padding-bottom: 5px; width: 20%;"><span title="{{ global_stuff['get_text']('Tip: Command') | safe }}">💡 {{ global_stuff['get_text']('Command') | safe }}</span></th>
+        <th style="padding-bottom: 5px; width: 25%;">{{ global_stuff['get_text']('Properties (Free Text)') | safe }}</th>
+        <th style="padding-bottom: 5px; width: 15%;"><span title="{{ global_stuff['get_text']('Tip: Hook') | safe }}">💡 {{ global_stuff['get_text']('Hook') | safe }}</span></th>
         <th style="padding-bottom: 5px; width: 10%;"></th>
       </tr>
 
@@ -75,6 +76,15 @@
             id="{{ class_prefix }}|esp|{{ outer_index }}|steps|{{ loop.index0 }}|step"
             value="{{ step.step }}"
             placeholder='global.cmds.cmd-id'>
+          </vscode-text-area>
+        </td>
+        <td>
+          <vscode-text-area 
+            style="width: 100%;"
+            resize="both" 
+            id="{{ class_prefix }}|esp|{{ outer_index }}|steps|{{ loop.index0 }}|cmd"
+            value="{{ step.cmd | default('') }}"
+            placeholder='cl -v "CALL $(TARGET_LIB)/AFTER"'>
           </vscode-text-area>
         </td>
         <td>
@@ -114,6 +124,7 @@
             placeholder='global.cmds.cmd-id'>
           </vscode-text-field>
         </td>
+        <td></td>
         <td>
           <vscode-text-field 
             style="width: 100%;"

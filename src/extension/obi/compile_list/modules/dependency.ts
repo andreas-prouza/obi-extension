@@ -47,7 +47,8 @@ export function getBuildPlan(
   let targetTree: { level: number; sources: { source: string; cmds: unknown[] }[] }[] =
     levels.map(level => ({ level: level.level, sources: level.sources.map(source => ({ source: source, cmds: [] })) }));
 
-  if (appConfig.global.settings.general.ALWAYS_TRANSFER_RELATED_COPYBOOKS) {
+  // Optional, as in the OBI backend
+  if (appConfig.global?.settings?.general?.ALWAYS_TRANSFER_RELATED_COPYBOOKS) {
     // Copybooks the build uses, unless they are built anyway
     const in_build = new Set(levels.flatMap(level => level.sources));
     const copySources = graph.dependencies_of([...in_build]).filter(dep => dep.toLowerCase().endsWith('.cpy') && !in_build.has(dep));

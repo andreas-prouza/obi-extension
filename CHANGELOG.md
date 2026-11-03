@@ -1,4 +1,4 @@
-## [Unreleased]
+## [1.4.1]
 
 **Requires VS Code 1.90 or newer** (before: 1.66).
 
@@ -17,6 +17,8 @@
 * **JSON schemas** for `dependency.json`, `source-infos.json`, source filters and `compile-list.json` ([spec](docs/features/json-schemas.md))
 * Multi-root workspaces: OBI uses the first folder with an OBI project ([spec](docs/features/multi-root-workspace.md))
 * The configuration pages say that saving drops comments in the TOML file ([spec](docs/features/toml-format-preserving-save.md))
+* `max-parallel-builds` (*System settings*): sources of one level the OBI backend builds at the same time on IBM i. Needs the OBI backend from November 2026; default 1
+* Extended source processing: a step can be a **Command** instead of a step (new column on the configuration page). It runs once, the default steps only with *Add default steps*, as in the OBI backend
 
 ### Security
 * Remote commands are quoted correctly, and source names are validated; before, `;`, `$()` or spaces in paths and names reached the IBM i shell ([spec](docs/bugfix/remote-command-quoting.md))
@@ -51,6 +53,10 @@
   * `LIBL` as a string no longer adds one library per character (the Python OBI still has this bug in `get_set_libl_cmd`)
   * *Activate extended source processing* (`USE_ESP`) works (bugs.md #24)
   * stable source order within a level; empty sources no longer always shown as changed (bugs.md #15); `dependency.json` changes are picked up
+  * same as the OBI backend: the settings of a source win over language settings and global variables (bugs.md #14); `TARGET_LIB_MAPPING` also maps an explicit `TARGET_LIB`; new variable `$(TARGET_LIB_ORIG)` (before the mapping)
+  * extended source processing: `add_default_steps = false` and `allow_multiple_matches = false` were ignored
+  * `ALWAYS_TRANSFER_RELATED_COPYBOOKS` is optional
+* *Add source* without local OBI works like `add_source` of the OBI backend: the added source always gets new commands, dependents that were built keep their commands and output and are reset, related copybooks are added on level 0, and the levels of the whole list are calculated again
 * Build history: builds without local OBI were missing, *Delete by date* around midnight, sort order ([spec](docs/bugfix/build-history-timestamps.md)); the delete button of a build shows, deleting asks first (bugs.md #3, #6)
 * Source filters: *show empty folders*, invalid regular expressions, duplicates and the filter icon ([spec](docs/features/source-filter-tree-performance.md))
 * Paths: Windows source names, `local-base-dir` everywhere ([spec](docs/bugfix/windows-source-path.md)); file links in remote workspaces, `cloud-ws-ssh-remote-host` no longer needed ([spec](docs/bugfix/remote-workspace-uris.md)); *Open file* and *Source quick search* open the right file

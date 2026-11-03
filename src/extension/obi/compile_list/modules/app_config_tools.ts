@@ -94,18 +94,26 @@ function getStepsFromCurrentEsp(
       throw new Error(`Step is not a dictionary or a string`);
     }
 
+    // As in the OBI backend: a raw cmd runs once and replaces the default steps, unless they are requested
+    const raw_cmd: string = typeof step.cmd === 'string' ? step.cmd : '';
+    const add_default_steps: boolean = step.add_default_steps ?? raw_cmd.length === 0;
+    const { cmd: _cmd, ...step_without_cmd } = step;
+
     let stepsToAppend: any[] = [];
-    if (step.step) {
+    if (raw_cmd.length > 0) {
+      stepsToAppend.push({ cmd: raw_cmd });
+    }
+    else if (step.step) {
       stepsToAppend.push({ step: step.step });
     }
-    if (step.add_default_steps) {
+    if (add_default_steps) {
       const globalSteps = getGlobalSteps(source, appConfig);
       stepsToAppend = stepsToAppend.concat(globalSteps.map(gs => ({ step: gs })));
     }
 
     for (const stepToAppend of stepsToAppend) {
-      // Scripting part is omitted for brevity
-      newSteps.push({ ...step, ...stepToAppend });
+      // Exit point scripts (Python) are only run by the OBI backend
+      newSteps.push({ ...step_without_cmd, ...stepToAppend });
     }
   }
   return newSteps;

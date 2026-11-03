@@ -12,6 +12,9 @@ export class Step {
     add_default_steps: boolean = true;
 
     step?: string|undefined = undefined; // e.g., "global.cmds.cmd-id"
+
+    /** A command to run instead of a step; it wins over `step` (as in the OBI backend) */
+    cmd?: string|undefined = undefined;
     
     // Record<string, any> allows the free-text JSON properties we set up earlier
     properties: Record<string, any> = {}; 
@@ -69,12 +72,15 @@ export class ExtendedSourceProcessingList {
 
     private static convert_dict_to_ESP(dict: any): ExtendedSourceProcessing {
         const esp = new ExtendedSourceProcessing();
-        esp.use_regex = dict.use_regex || false;
-        esp.allow_multiple_matches = dict.allow_multiple_matches || true;
+        // ?? instead of ||: false must stay false
+        esp.use_regex = dict.use_regex ?? false;
+        esp.allow_multiple_matches = dict.allow_multiple_matches ?? true;
         esp.conditions = dict.conditions || {};
         esp.steps = (dict.steps || []).map((step: any) => {
             const stepObj = new Step();
-            stepObj.add_default_steps = step.add_default_steps || true;
+            stepObj.cmd = typeof step.cmd === 'string' && step.cmd.length > 0 ? step.cmd : undefined;
+            // Default as in the OBI backend: true for a step, false for a raw cmd
+            stepObj.add_default_steps = step.add_default_steps ?? !stepObj.cmd;
             stepObj.step = step.step;
             stepObj.properties = step.properties || {};
             stepObj.exit_point_script = step.exit_point_script;

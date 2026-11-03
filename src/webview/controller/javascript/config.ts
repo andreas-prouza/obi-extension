@@ -855,8 +855,11 @@ function save_esp(config:string) {
         console.error("Failed to parse properties as JSON:", properties, e);
       }
       const exit_point_script = (document.getElementById(`${config}|esp|${block_loop}|steps|${i}|exit_point_script`) as TextField).value;
+      const cmd = (document.getElementById(`${config}|esp|${block_loop}|steps|${i}|cmd`) as TextField | null)?.value ?? '';
       steps.push({ add_default_steps: add_default, 
         step: step, 
+        // Only written when set; a command wins over the step
+        ...(cmd.trim().length > 0 ? { cmd: cmd } : {}),
         properties: propertiesDict, 
         exit_point_script: exit_point_script 
       });

@@ -128,7 +128,8 @@ Section `[general]`. The defaults created by *Initialize* work for most projects
 | `supported-object-types` | ✅ | `pgm, file, srvpgm, module, cpy, obj` | Last file extension of sources OBI handles |
 | `file-system-encoding` | ✅ | `utf-8` | Used by the OBI backend |
 | `console-output-encoding` | ✅ | `utf-8` | Used by the OBI backend |
-| `max-threads` | ✅ | `20` | Parallel threads for hashing sources |
+| `max-threads` | ✅ | `20` | Parallel threads for hashing sources on your PC |
+| `max-parallel-builds` | | `1` | Sources of one level the OBI backend builds at the same time on IBM i (OBI backend from November 2026). Levels are always built one after the other. Start low: sources of a level can still lock the same objects, e.g. service programs that add entries to the same binding directory. See [Parallel builds](https://github.com/andreas-prouza/obi/blob/main/docs/build-process.md#parallel-builds) |
 | `evfevent-output-dir` | ✅ | `.obi/tmp/evfevent` | Where compile commands write compiler events |
 | `cloud-ws-ssh-remote-host` | | | *Deprecated, ignored.* File links in remote workspaces (Remote-SSH, WSL, dev containers, codespaces) work without it |
 | `compiled-object-list`, `source-list`, `source-infos`, `dependency-list`, `deployment-object-list`, `build-output-dir`, `compile-list`, `compiled-object-list-md` | ✅ | see [files](#files-in-the-obi-folder) | File locations (tab *Constants*) |
@@ -174,10 +175,10 @@ DBGVIEW = "*SOURCE"
 
 `$(TARGET_LIB)` is determined for each source:
 
-1. `TARGET_LIB = "*SOURCE"` → the library folder of the source
-2. `TARGET_LIB = "MYLIB"` → that library
-3. `TARGET_LIB` empty → the entry for the source's library in `TARGET_LIB_MAPPING`
-4. otherwise → the library folder of the source
+1. `TARGET_LIB = "MYLIB"` → that library; `TARGET_LIB = "*SOURCE"` or empty → the library folder of the source
+2. then `TARGET_LIB_MAPPING` replaces that library, if it has an entry for it
+
+`$(TARGET_LIB_ORIG)` is the library before the mapping. This is the same in the OBI backend.
 
 Typical setup: no `TARGET_LIB` in the project configuration, and each developer sets their own test library in the user configuration.
 
@@ -228,9 +229,12 @@ Use `$(NAME)` in commands. Variables are resolved recursively.
 | `$(SRC_ATTR)` | `rpgle` |
 | `$(SRC_TYPE)` | `pgm` |
 | `$(TARGET_LIB)` | see [Target library](#target-library) |
+| `$(TARGET_LIB_ORIG)` | the target library before `TARGET_LIB_MAPPING` |
 | `$(SET_LIBL)` | commands to set the library list from `LIBL` |
 
 Also available: all [compile settings](#compile-settings) (`$(TGTRLS)`, `$(ACTGRP)`, ...), all [general settings](#general-settings) (e.g. `$(evfevent-output-dir)`) and all commands of `[global.cmds]` (`$(global.cmds.evfevent-export)`).
+
+If a name is set in several places, the later one wins, as in the OBI backend: compile settings → general settings → global variables → language settings → global commands → the `settings` of the source ([Per-source build settings](#per-source-build-settings)).
 
 In SQL sources, write `$(SQL_TARGET_LIB)` where the target library belongs. The command `global.cmds.sql-set-target-lib` replaces it with the target library before running the SQL.
 
@@ -284,6 +288,8 @@ steps = [ "global.cmds.chg-src-ccsid", "source-cmds.my-cmd", "global.compile-cmd
 
 The tab **Extended compile** (`extended-source-processing-config.toml` and the user variant) defines rules that select build steps and properties for groups of sources (e.g. by source name pattern) instead of single sources.
 For now, prefer [steps per source type](#commands-and-steps) and [per-source build settings](#per-source-build-settings).
+
+Each step of a rule has *either* a **Step** (e.g. `global.cmds.chg-src-ccsid`) *or* a **Command** (e.g. `cl -v "CALL $(TARGET_LIB)/AFTER"`); a command wins and runs once. *Add default steps* adds the steps of the source type after it, with the same properties: on by default for a step, off for a command. Details: [Extended source processing](https://github.com/andreas-prouza/obi/blob/main/docs/extended-source-processing.md) of the OBI backend.
 
 
 ## Custom build summary template

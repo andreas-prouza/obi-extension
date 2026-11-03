@@ -344,5 +344,8 @@
   "Save the password for profile {0} in the OS keychain?": "Save the password for profile {0} in the OS keychain?",
   "Save the passphrase of the SSH key for profile {0} in the OS keychain?": "Save the passphrase of the SSH key for profile {0} in the OS keychain?",
   "OBI could not be started": "OBI could not be started",
-  "Several OBI projects found. OBI works with '{0}'. Working with several projects at the same time is not supported yet.": "Several OBI projects found. OBI works with '{0}'. Working with several projects at the same time is not supported yet."
+  "Several OBI projects found. OBI works with '{0}'. Working with several projects at the same time is not supported yet.": "Several OBI projects found. OBI works with '{0}'. Working with several projects at the same time is not supported yet.",
+  "Sources built in parallel on IBM i": "Sources built in parallel on IBM i",
+  "Threads for hashing sources (on your PC)": "Threads for hashing sources (on your PC)",
+  "A command to run instead of the step, e.g. cl -v \"CALL $(TARGET_LIB)/AFTER\". Variables are replaced. It runs once; the default steps are only added if \"Add default steps\" is checked.": "A command to run instead of the step, e.g. cl -v \"CALL $(TARGET_LIB)/AFTER\". Variables are replaced. It runs once; the default steps are only added if \"Add default steps\" is checked."
 }

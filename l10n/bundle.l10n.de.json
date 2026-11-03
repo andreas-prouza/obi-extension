@@ -344,5 +344,8 @@
   "Save the password for profile {0} in the OS keychain?": "Passwort für das Profil {0} im Schlüsselbund des Betriebssystems speichern?",
   "Save the passphrase of the SSH key for profile {0} in the OS keychain?": "Passphrase des SSH-Schlüssels für das Profil {0} im Schlüsselbund des Betriebssystems speichern?",
   "OBI could not be started": "OBI konnte nicht gestartet werden",
-  "Several OBI projects found. OBI works with '{0}'. Working with several projects at the same time is not supported yet.": "Mehrere OBI-Projekte gefunden. OBI arbeitet mit '{0}'. Mehrere Projekte gleichzeitig werden noch nicht unterstützt."
+  "Several OBI projects found. OBI works with '{0}'. Working with several projects at the same time is not supported yet.": "Mehrere OBI-Projekte gefunden. OBI arbeitet mit '{0}'. Mehrere Projekte gleichzeitig werden noch nicht unterstützt.",
+  "Sources built in parallel on IBM i": "Parallel gebaute Sources auf der IBM i",
+  "Threads for hashing sources (on your PC)": "Threads für Hashwerte der Sources (auf Ihrem PC)",
+  "A command to run instead of the step, e.g. cl -v \"CALL $(TARGET_LIB)/AFTER\". Variables are replaced. It runs once; the default steps are only added if \"Add default steps\" is checked.": "Ein Befehl, der statt des Schritts ausgeführt wird, z. B. cl -v \"CALL $(TARGET_LIB)/AFTER\". Variablen werden ersetzt. Er läuft einmal; die Standardschritte werden nur hinzugefügt, wenn \"Standardschritte hinzufügen\" markiert ist."
 }

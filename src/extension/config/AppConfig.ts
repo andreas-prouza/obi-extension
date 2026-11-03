@@ -44,6 +44,8 @@ export interface IConfigGeneralProperties {
   'build-output-dir' : string|undefined;
   'compile-list' : string|undefined;
   'max-threads' : number|undefined;
+  /** Sources of a level the OBI backend builds at the same time (default 1) */
+  'max-parallel-builds' : number|undefined;
   'evfevent-output-dir' : string|undefined;
   [key: string]: string | string[] | boolean | number | undefined;
 }
@@ -110,6 +112,7 @@ export class ConfigGeneral implements IConfigGeneralProperties {
   'compile-list': string = '.obi/build-output/compile-list.json';
   'compiled-object-list-md': string|undefined;
   'max-threads': number|undefined;
+  'max-parallel-builds': number|undefined;
   'evfevent-output-dir': string|undefined;
 
   [key: string]: string | string[] | boolean | number | undefined ;

@@ -550,6 +550,11 @@
       <br/>
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-3" id="{{ class_prefix }}|general|max-threads" placeholder="20"
         value="{{ app_general['max-threads'] }}">{{ global_stuff['get_text']('Maximum number of threads') | safe }}</vscode-text-field>
+
+      <br/>
+      <br/>
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-3" regex_validator="^\d*$" type="number" id="{{ class_prefix }}|general|max-parallel-builds" placeholder="1"
+        value="{{ app_general['max-parallel-builds'] }}">{{ global_stuff['get_text']('Sources built in parallel on IBM i') | safe }}<label style="visibility: hidden;" id="hint_{{ class_prefix }}|general|max-parallel-builds">&nbsp;&nbsp;&nbsp;⚠️ Only numbers</label></vscode-text-field>
     
     </section>
 

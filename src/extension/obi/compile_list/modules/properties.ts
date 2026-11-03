@@ -32,14 +32,15 @@ export function getSourceProperties(config: any, source: string, ctx?: BuildList
     }
   }
 
-  if (sourceConfig && source in sourceConfig && 'settings' in sourceConfig[source]) {
-    globalSettings = { ...globalSettings, ...sourceConfig[source]['settings'] };
-  }
+  const sourceSettings = (sourceConfig && source in sourceConfig && sourceConfig[source]['settings']) || {};
 
-  globalSettings = { ...globalSettings, ...typeSettings, ...generalSettings, ...globalVariables, ...globalCmds };
+  // Same order as the OBI backend (properties.get_source_properties): the settings of the source win (bugs.md #14)
+  globalSettings = { ...globalSettings, ...generalSettings, ...globalVariables, ...typeSettings, ...globalCmds, ...sourceSettings };
   globalSettings['SOURCE'] = source;  
   globalSettings['SOURCE_FILE_NAME'] = path.join(config['general']['source-dir'], source).replace(/\\/g, '/');
   globalSettings['SOURCE_BASE_FILE_NAME'] = path.basename(globalSettings['SOURCE_FILE_NAME']);
+  // Before TARGET_LIB_MAPPING, as in the OBI backend
+  globalSettings['TARGET_LIB_ORIG'] = getTargetLib(source, globalSettings.TARGET_LIB);
   globalSettings['TARGET_LIB'] = getTargetLib(
     source,
     globalSettings.TARGET_LIB,
@@ -81,24 +82,16 @@ export function getSetLiblCmd(config: any, libl: string[] | string, targetLib: s
   return setLibl;
 }
 
+/** As in the OBI backend: TARGET_LIB (empty or *SOURCE: the library folder of the source), then TARGET_LIB_MAPPING */
 export function getTargetLib(source: string, targetLib?: string, libMapping?: Record<string, string>): string {
   const sourceLib = source.split('/')[0].toLowerCase();
+  let lib = targetLib && targetLib.toLowerCase() !== '*source' ? targetLib.toLowerCase() : sourceLib;
 
-  if (targetLib && targetLib.toLowerCase() === '*source') {
-    return sourceLib;
-  }
-
-  if (targetLib) {
-    return targetLib.toLowerCase();
-  }
-
-  if (libMapping) {
-    for (const k in libMapping) {
-      if (k.toLowerCase() === sourceLib) {
-        return libMapping[k].toLowerCase();
-      }
+  for (const [from, to] of Object.entries(libMapping ?? {})) {
+    if (from.toLowerCase() === lib) {
+      lib = String(to).toLowerCase();
+      break;
     }
   }
-
-  return sourceLib;
+  return lib;
 }

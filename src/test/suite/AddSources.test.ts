@@ -55,16 +55,40 @@ suite('Adding sources to a compile list', () => {
   });
 
 
-  test('sources already built successfully are reset, because their result is outdated', () => {
+  test('the added source always gets new commands; dependents built successfully keep their commands and are reset', () => {
     const list: CompileList = { compiles: [{ level: 1, sources: [source(A, 'failed')] }, { level: 2, sources: [source(B, 'success')] }, { level: 3, sources: [source(C)] }] };
     const result = mergeSourcesIntoCompileList(list, [A], dependencies, AppConfig.get_app_config());
 
     assert.deepStrictEqual(result.added, []);
-    assert.deepStrictEqual(result.reset, [B]);
+    assert.deepStrictEqual(result.reset, [A, B]);
+    assert.notStrictEqual(entry(list, A)?.cmds[0].cmd, `old ${A}`, 'new commands, whatever its status was');
+    assert.strictEqual(entry(list, A)?.status, undefined);
+    assert.strictEqual(entry(list, B)?.cmds[0].cmd, `old ${B}`, 'commands and output are kept');
+    assert.strictEqual(entry(list, B)?.cmds[0].status, 'new');
     assert.strictEqual(entry(list, B)?.status, undefined);
-    assert.notStrictEqual(entry(list, B)?.cmds[0].cmd, `old ${B}`, 'new commands');
-    assert.strictEqual(entry(list, A)?.status, 'failed', 'only successful ones are reset');
-    assert.strictEqual(entry(list, A)?.cmds[0].cmd, `old ${A}`);
+    assert.strictEqual(entry(list, C)?.cmds[0].cmd, `old ${C}`, 'not built yet: unchanged');
+  });
+
+
+  test('the levels of the whole list are calculated again', () => {
+    // b is in the list on level 1; adding a, which b depends on, moves b to level 2
+    const list: CompileList = { compiles: [{ level: 1, sources: [source(B), source(D)] }] };
+    mergeSourcesIntoCompileList(list, [A], { [B]: [A] }, AppConfig.get_app_config());
+
+    assert.deepStrictEqual(levels(list), [[1, [D, A]], [2, [B]]]);
+  });
+
+
+  test('related copybooks are added on level 0 (ALWAYS_TRANSFER_RELATED_COPYBOOKS)', () => {
+    const copybook = 'prouzalib/qrpglesrc/defs.rpgle.cpy';
+    fs.writeFileSync(path.join(DirTool.get_local_source_dir(), copybook), '**free');
+    const config = AppConfig.get_app_config();
+    const with_copybooks = { ...config, global: { ...config.global, settings: { ...config.global.settings, general: { ...config.global.settings?.general, ALWAYS_TRANSFER_RELATED_COPYBOOKS: true } } } };
+    const list: CompileList = { compiles: [] };
+
+    const result = mergeSourcesIntoCompileList(list, [A], { [A]: [copybook] }, with_copybooks);
+    assert.deepStrictEqual(result.added, [A, copybook]);
+    assert.deepStrictEqual(levels(list), [[0, [copybook]], [1, [A]]]);
   });
 
 

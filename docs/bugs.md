@@ -103,6 +103,7 @@ Severity: 🔴 high (data loss / security / feature unusable), 🟠 medium (wron
 * **Current:** order is general settings → per-source `settings` → language settings → `[general]` → global variables. A per-source `ACTGRP` is overridden by a language setting for the same type.
 * **Expected:** per-source settings should win (apply them last).
 * **Docs:** [configuration.md → Variables](../asserts/docs/configuration.md#variables) documents the current precedence; update after the fix.
+* **Status:** ✅ fixed (Unreleased): same order as the OBI backend, the settings of the source win; documented in configuration.md
 
 ## 15. 🟠 Empty sources are always shown as changed
 * **Where:** [files.ts:62-65](../src/extension/obi/compile_list/modules/files.ts#L62-L65) vs [DirTool.ts:500](../src/extension/utilities/DirTool.ts#L500)

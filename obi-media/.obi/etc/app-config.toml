@@ -18,6 +18,8 @@ build-output-dir = ".obi/build-output/objects"
 compile-list = ".obi/build-output/compile-list.json"
 compiled-object-list-md = ".obi/build-output/compiled-object-list.md"
 max-threads = 20
+# Sources of one level the OBI backend builds at the same time on IBM i. Start low: sources can lock the same objects
+max-parallel-builds = 1
 evfevent-output-dir = ".obi/tmp/evfevent"
 
 [global]

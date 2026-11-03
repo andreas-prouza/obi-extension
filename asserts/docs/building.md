@@ -67,7 +67,7 @@ With `*CURRENT` (or **Show single change** in the editor), only the active sourc
 * Creation time, **open JSON file** (the compile list) and **open OBI log** (`.obi/log/main.log`)
 * **Run build**: shown as long as not all commands succeeded
 * **Add source**: add further sources (multi-select, searchable by name and description). Their dependent objects are added too.
-  Dependent objects that were already built successfully are reset so they are built again.
+  An added source that is already in the list gets new build commands. Dependent objects that were already built successfully are reset so they are built again (their commands and output are kept). With `ALWAYS_TRANSFER_RELATED_COPYBOOKS`, the copybooks they use are added on level 0. The levels of the whole list are calculated again, so a source can move to a higher level. This is the same with and without a local OBI.
 
 **New sources / Changed sources / Dependent objects**: overview with links to the sources.
 
@@ -107,6 +107,7 @@ Steps:
    ```sh
    <remote OBI path>/venv/bin/python -X utf8 <remote OBI path>/main.py -a run -p .
    ```
+   Levels are built one after the other. With `max-parallel-builds` (see [General settings](configuration.md#general-settings)) the backend builds several sources of a level at the same time; their lines are then mixed in **OBI Build**. After a failed command no further source is started, sources that are already running are finished.
 5. **Download** the results of this build. The build summary now shows the result of every command.
    * the files directly in `.obi/build-output` (compile list, status, object list, `compiled-object-list.md`) and in `.obi/tmp`
    * `.obi/log` (cleared before each run)
@@ -122,7 +123,7 @@ Only sources that still have commands that are not `success` are built. So after
 
 **Cancel** (in the notification or in the OBI Build view) stops the build:
 * before the build runs on IBM i, it stops after the current step (no further upload or build);
-* while the build runs on IBM i, the OBI backend is stopped (`kill -TERM`). An IBM i command that is already running (e.g. a compile) finishes first; the build summary shows the results up to the cancel.
+* while the build runs on IBM i, the OBI backend is stopped (`kill -TERM`). IBM i commands that are already running (e.g. a compile, or several with `max-parallel-builds`) finish first; the build summary shows the results up to the cancel.
 
 If the OBI backend on IBM i is too old, the extension notifies you after the build.
 
