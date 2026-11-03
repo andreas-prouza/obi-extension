@@ -9,3 +9,29 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
+
+**/tsconfig*.json
+out-test/**
+test-resources/**
+docs/**
+.github/**
+scripts/**
+.nvmrc
+eslint.config.mjs
+esbuild.js
+# Copied into out/vendor by scripts/copy-vendor.js
+node_modules/jquery/**
+node_modules/bootstrap/**
+node_modules/bootstrap-table/**
+node_modules/tom-select/**
+node_modules/@popperjs/**
+node_modules/@vscode/codicons/**
+# Build and repository files
+out/asserts/**
+out/obi-media/**
+CLAUDE.md
+ToDo.md
+CONTRIBUTING.md
+coverage/**
+.c8rc.json
+

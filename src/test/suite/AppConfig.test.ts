@@ -1,24 +1,19 @@
-import * as fs from 'fs-extra';
 import * as path from 'path';
-import * as vscode from 'vscode';
 import { Workspace } from '../../extension/utilities/Workspace';
-import { AppConfig } from '../../shared/AppConfig';
+import { AppConfig } from '../../extension/config/AppConfig';
 import assert from 'assert';
-import { DirTool } from '../../extension/utilities/DirTool';
 import { OBIConfiguration } from '../../webview/controller/OBIConfiguration';
+import { reset_workspace } from './workspace_fixture';
 
 suite('AppConfig Integration', () => {
 
     // This is where your 'Gold Master' templates live
-    const masterTemplates = path.resolve(__dirname, '../../../test-resources/appconfig');
     const ws_uri = Workspace.get_workspace_uri();
 
     setup(async () => {
         // Clear the active workspace
 
-        const activeWsPath = Workspace.get_workspace(); 
-        await fs.emptyDir(activeWsPath);
-        DirTool.copy_dir(masterTemplates, activeWsPath)
+        await reset_workspace();
     });
 
     test('Verify AppConfig defaults', () => {
@@ -28,7 +23,8 @@ suite('AppConfig Integration', () => {
     });
 
     test('No missing attributes when all fields are set', () => {
-        const config = AppConfig.get_app_config();
+        // get_app_config() is shared and read-only: edit a copy of the project config
+        const config = AppConfig.get_app_config(AppConfig.get_project_app_config(ws_uri));
         const user_config = AppConfig.get_user_app_config(ws_uri);
 
         config.connection['remote-host'] = 'example.com';

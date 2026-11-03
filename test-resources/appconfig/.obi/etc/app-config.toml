@@ -6,7 +6,6 @@ local-base-dir = "."
 remote-base-dir = "${workspaceFolderBasename}"
 source-dir = "src"
 check-remote-source-on-startup = false
-use-remote-obi = false
 #remote-obi-dir = "/home/prouzat1/obi"
 supported-object-types = [ "pgm", "file", "srvpgm", "obj", "cpy" ]
 file-system-encoding = "utf-8"

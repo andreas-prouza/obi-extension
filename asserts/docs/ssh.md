@@ -90,7 +90,7 @@ With a key you don't need to enter a password.
    ssh-keygen -t ed25519 -f ~/.ssh/ibmi_ed25519
    ```
 
-   If you set a passphrase, you will be asked for it on each login. OBI does not support keys with a passphrase.
+   If you set a passphrase, OBI asks for it when it connects and offers to keep it in the OS keychain (see [Using the key in OBI](#using-the-key-in-obi)).
 
 2. Copy the public key to your IBM i:
 
@@ -128,16 +128,39 @@ $ ssh my-ibmi
 In the **User configuration**, set:
 
 * **User**: your IBM i user profile
-* **SSH Key**: the **absolute** path to the private key, e.g. `/home/me/.ssh/ibmi_ed25519` or `C:\Users\me\.ssh\ibmi_ed25519`.
-  `~` and environment variables are not expanded.
+* **SSH Key**: the path to the private key, e.g. `~/.ssh/ibmi_ed25519`, `$HOME/.ssh/ibmi_ed25519` or `%USERPROFILE%\.ssh\ibmi_ed25519`. `~` and environment variables are expanded on your PC.
+  For a key with a passphrase, OBI asks for the passphrase and offers to save it in the OS keychain (VS Code's secret storage). A wrong saved passphrase is removed and asked for again.
+* **Use the SSH agent** (`ssh-agent = true`): use the keys of the running `ssh-agent` (`SSH_AUTH_SOCK`), on Windows Pageant.
+* **SSH port** (`ssh-port`): if the SSH daemon doesn't listen on port 22.
 
 Without a key you can enter a **Password** instead. It is stored in VS Code's secret storage, not in the configuration file.
-If neither is set, OBI asks for the password on each connection.
+If no password is stored, OBI asks for it and offers to save it (*Save*, *Not now*, *Never for this profile*). A host or user entered at the prompt can be saved to the user configuration of the active profile.
 
-OBI does not read `~/.ssh/config`; host, user and key must be set in the OBI configuration.
+OBI tries the methods in this order: agent, key, password.
+
+OBI does not read `~/.ssh/config`; host, port, user and key must be set in the OBI configuration.
+
+
+## Host key verification
+
+OBI checks the host key of the IBM i on every connection, so nobody in between can pose as your IBM i and receive your password.
+
+* **First connection:** OBI shows the fingerprint of the host key (e.g. `SHA256:lGMfqRi8…`) and asks whether you trust the host. Compare it with the fingerprint on the IBM i before you click *Trust and connect*:
+
+  ```sh
+  ssh-keygen -lf /QOpenSys/etc/ssh/ssh_host_ed25519_key.pub
+  ```
+
+  The folder depends on the installed OpenSSH package (e.g. `/QOpenSys/etc/ssh/` or `/QOpenSys/QIBM/UserData/SC1/OpenSSH/etc/`). Use the key type shown in the dialog (`ssh-ed25519`, `ecdsa-sha2-nistp256`, `ssh-rsa`).
+  The fingerprint is stored in VS Code (for all workspaces), and the next connections don't ask again.
+* **Known in `~/.ssh/known_hosts`:** if you have connected with `ssh` before, OBI trusts the key from there without asking. Hashed entries are supported, wildcard patterns are not.
+* **Changed host key:** OBI refuses to connect and shows the stored and the received fingerprint. Someone could be intercepting the connection, or the host key was replaced (e.g. after reinstalling OpenSSH). If the change is expected, run **OBI: Forget stored SSH host key** from the command palette (or `ssh-keygen -R <host>` for a `known_hosts` entry) and connect again.
 
 
 ## Troubleshooting
+
+* **"Login to user@host failed (check user, password or key)"**: the server rejected all methods. Check the user, the stored password (remove it on the configuration page to be asked again) and that the public key is in `~/.ssh/authorized_keys` on the IBM i.
+* **"Can't reach host:port"**: wrong host or port, the SSH daemon isn't running, or a firewall blocks the port.
 
 Most login problems are caused by the home directory:
 

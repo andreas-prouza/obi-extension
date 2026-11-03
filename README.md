@@ -85,7 +85,7 @@ The IFS is only used to compile.
 * A home directory for your user profile (see the [SSH setup](asserts/docs/ssh.md))
 
 **On your PC**
-* VS Code 1.66 or higher
+* VS Code 1.90 or higher
 * SSH access to your IBM i (SSH key recommended, password also possible)
 * Optional: git
 
@@ -119,6 +119,8 @@ The detailed walkthrough is in [Getting started](asserts/docs/getting-started.md
 | [Sources](asserts/docs/sources.md) | Folder layout, source filters, quick search, descriptions |
 | [Dependencies](asserts/docs/dependencies.md) | Defining dependencies between sources and how they affect the build order |
 | [Configuration](asserts/docs/configuration.md) | All config files, settings, profiles, build commands, variables, per-source settings |
+
+Want to work on OBI itself? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 
 # Related projects

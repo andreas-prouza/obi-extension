@@ -1,5 +1,8 @@
 # Project: OBI extension
 
+- In [docs/architecture.md](docs/architecture.md) you can find guidelines and rules
+
+
 ## What it does
 Generates build commands for IBM i
 

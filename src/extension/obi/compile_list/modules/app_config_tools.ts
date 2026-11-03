@@ -1,7 +1,8 @@
 import * as path from 'path';
 import { minimatch } from "minimatch";
 import { getSourceProperties } from './properties';
-import { ExtendedSourceProcessingList } from '../../../../shared/EspConfig';
+import { ExtendedSourceProcessingList } from '../../../config/EspConfig';
+import { BuildListContext } from './context';
 
 // Combines the project-level ESP config with the active user/profile ESP config,
 // mirroring how they are both applied in src/webview/controller/OBIConfiguration.ts.
@@ -16,13 +17,13 @@ export function getActiveExtendedSourcesConfig(): any {
   };
 }
 
-export function getSteps(source: string, appConfig: any, extended_sources_config: any): Array<string | object> {
+export function getSteps(source: string, appConfig: any, extended_sources_config: any, ctx?: BuildListContext): Array<string | object> {
   let initSteps: Array<string | object> = [];
   if (appConfig.global?.steps?.['*ALL']) {
     initSteps = appConfig.global.steps['*ALL'];
   }
 
-  const extendedSteps = getExtendedSteps(source, appConfig, extended_sources_config);
+  const extendedSteps = getExtendedSteps(source, appConfig, extended_sources_config, ctx);
   if (extendedSteps) {
     return [...initSteps, ...extendedSteps];
   }
@@ -47,12 +48,17 @@ function getGlobalSteps(source: string, appConfig: any): Array<string | object> 
 
 
 
-function getExtendedSteps(source: string, appConfig: any, extended_sources_config: any): Array<string | object> | null {
+function getExtendedSteps(source: string, appConfig: any, extended_sources_config: any, ctx?: BuildListContext): Array<string | object> | null {
   if (!extended_sources_config?.extended_source_processing) {
     return null;
   }
+  // "Activate extended source processing" on the config page; on by default, as in the Python OBI
+  const use_esp = appConfig.global?.settings?.general?.USE_ESP;
+  if (use_esp === false || use_esp === 'false') {
+    return null;
+  }
 
-  const sourceProperties = getSourceProperties(appConfig, source);
+  const sourceProperties = getSourceProperties(appConfig, source, ctx);
   let resultSteps: Array<string | object> = [];
   let allowMultipleMatches = true;
 
@@ -88,18 +94,26 @@ function getStepsFromCurrentEsp(
       throw new Error(`Step is not a dictionary or a string`);
     }
 
+    // As in the OBI backend: a raw cmd runs once and replaces the default steps, unless they are requested
+    const raw_cmd: string = typeof step.cmd === 'string' ? step.cmd : '';
+    const add_default_steps: boolean = step.add_default_steps ?? raw_cmd.length === 0;
+    const { cmd: _cmd, ...step_without_cmd } = step;
+
     let stepsToAppend: any[] = [];
-    if (step.step) {
+    if (raw_cmd.length > 0) {
+      stepsToAppend.push({ cmd: raw_cmd });
+    }
+    else if (step.step) {
       stepsToAppend.push({ step: step.step });
     }
-    if (step.add_default_steps) {
+    if (add_default_steps) {
       const globalSteps = getGlobalSteps(source, appConfig);
       stepsToAppend = stepsToAppend.concat(globalSteps.map(gs => ({ step: gs })));
     }
 
     for (const stepToAppend of stepsToAppend) {
-      // Scripting part is omitted for brevity
-      newSteps.push({ ...step, ...stepToAppend });
+      // Exit point scripts (Python) are only run by the OBI backend
+      newSteps.push({ ...step_without_cmd, ...stepToAppend });
     }
   }
   return newSteps;

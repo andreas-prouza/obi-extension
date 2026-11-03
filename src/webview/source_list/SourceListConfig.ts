@@ -5,24 +5,22 @@ import { DirTool } from '../../extension/utilities/DirTool';
 import * as path from 'path';
 import { Constants } from '../../shared/Constants';
 import { OBITools } from '../../extension/utilities/OBITools';
-import { AppConfig } from '../../shared/AppConfig';
+import { AppConfig } from '../../extension/config/AppConfig';
 import { Workspace } from '../../extension/utilities/Workspace';
 import * as source from '../../shared/Source';
 import { SourceListProvider } from './SourceListProvider';
+import { SOURCE_FILTER_REQUESTS } from '../../shared/messages/SourceListMessages';
+import { parse_message } from '../../shared/messages/MessageGuard';
+import { logger } from '../../extension/utilities/Logger';
+import { render_template } from '../Templates';
 
-/*
-https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
-https://mozilla.github.io/nunjucks/api.html
-https://www.11ty.dev/docs/languages/nunjucks/
-*/
-const nunjucks = require('nunjucks');
 
 
 
 
 export class SourceListConfig {
 
-  public static currentPanel: SourceListConfig;
+  public static currentPanel: SourceListConfig | undefined;
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
   private static _context: vscode.ExtensionContext;
@@ -83,12 +81,11 @@ export class SourceListConfig {
 
     const source_list: source.IQualifiedSource[] = DirTool.get_json(path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, SourceListConfig.source_list_file)) || [];
 
-    nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-    const html = nunjucks.render('source_list/source-filter-config.html', 
+    const html = render_template('source_list/source-filter-config.html', 
       {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),
         config_css: getUri(webview, extensionUri, ["asserts/css", "config.css"]),
-        main_java_script: getUri(webview, extensionUri, ["out", "source_list_config.js"]),
+        main_java_script: getUri(webview, extensionUri, ["out", "webview", "source_list_config.js"]),
         source_list: source_list,
         source_list_file: SourceListConfig.source_list_file.replace('.json', ''),
         icons: {trash: "${trash}"}
@@ -108,41 +105,47 @@ export class SourceListConfig {
     if (!panel)
       return;
 
-    panel._panel.webview.html = await SourceListConfig.generate_html(SourceListConfig._extensionUri, SourceListConfig.currentPanel?._panel.webview);
+    panel._panel.webview.html = await SourceListConfig.generate_html(SourceListConfig._extensionUri, panel._panel.webview);
     SourceListProvider.source_list_provider.refresh();
   }
 
 
 
-  private static onReceiveMessage(message: any): void {
+  private static onReceiveMessage(raw: unknown): void {
+
+    const message = parse_message('Source filter config', raw, SOURCE_FILTER_REQUESTS, text => logger.warn(text));
+    if (!message)
+      return;
 
     const workspaceUri =
-    vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-    ? vscode.workspace.workspaceFolders[0].uri
-    : undefined;
+    Workspace.find_workspace_uri();
 
     if (!workspaceUri)
       return;
 
     const command = message.command;
 
-    switch (command) {
+    try {
+      switch (command) {
 
-      case "save_config":
-        SourceListConfig.save_filter(message.data);
-        SourceListConfig.update();
-        break;
+        case "save_config":
+          SourceListConfig.save_filter(message.data);
+          break;
 
-      case "delete_filter":
-        SourceListConfig.delete_filter(message.lib, message.file, message.member);
-        SourceListConfig.update();
-        break;
+        case "delete_filter":
+          SourceListConfig.delete_filter(message.lib, message.file, message.member);
+          break;
 
-      case "add_filter":
-        SourceListConfig.add_filter(message.lib, message.file, message.member, message.regex, message.show_empty_folders);
-        SourceListConfig.update();
-        break;
+        case "add_filter":
+          SourceListConfig.add_filter(message.lib, message.file, message.member, message.regex, message.show_empty_folders);
+          break;
+      }
     }
+    catch (e) {
+      DirTool.show_save_error(e);
+    }
+    if (["save_config", "delete_filter", "add_filter"].includes(command))
+      SourceListConfig.update();
     return;
   }
 
@@ -151,7 +154,7 @@ export class SourceListConfig {
   private static delete_filter(lib: string, file: string, member: string) {
 
     const json_file: string = path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, SourceListConfig.source_list_file);
-    const sl: source.IQualifiedSource[] = DirTool.get_json(json_file) || [];
+    const sl: source.IQualifiedSource[] = DirTool.read_json_strict<source.IQualifiedSource[]>(json_file) || [];
 
     for (let i=0; i<sl.length; i++) {
       if (sl[i]['source-lib'] == lib && sl[i]['source-file'] == file && sl[i]['source-member'] == member) {
@@ -160,14 +163,14 @@ export class SourceListConfig {
       }
     }
 
-    DirTool.write_file(json_file, JSON.stringify(sl, undefined, 2));
+    DirTool.update_json(json_file, sl);
   }
 
 
   private static add_filter(lib: string, file: string, member: string, regex: boolean, show_empty_folders: boolean) {
 
     const json_file: string = path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, SourceListConfig.source_list_file);
-    const sl: source.IQualifiedSource[] = DirTool.get_json(json_file) || [];
+    const sl: source.IQualifiedSource[] = DirTool.read_json_strict<source.IQualifiedSource[]>(json_file) || [];
 
     // check if it already exist
     for (let i=0; i<sl.length; i++) {
@@ -178,7 +181,7 @@ export class SourceListConfig {
 
     sl.push({"source-lib": lib, "source-file": file, "source-member": member, 'use-regex': regex, "show-empty-folders": show_empty_folders});
 
-    DirTool.write_file(json_file, JSON.stringify(sl, undefined, 2));
+    DirTool.update_json(json_file, sl);
   }
 
 
@@ -186,7 +189,7 @@ export class SourceListConfig {
 
     const json_file: string = path.join(Workspace.get_workspace(), Constants.SOURCE_FILTER_FOLDER_NAME, SourceListConfig.source_list_file);
 
-    DirTool.write_file(json_file, JSON.stringify(filter, undefined, 2));
+    DirTool.update_json(json_file, filter);
   }
 
 
@@ -201,7 +204,7 @@ export class SourceListConfig {
       {
         // Enable JavaScript in the webview
         enableScripts: true,
-        enableCommandUris: true,
+        enableCommandUris: false,   // no command: links on this page
         enableFindWidget: true,
         // Restrict the webview to only load resources from the `out` directory
         localResourceRoots: [

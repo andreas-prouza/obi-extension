@@ -1,15 +1,13 @@
+import "../../tools/javascript/toolkit";
 import {
-  allComponents,
-  provideVSCodeDesignSystem,
   Button
 } from "@vscode/webview-ui-toolkit";
+import { typed_post } from "../../tools/javascript/post";
+import type { WelcomeRequest } from "../../../shared/messages/StartMessages";
 
-// In order to use all the Webview UI Toolkit web components they
-// must be registered with the browser (i.e. webview) using the
-// syntax below.
-provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
+const post = typed_post<WelcomeRequest>(vscode);
 
 window.addEventListener("load", main);
 
@@ -35,7 +33,7 @@ function main() {
 
 function initialize_folder() {
 
-  vscode.postMessage({
+  post({
     command: "initialize_folder"
   });
 }
@@ -43,7 +41,7 @@ function initialize_folder() {
 
 function reload_window() {
 
-  vscode.postMessage({
+  post({
     command: "reload_window"
   });
 }
@@ -51,7 +49,7 @@ function reload_window() {
 
 function open_folder() {
 
-  vscode.postMessage({
+  post({
     command: "open_folder"
   });
 }

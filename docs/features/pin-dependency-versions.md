@@ -1,3 +1,9 @@
+# Pin dependency versions
+
+| Type | Severity | Status | Source | Depends on |
+|---|---|---|---|---|
+| Feature | 🟠 | finished (check in `npm run check:repo`) | – | – |
+
 # Current situation
 
 `package.json` pins several packages to `"latest"` instead of a fixed/semver range:

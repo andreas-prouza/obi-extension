@@ -1,0 +1,212 @@
+{
+  "compile_list": {
+    "compiles": [
+      {
+        "level": 1,
+        "sources": [
+          {
+            "source": "prouzalib/qsqlsrc/orders.sqltable.file",
+            "cmds": [
+              {
+                "cmd": "cl -v \"CHGATR OBJ('\"'src/prouzalib/qsqlsrc/orders.sqltable.file'\"') ATR(*CCSID) VALUE(1208)\"",
+                "status": "new",
+                "properties": {}
+              },
+              {
+                "cmd": "export OBI_CONTENT=\"$(sed 's/$(SQL_TARGET_LIB)/prouzalib/g' src/prouzalib/qsqlsrc/orders.sqltable.file)\"; printf '%s' \"$OBI_CONTENT\" > src/prouzalib/qsqlsrc/orders.sqltable.file",
+                "status": "new",
+                "properties": {}
+              },
+              {
+                "cmd": "liblist -a 'prouzalib' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null; cl -v \"RUNSQLSTM SRCSTMF('\"'src/prouzalib/qsqlsrc/orders.sqltable.file'\"') COMMIT(*NONE) ERRLVL(21)\"",
+                "status": "new",
+                "properties": {}
+              }
+            ],
+            "variables": {
+              "SOURCE": "prouzalib/qsqlsrc/orders.sqltable.file",
+              "SOURCE_FILE_NAME": "src/prouzalib/qsqlsrc/orders.sqltable.file",
+              "SOURCE_BASE_FILE_NAME": "orders.sqltable.file",
+              "TARGET_LIB": "prouzalib",
+              "TARGET_LIB_ORIG": "prouzalib",
+              "OBJ_NAME": "orders",
+              "SRC_ATTR": "sqltable",
+              "SRC_TYPE": "file",
+              "SET_LIBL": "liblist -a 'prouzalib' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null"
+            }
+          },
+          {
+            "source": "prouzalib/qddssrc/cust.pf.file",
+            "cmds": [
+              {
+                "cmd": "cl -v \"CHGATR OBJ('\"'src/prouzalib/qddssrc/cust.pf.file'\"') ATR(*CCSID) VALUE(1208)\"",
+                "status": "new",
+                "properties": {}
+              },
+              {
+                "cmd": "liblist -a 'QGPL' 2> /dev/null; cl -v \"CRTSRCPF FILE(QTEMP/QSRC) RCDLEN(112)\" 2> /dev/null; cl -v \"CPYFRMSTMF FROMSTMF('\"'src/prouzalib/qddssrc/cust.pf.file'\"') TOMBR('/QSYS.LIB/QTEMP.LIB/QSRC.FILE/\"'cust'\".MBR') MBROPT(*replace)\"; cl -v \"CRTPF FILE(\"'prouzalib/cust'\") SRCFILE(QTEMP/QSRC) OPTION(*EVENTF)\" 2> /dev/null; cl -v \"CHGPF FILE(\"'prouzalib/cust'\") SRCFILE(QTEMP/QSRC) OPTION(*EVENTF)\"; FILE='.obi/tmp/evfevent/prouzalib/qddssrc/cust.pf.file' && mkdir -p \"${FILE%/*}\" ; \n\ncl -v \"CPYTOIMPF FROMFILE(\"'prouzalib/EVFEVENT cust'\") TOSTMF('\"'.obi/tmp/evfevent/prouzalib/qddssrc/cust.pf.file'\"') MBROPT(*REPLACE) STMFCCSID(1208) RCDDLM(*LF) DTAFMT(*FIXED) STRDLM(*NONE) STRESCCHR(*NONE) RMVBLANK(*EOR) FLDDLM('')\"\n\ncl -v \"RMVM FILE(\"'prouzalib/EVFEVENT'\") MBR(\"'cust'\")\" ",
+                "status": "new",
+                "properties": {}
+              }
+            ],
+            "variables": {
+              "SOURCE": "prouzalib/qddssrc/cust.pf.file",
+              "SOURCE_FILE_NAME": "src/prouzalib/qddssrc/cust.pf.file",
+              "SOURCE_BASE_FILE_NAME": "cust.pf.file",
+              "TARGET_LIB": "prouzalib",
+              "TARGET_LIB_ORIG": "prouzalib",
+              "OBJ_NAME": "cust",
+              "SRC_ATTR": "pf",
+              "SRC_TYPE": "file",
+              "SET_LIBL": "liblist -a 'QGPL' 2> /dev/null",
+              "LIBL": "QGPL"
+            }
+          },
+          {
+            "source": "prouzalib/qrpglesrc/defs.rpgle.cpy",
+            "cmds": [
+              {
+                "cmd": "cl -v \"CHGATR OBJ('\"'src/prouzalib/qrpglesrc/defs.rpgle.cpy'\"') ATR(*CCSID) VALUE(1208)\"",
+                "status": "new",
+                "properties": {}
+              }
+            ],
+            "variables": {
+              "SOURCE": "prouzalib/qrpglesrc/defs.rpgle.cpy",
+              "SOURCE_FILE_NAME": "src/prouzalib/qrpglesrc/defs.rpgle.cpy",
+              "SOURCE_BASE_FILE_NAME": "defs.rpgle.cpy",
+              "TARGET_LIB": "prouzalib",
+              "TARGET_LIB_ORIG": "prouzalib",
+              "OBJ_NAME": "defs",
+              "SRC_ATTR": "rpgle",
+              "SRC_TYPE": "cpy",
+              "SET_LIBL": "liblist -a 'prouzalib' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null"
+            }
+          },
+          {
+            "source": "prouzalib/qrpglesrc/test4.rpgle.pgm",
+            "cmds": [
+              {
+                "cmd": "cl -v \"CHGATR OBJ('\"'src/prouzalib/qrpglesrc/test4.rpgle.pgm'\"') ATR(*CCSID) VALUE(1208)\"",
+                "status": "new",
+                "properties": {}
+              },
+              {
+                "cmd": "echo 'Works as designed'",
+                "status": "new",
+                "properties": {}
+              }
+            ],
+            "variables": {
+              "SOURCE": "prouzalib/qrpglesrc/test4.rpgle.pgm",
+              "SOURCE_FILE_NAME": "src/prouzalib/qrpglesrc/test4.rpgle.pgm",
+              "SOURCE_BASE_FILE_NAME": "test4.rpgle.pgm",
+              "TARGET_LIB": "prouzat1",
+              "TARGET_LIB_ORIG": "prouzat1",
+              "OBJ_NAME": "test4",
+              "SRC_ATTR": "rpgle",
+              "SRC_TYPE": "pgm",
+              "SET_LIBL": "liblist -a 'prouzat1' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null",
+              "ACTGRP": "TESTACT"
+            }
+          }
+        ]
+      },
+      {
+        "level": 2,
+        "sources": [
+          {
+            "source": "prouzalib/qrpglesrc/srv.sqlrpgle.srvpgm",
+            "cmds": [
+              {
+                "cmd": "cl -v \"CHGATR OBJ('\"'src/prouzalib/qrpglesrc/srv.sqlrpgle.srvpgm'\"') ATR(*CCSID) VALUE(1208)\"",
+                "status": "new",
+                "properties": {
+                  "TARGET_LIB": "ESPLIB",
+                  "SET_LIBL": "liblist -a 'ESPLIB' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null"
+                }
+              },
+              {
+                "cmd": "liblist -a 'ESPLIB' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null; cl -v \"CRTSQLRPGI OBJ(\"'ESPLIB/srv'\") SRCSTMF('\"'src/prouzalib/qrpglesrc/srv.sqlrpgle.srvpgm'\"') OBJTYPE(*MODULE) RPGPPOPT(*LVL2) TGTRLS(*CURRENT) DBGVIEW(*SOURCE) REPLACE(*YES) COMPILEOPT('TGTCCSID(*JOB) INCDIR(''./src'' ''./src'')') OPTION(*EVENTF)\"; FILE='.obi/tmp/evfevent/prouzalib/qrpglesrc/srv.sqlrpgle.srvpgm' && mkdir -p \"${FILE%/*}\" ; \n\ncl -v \"CPYTOIMPF FROMFILE(\"'ESPLIB/EVFEVENT srv'\") TOSTMF('\"'.obi/tmp/evfevent/prouzalib/qrpglesrc/srv.sqlrpgle.srvpgm'\"') MBROPT(*REPLACE) STMFCCSID(1208) RCDDLM(*LF) DTAFMT(*FIXED) STRDLM(*NONE) STRESCCHR(*NONE) RMVBLANK(*EOR) FLDDLM('')\"\n\ncl -v \"RMVM FILE(\"'ESPLIB/EVFEVENT'\") MBR(\"'srv'\")\"",
+                "status": "new",
+                "properties": {
+                  "TARGET_LIB": "ESPLIB",
+                  "SET_LIBL": "liblist -a 'ESPLIB' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null"
+                }
+              },
+              {
+                "cmd": "liblist -a 'ESPLIB' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null; cl -v \"RMVBNDDIRE BNDDIR(MYBND) OBJ(\"'*LIBL/srv'\")\" ",
+                "status": "new",
+                "properties": {
+                  "TARGET_LIB": "ESPLIB",
+                  "SET_LIBL": "liblist -a 'ESPLIB' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null"
+                }
+              },
+              {
+                "cmd": "liblist -a 'ESPLIB' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null; cl -v \"CRTSRVPGM SRVPGM(\"'ESPLIB/srv'\") EXPORT(*ALL) ACTGRP(*CALLER) BNDDIR(MYBND) REPLACE(*YES) TGTRLS(*CURRENT) STGMDL(*SNGLVL) \"",
+                "status": "new",
+                "properties": {
+                  "TARGET_LIB": "ESPLIB",
+                  "SET_LIBL": "liblist -a 'ESPLIB' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null"
+                }
+              },
+              {
+                "cmd": "liblist -a 'ESPLIB' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null; cl -v \"ADDBNDDIRE BNDDIR(MYBND) OBJ(\"'*LIBL/srv'\")\" ",
+                "status": "new",
+                "properties": {
+                  "TARGET_LIB": "ESPLIB",
+                  "SET_LIBL": "liblist -a 'ESPLIB' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null"
+                }
+              }
+            ],
+            "variables": {
+              "SOURCE": "prouzalib/qrpglesrc/srv.sqlrpgle.srvpgm",
+              "SOURCE_FILE_NAME": "src/prouzalib/qrpglesrc/srv.sqlrpgle.srvpgm",
+              "SOURCE_BASE_FILE_NAME": "srv.sqlrpgle.srvpgm",
+              "TARGET_LIB": "prouzalib",
+              "TARGET_LIB_ORIG": "prouzalib",
+              "OBJ_NAME": "srv",
+              "SRC_ATTR": "sqlrpgle",
+              "SRC_TYPE": "srvpgm",
+              "SET_LIBL": "liblist -a 'prouzalib' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null",
+              "RPGPPOPT": "*LVL2",
+              "DBGVIEW": "*SOURCE"
+            }
+          }
+        ]
+      },
+      {
+        "level": 3,
+        "sources": [
+          {
+            "source": "prouzalib/qrpglesrc/hello.rpgle.pgm",
+            "cmds": [
+              {
+                "cmd": "cl -v \"CHGATR OBJ('\"'src/prouzalib/qrpglesrc/hello.rpgle.pgm'\"') ATR(*CCSID) VALUE(1208)\"",
+                "status": "new",
+                "properties": {}
+              },
+              {
+                "cmd": "liblist -a 'prouzalib' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null; cl -v \"CRTBNDRPG PGM(\"'prouzalib/hello'\") SRCSTMF('\"'src/prouzalib/qrpglesrc/hello.rpgle.pgm'\"') DBGVIEW(*ALL) REPLACE(*YES) TGTCCSID(*JOB) INCDIR('./src') OPTION(*EVENTF)\"; FILE='.obi/tmp/evfevent/prouzalib/qrpglesrc/hello.rpgle.pgm' && mkdir -p \"${FILE%/*}\" ; \n\ncl -v \"CPYTOIMPF FROMFILE(\"'prouzalib/EVFEVENT hello'\") TOSTMF('\"'.obi/tmp/evfevent/prouzalib/qrpglesrc/hello.rpgle.pgm'\"') MBROPT(*REPLACE) STMFCCSID(1208) RCDDLM(*LF) DTAFMT(*FIXED) STRDLM(*NONE) STRESCCHR(*NONE) RMVBLANK(*EOR) FLDDLM('')\"\n\ncl -v \"RMVM FILE(\"'prouzalib/EVFEVENT'\") MBR(\"'hello'\")\"",
+                "status": "new",
+                "properties": {}
+              }
+            ],
+            "variables": {
+              "SOURCE": "prouzalib/qrpglesrc/hello.rpgle.pgm",
+              "SOURCE_FILE_NAME": "src/prouzalib/qrpglesrc/hello.rpgle.pgm",
+              "SOURCE_BASE_FILE_NAME": "hello.rpgle.pgm",
+              "TARGET_LIB": "prouzalib",
+              "TARGET_LIB_ORIG": "prouzalib",
+              "OBJ_NAME": "hello",
+              "SRC_ATTR": "rpgle",
+              "SRC_TYPE": "pgm",
+              "SET_LIBL": "liblist -a 'prouzalib' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "deployment_list": "1|prouzalib|prouzalib|cust|file|pf|prouzalib/qddssrc/cust.pf.file\n1|prouzalib|prouzalib|defs|cpy|rpgle|prouzalib/qrpglesrc/defs.rpgle.cpy\n1|prouzalib|prouzat1|test4|pgm|rpgle|prouzalib/qrpglesrc/test4.rpgle.pgm\n1|prouzalib|prouzalib|orders|file|sqltable|prouzalib/qsqlsrc/orders.sqltable.file\n2|prouzalib|prouzalib|srv|srvpgm|sqlrpgle|prouzalib/qrpglesrc/srv.sqlrpgle.srvpgm\n3|prouzalib|prouzalib|hello|pgm|rpgle|prouzalib/qrpglesrc/hello.rpgle.pgm"
+}

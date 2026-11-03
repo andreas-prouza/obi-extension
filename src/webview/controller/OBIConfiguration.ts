@@ -5,35 +5,19 @@ import { getUri } from "../../extension/utilities/getUri";
 import { DirTool } from '../../extension/utilities/DirTool';
 import { Constants } from '../../shared/Constants';
 import { OBITools } from '../../extension/utilities/OBITools';
-import { AppConfig, ConfigCompileSettings, SourceConfigList } from '../../shared/AppConfig';
+import { AppConfig, ConfigCompileSettings, SourceConfigList } from '../../extension/config/AppConfig';
 import { Workspace } from '../../extension/utilities/Workspace';
 import { OBISourceConfiguration } from './OBISourceConfiguration';
 import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
-import { ExtendedSourceProcessing, ExtendedSourceProcessingList, Step } from '../../shared/EspConfig';
+import { ExtendedSourceProcessing, ExtendedSourceProcessingList, Step } from '../../extension/config/EspConfig';
+import { CONFIGURATION_REQUESTS, ConfigurationRequest } from '../../shared/messages/ConfigurationMessages';
+import { parse_message } from '../../shared/messages/MessageGuard';
+import { logger } from '../../extension/utilities/Logger';
+import { ProjectState } from '../../extension/ProjectState';
+import { show_error } from '../../extension/utilities/Notify';
+import { render_template } from '../Templates';
 
-/*
-https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
-https://mozilla.github.io/nunjucks/api.html
-https://www.11ty.dev/docs/languages/nunjucks/
-*/
-const nunjucks = require('nunjucks');
 
-// configure() returns an Environment
-const env = nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-
-// Register "typename" filter on the environment
-env.addFilter("typename", (obj: any) => {
-  if (obj === null) return "null";
-  if (obj === undefined) return "undefined";
-
-  // If it's a class instance or built-in
-  if (obj.constructor && obj.constructor.name) {
-    return obj.constructor.name;
-  }
-
-  // Fallback
-  return typeof obj;
-});
 
 
 export class OBIConfiguration {
@@ -75,7 +59,7 @@ export class OBIConfiguration {
 
     if (OBIConfiguration.currentPanel) {
       // If the webview panel already exists reveal it
-      OBIConfiguration.currentPanel._panel.reveal(ViewColumn.One);
+      OBIConfiguration.currentPanel._panel.reveal();
       return;
     }
 
@@ -104,7 +88,7 @@ export class OBIConfiguration {
     const user = config.connection['ssh-user'];
     const current_profile = Workspace.get_current_profile() || 'default';
 
-    const error_text = AppConfig.self_check();
+    const error_text = OBITools.check_local_obi();
 
     const pwd = await context.secrets.get(`obi|${current_profile}|${host}|${user}`);
 
@@ -112,18 +96,18 @@ export class OBIConfiguration {
     const esp_config_project = new ExtendedSourceProcessingList();
     const esp_config_user = new ExtendedSourceProcessingList(true);
     
-    const panel = await context.secrets.get('obi|config|panel');
-    const panel_tab = await context.secrets.get('obi|config|panel_tab');
+    const { panel, panel_tab } = OBIConfiguration.get_ui_state(context);
 
-    const html = env.render('controller/configuration.html', 
+    const html = render_template('controller/configuration.html', 
       {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),
         config_css: getUri(webview, extensionUri, ["asserts/css", "config.css"]),
-        main_java_script: getUri(webview, extensionUri, ["out", "config.js"]),
+        main_java_script: getUri(webview, extensionUri, ["out", "webview", "config.js"]),
         icons: {debug_start: '$(preview)'},
         user_config: user_config,
         project_config: project_config,
-        SSH_PASSWORD: pwd,
+        // Never pass the secret itself into the page: only whether one is stored
+        ssh_password_stored: pwd !== undefined && pwd.length > 0,
         project_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_FILE),
         user_config_file: DirTool.get_encoded_file_URI(AppConfig.get_current_profile_app_config_file()),
         source_config_file: DirTool.get_encoded_file_URI(Constants.OBI_SOURCE_CONFIG_FILE),
@@ -153,182 +137,140 @@ export class OBIConfiguration {
     if (!panel)
       return;
 
-    panel._panel.webview.html = await OBIConfiguration.generate_html(OBIConfiguration._context, OBIConfiguration._extensionUri, OBIConfiguration.currentPanel?._panel.webview);
+    panel._panel.webview.html = await OBIConfiguration.generate_html(OBIConfiguration._context, OBIConfiguration._extensionUri, panel._panel.webview);
     
   }
 
 
 
-  private static onReceiveMessage(message: any): void {
+  private static onReceiveMessage(raw: unknown): void {
+    try {
+      const message = parse_message('Configuration', raw, CONFIGURATION_REQUESTS, text => logger.warn(text));
+      if (message)
+        OBIConfiguration.handle_message(message);
+    }
+    catch (e) {
+      DirTool.show_save_error(e);
+    }
+  }
 
-    const is_user = true;
-    const is_project = false;
-    let config: AppConfig;
-    let lang: string;
-    let attr: string;
+
+
+  /** Config of the page section the message comes from */
+  private static config_of(target: 'user' | 'project', workspaceUri: Uri): AppConfig {
+    return target == 'user' ? AppConfig.get_user_app_config(workspaceUri) : AppConfig.get_project_app_config(workspaceUri);
+  }
+
+
+
+  private static handle_message(message: ConfigurationRequest): void {
 
     const workspaceUri =
-    vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-    ? vscode.workspace.workspaceFolders[0].uri
-    : undefined;
+    Workspace.find_workspace_uri();
 
     if (!workspaceUri)
       return;
 
-    if (message.panel)
-      OBIConfiguration._context.secrets.store('obi|config|panel', message.panel);
-    if (message.panel_tab)
-      OBIConfiguration._context.secrets.store('obi|config|panel_tab', message.panel_tab);
+    OBIConfiguration.save_ui_state(OBIConfiguration._context, message.panel, message.panel_tab);
 
-    const command = message.command;
+    switch (message.command) {
 
-    switch (command) {
-
-      case "user_save":
-        OBIConfiguration.save_config(is_user, workspaceUri, message.data);
-        break;
-
-      case "project_save":
-        OBIConfiguration.save_config(is_project, workspaceUri, message.data);
+      case "save_config":
+        OBIConfiguration.save_config(message.target == 'user', workspaceUri, message.data);
         break;
 
       case "save_ssh_password":
-        config = AppConfig.get_app_config();
-        const host = config['connection']['remote-host'];
-        const user = config['connection']['ssh-user'];
-        const current_profile = Workspace.get_current_profile() || 'default';
-        OBIConfiguration._context.secrets.delete(`obi|${current_profile}|${host}|${user}`);
-        if (message.password.length > 0)
-          OBIConfiguration._context.secrets.store(`obi|${current_profile}|${host}|${user}`, message.password);
+        // An empty field means "unchanged"; removing is an explicit action (delete_ssh_password)
+        if (message.password.length == 0)
+          break;
+        OBIConfiguration._context.secrets.store(OBIConfiguration.get_password_key(), message.password);
         break;
 
-      case "add_language_attribute":
-        lang = message.language;
-        attr = message.attribute;
+      case "delete_ssh_password":
+        OBIConfiguration._context.secrets.delete(OBIConfiguration.get_password_key()).then(() => OBIConfiguration.update());
+        break;
 
-        if(message.user_project == 'user')
-          config = AppConfig.get_user_app_config(workspaceUri);
-        else
-          config = AppConfig.get_project_app_config(workspaceUri);
-
+      case "add_language_attribute": {
+        const config = OBIConfiguration.config_of(message.user_project, workspaceUri);
         if (config.global.settings && config.global.settings.language)
-          config.global.settings.language[lang][attr] = '';
+          config.global.settings.language[message.language][message.attribute] = '';
 
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
         break;
+      }
 
-      case "add_language_settings":
-        lang = message.language;
-        attr = message.attribute;
-
-        if(message.user_project == 'user')
-          config = AppConfig.get_user_app_config(workspaceUri);
-        else
-          config = AppConfig.get_project_app_config(workspaceUri);
-
+      case "add_language_settings": {
+        const config = OBIConfiguration.config_of(message.user_project, workspaceUri);
         if (config.global.settings && config.global.settings.language)
-          config.global.settings.language[lang] = new ConfigCompileSettings();
+          config.global.settings.language[message.language] = new ConfigCompileSettings();
 
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
         break;
+      }
 
-
-
-      case "add_global_variable":
-
-        if(message.user_project == 'user')
-          config = AppConfig.get_user_app_config(workspaceUri);
-        else
-          config = AppConfig.get_project_app_config(workspaceUri);
+      case "add_global_variable": {
+        const config = OBIConfiguration.config_of(message.user_project, workspaceUri);
         if (!config.global.variables)
           config.global.variables = {};
-        switch(message.type) {
-          case "list":
-            message.value = message.value.split(/\r?\n/);
-            break;
-        }
-        config.global.variables[message.key]=message.value;
+        config.global.variables[message.key] = message.type == 'list' ? message.value.split(/\r?\n/) : message.value;
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
         break;
+      }
 
-      
-      case "delete_global_variable":
-
-        if(message.user_project == 'user')
-          config = AppConfig.get_user_app_config(workspaceUri);
-        else
-          config = AppConfig.get_project_app_config(workspaceUri);
-        delete config.global.variables[message.key];
+      case "delete_global_variable": {
+        const config = OBIConfiguration.config_of(message.user_project, workspaceUri);
+        if (config.global.variables)
+          delete config.global.variables[message.key];
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
         break;
+      }
 
-
-
-      case "add_global_cmd":
-      case "save_global_cmd":
-
-        if(message.user_project == 'user')
-          config = AppConfig.get_user_app_config(workspaceUri);
-        else
-          config = AppConfig.get_project_app_config(workspaceUri);
-        config.global.cmds[message.key]=message.value;
+      case "add_global_cmd": {
+        const config = OBIConfiguration.config_of(message.user_project, workspaceUri);
+        config.global.cmds = { ...config.global.cmds, [message.key]: message.value };
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
         break;
+      }
 
-      case "add_compile_cmd":
-      case "save_compile_cmd":
-
-        if(message.user_project == 'user')
-          config = AppConfig.get_user_app_config(workspaceUri);
-        else
-          config = AppConfig.get_project_app_config(workspaceUri);
-        config.global['compile-cmds'][message.key]=message.value;
+      case "add_compile_cmd": {
+        const config = OBIConfiguration.config_of(message.user_project, workspaceUri);
+        config.global['compile-cmds'] = { ...config.global['compile-cmds'], [message.key]: message.value };
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
         break;
+      }
 
-      case "add_global_step":
-      case "save_global_step":
-
-        if(message.user_project == 'user')
-          config = AppConfig.get_user_app_config(workspaceUri);
-        else
-          config = AppConfig.get_project_app_config(workspaceUri);
-        config.global.steps[message.key]=message.value.split('\n');
+      case "add_global_step": {
+        const config = OBIConfiguration.config_of(message.user_project, workspaceUri);
+        config.global.steps = { ...config.global.steps, [message.key]: message.value.split('\n') };
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
         break;
+      }
 
-      case "delete_global_cmd":
-
-        if(message.user_project == 'user')
-          config = AppConfig.get_user_app_config(workspaceUri);
-        else
-          config = AppConfig.get_project_app_config(workspaceUri);
-        delete config.global.cmds[message.key];
+      case "delete_global_cmd": {
+        const config = OBIConfiguration.config_of(message.user_project, workspaceUri);
+        if (config.global.cmds)
+          delete config.global.cmds[message.key];
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
         break;
+      }
 
-      case "delete_compile_cmd":
-
-        if(message.user_project == 'user')
-          config = AppConfig.get_user_app_config(workspaceUri);
-        else
-          config = AppConfig.get_project_app_config(workspaceUri);
-        delete config.global['compile-cmds'][message.key];
+      case "delete_compile_cmd": {
+        const config = OBIConfiguration.config_of(message.user_project, workspaceUri);
+        if (config.global['compile-cmds'])
+          delete config.global['compile-cmds'][message.key];
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
         break;
+      }
 
-      case "delete_global_step":
-
-        if(message.user_project == 'user')
-          config = AppConfig.get_user_app_config(workspaceUri);
-        else
-          config = AppConfig.get_project_app_config(workspaceUri);
-        delete config.global.steps[message.key];
+      case "delete_global_step": {
+        const config = OBIConfiguration.config_of(message.user_project, workspaceUri);
+        if (config.global.steps)
+          delete config.global.steps[message.key];
         OBIConfiguration.save_config(message.user_project == 'user', workspaceUri, config);
         break;
+      }
 
       case "edit_source_config":
-
         OBISourceConfiguration.render(OBIConfiguration._context, OBIConfiguration._extensionUri, message.source);
         break;
 
@@ -346,69 +288,93 @@ export class OBIConfiguration {
         OBIConfiguration.update();
         break;
 
-      case "add_esp_block":
-
-        const user_config_add_block = true ? message.user_project == 'user' : false;
+      case "add_esp_block": {
         const esp_block = new ExtendedSourceProcessing();
         esp_block.conditions = {"SOURCE_FILE_NAME": ["*"], "TARGET_LIB": ["*"]};
         esp_block.steps = [{add_default_steps: true, properties: {"TARGET_LIB": "PROUZALIB", "JOB_CCSID": "1141"}}];
-        const esp_config = new ExtendedSourceProcessingList(user_config_add_block);
+        const esp_config = new ExtendedSourceProcessingList(message.user_project == 'user');
         esp_config.add_new_esp_block(esp_block);
         OBIConfiguration.update();
         break;
+      }
 
-      case "delete_esp_block":
-        const user_config_delete_block = true ? message.user_project == 'user' : false;
-        const esp_config_delete = new ExtendedSourceProcessingList(user_config_delete_block);
-        esp_config_delete.extended_source_processing.splice(message.index, 1);
-        esp_config_delete.save_to_file();
+      case "delete_esp_block": {
+        const esp_config = new ExtendedSourceProcessingList(message.user_project == 'user');
+        esp_config.extended_source_processing.splice(message.index, 1);
+        esp_config.save_to_file();
         OBIConfiguration.update();
         break;
+      }
 
-      case "delete_esp_step":
-        const user_config_delete_step = true ? message.user_project == 'user' : false;
-        const esp_config_delete_step = new ExtendedSourceProcessingList(user_config_delete_step);
-        esp_config_delete_step.extended_source_processing[message.esp_index].steps.splice(message.step_index, 1);
-        esp_config_delete_step.save_to_file();
+      case "delete_esp_step": {
+        const esp_config = new ExtendedSourceProcessingList(message.user_project == 'user');
+        esp_config.extended_source_processing[message.esp_index]?.steps.splice(message.step_index, 1);
+        esp_config.save_to_file();
         OBIConfiguration.update();
         break;
+      }
 
-      case "add_esp_step":
-        const user_config_add_step = true ? message.user_project == 'user' : false;
-        const esp_config_add_step = new ExtendedSourceProcessingList(user_config_add_step);
-        esp_config_add_step.extended_source_processing[message.index].steps.push(new Step());
-        esp_config_add_step.save_to_file();
+      case "add_esp_step": {
+        const esp_config = new ExtendedSourceProcessingList(message.user_project == 'user');
+        esp_config.extended_source_processing[message.index]?.steps.push(new Step());
+        esp_config.save_to_file();
         OBIConfiguration.update();
         break;
+      }
 
-      case "save_esp":
-
-        const data = message.data;
-        const user_config_save = true ? message.user_project == 'user' : false;
-        const esp_config_save = new ExtendedSourceProcessingList(user_config_save, message.data);
-        esp_config_save.save_to_file();
-        //OBIConfiguration.update();
+      case "save_esp": {
+        const esp_config = new ExtendedSourceProcessingList(message.user_project == 'user', message.data);
+        esp_config.save_to_file();
         break;
-
+      }
     }
-    return;
+  }
+
+
+
+  /** Last selected tab of the config page. Validated, because the values are rendered into the page. */
+  private static get_ui_state(context: vscode.ExtensionContext): { panel: string; panel_tab: string } {
+    const panel = context.workspaceState.get<string>('obi.config.panel');
+    const panel_tab = context.workspaceState.get<string>('obi.config.panel_tab');
+    return {
+      panel: panel && /^[a-z_]+$/.test(panel) ? panel : 'project_cfg',
+      panel_tab: panel_tab && /^tab-\d+$/.test(panel_tab) ? panel_tab : 'tab-1'
+    };
+  }
+
+
+  private static save_ui_state(context: vscode.ExtensionContext, panel: unknown, panel_tab: unknown): void {
+    if (typeof panel === 'string' && panel.length > 0 && panel !== context.workspaceState.get('obi.config.panel'))
+      context.workspaceState.update('obi.config.panel', panel);
+    if (typeof panel_tab === 'string' && panel_tab.length > 0 && panel_tab !== context.workspaceState.get('obi.config.panel_tab'))
+      context.workspaceState.update('obi.config.panel_tab', panel_tab);
+  }
+
+
+  /** SecretStorage key of the SSH password of the current profile, host and user (same key as in SSH_Tasks.connect). */
+  private static get_password_key(): string {
+    const config = AppConfig.get_app_config();
+    const current_profile = Workspace.get_current_profile() || 'default';
+    return `obi|${current_profile}|${config.connection['remote-host']}|${config.connection['ssh-user']}`;
   }
 
 
 
   private static add_source_config(source: string) {
-    let source_configs: SourceConfigList = AppConfig.get_source_configs() || {};
-    source_configs[source] = {"source-cmds": {}, settings: {} as any, steps: []};
-    DirTool.write_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs);
+    const file = path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE);
+    const source_configs: SourceConfigList = DirTool.read_toml_strict<SourceConfigList>(file) ?? {};
+    source_configs[source] = {"source-cmds": {}, settings: {}, steps: []};
+    DirTool.update_toml(file, source_configs);
   }
 
 
 
 
   private static delete_source_config(source: string) {
-    let source_configs: SourceConfigList = AppConfig.get_source_configs() || {};
+    const file = path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE);
+    const source_configs: SourceConfigList = DirTool.read_toml_strict<SourceConfigList>(file) ?? {};
     delete source_configs[source];
-    DirTool.write_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs);
+    DirTool.update_toml(file, source_configs);
   }
 
 
@@ -416,9 +382,14 @@ export class OBIConfiguration {
 
   public static save_config(isUser: boolean, workspaceUri: Uri, data: any) {
 
-    vscode.window.showInformationMessage('Configuration saved');
-    const app_config: AppConfig = AppConfig.get_app_config();
-    const missing_configs = app_config.attributes_missing();
+    // App config
+    let toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_FILE);
+    if (isUser)
+      toml_file = path.join(workspaceUri.fsPath, AppConfig.get_current_profile_app_config_file());
+
+    // The config below is read with the lenient reader: make sure it wasn't a file that couldn't be parsed
+    DirTool.read_toml_strict(toml_file);
+
     let new_config: AppConfig;
 
     if (isUser) {
@@ -428,12 +399,14 @@ export class OBIConfiguration {
       new_config = AppConfig.get_project_app_config(Workspace.get_workspace_uri());
     }
 
-    if ('connection' in data) {
-      new_config.connection = { ...new_config.connection, ...data['connection' as keyof typeof data] };
+    // Webview data is validated in onReceiveMessage; internal callers pass AppConfig instances
+    if (typeof data['connection'] === 'object' && data['connection'] !== null && !Array.isArray(data['connection'])) {
+      Object.assign(new_config.connection, data['connection']);
     }
     const mergeRecursive = (target: any, source: any) => {
       for (const key in source) {
-      if (source.hasOwnProperty(key)) {
+      // TOML tables from smol-toml have no prototype, so call hasOwnProperty via Object.prototype
+      if (Object.prototype.hasOwnProperty.call(source, key) && !['__proto__', 'constructor', 'prototype'].includes(key)) {
         if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
         if (!target[key]) {
           Object.assign(target, { [key]: {} });
@@ -464,18 +437,14 @@ export class OBIConfiguration {
     if (data['global'] && data['global']['compile-cmds'])
       new_config.global['compile-cmds'] = data['global']['compile-cmds'];
 
-    // App config
-    let toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_FILE);
-    if (isUser)
-      toml_file = path.join(workspaceUri.fsPath, AppConfig.get_current_profile_app_config_file());
-    
-    DirTool.write_toml(toml_file, new_config);
+    DirTool.update_toml(toml_file, new_config);
     AppConfig.reset();
+    vscode.window.showInformationMessage(vscode.l10n.t('Configuration saved'));
 
-    if (missing_configs && !AppConfig.get_app_config().attributes_missing())
-      vscode.commands.executeCommand('workbench.action.reloadWindow');
+    // A configuration that became valid shows the OBI views, without reloading the window
+    ProjectState.update().catch((e: unknown) => show_error(vscode.l10n.t('OBI could not be started'), e));
 
-    AppConfig.self_check();
+    OBITools.check_local_obi();
 }
   
 
@@ -494,8 +463,7 @@ export class OBIConfiguration {
         // Restrict the webview to only load resources from the `out` directory
         localResourceRoots: [
           vscode.Uri.joinPath(extensionUri, "out"),
-          vscode.Uri.joinPath(extensionUri, "asserts"),
-          vscode.Uri.joinPath(extensionUri, 'node_modules')
+          vscode.Uri.joinPath(extensionUri, "asserts")
         ],
         retainContextWhenHidden: true
       }

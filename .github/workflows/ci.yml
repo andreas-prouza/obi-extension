@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint (fails on new warnings)
+        run: npm run lint:ci
+
+      - name: Repository checks
+        run: npm run check:repo
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      # Builds the bundle and the tests (pretest), then runs them in VS Code
+      - name: Integration tests with coverage (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:coverage
+
+      - name: Integration tests (Windows)
+        if: runner.os == 'Windows'
+        run: npm test
+
+      - name: Audit production dependencies
+        if: runner.os == 'Linux'
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Package size
+        if: runner.os == 'Linux'
+        run: |
+          npx vsce ls --no-dependencies > vsix-files.txt
+          node scripts/check-vsix-size.js vsix-files.txt
+
+  # The oldest VS Code version in engines.vscode
+  minimum-vscode:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Integration tests with VS Code 1.90.0
+        run: xvfb-run -a npm test
+        env:
+          VSCODE_TEST_VERSION: 1.90.0

@@ -5,14 +5,11 @@
 local-base-dir = "."
 remote-base-dir = "${workspaceFolderBasename}"
 source-dir = "src"
-check-remote-source-on-startup = false
-use-remote-obi = false
 remote-obi-dir = "/apps/obi"
 supported-object-types = [ "pgm", "file", "srvpgm", "obj", "cpy" ]
 file-system-encoding = "utf-8"
 console-output-encoding = "utf-8"
 compiled-object-list = ".obi/etc/object-builds.json"
-remote-source-list=".obi/etc/source-list-remote.json"
 source-list=".obi/etc/source-list-local.json"
 source-infos=".obi/etc/source-infos.json"
 dependency-list = ".obi/etc/dependency.json"
@@ -21,6 +18,8 @@ build-output-dir = ".obi/build-output/objects"
 compile-list = ".obi/build-output/compile-list.json"
 compiled-object-list-md = ".obi/build-output/compiled-object-list.md"
 max-threads = 20
+# Sources of one level the OBI backend builds at the same time on IBM i. Start low: sources can lock the same objects
+max-parallel-builds = 1
 evfevent-output-dir = ".obi/tmp/evfevent"
 
 [global]
@@ -54,7 +53,7 @@ TGTCCSID = "*JOB"
 [global.settings.language."pf.file"]
 TGTRLS = "*CURRENT"
 TGTCCSID = "*JOB"
-LIBL = "QGPL"
+LIBL = [ "QGPL" ]
 
 [global.cmds]
 chg-src-ccsid = "cl -v \"CHGATR OBJ('\"'$(SOURCE_FILE_NAME)'\"') ATR(*CCSID) VALUE(1208)\""

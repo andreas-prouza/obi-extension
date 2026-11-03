@@ -1,22 +1,21 @@
+import "../../tools/javascript/toolkit";
 import {
-  allComponents,
-  provideVSCodeDesignSystem,
   Button
 } from "@vscode/webview-ui-toolkit";
 
 import { showAlert } from "../../tools/javascript/alertBox";
+import { typed_post } from "../../tools/javascript/post";
+import { keep_ui_state } from "../../tools/javascript/ui_state";
+import type { BuildSummaryRequest } from "../../../shared/messages/BuildSummaryMessages";
 // Expose showAlert to the global scope for inline HTML handlers
 (window as any).showAlert = showAlert;
 
 
-// In order to use all the Webview UI Toolkit web components they
-// must be registered with the browser (i.e. webview) using the
-// syntax below.
-provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
-// Expose vscode to the global scope for inline HTML handlers
+// Custom build summary templates post save_custom_data with window.vscode
 (window as any).vscode = vscode;
+const post = typed_post<BuildSummaryRequest>(vscode);
 
 let loaded: boolean = false;
 
@@ -27,13 +26,11 @@ function main() {
   // a given toolkit component can be imported and used to type cast a reference
   // to the element (i.e. the `as Button` syntax)
 
-  console.log(`Load main ${loaded}`);
   if (loaded)
     return;
   loaded = true;
   
   const run_button = document.getElementById('run_build') as Button;
-  console.log(`run_button.addEventListener ${run_button}`);
   if (run_button)
     run_button.addEventListener('click', run_build);  
   
@@ -42,7 +39,6 @@ function main() {
     add_source_button.addEventListener('click', add_source);
   
   const joblogButton = document.getElementsByClassName("joblog");
-  console.log(`joblog.addEventListener ${joblogButton.length}`);
   for (let i = 0; i < joblogButton.length; i++) {
     joblogButton[i].addEventListener("click", function (e) {show_log('joblog', joblogButton[i]);});
   }
@@ -68,30 +64,35 @@ function main() {
   }
 
 
-  const headers = document.querySelectorAll('.collapsible-header');
+  // Scroll position, opened commands and collapsed levels survive an update of the page (e.g. after a build)
+  const ui = keep_ui_state(vscode);
+  const collapsed = new Set<string>(ui.get<string[]>('collapsed_levels') ?? []);
+
+  const headers = document.querySelectorAll<HTMLElement>('.collapsible-header');
 
   headers.forEach(header => {
-    header.addEventListener('click', function() {
-      // Get the target class name from the data attribute (e.g., "level-1")
-      const targetClass = this.getAttribute('data-target');
-      // Find all rows with that class
-      const contentRows = document.querySelectorAll('.' + targetClass);
-      // Find the icon to toggle it
-      const icon = this.querySelector('.toggle-icon');
-
-      contentRows.forEach(row => {
-        // Toggle the display property
-        if (row.style.display === 'none') {
-          row.style.display = 'table-row'; // Show the row
-        } else {
-          row.style.display = 'none'; // Hide the row
-        }
+    // The target class name from the data attribute (e.g., "level-1")
+    const targetClass = header.getAttribute('data-target') ?? '';
+    const show_level = (visible: boolean) => {
+      document.querySelectorAll<HTMLElement>('.' + targetClass).forEach(row => {
+        row.style.display = visible ? 'table-row' : 'none';
       });
+      const icon = header.querySelector('.toggle-icon');
+      if (icon)
+        icon.textContent = visible ? '▼' : '▶';
+    };
 
-      // Optional: Flip the arrow icon
-      if (icon) {
-        icon.textContent = icon.textContent === '▼' ? '▶' : '▼';
-      }
+    if (collapsed.has(targetClass))
+      show_level(false);
+
+    header.addEventListener('click', function() {
+      const visible = collapsed.has(targetClass);
+      show_level(visible);
+      if (visible)
+        collapsed.delete(targetClass);
+      else
+        collapsed.add(targetClass);
+      ui.set('collapsed_levels', Array.from(collapsed));
     });
   });
 
@@ -127,7 +128,7 @@ function run_build() {
     }
   }
 
-  vscode.postMessage({
+  post({
     command: "run_build",
     ignore_sources: ignore_sources,
     ignore_sources_cmd: ignore_sources_cmd
@@ -136,7 +137,7 @@ function run_build() {
 
 
 function add_source() {
-  vscode.postMessage({
+  post({
     command: "add_source"
   });
 }
@@ -147,7 +148,7 @@ function edit_cmd(e: Element) {
   const source: string = e.getAttribute('source') || '';
   const cmd_index: number = Number(e.getAttribute('cmd_index'));
 
-  vscode.postMessage({
+  post({
     command: "edit_cmd",
     level: level,
     cmd_index: cmd_index,
@@ -157,12 +158,12 @@ function edit_cmd(e: Element) {
 
 
 //--function handleHowdyClick() {
-function show_log(log_type: string, e: Element) {
+function show_log(log_type: 'joblog' | 'stdout' | 'stderr', e: Element) {
   const level: string = e.getAttribute('level') || '';
   const source: string = e.getAttribute('source') || '';
   const cmd_index: number = Number(e.getAttribute('cmd_index'));
 
-  vscode.postMessage({
+  post({
     command: "show_log",
     type: log_type,
     level: level,
@@ -176,7 +177,7 @@ function show_log(log_type: string, e: Element) {
 function open_file(e: Element) {
   const source: string = e.getAttribute('data-file') || '';
 
-  vscode.postMessage({
+  post({
     command: "open_file",
     source: source
   });

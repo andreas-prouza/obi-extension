@@ -1,3 +1,5 @@
+**Status:** ready
+
 # Current situation
 
 `src/extension/utilities/OBITools.ts` and `src/extension/obi/OBICommands.ts` each mix multiple

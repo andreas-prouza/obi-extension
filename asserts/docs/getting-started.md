@@ -2,6 +2,8 @@
 
 # Getting started
 
+VS Code also has a short walkthrough: *Help → Get Started → Get started with OBI*.
+
 - [1. Prepare your IBM i](#1-prepare-your-ibm-i)
 - [2. Initialize the project](#2-initialize-the-project)
 - [3. Minimum configuration](#3-minimum-configuration)
@@ -13,7 +15,7 @@
 ## 1. Prepare your IBM i
 
 1. **SSH, bash and home directory**  
-   Follow the [SSH setup](ssh.md). OBI runs every remote command with `bash`, and it needs `/home/<user>` with a `.bashrc` that puts `/QOpenSys/pkgs/bin` on the `PATH`.
+   Follow the [SSH setup](ssh.md). OBI runs every remote command with `bash`, and it needs the home directory of the user (`HOMEDIR` of the user profile, usually `/home/<user>`) with a `.bashrc` that puts `/QOpenSys/pkgs/bin` on the `PATH`.
    If the home directory or `.bashrc` is missing, the extension offers to create it before the first build.
 
 2. **Python 3.12 or higher** (via YUM).
@@ -33,6 +35,8 @@
 
 ## 2. Initialize the project
 
+OBI needs a **trusted** workspace (it runs the build commands and programs configured in the project); in Restricted Mode it stays disabled.
+
 1. On your PC, create an empty project folder (or clone your project's git repository).
 2. Open the folder in VS Code.
 3. Switch to the **Object Builder for i** view in the activity bar.
@@ -44,7 +48,7 @@
    This creates the `.obi` folder with the default configuration, a source filter *All sources* and a sample source `src/prouzalib/qrpglesrc/hello.rpgle.pgm`.
    Existing files are never overwritten.
 
-5. The window reloads and the configuration opens (see next step).
+5. The OBI views appear and the configuration opens (see next step).
 
 
 ## 3. Minimum configuration
@@ -77,7 +81,7 @@ Notes:
 * The password is **not** written into any file. It is stored in VS Code's secret storage (per profile, host and user). Without a key and a stored password, you are prompted on each connection.
 * None of the base or OBI paths may be `/`.
 
-Click **Save**. Once the configuration is complete, the window reloads and OBI is ready:
+Click **Save**. Once the configuration is complete, OBI is ready (no reload needed):
 
 ![OBI after initialization](../img/ext/obi-after-init.png)
 
@@ -118,10 +122,10 @@ See [Sources](sources.md) for working with sources in the extension.
 On the first build, OBI detects that the project is missing on IBM i and offers **Transfer all** (also available as a toolbar button in the OBI Build view):
 
 * **Only minimum**: transfers only `.obi/etc` and `.obi/build-output`. Sources are transferred with each build anyway.
-* **Yes**: transfers the whole project folder (without `.git`, `.vscode` and similar).
+* **Transfer all**: transfers the whole project folder (without `.git`, `.vscode` and similar).
 
-> ⚠️ **Transfer all deletes the remote project folder first.**
-> You get a second confirmation showing the folder. Make sure it is the right one.
+> ⚠️ **Both options delete the remote project folder first.**
+> You get a second confirmation showing the absolute folder on the IBM i. OBI refuses to delete system folders, your home directory (or a folder containing it) and folders directly below `/`, and asks again if the folder doesn't contain an OBI project (`.obi/etc/app-config.toml`).
 
 More about building in [Building](building.md).
 
@@ -148,5 +152,5 @@ More about building in [Building](building.md).
    With a dependency list OBI rebuilds dependent objects in the correct order (e.g. service programs, files).
    This can be done step by step. See [Dependencies](dependencies.md).
 
-5. **Commit** everything (sources and shared `.obi` configuration) to your git repository.
+5. **Commit** everything (sources and shared `.obi` configuration) to your git repository. Personal and generated files are kept out by the `.gitignore` that *Initialize* created (see [Files in the .obi folder](configuration.md#files-in-the-obi-folder)).
    See [which files to commit](configuration.md#files-in-the-obi-folder).

@@ -1,0 +1,16 @@
+{
+	// Test build: unbundled tsc output in out-test/, so it never overwrites the esbuild bundle in out/.
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"outDir": "out-test",
+		"rootDir": "src"
+	},
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		".vscode-test",
+		"src/webview/**/javascript/**"
+	]
+}

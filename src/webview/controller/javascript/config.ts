@@ -1,40 +1,62 @@
+import "../../tools/javascript/toolkit";
 import {
-  allComponents,
-  provideVSCodeDesignSystem,
   Button,
   TextField,
   Checkbox
 } from "@vscode/webview-ui-toolkit";
 
-import { showAlert } from "../../tools/javascript/alertBox";
+import { page_text, showAlert } from "../../tools/javascript/alertBox";
+import { init_source_select } from "../../tools/javascript/sourceSelect";
+import { typed_post } from "../../tools/javascript/post";
+import type { ConfigurationRequest } from "../../../shared/messages/ConfigurationMessages";
 import { json } from "stream/consumers";
+import { keep_ui_state } from "../../tools/javascript/ui_state";
 
 const deepmerge = require('deepmerge');
 
-// In order to use all the Webview UI Toolkit web components they
-// must be registered with the browser (i.e. webview) using the
-// syntax below.
-provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
+const post = typed_post<ConfigurationRequest>(vscode);
+
+
+/** 'user' or 'project' from a config / data-config attribute; anything else is the project config (as before) */
+function config_target(value: string | null | undefined): 'user' | 'project' {
+  return value === 'user' ? 'user' : 'project';
+}
 
 window.addEventListener("load", main);
 //document.addEventListener('DOMContentLoaded', main, false);
 
 
-let panel: string|null;
-let panel_tab: string|null;
+let panel: string|undefined;
+let panel_tab: string|undefined;
 
 
 
 function main() {
+  // The page is rendered again after most actions: keep the scroll position
+  keep_ui_state(vscode);
 
-  console.log('Main ...');
+
+  // Rendered by the extension (validated there)
+  panel = document.body.dataset.panel;
+  panel_tab = document.body.dataset.panelTab;
+
+  init_source_select('config_source_list');
 
   check_inputs();
 
   const save_button = document.getElementById("save_config") as Button;
   save_button?.addEventListener("click", save_configs);
+
+  const delete_password_button = document.getElementById("delete_ssh_password") as Button;
+  delete_password_button?.addEventListener("click", () => {
+    post({
+      command: "delete_ssh_password",
+      panel: panel,
+      panel_tab: panel_tab
+    });
+  });
 
   const project_cfg_button = document.getElementById("project_cfg");
   project_cfg_button?.addEventListener("click", () => {panel = 'project_cfg'});
@@ -43,7 +65,6 @@ function main() {
   const source_cfg_button = document.getElementById("source_cfg");
   source_cfg_button?.addEventListener("click", () => {panel = 'source_cfg'});
 
-  console.log(`Panel: ${panel}, panel_tab: ${panel_tab}`);
   const panel_tab_buttons = document.getElementsByClassName('panel_tab');
   for (let i = 0; i < panel_tab_buttons.length; i++) {
     panel_tab_buttons[i].addEventListener("click", () => {panel_tab=panel_tab_buttons[i].id.replace('project_', '').replace('user_', '')});
@@ -59,7 +80,7 @@ function main() {
   for (let i = 0; i < buttons.length; i++) {
     const el = buttons[i];
     el.addEventListener("click", () => {
-      delete_global_cmd(el.getAttribute('project_user'), el.getAttribute('key')?.split('|')[2]); 
+      delete_global_cmd(el.getAttribute('project_user') ?? '', el.getAttribute('key')?.split('|')[2] ?? ''); 
       reload();
     });
   }
@@ -76,7 +97,7 @@ function main() {
   for (let i = 0; i < buttons.length; i++) {
     const el = buttons[i];
     el.addEventListener("click", () => {
-      delete_compile_cmd(el.getAttribute('project_user'), el.getAttribute('key')?.split('|')[2]); 
+      delete_compile_cmd(el.getAttribute('project_user') ?? '', el.getAttribute('key')?.split('|')[2] ?? ''); 
       reload();
     });
   }
@@ -92,7 +113,7 @@ function main() {
   for (let i = 0; i < buttons.length; i++) {
     const el = buttons[i];
     el.addEventListener("click", () => {
-      delete_global_step(el.getAttribute('project_user'), el.getAttribute('key')?.split('|')[2]); 
+      delete_global_step(el.getAttribute('project_user') ?? '', el.getAttribute('key')?.split('|')[2] ?? ''); 
       reload();
     });
   }
@@ -220,7 +241,7 @@ function main() {
   for (let i = 0; i < buttons.length; i++) {
     const el = buttons[i];
     el.addEventListener("click", () => {
-      delete_global_variable(el.getAttribute('project_user'), el.getAttribute('key')?.split('|')[2]); 
+      delete_global_variable(el.getAttribute('project_user') ?? '', el.getAttribute('key')?.split('|')[2] ?? ''); 
       reload();
     });
   }
@@ -233,7 +254,7 @@ function main() {
   check_error_text();
   
   // Show configuration loaded message in the UI instead of alert
-  showAlert('Configuration reloaded.', 'success');
+  showAlert(page_text('obi_text_reloaded', 'Configuration reloaded.'), 'success');
 }
 
 
@@ -252,12 +273,11 @@ function add_global_variable(e: HTMLElement) {
   const type:string = (document.getElementById(`new_global_variable_type_${config}`) as HTMLSelectElement).value;
 
 
-  console.log(`add_global_variable: ${key} : ${value} : ${type}`);
-  vscode.postMessage({
+  post({
     command: "add_global_variable",
     panel: panel,
     panel_tab: panel_tab,
-    user_project: config,
+    user_project: config_target(config),
     key: key,
     value: value,
     type: type
@@ -272,15 +292,14 @@ function add_global_variable(e: HTMLElement) {
 
 function delete_global_variable(config: string, key: string) {
 
-  console.log(`Delete command ${key} for ${config}`);
   
   save_config(config);
 
-  vscode.postMessage({
+  post({
     command: "delete_global_variable",
     panel: panel,
     panel_tab: panel_tab,
-    user_project: config,
+    user_project: config_target(config),
     key: key
   });
 
@@ -290,12 +309,11 @@ function delete_global_variable(config: string, key: string) {
 
 function add_esp_block(config: string) {
   
-  console.log(`Add new ESP block`);
-  vscode.postMessage({
+  post({
     command: "add_esp_block",
     panel: panel,
     panel_tab: panel_tab,
-    user_project: config
+    user_project: config_target(config)
   });
 
 }
@@ -303,12 +321,11 @@ function add_esp_block(config: string) {
 
 function add_step_to_esp(config: string, index: number) {
   
-  console.log(`Add new ESP step to ESP block ${index}`);
-  vscode.postMessage({
+  post({
     command: "add_esp_step",
     panel: panel,
     panel_tab: panel_tab,
-    user_project: config,
+    user_project: config_target(config),
     index: index
   });
 
@@ -317,12 +334,11 @@ function add_step_to_esp(config: string, index: number) {
 
 function delete_esp_block(config: string, index: number) {
   
-  console.log(`Delete ESP block`);
-  vscode.postMessage({
+  post({
     command: "delete_esp_block",
     panel: panel,
     panel_tab: panel_tab,
-    user_project: config,
+    user_project: config_target(config),
     index: index
   });
 
@@ -331,12 +347,11 @@ function delete_esp_block(config: string, index: number) {
 
 function delete_esp_step(config: string, espIndex: number, stepIndex: number) {
 
-  console.log(`Delete ESP block step`);
-  vscode.postMessage({
+  post({
     command: "delete_esp_step",
     panel: panel,
     panel_tab: panel_tab,
-    user_project: config,
+    user_project: config_target(config),
     esp_index: espIndex,
     step_index: stepIndex
   });
@@ -351,8 +366,7 @@ function edit_source_config() {
   const config_source_list = document.getElementById('config_source_list') as HTMLSelectElement;
   const key: string|null = config_source_list.value;
 
-  console.log(`Edit source config: ${key}`);
-  vscode.postMessage({
+  post({
     command: "edit_source_config",
     source: key
   });
@@ -364,8 +378,7 @@ function add_source_config() {
   const config_source_list = document.getElementById('new_config_source_list') as HTMLSelectElement;
   const key: string|null = config_source_list.value;
 
-  console.log(`Add source config: ${key}`);
-  vscode.postMessage({
+  post({
     command: "add_source_config",
     panel: panel,
     panel_tab: panel_tab,
@@ -381,8 +394,7 @@ function delete_source_config() {
   const config_source_list = document.getElementById('config_source_list') as HTMLSelectElement;
   const key: string|null = config_source_list.value;
 
-  console.log(`delete_source_config: ${key}`);
-  vscode.postMessage({
+  post({
     command: "delete_source_config",
     panel: panel,
     panel_tab: panel_tab,
@@ -395,16 +407,15 @@ function delete_source_config() {
 
 function delete_global_cmd(config: string, key: string) {
 
-  console.log(`Delete command ${key} for ${config}`);
   
   save_config(config);
 
 
-  vscode.postMessage({
+  post({
     command: "delete_global_cmd",
     panel: panel,
     panel_tab: panel_tab,
-    user_project: config,
+    user_project: config_target(config),
     key: key
   });
 
@@ -414,15 +425,14 @@ function delete_global_cmd(config: string, key: string) {
 
 function delete_compile_cmd(config: string, key: string) {
 
-  console.log(`Delete command ${key} for ${config}`);
   
   save_config(config);
 
-  vscode.postMessage({
+  post({
     command: "delete_compile_cmd",
     panel: panel,
     panel_tab: panel_tab,
-    user_project: config,
+    user_project: config_target(config),
     key: key
   });
 
@@ -432,15 +442,14 @@ function delete_compile_cmd(config: string, key: string) {
 
 function delete_global_step(config: string, key: string) {
   
-  console.log(`Delete command ${key} for ${config}`);
   
   save_config(config);
 
-  vscode.postMessage({
+  post({
     command: "delete_global_step",
     panel: panel,
     panel_tab: panel_tab,
-    user_project: config,
+    user_project: config_target(config),
     key: key
   });
 
@@ -451,19 +460,17 @@ function add_global_cmd(e: HTMLElement) {
   
   const config: string = e.getAttribute('config') ?? '';
 
-  console.log(`Add global command for ${config}`);
 
   save_config(config);
 
   const key = document.getElementById("new_global_cmd_key") as TextField;
   const value = document.getElementById("new_global_cmd_value") as TextField;
-  console.log(`New command ${key.value}, ${value.value}`);
 
-  vscode.postMessage({
+  post({
     command: "add_global_cmd",
     panel: panel,
     panel_tab: panel_tab,
-    user_project: config,
+    user_project: config_target(config),
     key: key.value,
     value: value.value
   });
@@ -476,19 +483,17 @@ function add_compile_cmd(e: HTMLElement) {
   
   const config: string = e.getAttribute('config') ?? '';
 
-  console.log(`Add compile command for ${config}`);
 
   save_config(config);
 
   const key = document.getElementById("new_compile_cmd_key") as TextField;
   const value = document.getElementById("new_compile_cmd_value") as TextField;
-  console.log(`New command ${key.value}, ${value.value}`);
 
-  vscode.postMessage({
+  post({
     command: "add_compile_cmd",
     panel: panel,
     panel_tab: panel_tab,
-    user_project: config,
+    user_project: config_target(config),
     key: key.value,
     value: value.value
   });
@@ -500,18 +505,16 @@ function add_global_step(e: HTMLElement) {
   
   const config: string = e.getAttribute('config') ?? '';
 
-  console.log(`Add global step for ${config}`);
   save_config(config);
 
   const key = document.getElementById("new_global_step_key") as TextField;
   const value = document.getElementById("new_global_step_value") as TextField;
-  console.log(`New command ${key.value}, ${value.value}`);
 
-  vscode.postMessage({
+  post({
     command: "add_global_step",
     panel: panel,
     panel_tab: panel_tab,
-    user_project: config,
+    user_project: config_target(config),
     key: key.value,
     value: value.value
   });
@@ -523,14 +526,13 @@ function add_global_step(e: HTMLElement) {
 
 function add_language_attribute(class_prefix: string, language: string, attribute: string) {
   
-  console.log(`saved ${language}, ${attribute}`);
   save_config(class_prefix);
 
-  vscode.postMessage({
+  post({
     command: "add_language_attribute",
     panel: panel,
     panel_tab: panel_tab,
-    user_project: class_prefix,
+    user_project: config_target(class_prefix),
     language: language,
     attribute: attribute
   });
@@ -541,14 +543,13 @@ function add_language_attribute(class_prefix: string, language: string, attribut
 
 function add_language_settings(class_prefix: string, language: string) {
   
-  console.log(`Add language settings for ${class_prefix}, ${language}`);
   save_config(class_prefix);
 
-  vscode.postMessage({
+  post({
     command: "add_language_settings",
     panel: panel,
     panel_tab: panel_tab,
-    user_project: class_prefix,
+    user_project: config_target(class_prefix),
     language: language
   });
 
@@ -565,7 +566,6 @@ function vaidate (element: HTMLInputElement): void {
 
   if (attr && element.value.length > 0) {
     const reg = new RegExp(attr);
-    console.log(`Test ${element.id}: ${reg.test(element.value)}`);
     if (!reg.test(element.value)){
       element.value = '';
       hint.style.visibility = "visible";
@@ -583,7 +583,7 @@ function save_configs() {
 
   const ssh_password = document.getElementById("user|SSH_PASSWORD") as HTMLInputElement;
   if (ssh_password.value.length > 0)
-    vscode.postMessage({
+    post({
       command: `save_ssh_password`,
       panel: panel,
       panel_tab: panel_tab,
@@ -638,7 +638,6 @@ function check_panel_missing(panel: string) {
       found_tab = true
   }
 
-  console.log(`Found: ${found_panel}, tab: ${found_tab}`);
 
   if (found_panel) {
     panel_el?.classList.add('missing_value');
@@ -737,7 +736,7 @@ function check_inputs() {
 function set_element_missing_value(element: Element) {
   element.classList.add('missing_value');
   const panel = element.getAttribute('panel');
-  const panel_el = document.getElementById(panel);
+  const panel_el = document.getElementById(panel ?? '');
   const tab_el = document.getElementById(`${panel?.split('_')[0]}_cfg`);
 
   if (!panel)
@@ -754,7 +753,7 @@ function set_element_missing_value(element: Element) {
 //function save_global_cmds(class_prefix:string) {
 function get_global_cmds(class_prefix:string) {
 
-  let results = {};
+  let results: Record<string, string> = {};
 
   const app_elements = document.getElementsByClassName(`${class_prefix}_save_app_global_cmds`);
   for (let i = 0; i < app_elements.length; i++) {
@@ -775,7 +774,7 @@ function get_global_cmds(class_prefix:string) {
 //function save_global_step(class_prefix:string) {
 function get_global_steps(class_prefix:string) {
 
-  let results = {};
+  let results: Record<string, string[]> = {};
   const app_elements = document.getElementsByClassName(`${class_prefix}_save_app_global_step`);
   for (let i = 0; i < app_elements.length; i++) {
     
@@ -793,7 +792,7 @@ function get_global_steps(class_prefix:string) {
 
 function get_compile_cmds(class_prefix:string) {
 
-  let results = {};
+  let results: Record<string, string> = {};
   const app_elements = document.getElementsByClassName(`${class_prefix}_save_app_compile_cmd`);
   for (let i = 0; i < app_elements.length; i++) {
     
@@ -809,7 +808,7 @@ function get_compile_cmds(class_prefix:string) {
 
 
 function reload() {
-  vscode.postMessage({
+  post({
     command: `reload`
   });
 }
@@ -833,8 +832,6 @@ function save_esp(config:string) {
     const allow_multiple_matches = (document.getElementById(`${config}|esp|${block_loop}|allow_multiple_matches`) as Checkbox).checked;
     const conditions = (document.getElementById(`${config}|esp|${block_loop}|conditions`) as TextField).value;
 
-    console.log(`${config}|esp|${block_loop}|conditions`);
-    console.log(conditions);
 
     let conditionsDict: Record<string, string> = {};
     try {
@@ -847,7 +844,6 @@ function save_esp(config:string) {
 
     for (let i = 0; i < steps_count; i++) {
 
-      console.log(`${config}|esp|${block_loop}|steps|${i}|step`);
       const add_default = (document.getElementById(`${config}|esp|${block_loop}|steps|${i}|add_default_steps`) as Checkbox).checked;
       const step = (document.getElementById(`${config}|esp|${block_loop}|steps|${i}|step`) as TextField).value;
       const properties = (document.getElementById(`${config}|esp|${block_loop}|steps|${i}|properties`) as TextField).value;
@@ -859,8 +855,11 @@ function save_esp(config:string) {
         console.error("Failed to parse properties as JSON:", properties, e);
       }
       const exit_point_script = (document.getElementById(`${config}|esp|${block_loop}|steps|${i}|exit_point_script`) as TextField).value;
+      const cmd = (document.getElementById(`${config}|esp|${block_loop}|steps|${i}|cmd`) as TextField | null)?.value ?? '';
       steps.push({ add_default_steps: add_default, 
         step: step, 
+        // Only written when set; a command wins over the step
+        ...(cmd.trim().length > 0 ? { cmd: cmd } : {}),
         properties: propertiesDict, 
         exit_point_script: exit_point_script 
       });
@@ -874,12 +873,10 @@ function save_esp(config:string) {
     });
   };
 
-  console.log(results);
-  console.log(JSON.stringify(results));
 
-  vscode.postMessage({
+  post({
     command: `save_esp`,
-    user_project: config,
+    user_project: config_target(config),
     panel: panel,
     panel_tab: panel_tab,
     data: results
@@ -893,7 +890,6 @@ function save_config(class_prefix:string) {
 
   let app_config: any = {};
 
-  console.log(`Save config for ${class_prefix}`);
 
   const global_cmds = get_global_cmds(class_prefix);
   const global_steps = get_global_steps(class_prefix);
@@ -981,10 +977,12 @@ function save_config(class_prefix:string) {
     //app_config[app_elements[i].id] = app_elements[i].value;
   }
 
-  console.log(app_config);
 
-  vscode.postMessage({
-    command: `${class_prefix}_save`,
+  if (class_prefix !== 'user' && class_prefix !== 'project')
+    return;   // source configs are saved on their own page
+  post({
+    command: 'save_config',
+    target: class_prefix,
     panel: panel,
     panel_tab: panel_tab,
     data: app_config
@@ -999,7 +997,7 @@ function receive_message(e: MessageEvent) {
   switch (e.data.command) {
     
     case 'finished_saving_config':
-      showAlert('Configuration reloaded.', 'success');
+      showAlert(page_text('obi_text_reloaded', 'Configuration reloaded.'), 'success');
       break;
   }
 }

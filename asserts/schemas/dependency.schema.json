@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OBI dependencies",
+  "description": "For each source the sources it depends on: when one of them changes, the source is built again.",
+  "type": "object",
+  "propertyNames": {
+    "pattern": "^[A-Za-z0-9_$#@.\\-]+/[A-Za-z0-9_$#@.\\-]+/[A-Za-z0-9_$#@.\\-]+$",
+    "patternErrorMessage": "A source in the form lib/file/member.ext, e.g. mylib/qrpglesrc/hello.rpgle.pgm"
+  },
+  "additionalProperties": {
+    "type": "array",
+    "description": "Sources this source depends on.",
+    "uniqueItems": true,
+    "items": {
+      "type": "string",
+      "description": "A source this source depends on.",
+      "pattern": "^[A-Za-z0-9_$#@.\\-]+/[A-Za-z0-9_$#@.\\-]+/[A-Za-z0-9_$#@.\\-]+$",
+      "patternErrorMessage": "A source in the form lib/file/member.ext, e.g. mylib/qrpglesrc/hello.rpgle.pgm"
+    }
+  }
+}

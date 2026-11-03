@@ -1,19 +1,22 @@
-import { getSourceProperties, getSetLiblCmd } from './properties';
-import { OBIConstants } from './obi_constants';
+import { getSourceProperties, getSourceVariables, getSetLiblCmd } from './properties';
 import { getTableElement } from './toml_tools';
 import { getSteps } from './app_config_tools';
 import { DirTool } from '../../../utilities/DirTool';
 import path from 'path';
 import { Workspace } from '../../../utilities/Workspace';
+import { replaceCmdParameters, removeUnresolvedCmdParameters, find_unresolved_placeholders } from './cmd_parameters';
+import { BuildListContext, create_build_list_context } from './context';
+import { Constants } from '../../../../shared/Constants';
 
-export function addBuildCmds(targetTree: any[], appConfig: any, extended_sources_config: any): void {
+export function addBuildCmds(targetTree: any[], appConfig: any, extended_sources_config: any, ctx: BuildListContext = create_build_list_context()): void {
   let objectList: string[] = [];
 
   for (const targetItem of targetTree) {
     for (const sourceItem of targetItem.sources) {
-      objectList.push(getObjectList(targetItem.level, sourceItem.source, appConfig));
-      sourceItem.cmds = getSourceBuildCmds(sourceItem.source, appConfig, extended_sources_config);
-      sourceItem.variables = getSourceProperties(appConfig, sourceItem.source);
+      objectList.push(getObjectList(targetItem.level, sourceItem.source, appConfig, ctx));
+      sourceItem.cmds = getSourceBuildCmds(sourceItem.source, appConfig, extended_sources_config, ctx);
+      // Only what is specific to the source (the full set is the same for all sources and contains all global commands)
+      sourceItem.variables = getSourceVariables(appConfig, sourceItem.source, ctx);
     }
   }
 
@@ -23,8 +26,8 @@ export function addBuildCmds(targetTree: any[], appConfig: any, extended_sources
   }
 }
 
-export function getObjectList(level: string, source: string, appConfig: any): string {
-  const variableDict = getSourceProperties(appConfig, source);
+export function getObjectList(level: string, source: string, appConfig: any, ctx?: BuildListContext): string {
+  const variableDict = getSourceProperties(appConfig, source, ctx);
   const prodLib = source.split('/')[0];
   const parts = source.split('.');
   const objType = parts[parts.length - 1];
@@ -32,19 +35,21 @@ export function getObjectList(level: string, source: string, appConfig: any): st
   return `${level}|${prodLib}|${variableDict.TARGET_LIB}|${variableDict.OBJ_NAME}|${objType}|${objAttr}|${source}`;
 }
 
-export function getSourceBuildCmds(source: string, appConfig: any, extended_sources_config: any): any[] {
-  const sourcesConfig = DirTool.get_toml(path.join(Workspace.get_workspace(), OBIConstants.get('SOURCE_CONFIG_TOML')));
+export function getSourceBuildCmds(source: string, appConfig: any, extended_sources_config: any, ctx: BuildListContext = create_build_list_context()): any[] {
+  const sourcesConfig = ctx.source_configs;
   let sourceConfig: any = {};
   if (sourcesConfig && sourcesConfig[source]) {
     sourceConfig = sourcesConfig[source];
   }
 
-  let steps = getSteps(source, appConfig, extended_sources_config);
+  let steps = getSteps(source, appConfig, extended_sources_config, ctx);
   if (sourceConfig.steps && sourceConfig.steps.length > 0) {
     steps = sourceConfig.steps;
   }
 
-  const variableDict = getSourceProperties(appConfig, source);
+  const variableDict = getSourceProperties(appConfig, source, ctx);
+  // Once per source, not per step and %word%
+  const cmd_config = { ...appConfig, ...sourceConfig };
 
   const cmds: any[] = [];
 
@@ -52,45 +57,57 @@ export function getSourceBuildCmds(source: string, appConfig: any, extended_sour
     
     let cmd: string;
     let step_properties: any = {};
+    // compile-list.json gets only what the step sets itself, not the whole merged config (compile-list-size.md)
+    let own_properties: Record<string, unknown> = {};
 
     if (typeof step === 'string') {
       if (step.trim() === '') continue;
-      cmd = getCmdFromStep(step, source, variableDict, appConfig, sourceConfig);
+      cmd = getCmdFromStep(step, appConfig, cmd_config);
     } else if (typeof step === 'object' && step !== null) {
-      step_properties = { ...variableDict, ...(step as any).properties };
-      cmd = (step as any).cmd || getCmdFromStep((step as any).step, source, step_properties, appConfig, sourceConfig);
+      const step_obj = step as { cmd?: string; step: string; properties?: Record<string, unknown> };
+      own_properties = { ...step_obj.properties };
+      step_properties = { ...variableDict, ...own_properties };
+      if (step_obj.cmd)
+        cmd = step_obj.cmd;
+      else {
+        cmd = getCmdFromStep(step_obj.step, appConfig, cmd_config);
+        // The step may set its own LIBL / TARGET_LIB
+        step_properties['SET_LIBL'] = getSetLiblCmd(appConfig, step_properties.LIBL || [], step_properties.TARGET_LIB);
+        if (step_properties['SET_LIBL'] !== variableDict['SET_LIBL'])
+          own_properties['SET_LIBL'] = step_properties['SET_LIBL'];
+      }
     } else {
       continue;
     }
 
     cmd = replaceCmdParameters(cmd, { ...variableDict, ...step_properties });
-    cmds.push({ cmd: cmd, status: 'new', properties: step_properties });
+    cmds.push({ cmd: cmd, status: 'new', properties: own_properties });
+
+    const unresolved = find_unresolved_placeholders(cmd);
+    if (unresolved.length > 0) {
+      const names = unresolved_report.get(source) ?? new Set<string>();
+      unresolved.forEach(name => names.add(name));
+      unresolved_report.set(source, names);
+    }
   }
 
   return cmds;
 }
 
-export function getCmdFromStep(
-  step: string,
-  source: string,
-  variableDict: any,
-  appConfig: any,
-  sourceConfig: any
-): string {
-  let cmd = resolveCmdId({ ...appConfig, ...sourceConfig }, step);
+/** Command of a step id (e.g. global.compile-cmds."rpgle.pgm"); cmd_config = app config merged with the source's config */
+export function getCmdFromStep(step: string, appConfig: any, cmd_config: any): string {
+  let cmd = resolveCmdId(cmd_config, step);
 
   const percentWords = cmd.match(/%[\w\.]+%/g) || [];
   for (const word of percentWords) {
     const key = word.replace(/%/g, '');
-    const subcmd = resolveCmdId({ ...appConfig, ...sourceConfig }, key);
+    const subcmd = resolveCmdId(cmd_config, key);
     cmd = cmd.replace(word, subcmd);
   }
 
-  variableDict['SET_LIBL'] = getSetLiblCmd(appConfig, variableDict.LIBL || [], variableDict.TARGET_LIB);
-
   if (!cmd) {
     throw new Error(
-      `Step '${step}' not found in '${OBIConstants.get('CONFIG_TOML')}' or '${OBIConstants.get('CONFIG_USER_TOML')}'`
+      `Step '${step}' not found in '${Constants.OBI_APP_CONFIG_FILE}' or '${Constants.OBI_APP_CONFIG_USER_FILE}'`
     );
   }
 
@@ -114,40 +131,18 @@ export function resolveCmdId(config: any, cmdid: string): string {
   return cmd;
 }
 
-export function replaceCmdParameters(cmd: string, variableDict: any): string {
-  for (const k in variableDict) {
-    const v = variableDict[k];
-    if (typeof v !== 'string' && typeof v !== 'number') {
-      continue;
-    }
-    const cmd_new = cmd.replace(new RegExp(`\\$\\(${k}\\)`, 'g'), String(v));
-    if (cmd_new !== cmd) {
-      cmd = replaceCmdParameters(cmd_new, variableDict);
-    }
-  }
+// Substitution lives in cmd_parameters.ts (pure, unit-tested); re-exported for existing callers
+export { replaceCmdParameters, removeUnresolvedCmdParameters };
 
-  return removeUnresolvedCmdParameters(cmd);
-}
 
-export function removeUnresolvedCmdParameters(cmd: string): string {
-  cmd = cmd.replace(/ACTGRP\(\$\(ACTGRP\)\)/g, '');
-  cmd = cmd.replace(/ACTGRP\(\)/g, '');
-  cmd = cmd.replace(/BNDDIR\(\$\(INCLUDE_BNDDIR\)\)/g, '');
-  cmd = cmd.replace(/BNDDIR\(\)/g, '');
-  cmd = cmd.replace(/TGTRLS\(\$\(TGTRLS\)\)/g, '');
-  cmd = cmd.replace(/TGTRLS\(\)/g, '');
-  cmd = cmd.replace(/STGMDL\(\$\(STGMDL\)\)/g, '');
-  cmd = cmd.replace(/STGMDL\(\)/g, '');
-  cmd = cmd.replace(/TGTCCSID\(\$\(TGTCCSID\)\)/g, '');
-  cmd = cmd.replace(/TGTCCSID\(\)/g, '');
-  cmd = cmd.replace(/DBGVIEW\(\$\(DBGVIEW\)\)/g, '');
-  cmd = cmd.replace(/DBGVIEW\(\)/g, '');
-  cmd = cmd.replace(/INCDIR\(\$\(INCDIR_SQLRPGLE\)\)/g, '');
-  cmd = cmd.replace(/INCDIR\(\)/g, '');
-  cmd = cmd.replace(/INCDIR\(\$\(INCDIR_RPGLE\)\)/g, '');
-  cmd = cmd.replace(/INCDIR\(\)/g, '');
+/** Unresolved variables per source, collected while building the commands (see take_unresolved_report). */
+const unresolved_report: Map<string, Set<string>> = new Map();
 
-  return cmd;
+/** Returns and clears the unresolved variables collected since the last call. */
+export function take_unresolved_report(): Map<string, string[]> {
+  const report = new Map([...unresolved_report].map(([source, names]) => [source, [...names]] as [string, string[]]));
+  unresolved_report.clear();
+  return report;
 }
 
 export function orderBuilds(targetTree: any): any {

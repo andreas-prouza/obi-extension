@@ -1,3 +1,5 @@
+**Status:** finished (1.3.1, 1.3.2)
+
 # Current situation
 
 In the build summary the source which needs to be build and all it's dependencies were listed.

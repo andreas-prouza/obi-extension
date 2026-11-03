@@ -29,14 +29,15 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index",
+				"--extensionTestsPath=${workspaceFolder}/out-test/test/suite/index",
 				"--disable-extensions",
-				"${workspaceFolder}/test-workspace-active"
+				// Tests clear their workspace folder: never point this at tracked files.
+				"${workspaceFolder}/.vscode-test/workspace"
 			],
 			"outFiles": [
-				"${workspaceFolder}/out/test/**/*.js"
+				"${workspaceFolder}/out-test/**/*.js"
 			],
-			"preLaunchTask": "npm: watch"
+			"preLaunchTask": "tests: prepare"
 		}
 	]
 }

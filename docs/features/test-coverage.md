@@ -1,3 +1,5 @@
+**Status:** finished (Unreleased)
+
 # Current situation
 
 `src/test/suite/` only contains `AppConfig.test.ts` and `extension.test.ts`. There is no test
@@ -21,3 +23,10 @@ coverage for:
   POSIX and Windows-style input paths, run on all platforms in CI
 * Add a minimal SSH_Tasks test using a mocked `node-ssh` client
 * Wire a coverage threshold into `npm test` so regressions in coverage are visible
+
+
+## Result
+
+* Build order: `DependencyOrder.test.ts` and `DependencyGraph.test.ts` (multi-level chains, cycles). Adding sources: `AddSources.test.ts`, including the status reset. Paths: `SourcePath.test.ts`, `DirTool` suite, on Linux and Windows in CI. SSH: `SSH_Tasks.test.ts`, `SshLogin.test.ts`, `Transfer.test.ts`, `HostKeyVerification.test.ts` with a mocked `node-ssh`.
+* `npm run test:coverage` (`c8`, in CI on Linux) measures the code the tests run in the VS Code extension host. Thresholds in `.c8rc.json`, just below the current values: lines 73.6 %, branches 80.7 %, functions 71.9 %. Raise them when coverage grows.
+* Page scripts (`src/webview/**/javascript`) run in the browser part of the webview and aren't measured.

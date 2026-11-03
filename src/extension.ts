@@ -8,11 +8,10 @@ import { Welcome } from './webview/controller/Welcome';
 import { OBITools } from './extension/utilities/OBITools';
 import { OBIConfiguration } from './webview/controller/OBIConfiguration';
 import { SSH_Tasks } from './extension/utilities/SSH_Tasks';
-import { AppConfig } from './shared/AppConfig';
+import { AppConfig } from './extension/config/AppConfig';
 import { ConfigInvalid } from './webview/controller/ConfigInvalid';
 import { logger } from './extension/utilities/Logger';
 import { SourceInfos } from './webview/source_list/SourceInfos';
-import { LocaleText } from './extension/utilities/LocaleText';
 import { Workspace } from './extension/utilities/Workspace';
 import { OBISourceConfiguration } from './webview/controller/OBISourceConfiguration';
 import { DirTool } from './extension/utilities/DirTool';
@@ -22,105 +21,110 @@ import { LocalSourceList } from './extension/utilities/LocalSourceList';
 import { QuickSettings } from './webview/quick_settings/QuickSettings';
 import { BuildHistoryProvider } from './webview/build_history/BuildHistoryProvider';
 import { sourceQuickSearch } from './source-quick-search';
-import { clear_diagnostics } from './extension/source/compile-diagnostics';
+import { CompileDiagnostics } from './extension/source/CompileDiagnostics';
+import { StatusBar } from './extension/StatusBar';
+import { offer_gitignore_entries } from './extension/obi/GitignoreCheck';
 import { HealthyWatchdog } from './extension/utilities/HealthyWatchdog';
 import { Constants } from './shared/Constants';
+import { SystemCmdExecution } from './extension/utilities/SystemCmdExecution';
+import { register_command } from './extension/utilities/Registration';
+import { HostKeyStore } from './extension/utilities/HostKeyStore';
+import { BuildOutput } from './extension/utilities/BuildOutput';
+import { add_log_files, register_output_channel, set_secret_values } from './extension/utilities/Logger';
+import { secret_values } from './shared/Redact';
+import { OPEN_CONFIGURATION, show_error } from './extension/utilities/Notify';
+import { remove_secrets_from_history } from './extension/obi/HistorySecrets';
+import { ProjectState } from './extension/ProjectState';
+import { FILE_CALLBACKS } from './file_callbacks';
 
 
 export function activate(context: vscode.ExtensionContext) {
 
+	register_output_channel(context);
+
 	logger.info('Congratulations, your extension "obi" is now active!');
-	const rootPath =
-		vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-			? vscode.workspace.workspaceFolders[0].uri.fsPath
-			: undefined;
-	const ws_uri =
-		vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-			? vscode.workspace.workspaceFolders[0].uri
-			: undefined;
 
 	logger.info('Start app');
 
 	logger.info(`vscode.env.remoteName: ${vscode.env.remoteName}`);
 	logger.info(`vscode.env.uriScheme: ${vscode.env.uriScheme}`);
 	logger.info(`vscode.env.appHost: ${vscode.env.appHost}`);
-	logger.info(`vscode.env.appHost: ${vscode.env.remoteName}`);
 
 	SSH_Tasks.context = context;
 	OBITools.ext_context = context;
 
+	// Older versions kept the selected config tab in the OS keychain; it's in workspaceState now
+	context.secrets.delete('obi|config|panel');
+	context.secrets.delete('obi|config|panel_tab');
 
-	// Add support for multi language
-	LocaleText.init(vscode.env.language, context);
 
-	//const fileUri = vscode.Uri.file('/home/andreas/projekte/opensource/extensions/obi/README.md');
-	//vscode.commands.executeCommand('vscode.open', fileUri);
 
-	const contains_obi_project: boolean = OBITools.contains_obi_project();
-	vscode.commands.executeCommand('setContext', 'obi.contains_obi_project', contains_obi_project);
+	// Host keys are stored globally, so this works in every window
+	register_command(context, 'obi.ssh.forget-host-key', () => HostKeyStore.forget(context.globalState));
+	BuildOutput.register(context);
+	// Also without a project: this creates it
+	register_command(context, 'obi.initialize-folder', () => OBITools.initialize_folder());
 
 	const obi_welcome_provider = new Welcome(context.extensionUri);
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(Welcome.viewType, obi_welcome_provider)
 	);
 
-	if (!contains_obi_project)
-		return;
+	// Sets obi.contains_obi_project / obi.valid-config, and registers and starts the rest when a project is found
+	// and its configuration is valid; config changes and Initialize update it without reloading the window
+	ProjectState.init(context, { on_project_found: register_project_features, on_valid: start_project_services });
+	ProjectState.update().catch((e: unknown) => show_error(vscode.l10n.t('OBI could not be started'), e));
+}
+
+
+
+/** Commands, views and listeners of an OBI project; once per window, as soon as a project is found */
+function register_project_features(context: vscode.ExtensionContext): void {
+
+	const rootPath = Workspace.get_workspace();
+	const ws_uri = Workspace.get_workspace_uri();
+
+	add_log_files(rootPath);
+	offer_gitignore_entries(context, rootPath).catch(e => logger.warn(`.gitignore check failed: ${e}`));
+	// Older versions stored the build config with secret* variables in the history (bugs.md #1)
+	if (!context.workspaceState.get<boolean>('obi.history.secrets_removed')) {
+		const cleaned = remove_secrets_from_history(path.join(rootPath, Constants.BUILD_HISTORY_DIR));
+		logger.info(`Secret variables removed from ${cleaned} build history entries`);
+		context.workspaceState.update('obi.history.secrets_removed', true);
+	}
+	set_secret_values(() => secret_values(AppConfig.get_app_config().global?.variables));
 
 	const obi_config_invalid_provider = new ConfigInvalid(context.extensionUri);
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(ConfigInvalid.viewType, obi_config_invalid_provider)
 	);
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.controller.config', () => {
-			OBIConfiguration.render(context, context.extensionUri)
-		})
-	)
+	register_command(context, 'obi.controller.config', () => {
+		OBIConfiguration.render(context, context.extensionUri)
+	})
+	context.subscriptions.push(Workspace.on_did_change_profile(() => OBIConfiguration.update()));
 
-	vscode.commands.executeCommand('setContext', 'obi.valid-config', false);
-
-	var self_check_ok: boolean = true;
 	try {
-		OBITools.self_check();
+		OBITools.migrate_project_files(context);
 	}
-	catch (e: any) {
-		self_check_ok = false;
-		vscode.window.showErrorMessage(e.message);
-		OBITools.reload_obi_extension_on_config_change();
-		return;
+	catch (e: unknown) {
+		show_error(vscode.l10n.t('OBI could not update the project files'), e);
 	}
-	
-	const config = AppConfig.get_app_config();
-	if (config.attributes_missing()) {
-		vscode.window.showErrorMessage("Config not finished!");
-		vscode.commands.executeCommand('obi.controller.config');
-		//OBITools.reload_obi_extension_on_config_change();
-		//return;
-	}
-	
-	vscode.commands.executeCommand('setContext', 'obi.valid-config', true);
-	HealthyWatchdog.set_healthy_watchdog(context);
 
+	register_command(context, 'obi.source-quick-search', () => {
+		sourceQuickSearch();
+	});
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.source-quick-search', () => {
-			sourceQuickSearch();
-		})
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.open.file', async () => {
-			const source_list = await LocalSourceList.get_source_list();
-			if (source_list) {
-				const file = await vscode.window.showQuickPick(source_list);
-				if (file) {
-					const fileUri = vscode.Uri.file(file);
-					vscode.commands.executeCommand('vscode.open', fileUri);
-				}
+	register_command(context, 'obi.open.file', async () => {
+		const source_list = await LocalSourceList.get_source_list();
+		if (source_list) {
+			const source = await vscode.window.showQuickPick(source_list);
+			if (source) {
+				// The list contains OBI source names (relative to the source folder)
+				vscode.commands.executeCommand('vscode.open', DirTool.get_file_URI(path.join(DirTool.get_local_source_dir_relative(), source)));
 			}
-		})
-	);
+		}
+	});
 
 	// Create new source list provider
 	const source_list_provider = new SourceListProvider(rootPath);
@@ -134,126 +138,83 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider(I_Releaser.viewType, i_releaser)
 	);
 
-	/*context.subscriptions.push(
-		vscode.commands.registerCommand('obi.deployment.maintain', () => {
-			DeploymentConfig.render(context)
-		})
-	);
+	/*register_command(context, 'obi.deployment.maintain', () => {
+		DeploymentConfig.render(context)
+	});
 	*/
 
 
 	//--------------------------------------------------------
 	// Controller OBI
 	//--------------------------------------------------------
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.get-remote-source-list', () => {
-			// Only available with workspaces
-			OBICommands.get_remote_source_list();
-		})
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.copy-profile-config', () => {
-			OBIController.copy_current_profile()
-		})
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.check-remote-sources', () => {
-			// Only available with workspaces
-			OBITools.check_remote_sources().then((success) => {
-				if (success)
-					vscode.window.showInformationMessage('Remote source check succeeded');
-				else
-					vscode.window.showWarningMessage('Remote source check failed');
-			});
-		})
-	);
-
-	const run_native: boolean = OBITools.without_local_obi();
-	vscode.commands.executeCommand('setContext', 'obi.run_native', run_native);
-
-	//SSH_Tasks.connect();
+	register_command(context, 'obi.copy-profile-config', () => {
+		OBIController.copy_current_profile()
+	});
 
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.reset-compiled-object-list', () => {
-			// Only available with workspaces
-			OBICommands.reset_compiled_object_list();
-		})
-	);
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.get-remote-build-results', () => {
-			// Only available with workspaces
-			OBICommands.get_remote_build_results();
-		})
-	);
+	register_command(context, 'obi.reset-compiled-object-list', () => {
+		// Only available with workspaces
+		OBICommands.reset_compiled_object_list();
+	});
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.controller.dependency-list', () => {
-			vscode.commands.executeCommand('vscode.open', vscode.Uri.joinPath(ws_uri, Constants.DEPENDENCY_LIST));
-		})
-	);
+	register_command(context, 'obi.get-remote-build-results', () => {
+		// Only available with workspaces
+		OBICommands.get_remote_build_results();
+	});
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.show_changes', () => {
-			// Only available with workspaces
-			OBICommands.show_changes(context);
-		})
-	);
+	register_command(context, 'obi.controller.dependency-list', () => {
+		vscode.commands.executeCommand('vscode.open', vscode.Uri.joinPath(ws_uri, Constants.DEPENDENCY_LIST));
+	});
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.show_single_changes', () => {
-			// Only available with workspaces
-			OBICommands.show_single_changes(context);
-		})
-	);
+	register_command(context, 'obi.show_changes', () => {
+		// Only available with workspaces
+		OBICommands.show_changes(context);
+	});
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.run_build', () => {
-			// Only available with workspaces
-			OBICommands.run_build(context);
-		})
-	);
+	register_command(context, 'obi.show_single_changes', () => {
+		// Only available with workspaces
+		OBICommands.show_single_changes(context);
+	});
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.run_single_build', () => {
-			// Only available with workspaces
-			OBICommands.run_single_build(context);
-		})
-	);
+	register_command(context, 'obi.run_build', () => {
+		// Only available with workspaces
+		OBICommands.run_build(context);
+	});
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.add-source-to-build-summary', () => {
-			// Only available with workspaces
-			BuildSummary.add_sources(context.extensionUri, ws_uri);
-		})
-	);
+	register_command(context, 'obi.run_single_build', () => {
+		// Only available with workspaces
+		OBICommands.run_single_build(context);
+	});
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.open_build_summary', (summary_file_path?: string) => {
-			// Only available with workspaces
-			if (summary_file_path) {
-				summary_file_path = OBITools.convert_local_filepath_2_obi_filepath(summary_file_path);
-				if (DirTool.file_exists(path.join(Workspace.get_workspace(), summary_file_path))) {
-					summary_file_path = path.dirname(summary_file_path);
-				}
+	register_command(context, 'obi.add-source-to-build-summary', () => {
+		// Only available with workspaces
+		BuildSummary.add_sources(context.extensionUri, ws_uri);
+	});
+
+	register_command(context, 'obi.open_build_summary', (summary_file_path?: string) => {
+		// Only available with workspaces
+		if (summary_file_path) {
+			if (path.isAbsolute(summary_file_path))
+				summary_file_path = DirTool.to_workspace_relative(summary_file_path) ?? summary_file_path;
+			if (DirTool.file_exists(path.join(Workspace.get_workspace(), summary_file_path))) {
+				summary_file_path = path.dirname(summary_file_path);
 			}
-			BuildSummary.render(context.extensionUri, ws_uri, summary_file_path);
-		})
-	);
+		}
+		BuildSummary.render(context.extensionUri, ws_uri, summary_file_path);
+	});
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.transfer-all', () => {
-			// Only available with workspaces
-			OBITools.transfer_project_folder(false);
-		})
-	);
+	register_command(context, 'obi.transfer-all', () => {
+		// Only available with workspaces
+		OBITools.transfer_project_folder(false);
+	});
 
 	const obi_controller_provider = new OBIController(context.extensionUri);
 	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(OBIController.viewType, obi_controller_provider)
+		// Keep the page (e.g. the busy indicator) while the view is hidden
+		vscode.window.registerWebviewViewProvider(OBIController.viewType, obi_controller_provider, {
+			webviewOptions: { retainContextWhenHidden: true }
+		})
 	);
 
 	const quick_settings = new QuickSettings(context.extensionUri);
@@ -264,107 +225,82 @@ export function activate(context: vscode.ExtensionContext) {
 	// Register Build History Tree View
 	const buildHistoryProvider = new BuildHistoryProvider(rootPath);
 	buildHistoryProvider.register(context);
+	BuildHistoryProvider.init_retention(context.workspaceState);
 
-	if (config.general['check-remote-source-on-startup'] && config.general['check-remote-source-on-startup'] === true) {
-		OBITools.check_remote_sources().then((success) => {
-			if (success)
-				vscode.window.showInformationMessage('Remote source check succeeded');
-			else
-				vscode.window.showWarningMessage('Remote source check failed');
-		});
-	}
+	register_command(context, 'obi.source-filter.maintain-source-infos', () => {
+		// Only available with workspaces
+		SourceInfos.render(context, true);
+	});
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.source-filter.maintain-source-infos', () => {
-			// Only available with workspaces
-			SourceInfos.render(context, true);
-		})
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand('obi.source-filter.view-source-infos', () => {
-			// Only available with workspaces
-			SourceInfos.render(context, false);
-		})
-	);
+	register_command(context, 'obi.source-filter.view-source-infos', () => {
+		// Only available with workspaces
+		SourceInfos.render(context, false);
+	});
 
 
-	vscode.commands.registerCommand('obi.source.edit-compile-config', async (item: SourceListItem | vscode.Uri) => {
+	register_command(context, 'obi.source.edit-compile-config', async (item: SourceListItem | vscode.Uri) => {
 
 		if (item instanceof SourceListItem)
 			OBISourceConfiguration.render(context, context.extensionUri, `${item.src_lib}/${item.src_file}/${item.src_member}`);
 
 		if (item instanceof vscode.Uri) {
 
-			const config: AppConfig = AppConfig.get_app_config();
-			const src_dir: string = config.general['source-dir'] || 'src';
-			let source_path: string = item.fsPath.replace(Workspace.get_workspace(), '')
-			source_path = source_path.replace(src_dir, '');
-			source_path = source_path.replace('\\', '/');
-			source_path = source_path.replace(/^\/+/, '');
-
-			if (!DirTool.file_exists(path.join(Workspace.get_workspace(), src_dir, source_path))) {
-				vscode.window.showErrorMessage(`Source ${source_path} not found in OBI project`);
+			const source_path = DirTool.to_obi_source(item.fsPath);
+			if (!source_path) {
+				vscode.window.showErrorMessage(DirTool.not_in_source_dir_message(item.fsPath));
+				return;
+			}
+			if (!DirTool.file_exists(item.fsPath)) {
+				vscode.window.showErrorMessage(vscode.l10n.t('Source {0} not found in the OBI project', source_path));
 				return;
 			}
 
-			OBISourceConfiguration.render(context, context.extensionUri, `${source_path}`);
+			OBISourceConfiguration.render(context, context.extensionUri, source_path);
 		}
 
 	});
 
 
-	vscode.commands.registerCommand('obi.source.maintain-source-dependency', async (item: SourceListItem | vscode.Uri) => {
+	register_command(context, 'obi.source.maintain-source-dependency', async (item: SourceListItem | vscode.Uri) => {
 
 		if (item instanceof SourceListItem)
 			OBISourceDependency.render(context, context.extensionUri, `${item.src_lib}/${item.src_file}/${item.src_member}`);
 
 		if (item instanceof vscode.Uri) {
 
-			const config: AppConfig = AppConfig.get_app_config();
-			const src_dir: string = config.general['source-dir'] || 'src';
-			let source_path: string = item.fsPath.replace(Workspace.get_workspace(), '')
-			source_path = source_path.replace(src_dir, '');
-			source_path = source_path.replace(/\\/g, '/');
-			source_path = source_path.replace(/^\/+/, '');
-
-			if (!DirTool.file_exists(path.join(Workspace.get_workspace(), src_dir, source_path))) {
-				vscode.window.showErrorMessage(`Source ${source_path} not found in OBI project`);
+			const source_path = DirTool.to_obi_source(item.fsPath);
+			if (!source_path) {
+				vscode.window.showErrorMessage(DirTool.not_in_source_dir_message(item.fsPath));
+				return;
+			}
+			if (!DirTool.file_exists(item.fsPath)) {
+				vscode.window.showErrorMessage(vscode.l10n.t('Source {0} not found in the OBI project', source_path));
 				return;
 			}
 
-			OBISourceDependency.render(context, context.extensionUri, `${source_path}`);
+			OBISourceDependency.render(context, context.extensionUri, source_path);
 		}
 
 	});
 
-	vscode.commands.registerCommand('obi.clearDiagnostics', async(item) => {
-			clear_diagnostics().then(() => {
-				// Optional: Show a little status bar message
-				vscode.window.setStatusBarMessage('Diagnostics cleared', 3000);
-			});
+	register_command(context, 'obi.clearDiagnostics', () => {
+		CompileDiagnostics.clear();
+		vscode.window.setStatusBarMessage(vscode.l10n.t('Diagnostics cleared'), 3000);
 	});
-
-
-	LocalSourceList.load_source_list();
 
 
 	// Watch for file renames in the workspace
 	const renameListener = vscode.workspace.onDidRenameFiles(async event => {
 		const app_config = AppConfig.get_app_config();
-		const src_dir = (app_config.general['source-dir'] || 'src').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
-		const src_prefix = `${src_dir}/`;
 
 		for (const renamedFile of event.files) {
-			const old_path = OBITools.convert_local_filepath_2_obi_filepath(renamedFile.oldUri.fsPath).replace(/\\/g, '/').replace(/^\/+/, '');
-			const new_path = OBITools.convert_local_filepath_2_obi_filepath(renamedFile.newUri.fsPath).replace(/\\/g, '/').replace(/^\/+/, '');
+			const old_source = DirTool.to_obi_source(renamedFile.oldUri.fsPath);
+			const new_source = DirTool.to_obi_source(renamedFile.newUri.fsPath);
 
-			if (!old_path.startsWith(src_prefix) || !new_path.startsWith(src_prefix)) {
+			if (!old_source || !new_source) {
 				continue;
 			}
 
-			const old_source = old_path.substring(src_prefix.length);
-			const new_source = new_path.substring(src_prefix.length);
 			const old_ext = path.extname(old_source).replace('.', '').toLowerCase();
 			const new_ext = path.extname(new_source).replace('.', '').toLowerCase();
 
@@ -372,14 +308,36 @@ export function activate(context: vscode.ExtensionContext) {
 				continue;
 			}
 
-			await SourceListProvider.sync_renamed_source_member(old_source, new_source);
+			try {
+				await SourceListProvider.sync_renamed_source_member(old_source, new_source);
+			}
+			catch (e) {
+				DirTool.show_save_error(e);
+			}
 		}
 
 		SourceListProvider.get_instance().refresh();
 	});
 
     context.subscriptions.push(renameListener);
+}
 
 
+
+/** Watchers, compile messages, status bar, source list and history clean-up; once the configuration is valid */
+function start_project_services(context: vscode.ExtensionContext): void {
+	HealthyWatchdog.set_healthy_watchdog(context, FILE_CALLBACKS);
+	CompileDiagnostics.init(context);
+	StatusBar.init(context);
+	BuildHistoryProvider.apply_retention().catch((e: unknown) => logger.warn(`Build history retention failed: ${e}`));
+	LocalSourceList.load_source_list();
+}
+
+
+
+export function deactivate(): void {
+	// Local OBI processes run in their own process group and would outlive a window reload
+	SystemCmdExecution.abort_all();
+	SSH_Tasks.disconnect();
 }
 

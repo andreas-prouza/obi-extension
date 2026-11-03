@@ -1,3 +1,5 @@
+**Status:** ready
+
 # Current situation
 
 [CLAUDE.md](../../CLAUDE.md) states "Command IDs use the prefix `obi-`".
