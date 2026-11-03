@@ -23,25 +23,36 @@
     "url": "https://github.com/andreas-prouza/obi-extension"
   },
   "engines": {
-    "vscode": "^1.66.0"
+    "vscode": "^1.90.0"
   },
   "categories": [
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "workspaceContains:.obi/etc/app-config.toml"
   ],
   "main": "./out/extension.js",
+  "l10n": "./l10n",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "%capabilities.untrustedWorkspaces%"
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "%capabilities.virtualWorkspaces%"
+    }
+  },
   "contributes": {
     "commands": [
       {
         "command": "obi.clearDiagnostics",
-        "title": "OBI: Clear Diagnostics",
+        "title": "%obi.clearDiagnostics%",
         "icon": "$(clear-all)"
       },
       {
         "command": "obi.showErrors",
-        "title": "OBI: Show Errors",
+        "title": "%obi.showErrors%",
         "icon": "$(check-all)",
         "when": "obi.contains_obi_project && obi.valid-config"
       },
@@ -49,31 +60,36 @@
         "command": "obi.show_changes",
         "title": "%obi.show_changes%",
         "icon": "$(loaded-scripts-view-icon)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "when": "obi.contains_obi_project && obi.valid-config",
+        "enablement": "!obi.busy"
       },
       {
         "command": "obi.show_single_changes",
         "title": "%obi.show_single_changes%",
         "icon": "$(loaded-scripts-view-icon)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "when": "obi.contains_obi_project && obi.valid-config",
+        "enablement": "!obi.busy"
       },
       {
         "command": "obi.run_build",
         "title": "%obi.run_build%",
         "icon": "$(run-all)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "when": "obi.contains_obi_project && obi.valid-config",
+        "enablement": "!obi.busy"
       },
       {
         "command": "obi.run_single_build",
         "title": "%obi.run_single_build%",
         "icon": "$(run)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "when": "obi.contains_obi_project && obi.valid-config",
+        "enablement": "!obi.busy"
       },
       {
         "command": "obi.add-source-to-build-summary",
         "title": "%obi.add-source-to-build-summary%",
         "icon": "$(add)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "when": "obi.contains_obi_project && obi.valid-config",
+        "enablement": "!obi.busy"
       },
       {
         "command": "obi.source-filter.update",
@@ -103,25 +119,15 @@
         "command": "obi.reset-compiled-object-list",
         "title": "%obi.reset-compiled-object-list%",
         "icon": "$(extensions)",
-        "when": "obi.contains_obi_project && obi.valid-config"
-      },
-      {
-        "command": "obi.get-remote-source-list",
-        "title": "%obi.get-remote-source-list%",
-        "icon": "$(arrow-down)",
-        "when": "obi.contains_obi_project && obi.valid-config && false"
+        "when": "obi.contains_obi_project && obi.valid-config",
+        "enablement": "!obi.busy"
       },
       {
         "command": "obi.get-remote-build-results",
         "title": "%obi.get-remote-build-results%",
         "icon": "$(arrow-down)",
-        "when": "obi.contains_obi_project && obi.valid-config && false"
-      },
-      {
-        "command": "obi.check-remote-sources",
-        "title": "%obi.check-remote-sources%",
-        "icon": "$(tasklist)",
-        "when": "obi.contains_obi_project && obi.valid-config && false"
+        "when": "obi.contains_obi_project && obi.valid-config && false",
+        "enablement": "!obi.busy"
       },
       {
         "command": "obi.controller.config",
@@ -145,7 +151,8 @@
         "command": "obi.transfer-all",
         "title": "%obi.transfer-all%",
         "icon": "$(cloud-upload)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "when": "obi.contains_obi_project && obi.valid-config",
+        "enablement": "!obi.busy"
       },
       {
         "command": "obi.source-filter.show-view",
@@ -219,46 +226,68 @@
       },
       {
         "command": "obi.build-history.update",
-        "title": "Update Build History"
+        "title": "%obi.build-history.update%"
       },
       {
         "command": "obi.build-history.search",
-        "title": "Filter Build History by Source",
+        "title": "%obi.build-history.search%",
         "icon": "$(search)"
       },
       {
         "command": "obi.build-history.switch-to-source-view",
-        "title": "Switch to Source-based View",
+        "title": "%obi.build-history.switch-to-source-view%",
         "icon": "$(references)"
       },
       {
         "command": "obi.build-history.switch-to-date-view",
-        "title": "Switch to Date-based View",
+        "title": "%obi.build-history.switch-to-date-view%",
         "icon": "$(calendar)"
       },
       {
         "command": "obi.build-history.delete-item",
-        "title": "Delete Build History Item",
+        "title": "%obi.build-history.delete-item%",
         "icon": "$(trash)"
       },
       {
         "command": "obi.build-history.delete-date",
-        "title": "Delete Build History for Date",
+        "title": "%obi.build-history.delete-date%",
         "icon": "$(trash)"
       },
       {
+        "command": "obi.build-history.delete-all",
+        "title": "%obi.build-history.delete-all%",
+        "icon": "$(clear-all)"
+      },
+      {
         "command": "obi.open.file",
-        "title": "OBI: Open file by name"
+        "title": "%obi.open.file%"
       },
       {
         "command": "obi.source-quick-search",
-        "title": "OBI: Source quick search",
+        "title": "%obi.source-quick-search%",
         "icon": "$(search)"
       },
       {
         "command": "obi.show.tools",
         "category": "OBI",
-        "title": "OBI: Show tools"
+        "title": "%obi.show.tools%"
+      },
+      {
+        "command": "obi.ssh.forget-host-key",
+        "title": "%obi.ssh.forget-host-key%"
+      },
+      {
+        "command": "obi.build.show-output",
+        "title": "%obi.build.show-output%",
+        "icon": "$(output)"
+      },
+      {
+        "command": "obi.status-bar.menu",
+        "title": "%obi.status-bar.menu%"
+      },
+      {
+        "command": "obi.initialize-folder",
+        "title": "%obi.initialize-folder%"
       }
     ],
     "menus": {
@@ -306,19 +335,9 @@
           "group": "navigation@5"
         },
         {
-          "command": "obi.get-remote-source-list",
-          "when": "false && obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
-          "group": "navigation@20"
-        },
-        {
           "command": "obi.reset-compiled-object-list",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
           "group": "navigation@40"
-        },
-        {
-          "command": "obi.check-remote-sources",
-          "when": "false && obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
-          "group": "navigation@50"
         },
         {
           "command": "obi.transfer-all",
@@ -359,6 +378,11 @@
           "command": "obi.build-history.search",
           "when": "view == obi.build-history",
           "group": "navigation@0"
+        },
+        {
+          "command": "obi.build-history.delete-all",
+          "when": "view == obi.build-history",
+          "group": "navigation@2"
         }
       ],
       "editor/title/context": [
@@ -440,7 +464,7 @@
         },
         {
           "command": "obi.build-history.delete-item",
-          "when": "view == obi.build-history && viewItem == buildHistoryFile",
+          "when": "view == obi.build-history && viewItem == buildHistoryBuild",
           "group": "inline"
         },
         {
@@ -448,13 +472,23 @@
           "when": "view == obi.build-history && viewItem == buildHistoryDate",
           "group": "inline"
         }
+      ],
+      "commandPalette": [
+        {
+          "command": "obi.status-bar.menu",
+          "when": "false"
+        },
+        {
+          "command": "obi.initialize-folder",
+          "when": "!obi.contains_obi_project"
+        }
       ]
     },
     "viewsContainers": {
       "activitybar": [
         {
           "id": "obi-bar",
-          "title": "Object Builder for i",
+          "title": "%view.obi-bar%",
           "icon": "$(code)"
         }
       ]
@@ -464,7 +498,7 @@
         {
           "type": "webview",
           "id": "obi.controller",
-          "name": "OBI Build",
+          "name": "%view.obi.controller%",
           "when": "obi.contains_obi_project && obi.valid-config"
         },
         {
@@ -476,7 +510,7 @@
         {
           "type": "tree",
           "id": "obi.build-history",
-          "name": "Build history",
+          "name": "%view.obi.build-history%",
           "when": "obi.contains_obi_project && obi.valid-config"
         },
         {
@@ -495,7 +529,7 @@
           "type": "webview",
           "id": "obi-welcome",
           "name": "%Welcome%",
-          "when": "obi.contains_obi_project == false"
+          "when": "!obi.contains_obi_project"
         },
         {
           "type": "webview",
@@ -504,58 +538,219 @@
           "when": "obi.contains_obi_project && !obi.valid-config"
         }
       ]
-    }
+    },
+    "configuration": {
+      "title": "OBI",
+      "properties": {
+        "obi.build.revealOutput": {
+          "type": "string",
+          "enum": [
+            "onStart",
+            "onError",
+            "never"
+          ],
+          "enumDescriptions": [
+            "%obi.build.revealOutput.onStart%",
+            "%obi.build.revealOutput.onError%",
+            "%obi.build.revealOutput.never%"
+          ],
+          "default": "onError",
+          "description": "%obi.build.revealOutput%"
+        },
+        "obi.build.confirmRun": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "%obi.build.confirmRun%"
+        },
+        "obi.statusBar.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "%obi.statusBar.enabled%"
+        },
+        "obi.log.writeFiles": {
+          "type": "boolean",
+          "default": true,
+          "description": "%obi.log.writeFiles%"
+        },
+        "obi.log.maxFileSizeMB": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "description": "%obi.log.maxFileSizeMB%"
+        },
+        "obi.buildHistory.maxBuilds": {
+          "type": "number",
+          "default": 100,
+          "minimum": 0,
+          "scope": "resource",
+          "description": "%obi.buildHistory.maxBuilds%"
+        },
+        "obi.buildHistory.maxAgeDays": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "scope": "resource",
+          "description": "%obi.buildHistory.maxAgeDays%"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "obi.run_single_build",
+        "key": "ctrl+alt+shift+b",
+        "mac": "cmd+alt+shift+b",
+        "when": "editorTextFocus && obi.contains_obi_project && obi.valid-config && resourceExtname =~ /^\\.(pgm|srvpgm|module|file)$/"
+      },
+      {
+        "command": "obi.show_single_changes",
+        "key": "ctrl+alt+shift+c",
+        "mac": "cmd+alt+shift+c",
+        "when": "editorTextFocus && obi.contains_obi_project && obi.valid-config && resourceExtname =~ /^\\.(pgm|srvpgm|module|file)$/"
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "obi.getting-started",
+        "title": "%walkthrough.title%",
+        "description": "%walkthrough.description%",
+        "steps": [
+          {
+            "id": "initialize",
+            "title": "%walkthrough.initialize.title%",
+            "description": "%walkthrough.initialize.description%",
+            "media": {
+              "markdown": "asserts/walkthrough/initialize.md"
+            },
+            "completionEvents": [
+              "onContext:obi.contains_obi_project"
+            ]
+          },
+          {
+            "id": "configure",
+            "title": "%walkthrough.configure.title%",
+            "description": "%walkthrough.configure.description%",
+            "media": {
+              "markdown": "asserts/walkthrough/configure.md"
+            },
+            "when": "obi.contains_obi_project",
+            "completionEvents": [
+              "onContext:obi.valid-config"
+            ]
+          },
+          {
+            "id": "show-changes",
+            "title": "%walkthrough.show-changes.title%",
+            "description": "%walkthrough.show-changes.description%",
+            "media": {
+              "markdown": "asserts/walkthrough/show-changes.md"
+            },
+            "when": "obi.valid-config",
+            "completionEvents": [
+              "onCommand:obi.show_changes"
+            ]
+          },
+          {
+            "id": "run-build",
+            "title": "%walkthrough.run-build.title%",
+            "description": "%walkthrough.run-build.description%",
+            "media": {
+              "markdown": "asserts/walkthrough/run-build.md"
+            },
+            "when": "obi.valid-config",
+            "completionEvents": [
+              "onCommand:obi.run_build"
+            ]
+          },
+          {
+            "id": "read-more",
+            "title": "%walkthrough.read-more.title%",
+            "description": "%walkthrough.read-more.description%",
+            "media": {
+              "markdown": "asserts/walkthrough/read-more.md"
+            }
+          }
+        ]
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": "**/.obi/etc/dependency.json",
+        "url": "./asserts/schemas/dependency.schema.json"
+      },
+      {
+        "fileMatch": "**/.obi/etc/source-infos.json",
+        "url": "./asserts/schemas/source-infos.schema.json"
+      },
+      {
+        "fileMatch": "**/.obi/source-list/*.json",
+        "url": "./asserts/schemas/source-filter.schema.json"
+      },
+      {
+        "fileMatch": [
+          "**/.obi/build-output/compile-list.json",
+          "**/.obi/build-history/*/compile-list.json"
+        ],
+        "url": "./asserts/schemas/compile-list.schema.json"
+      }
+    ]
   },
   "scripts": {
-    "clean": "node -e \"require('fs').rmSync('out',{recursive:true,force:true})\"",
-    "copy-assets": "node -e \"require('fs').cpSync('asserts','out/asserts',{recursive:true})\"",
-    "copy-obi-media": "node -e \"require('fs').cpSync('obi-media','out/obi-media',{recursive:true})\"",
-    "copy-all": "npm run copy-assets && npm run copy-obi-media",
-    "vscode:prepublish": "npm run package",
-    "compile": "node ./esbuild.js && npm run copy-all",
-    "package": "NODE_ENV=production node ./esbuild.js",
+    "clean": "node -e \"for (const d of ['out','out-test']) require('fs').rmSync(d,{recursive:true,force:true})\"",
+    "vscode:prepublish": "npm run clean && npm run package",
+    "compile": "node ./esbuild.js && node scripts/copy-vendor.js",
+    "package": "node ./esbuild.js --production && node scripts/copy-vendor.js",
+    "package:vsix": "vsce package --no-dependencies",
     "watch": "node ./esbuild.js --watch",
-    "compile-tests": "tsc -p ./",
-    "watch-tests": "tsc -watch -p ./",
-    "pretest": "npm run compile-tests && npm run lint",
-    "test": "node ./out/test/runTest.js",
-    "test:fast": "npm run compile-tests && node ./out/test/runTest.js",
+    "typecheck": "tsc -p ./ --noEmit",
+    "compile-tests": "tsc -p ./tsconfig.test.json",
+    "watch-tests": "tsc -p ./tsconfig.test.json --watch",
+    "pretest": "npm run compile && npm run compile-tests",
+    "test": "node ./out-test/test/runTest.js",
+    "test:unit": "npm run compile-tests && mocha --ui tdd \"out-test/test/unit/**/*.test.js\"",
+    "test:coverage": "npm run pretest && node -e \"require('fs').rmSync('coverage',{recursive:true,force:true})\" && node ./out-test/test/runTest.js --coverage && c8 report",
     "lint": "eslint src/",
-    "postinstall": "rm -rf node_modules/ssh2/test"
+    "lint:ci": "eslint src/ --max-warnings 256",
+    "check:repo": "node scripts/check-repo.js",
+    "postinstall": "node -e \"require('fs').rmSync('node_modules/ssh2/test',{recursive:true,force:true})\""
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/chai": "^5.2.3",
     "@types/fs-extra": "^11.0.4",
+    "@types/mocha": "^10.0.10",
     "@types/sinon": "^21.0.1",
-    "@types/vscode": "^1.66.0",
+    "@types/ssh2": "^1.15.6",
+    "@types/vscode": "1.90.0",
     "@types/vscode-webview": "^1.57.5",
-    "@typescript-eslint/eslint-plugin": "latest",
-    "@typescript-eslint/parser": "latest",
+    "@typescript-eslint/eslint-plugin": "^8.72.0",
+    "@typescript-eslint/parser": "^8.72.0",
     "@vscode/test-electron": "^3.0.0",
-    "chai": "^6.2.2",
+    "@vscode/vsce": "^4.0.0",
+    "ajv": "^8.20.0",
+    "c8": "^12.0.0",
     "esbuild": "^0.28.0",
     "eslint": "^10.2.0",
     "fs-extra": "^11.3.4",
     "glob": "^13.0.6",
+    "mocha": "^11.8.0",
     "ovsx": "^1.0.0",
     "sinon": "^22.0.0",
     "typescript-eslint": "^8.58.0"
   },
   "dependencies": {
-    "@emnapi/core": "^1.4.3",
-    "@emnapi/runtime": "^1.4.3",
     "@ibm/ibmi-eventf-parser": "^2.0.1",
-    "@tybys/wasm-util": "^0.10.1",
     "@vscode/codicons": "^0.0.45",
     "@vscode/webview-ui-toolkit": "^1.4.0",
+    "bootstrap": "5.3.3",
+    "bootstrap-table": "1.23.2",
     "deepmerge": "^4.3.1",
-    "hasha": "^7.0.0",
+    "jquery": "3.7.1",
+    "minimatch": "^10.2.6",
     "node-ssh": "^13.2.0",
     "nunjucks": "^3.2.4",
     "smol-toml": "^1.3.0",
-    "wildcard-match": "latest",
-    "winston": "latest",
-    "winston-transport": "latest"
+    "tom-select": "2.4.3",
+    "winston": "^3.19.0",
+    "winston-transport": "^4.9.0"
   }
 }

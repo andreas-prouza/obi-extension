@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="{{ global_stuff['theme_mode'] }}">
   <head>
+  {% include "tools/csp.html" %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table.min.css">
     
     <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
     <link rel="stylesheet" href="{{ config_css }}">
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/codicons/codicon.css">
+    <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/codicons/codicon.css">
 
     <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
 
@@ -23,12 +23,14 @@
       {{ global_stuff['get_text']('Created at') | safe }} <b><u>{{ compile_list['timestamp'] }}</u></b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <a href='command:vscode.open?{{ compile_file_uri }}'>{{ global_stuff['get_text']('open JSON file') | safe }}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <a href='command:vscode.open?{{ log_file_uri }}'>{{ global_stuff['get_text']('open OBI log') | safe }}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      {% if not is_compile_list_completed %}&nbsp;&nbsp;&nbsp;<vscode-button style="height:35px" onclick="run_build()" style="vertical-align: super;" id="run_build" appearance="primary">{{ global_stuff['get_text']('Run build') | safe }}</vscode-button>{% endif %}
+      {% if not is_compile_list_completed %}&nbsp;&nbsp;&nbsp;<vscode-button style="height:35px; vertical-align: super;" id="run_build" appearance="primary">{{ global_stuff['get_text']('Run build') | safe }}</vscode-button>{% endif %}
       &nbsp;&nbsp;&nbsp;
-      {% include custom_build_list_template ignore missing %}
+      {% if custom_build_list_template %}{% include custom_build_list_template ignore missing %}{% endif %}
     </div>
     <div><vscode-button style="height:35px; vertical-align: super;" id="add_source" appearance="primary"><span slot="start"><span class="codicon codicon-add"></span></span>{{ global_stuff['get_text']('Add source') | safe }}</vscode-button></div>
 
+    {% else %}
+    <p id="no_compile_list">{{ global_stuff['get_text']("No build summary yet. Run 'Show changes' to create one.") }}</p>
     {% endif %}
     <div class="save-button-wrapper">
       {% include "tools/alertBox.html" %}
@@ -37,7 +39,7 @@
     
     <div class="grid-container">
       <div class="box box-1">
-        <details open>
+        <details data-state-id="objects|new" open>
           <summary><h6>{{ object_list['new_sources'] | length}} {{ global_stuff['get_text']('New sources') | safe }}</h6></summary>
         <ul>
           {% for source in object_list['new_sources'] %}
@@ -47,7 +49,7 @@
         </details>
       </div>
       <div class="box box-2">
-        <details open>
+        <details data-state-id="objects|changed" open>
           <summary><h6>{{ object_list['changed_sources'] | length}} {{ global_stuff['get_text']('Changed sources') | safe }}</h6></summary>
         <ul>
           {% for source in object_list['changed_sources'] %}
@@ -57,8 +59,8 @@
         </details>
       </div>
       <div class="box box-3">
-        <details open>
-          <summary><h6>{{ object_list['dependend_sources'] | length}} {{ global_stuff['get_text']('Dependend objects') | safe }}</h6></summary>
+        <details data-state-id="objects|dependent" open>
+          <summary><h6>{{ object_list['dependend_sources'] | length}} {{ global_stuff['get_text']('Dependent objects') | safe }}</h6></summary>
         <ul>
           {% for source in object_list['dependend_sources'] %}
             <li><a href='command:vscode.open?{{ source["file"] }}'>{{ source["source"] }}</a></li>
@@ -114,7 +116,7 @@
             <span class="{{ last_cmd.status }}">{{ last_cmd.status }}</span>
           </td>
           <td>
-            <details {%if last_cmd.status == 'failed' %}open{% endif %}><summary>{{ source_item['cmds'] | length }} {{ global_stuff['get_text']('commands') | safe }}</summary>
+            <details data-state-id="cmds|{{ level_item['level'] }}|{{ source_item['source'] }}" {%if last_cmd.status == 'failed' %}open{% endif %}><summary>{{ source_item['cmds'] | length }} {{ global_stuff['get_text']('commands') | safe }}</summary>
               <table>
                 <tr>
                   <th>&nbsp;</th>
@@ -128,7 +130,7 @@
                   <td><vscode-checkbox class="type_checkbox build_source_cmd" source="{{ source_item['source'] }}" cmd="{{ cmd_entry['cmd'] }}" {% if 'ignore' not in cmd_entry or cmd_entry['ignore'] == false %}checked{% endif %}></vscode-checkbox></td>
                   <td>{{ (cmd_entry.updated or "").slice(11, 23) }}</td>
                   <td><span class="{{ cmd_entry.status }}">{{ cmd_entry.status }}</span></td>
-                  <td><details {% if cmd_entry.status == 'failed' %}open{% endif %}><summary><code>{{ cmd_entry.cmd | replace('2> /dev/null', '') | replace('cl -v', '') | replace('"\'', '') | replace('\'"', '') | replace('"', '') | truncate(100) }}</code></summary><div style="border: 1px solid">{% for cmd in cmds %}<pre style="white-space: pre-wrap;">{{ cmd | trim }}</pre>{% endfor %}</div></details></td>
+                  <td><details data-state-id="cmd|{{ level_item['level'] }}|{{ source_item['source'] }}|{{ loop.index0 }}" {% if cmd_entry.status == 'failed' %}open{% endif %}><summary><code>{{ cmd_entry.cmd | replace('2> /dev/null', '') | replace('cl -v', '') | replace('"\'', '') | replace('\'"', '') | replace('"', '') | truncate(100) }}</code></summary><div style="border: 1px solid">{% for cmd in cmds %}<pre style="white-space: pre-wrap;">{{ cmd | trim }}</pre>{% endfor %}</div></details></td>
                   <td>
                     <vscode-button class="edit_cmd" source="{{ source_item['source'] }}" level="{{ level_item['level'] }}" cmd_index="{{ loop.index0 }}" appearance="secondary"><span class="codicon codicon-edit"></span></vscode-button>
                   </td>

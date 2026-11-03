@@ -1,3 +1,9 @@
+# Typed error handling
+
+| Type | Severity | Status | Source | Depends on |
+|---|---|---|---|---|
+| Feature | 🟡 | finished (`get_error_message` in `src/shared/Errors.ts`) | – | – |
+
 # Current situation
 
 Error handling throughout the codebase uses `catch (e: any)` / `catch (error: any)`

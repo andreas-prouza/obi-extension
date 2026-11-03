@@ -3,12 +3,15 @@
 import * as vscode from 'vscode';
 import { Uri } from "vscode";
 import { logger } from './Logger';
-import { AppConfig } from "../../shared/AppConfig";
+import { AppConfig } from "../config/AppConfig";
 
 import * as path from 'path';
-import * as source from "../../shared/Source";
 import * as fs from 'fs';
 import { Workspace } from "./Workspace";
+import { ConfigFileError, get_error_message, json_error_position } from "../../shared/Errors";
+import { show_error } from "./Notify";
+import { local_source_dir, local_source_root, relative_inside } from "./SourcePath";
+import { md5_file } from "../obi/compile_list/modules/source_hashes";
 
 
 const crypto = require('crypto')
@@ -28,127 +31,6 @@ export class DirTool {
     return path;
   }
 
-
-
-  public static *get_all_files_in_dir(rootdir:string, dir: string, file_extensions: string[]): Generator<string> | undefined {
-    
-    if (!DirTool.dir_exists(path.join(rootdir, dir)))
-      return undefined;
-    
-    const fs = require('fs');
-    const files = fs.readdirSync(path.join(rootdir, dir), { withFileTypes: true });
-
-    for (const file of files) {
-      if (file.isDirectory()) {
-        yield* DirTool.get_all_files_in_dir(rootdir, path.join(dir, file.name), file_extensions);
-      } else {
-        if (file_extensions.includes(file.name.split('.').pop()))
-          yield path.join(dir, file.name);
-      }
-    }
-  }
-
-
-  /**
-   * List files in a directory recursive
-   * It's async for better performance
-   * @param rootdir 
-   * @param dir 
-   * @param file_extensions 
-   * @returns 
-   */
-  public static async get_all_files_in_dir2(rootdir:string, dir: string, file_extensions: string[], replace_backslash: boolean = false): Promise<string[] | undefined> {
-    
-    if (!DirTool.dir_exists(path.join(rootdir, dir)))
-      return undefined;
-    
-    let file_list: string[] = [];
-    let call_list = [];
-
-    const fs = require('fs');
-    const files = fs.readdirSync(path.join(rootdir, dir), { withFileTypes: true });
-
-
-    let file_path: string;
-
-    for (const file of files) {
-
-      if (file.isDirectory()) {
-        call_list.push(DirTool.get_all_files_in_dir2(rootdir, path.join(dir, file.name), file_extensions, replace_backslash));
-      } else {
-
-        if (file_extensions.includes(file.name.split('.').pop())) {
-
-          file_path = path.join(dir, file.name)
-          
-          if (replace_backslash)
-            file_path = file_path.replace(/\\/g, '/');
-          file_list.push(file_path);
-        }
-      }
-    }
-
-    const results = await Promise.all(call_list);
-    results.map((list: string[]|undefined) => {
-      if (list)
-        file_list = [...file_list, ...list];
-    });
-
-    return file_list;
-  }
-
-  
-
-  /**
-   * List files in a directory recursive
-   * It's async for better performance
-   * @param rootdir 
-   * @param dir 
-   * @param file_extensions 
-   * @returns 
-   */
-  public static async get_all_files_in_dir3(rootdir:string, dir: string, file_extensions: string[]|undefined): Promise<source.IQualifiedSource[] | undefined> {
-    
-    if (!DirTool.dir_exists(path.join(rootdir, dir)))
-      return undefined;
-    
-    let file_list: source.IQualifiedSource[] = [];
-    let call_list = [];
-
-    const fs = require('fs');
-    const files = fs.readdirSync(path.join(rootdir, dir), { withFileTypes: true });
-
-    if (files.length == 0) {
-      const path_array: string[] = dir.split('/');
-      const src_lib = path_array[0] ?? null;
-      const src_file = path_array[1] ?? null;
-      return [{"source-lib": src_lib, "source-file": src_file, "source-member": ''}];
-    }
-
-
-    for (const file of files) {
-      if (file.isDirectory()) {
-        call_list.push(DirTool.get_all_files_in_dir3(rootdir, path.join(dir, file.name), file_extensions));
-      } else {
-        if (file_extensions == undefined || file_extensions.includes(file.name.split('.').pop())) {
-          const source: string = path.join(dir, file.name).replace(/\\/g, '/');
-          const source_arr: string[] = source.split('/').reverse();
-          const src_mbr = source_arr[0];
-          const src_file = source_arr[1];
-          const src_lib = source_arr[2];
-          file_list.push({"source-lib": src_lib, "source-file": src_file, "source-member": src_mbr});
-        }
-      }
-    }
-
-    const results = await Promise.all(call_list);
-    results.map((list: source.IQualifiedSource[]|undefined) => {
-      if (list)
-        file_list = [...file_list, ...list];
-    });
-
-    return file_list;
-  }
 
 
   public static list_dir(dir: string): string[] {
@@ -219,13 +101,13 @@ export class DirTool {
     try {
       return JSON.parse(json_string);
     }
-    catch (e: any) {
+    catch (e: unknown) {
       if (showErrorMessage) {
-        vscode.window.showErrorMessage(`Error in json file: ${path}: ${e.message}`);
+        vscode.window.showErrorMessage(vscode.l10n.t('Error in JSON file {0}: {1}', path, get_error_message(e)));
       }
-      logger.error(`JSON parse error for ${path}`);
-      logger.debug(`JSON content: ${json_string}`);
-      logger.error(`Parsing JSON content on line ${e.line}, column ${e.column}: ${e.message}`);
+      // No file content in the log: compile lists can contain secret* variables
+      const position = json_error_position(String(json_string), get_error_message(e));
+      logger.error(`JSON parse error for ${path} (line ${position.line ?? '?'}, column ${position.column ?? '?'}): ${get_error_message(e)}`);
     }
     return undefined;
     
@@ -233,83 +115,192 @@ export class DirTool {
 
 
   
-  public static get_file_changed_date(file: string) {
+
+
+  /**
+   * Writes via a temp file + rename, so readers never see a partially written file. Throws on failure.
+   */
+  public static write_atomic(file: string, content: string): void {
 
     file = DirTool.resolve_env_in_path(file);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
 
-    const { mtime, ctime } = fs.statSync(file);
-    return mtime;
+    // Write next to the real file if `file` is a symlink, so the link is kept
+    const target = fs.existsSync(file) ? fs.realpathSync(file) : file;
+    const tmp = `${target}.${process.pid}.${Date.now()}.tmp`;
+    fs.writeFileSync(tmp, content, 'utf8');
+
+    for (let attempt = 0; ; attempt++) {
+      try {
+        fs.renameSync(tmp, target);
+        logger.debug(`Written: ${target}`);
+        return;
+      }
+      catch (e) {
+        const code = (e as NodeJS.ErrnoException).code;
+        // Windows: the target can be locked for a moment (file watcher, virus scanner)
+        if (attempt < 3 && (code === 'EPERM' || code === 'EBUSY' || code === 'EACCES')) {
+          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50);
+          continue;
+        }
+        fs.rmSync(tmp, { force: true });
+        throw e;
+      }
+    }
   }
 
 
 
+  /**
+   * Parsed JSON, or undefined if the file doesn't exist or is empty (older versions created empty files).
+   * Throws ConfigFileError if it has content that can't be parsed.
+   */
+  public static read_json_strict<T>(file: string): T | undefined {
 
-  public static write_json(file: string, data: any): any|undefined {
-    
     file = DirTool.resolve_env_in_path(file);
-    
-    if (!DirTool.dir_exists(path.dirname(file))) {
-      fs.mkdirSync(path.dirname(file), { recursive: true });
+    if (!DirTool.file_exists(file))
+      return undefined;
+
+    const text = fs.readFileSync(file, 'utf8');
+    if (text.trim().length == 0)
+      return undefined;
+    try {
+      return JSON.parse(text) as T;
     }
-    try{
-      // Read the TOML file into a string
-      const text = JSON.stringify(data, null, 2);
-      logger.info(`Writing JSON to file 2: ${path.resolve(file)}`);
-      
-      fs.writeFileSync(file, text, 'utf8');
+    catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      const { line, column } = json_error_position(text, message);
+      throw new ConfigFileError(file, line, column, message);
     }
-    catch (e: any) {
-      logger.error(`Error in json file: ${file}`);
-    }
-    return;
   }
 
 
 
-  public static get_file_URI(file: string) : any {
+  /** Parsed TOML, or undefined if the file doesn't exist. Throws ConfigFileError if it exists but can't be parsed. */
+  public static read_toml_strict<T>(file: string): T | undefined {
 
-    let scheme:string = 'file';
-    let remote_ws_host:string = '';
+    file = DirTool.resolve_env_in_path(file);
+    if (!DirTool.file_exists(file))
+      return undefined;
 
-    if (vscode.env.remoteName) {
-      scheme = 'vscode-remote';
-      remote_ws_host = AppConfig.get_app_config().general['cloud-ws-ssh-remote-host'] || vscode.env.remoteName;
+    const toml = require('smol-toml');
+    try {
+      return toml.parse(fs.readFileSync(file, 'utf8')) as T;
     }
-
-    const fileUri = {
-      scheme: scheme,
-      path: path.join(Workspace.get_workspace(), file),
-      authority: remote_ws_host
-    };
-
-    return fileUri;
+    catch (e) {
+      const error = e as { line?: number; column?: number; message?: string };
+      throw new ConfigFileError(file, error.line, error.column, (error.message ?? String(e)).split('\n')[0]);
+    }
   }
 
 
 
+  /**
+   * Writes a config/data file the user may have edited by hand.
+   * Refuses to overwrite an existing file that can't be parsed: the data was read from it, so it is incomplete.
+   */
+  public static update_json(file: string, data: any): void {
+    DirTool.read_json_strict(file);   // throws ConfigFileError if the current content is invalid
+    DirTool.write_json(file, data);
+  }
+
+
+  /** Like update_json for TOML files. */
+  public static update_toml(file: string, data: any): void {
+    DirTool.read_toml_strict(file);   // throws ConfigFileError if the current content is invalid
+    DirTool.write_toml(file, data);
+  }
+
+
+
+  /** Shows an error of a failed save; for ConfigFileError with an action to open the file at the error position. */
+  public static show_save_error(error: unknown): void {
+    if (error instanceof ConfigFileError)
+      show_error(vscode.l10n.t('Nothing was saved. Fix the file and try again'), error);
+    else
+      show_error(vscode.l10n.t('Saving failed'), error);
+  }
+
+
+
+  /** Writes JSON atomically. Throws on failure. */
+  public static write_json(file: string, data: any): void {
+    DirTool.write_atomic(file, JSON.stringify(data, null, 2));
+  }
+
+
+
+  /**
+   * URI of a workspace-relative file. Scheme and authority come from the workspace folder,
+   * so it works in local, Remote-SSH, WSL, dev container and codespaces windows.
+   */
+  public static get_file_URI(file: string) : vscode.Uri {
+
+    if (path.isAbsolute(file)) {
+      const rel = DirTool.to_workspace_relative(file);
+      if (rel === undefined)
+        return vscode.Uri.file(file);
+      file = rel;
+    }
+
+    return vscode.Uri.joinPath(Workspace.get_workspace_uri(), ...file.split(/[\\/]+/).filter(s => s.length > 0 && s !== '.'));
+  }
+
+
+
+  /** Argument for `command:vscode.open?…` links in webviews */
   public static get_encoded_file_URI(file: string) : string {
 
     return encodeURIComponent(JSON.stringify(DirTool.get_file_URI(file)));
   }
 
 
-  public static get_encoded_source_URI(workspaceUri: Uri, file: string) : string {
+  /** URI of an OBI source (lib/file/member.ext) for the webviews */
+  public static get_encoded_source_URI(source: string) : string {
 
-    const config = AppConfig.get_app_config();
-
-    return DirTool.get_encoded_file_URI(path.join(config.general["source-dir"], file))
+    return DirTool.get_encoded_file_URI(path.join(DirTool.get_local_source_dir_relative(), source))
   }
 
 
 
-  public static get_encoded_build_output_URI(file: string) : string {
+  /** Source folder relative to the workspace: <local-base-dir>/<source-dir> */
+  public static get_local_source_dir_relative(): string {
 
     const config = AppConfig.get_app_config();
-
-    return DirTool.get_encoded_file_URI(path.join(config.general["build-output-dir"], file))
-
+    return local_source_dir(config.general['local-base-dir'], config.general['source-dir']);
   }
 
+
+
+  /** Absolute source folder: <workspace>/<local-base-dir>/<source-dir> */
+  public static get_local_source_dir(): string {
+
+    const config = AppConfig.get_app_config();
+    return local_source_root(Workspace.get_workspace(), config.general['local-base-dir'], config.general['source-dir']);
+  }
+
+
+
+  /** OBI source name (lib/file/member.ext) of a local file, or undefined if it's not inside the source folder */
+  public static to_obi_source(fs_path: string): string | undefined {
+
+    return relative_inside(DirTool.get_local_source_dir(), fs_path);
+  }
+
+
+
+  /** Workspace-relative, '/'-separated path of a local file, or undefined if it's not inside the workspace */
+  public static to_workspace_relative(fs_path: string): string | undefined {
+
+    return relative_inside(Workspace.get_workspace(), fs_path);
+  }
+
+
+
+  public static not_in_source_dir_message(fs_path: string): string {
+
+    return vscode.l10n.t('{0} is not inside the OBI source folder {1}', fs_path, DirTool.get_local_source_dir());
+  }
 
 
   public static get_toml(file: string): any|undefined {
@@ -330,81 +321,27 @@ export class DirTool {
       const result = toml.parse(data);
       return result;
     }
-    catch (e: any) {
+    catch (e: unknown) {
+      const position = e as { line?: number; column?: number };
       logger.error(`Error in toml file: ${file}`);
-      logger.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
+      logger.error(`Parsing toml content on line ${position.line}, column ${position.column}: ${get_error_message(e)}`);
     }
     return undefined;
   }
 
 
-  public static write_toml(file: string, data: any): any|undefined {
-
-    file = DirTool.resolve_env_in_path(file);
-
-    if (!DirTool.dir_exists(path.dirname(file))) {
-      fs.mkdirSync(path.dirname(file), { recursive: true });
-    }
+  /** Writes TOML atomically. Throws on failure. */
+  public static write_toml(file: string, data: any): void {
     const toml = require('smol-toml');
-    try{
-      
-      // Read the TOML file into a string
-      const text = toml.stringify(data);
-
-      fs.writeFileSync(file, text, 'utf8');
-    }
-    catch (e: any) {
-      logger.error(`Error in toml file: ${file}`);
-      logger.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
-    }
-    return;
+    DirTool.write_atomic(file, toml.stringify(data));
   }
 
 
 
+  /** Writes a text file atomically. Throws on failure. */
   public static write_file(file: string, content: string): void {
-
-    file = DirTool.resolve_env_in_path(file);
-
-    logger.info(`Write data to ${file}`);
-    
-    try{
-      if (!DirTool.dir_exists(path.dirname(file)))
-        fs.mkdirSync(path.dirname(file), {recursive: true});
-
-      fs.writeFileSync(file, content, 'utf8');
-    }
-    catch (e: any) {
-      logger.error(`Error write file: ${file}: ${e.message}`);
-      if (e.line)
-        logger.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
-    }
-    return;
+    DirTool.write_atomic(file, content);
   }
-
-
-
-  public static get_key_value_file(file: string): string[]|undefined {
-
-    file = DirTool.resolve_env_in_path(file);
-
-    let key_values: any= {};
-    if (!DirTool.file_exists(file))
-      return undefined;
-    
-    try{
-      // Read the TOML file into a string
-      const data = fs.readFileSync(file, 'utf8');
-
-      return data.toString().split('\n');
-    }
-    catch (e: any) {
-      logger.error(`Error in toml file: ${file}`);
-      logger.error(`Parsing toml content on line ${e.line}, column ${e.column}: ${e.message}`);
-    }
-    return undefined;
-  }
-
 
 
   public static get_file_content(file: string): string|undefined {
@@ -419,8 +356,8 @@ export class DirTool {
       const data = fs.readFileSync(file, 'utf8');
       return data.toString();
     }
-    catch (e: any) {
-      logger.error(`Error on reading ${file}`);
+    catch (e: unknown) {
+      logger.error(`Error on reading ${file}: ${get_error_message(e)}`);
     }
     return undefined;
   }
@@ -436,77 +373,9 @@ export class DirTool {
   }
 
 
-  public static get_shell_config(file: string): any|undefined {
-
-    file = DirTool.resolve_env_in_path(file);
-
-    const content_list: string[]|undefined = DirTool.get_key_value_file(file);
-    if (!content_list)
-      return undefined;
-
-    let key_values: { [key: string]: string } = {};
-
-    for (var i=0; i < content_list.length; i++) {
-      
-      const line = content_list[i].trim().split('#');
-      if (line[0].length == 0)
-        continue;
-
-      const line2 = content_list[i].trim().split('source ');
-      if (line2[0].length == 0)
-        continue;
-
-      const k_v: string[] = line[0].trim().split('=');
-      key_values[k_v[0]] = k_v[1];
-    }
-
-    return key_values;
-
-  }
-
-
-/*
-  public static async get_hash_file(file:string): Promise<string> {
- 
-    const hasha = require('hasha');
-
-    // Get the MD5 hash of an image
-    const fileHash = await hasha.fromFile(file, {algorithm: 'md5'});
-    
-    return fileHash;
-  }
-
-
-      var fs = require('fs')
-    var crypto = require('crypto')
-    return new Promise((resolve, reject) => {
-      const hash = crypto.createHash('sha256');
-      const stream = fs.createReadStream(path);
-      stream.on('error', err => reject(err));
-      stream.on('data', chunk => hash.update(chunk));
-      stream.on('end', () => resolve(hash.digest('hex')));
-    });
-    */
-
-  public static async checksumFile(root: string, file_path: string): Promise<source.ISource> {
-
-    root = DirTool.resolve_env_in_path(root);
-    file_path = DirTool.resolve_env_in_path(file_path);
-
-    return {[file_path] : await DirTool.get_file_hash(path.join(root, file_path))};
-  }
-
-
+  /** MD5 (hex) of a file */
   public static async get_file_hash(file: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const hash = crypto.createHash('md5');
-      const stream = fs.createReadStream(file);
-      stream.on('error', err => reject(err));
-      stream.on('data', chunk => hash.update(chunk));
-      stream.on('end', () => {
-        resolve(String(hash.digest('hex')));
-      });
-    });
+    return md5_file(file);
   }
 
 
@@ -543,7 +412,7 @@ export class DirTool {
         DirTool.write_file(dest, '');
         return;
       }
-      vscode.window.showErrorMessage(`Copy error: source file does not exist: ${src}`);
+      vscode.window.showErrorMessage(vscode.l10n.t('Copy error: source file does not exist: {0}', src));
       throw new Error(`Source file does not exist: ${src}`);
     }
     fs.copyFileSync(src, dest);

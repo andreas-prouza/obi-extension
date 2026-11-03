@@ -2,65 +2,147 @@ import * as vscode from 'vscode';
 import * as winston from "winston";
 import TransportStream, { TransportStreamOptions } from 'winston-transport';
 import * as path from 'path';
-import { Constants } from '../../shared/Constants';
-import * as fs from 'fs';
+import { redact } from '../../shared/Redact';
+import { ExtensionSettings } from './ExtensionSettings';
 
 
-const outputChannel = vscode.window.createOutputChannel(`OBI`);
+// Created on activation (register_output_channel), not on import. Without it (tests, before activation),
+// log lines go to the console.
+let outputChannel: vscode.LogOutputChannel | undefined = undefined;
 
-let ws: string = '';
-if (vscode.workspace.workspaceFolders)
-  ws = vscode.workspace.workspaceFolders[0].uri.fsPath
+/** Values to mask in every log line (secret* variables of the config), set on activation */
+let secrets: () => string[] = () => [];
 
-//const winston = require('winston');
 
-class CustomTransport extends TransportStream {
+/** Writes to the "OBI" log channel; its level is shown by VS Code */
+class ChannelTransport extends TransportStream {
   constructor(opts: TransportStreamOptions) {
     super(opts);
   }
-  log(info: winston.LogEntry, callback: any) {
+  log(info: winston.LogEntry, callback: () => void) {
     setImmediate(() => {
       this.emit("logged", info);
     });
 
-    const { level, message, ...meta } = info;
-    // do whatever you want with log data
-    outputChannel.appendLine(`${new Date().toISOString()} - ${level} - ${message}`);
+    const channel = outputChannel;
+    const message = String(info.message).replace(/^\t/, '');   // format.align; the channel adds its own prefix
+    if (channel) {
+      switch (info.level) {
+        case 'error': channel.error(message); break;
+        case 'warn': channel.warn(message); break;
+        case 'info': channel.info(message); break;
+        case 'silly': channel.trace(message); break;
+        default: channel.debug(message); break;   // http, verbose, debug
+      }
+    }
+    else
+      console.log(`${new Date().toISOString()} ${info.level}: ${message}`);
     callback();
   }
 };
 
 
-const myCustomTransport = new CustomTransport({});
+/** VS Code log level → winston level */
+function winston_level(level: vscode.LogLevel): string {
+  switch (level) {
+    case vscode.LogLevel.Trace: return 'silly';
+    case vscode.LogLevel.Debug: return 'debug';
+    case vscode.LogLevel.Warning: return 'warn';
+    case vscode.LogLevel.Error: return 'error';
+    case vscode.LogLevel.Off: return 'error';
+    default: return 'info';
+  }
+}
+
+
+/** Shows the "OBI" output channel (action "Show log" of error messages) */
+export function show_log(): void {
+  outputChannel?.show(true);
+}
+
+
+/**
+ * Creates the "OBI" log channel (on activation) and disposes it with the extension. The level follows
+ * Developer: Set Log Level… → OBI (default: info).
+ */
+export function register_output_channel(context: vscode.ExtensionContext): void {
+  const channel = outputChannel ?? vscode.window.createOutputChannel('OBI', { log: true });
+  outputChannel = channel;
+  logger.level = winston_level(channel.logLevel);
+  context.subscriptions.push(
+    channel.onDidChangeLogLevel(level => { logger.level = winston_level(level); }),
+    {
+      dispose: () => {
+        channel.dispose();
+        outputChannel = undefined;
+      }
+    }
+  );
+}
+
+
+/** Masks the returned values (secret* variables) in every log line */
+export function set_secret_values(provider: () => string[]): void {
+  secrets = provider;
+  cached_secrets = undefined;
+}
+
+
+/**
+ * Log files in <workspace>/.obi/log (settings obi.log.writeFiles, obi.log.maxFileSizeMB): at most
+ * maxFileSizeMB per file, 3 files each (combined.log, combined1.log, …).
+ */
+export function add_log_files(workspace: string): void {
+  if (!ExtensionSettings.log_write_files())
+    return;
+
+  const maxsize = ExtensionSettings.log_max_file_size_mb() * 1024 * 1024;
+  const dirname = path.join(workspace, '.obi', 'log');
+  logger.add(new winston.transports.File({ dirname, filename: 'error.log', level: 'error', maxsize, maxFiles: 3, tailable: true }));
+  logger.add(new winston.transports.File({ dirname, filename: 'combined.log', maxsize, maxFiles: 3, tailable: true }));
+}
+
+
+const SECRETS_REFRESH_MS = 5000;
+let cached_secrets: { at: number; values: string[] } | undefined = undefined;
+let reading_secrets = false;
+
+/** The secret values, read again at most every few seconds (reading the config logs as well: no recursion) */
+function current_secrets(): string[] {
+  if (cached_secrets && Date.now() - cached_secrets.at < SECRETS_REFRESH_MS)
+    return cached_secrets.values;
+  if (reading_secrets)
+    return cached_secrets?.values ?? [];
+
+  reading_secrets = true;
+  try {
+    cached_secrets = { at: Date.now(), values: secrets() };
+  }
+  catch {
+    cached_secrets = { at: Date.now(), values: [] };   // no valid config yet: nothing to mask
+  }
+  finally {
+    reading_secrets = false;
+  }
+  return cached_secrets.values;
+}
+
+const mask_secrets = winston.format(info => {
+  const values = current_secrets();
+  if (values.length > 0)
+    info.message = redact(String(info.message), values);
+  return info;
+});
+
 
 export const logger = winston.createLogger({
-  level: 'debug',
+  // Tests: OBI_LOG_LEVEL=debug npm test
+  level: process.env.OBI_LOG_LEVEL || 'info',
   format: winston.format.combine(
+    mask_secrets(),
     winston.format.timestamp(),
     winston.format.align(),
     winston.format.printf((info) => `[${info.timestamp}] ${info.level}: ${info.message}`)
   ),
-  //defaultMeta: { service: 'user-service' },
-  transports: [
-    //
-    // - Write all logs with importance level of `error` or less to `error.log`
-    // - Write all logs with importance level of `info` or less to `combined.log`
-    //
-    new winston.transports.Console(),
-    myCustomTransport
-  ],
+  transports: [new ChannelTransport({})],
 });
-
-
-if (fs.existsSync(path.join(ws, Constants.OBI_APP_CONFIG_FILE))) {
-  logger.add(new winston.transports.File({ dirname: path.join(ws, '.obi', 'log'), filename: 'error.log', level: 'error' }));
-  logger.add(new winston.transports.File({ dirname: path.join(ws, '.obi', 'log'), filename: 'combined.log' }));
-}
-
-//
-// If we're not in production then log to the `console` with the format:
-// `${info.level}: ${info.message} JSON.stringify({ ...rest }) `
-//
-//logger.add(new winston.transports.Console({
-//  format: winston.format.simple(),
-//}));

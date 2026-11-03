@@ -1,8 +1,6 @@
-export function getNonce() {
-  let text = "";
-  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 32; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
+import { randomBytes } from 'crypto';
+
+/** Nonce for the Content-Security-Policy of a webview: 128 random bits, base64 */
+export function getNonce(): string {
+  return randomBytes(16).toString('base64');
 }

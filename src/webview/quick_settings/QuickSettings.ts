@@ -2,13 +2,8 @@ import * as vscode from 'vscode';
 import { getUri } from "../../extension/utilities/getUri";
 import { OBITools } from '../../extension/utilities/OBITools';
 import { Constants } from '../../shared/Constants';
-import { AppConfig } from '../../shared/AppConfig';
-/*
-https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
-https://mozilla.github.io/nunjucks/api.html
-https://www.11ty.dev/docs/languages/nunjucks/
-*/
-const nunjucks = require('nunjucks');
+import { AppConfig } from '../../extension/config/AppConfig';
+import { render_template } from '../Templates';
 
 
 
@@ -46,7 +41,7 @@ export class QuickSettings implements vscode.WebviewViewProvider {
 		webviewView.webview.options = {
 			// Allow scripts in the webview
 			enableScripts: true,
-      enableCommandUris: true,
+      enableCommandUris: false,   // no command: links on this page
 			localResourceRoots: [
         vscode.Uri.joinPath(this._extensionUri, "out"),
         vscode.Uri.joinPath(this._extensionUri, "asserts")
@@ -54,14 +49,14 @@ export class QuickSettings implements vscode.WebviewViewProvider {
 		};
 
     if (vscode.workspace.workspaceFolders == undefined) {
-      vscode.window.showErrorMessage('No workspace defined');
+      vscode.window.showErrorMessage(vscode.l10n.t('No workspace defined'));
       return;
     }
     
     const html_template = 'quick_settings/index.html';
     
     const app_config = AppConfig.get_app_config();
-    const config_settings_attributes = Object.entries(app_config['global']['settings']['general'] || {})
+    const config_settings_attributes = Object.entries(app_config.global.settings?.general || {})
       .filter(([_ , value]) => typeof value !== 'function')
       .map(([name, value]) => ({
         name,
@@ -69,25 +64,15 @@ export class QuickSettings implements vscode.WebviewViewProvider {
         value: value
       }));
 
-    nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-    const html = nunjucks.render(html_template, 
+    const html = render_template(html_template, 
       {
         global_stuff: OBITools.get_global_stuff(webviewView.webview, this._extensionUri),
-        main_java_script: getUri(webviewView.webview, this._extensionUri, ["out", "controller.js"]),
+        main_java_script: getUri(webviewView.webview, this._extensionUri, ["out", "webview", "controller.js"]),
         config_settings_attributes: config_settings_attributes
       }
     );
 		webviewView.webview.html = html;
-
-    // Listener
-		webviewView.webview.onDidReceiveMessage(data => {
-
-			switch (data.command) {
-				case 'test':
-					vscode.window.showInformationMessage('Message from controller');
-					break;
-			}
-		});
+		// No messages are handled here (the debug message 'test' had no sender)
 
 	}
 

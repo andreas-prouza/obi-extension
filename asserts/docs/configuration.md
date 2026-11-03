@@ -16,6 +16,7 @@
 - [Extended source processing](#extended-source-processing)
 - [Custom build summary template](#custom-build-summary-template)
 - [Language](#language)
+- [VS Code settings and log](#vs-code-settings-and-log)
 
 OBI has no VS Code settings. Everything is stored in the project folder under `.obi`.
 
@@ -36,7 +37,11 @@ The configuration has three areas, each with several tabs:
 
 Tabs: **Configuration** (connection, paths, OBI backend), **Compile settings** (settings, variables, commands, steps), **Extended compile**, **System settings** (object types, encodings, threads) and **Constants** (file locations).
 
-You can also edit the TOML files directly (links *Open project config file* / *Open user config file*). When a configuration file changes, the window reloads.
+In a multi-root workspace, OBI works with the first folder that contains an OBI project (`.obi/etc/app-config.toml`). If there are several, it says so once; working with several projects at the same time is not supported yet.
+
+You can also edit the TOML files directly (links *Open project config file* / *Open user config file*). Changes are picked up without reloading the window; an invalid configuration shows the *Invalid configuration* view until it is fixed.
+
+> ℹ️ Saving from the configuration pages rewrites the whole TOML file: comments are lost and keys can change their order. Keep explanations in a README or this documentation rather than in comments, or edit the files directly if you want to keep their comments.
 
 
 ## Project and user configuration
@@ -63,25 +68,33 @@ On each build, the project configuration and your active user configuration are 
 | `etc/source-infos.json` | [Source descriptions](sources.md#source-descriptions) | ✅ commit |
 | `etc/object-builds.json` | Hashes of the last successful builds (change detection) | ❌ local, usually (it reflects what *you* built) |
 | `etc/constants.py`, `etc/logger_config.py` | Settings for the OBI backend; do not modify | ✅ commit |
-| `etc/source-list-local.json`, `etc/source-list-remote.json` | Generated source lists | ❌ local |
+| `etc/source-list-local.json` | Generated source list | ❌ local |
 | `source-list/*.json` | [Source filters](sources.md#source-filters) | ✅ commit |
 | `.vscode/templates/` | [Custom build summary template](#custom-build-summary-template) | ✅ commit |
 | `build-output/` | Current build list and results | ❌ local |
 | `build-history/` | [Build history](building.md#build-history) | ❌ local |
 | `tmp/`, `log/` | Temporary files, compiler events, logs | ❌ local |
+| `cache/` | Cache of the source hashes | ❌ local |
 
-Suggested `.gitignore`:
+*Initialize* creates a `.gitignore` with these entries (unless the folder already has one). In an existing git project without them, OBI offers once to append the missing entries; existing lines are never changed:
 
 ```gitignore
-.obi/etc/.user-*
+# OBI: personal configuration
+.obi/etc/.user-app-config*.toml
+.obi/etc/.user-extended-source-processing-config*.toml
 .obi/etc/workspace-settings.json
 .obi/etc/object-builds.json
-.obi/etc/source-list-*.json
+
+# OBI: generated
+.obi/log/
+.obi/tmp/
+.obi/cache/
 .obi/build-output/
 .obi/build-history/
-.obi/tmp/
-.obi/log/
+.obi/etc/source-list-*.json
 ```
+
+VS Code checks `dependency.json`, `source-infos.json`, the files in `source-list` and `compile-list.json` against a schema: you get completion and error marks while editing. This works at the default locations. If you moved a file with `dependency-list` or `source-infos`, add it to the VS Code setting `json.schemas`.
 
 
 ## Connection
@@ -92,7 +105,10 @@ Section `[connection]`.
 |---|---|---|
 | `remote-host` | ✅ | IBM i host name or IP |
 | `ssh-user` | ✅ (user config) | IBM i user profile |
-| `ssh-key` | | Absolute path to your private SSH key. `~` is not expanded |
+| `ssh-key` | | Path to your private SSH key; `~`, `$HOME` and `%USERPROFILE%` are expanded. A passphrase is asked for when connecting ([SSH setup](ssh.md#using-the-key-in-obi)) |
+| `ssh-agent` | | `true`: use the running SSH agent (`SSH_AUTH_SOCK`, on Windows Pageant) |
+| `ssh-port` | | SSH port (default 22) |
+| `ssh-concurrency` | | Number of files transferred in parallel (1–32, default 5). More can be faster over slow connections; the SSH server may limit it |
 
 **Password**: entered in the user configuration, but stored in VS Code's secret storage (per profile, host and user), never in a file.
 Without key and stored password you are prompted when connecting. See [SSH setup](ssh.md).
@@ -105,7 +121,7 @@ Section `[general]`. The defaults created by *Initialize* work for most projects
 | Key | Mandatory | Default | Description |
 |---|---|---|---|
 | `local-base-dir` | ✅ | `.` | Project folder on the PC (relative to the workspace) |
-| `remote-base-dir` | ✅ | | Project folder in the IFS. Relative paths start at the home directory. `${workspaceFolderBasename}`, `~` and `$USER` are replaced |
+| `remote-base-dir` | ✅ | | Project folder in the IFS. Relative paths start at the home directory. `${workspaceFolderBasename}`, `$USER` and a leading `~` (the home directory, `$HOME` of the SSH user) are replaced. Must not be the home directory itself (`~`, `.`, `$HOME`) |
 | `source-dir` | ✅ | `src` | Source directory below the project folder |
 | `remote-obi-dir` | ✅ | | Path of the [OBI backend](https://github.com/andreas-prouza/obi) on IBM i |
 | `local-obi-dir` | | | Optional path of a local OBI backend (with `venv`); used to generate the build list instead of the extension |
@@ -113,10 +129,9 @@ Section `[general]`. The defaults created by *Initialize* work for most projects
 | `file-system-encoding` | ✅ | `utf-8` | Used by the OBI backend |
 | `console-output-encoding` | ✅ | `utf-8` | Used by the OBI backend |
 | `max-threads` | ✅ | `20` | Parallel threads for hashing sources |
-| `check-remote-source-on-startup` | | `false` | Compare local and remote sources on startup and offer to sync them |
 | `evfevent-output-dir` | ✅ | `.obi/tmp/evfevent` | Where compile commands write compiler events |
-| `cloud-ws-ssh-remote-host` | | | Only for remote/cloud workspaces: host of the workspace (not the IBM i) |
-| `compiled-object-list`, `source-list`, `remote-source-list`, `source-infos`, `dependency-list`, `deployment-object-list`, `build-output-dir`, `compile-list`, `compiled-object-list-md` | ✅ | see [files](#files-in-the-obi-folder) | File locations (tab *Constants*) |
+| `cloud-ws-ssh-remote-host` | | | *Deprecated, ignored.* File links in remote workspaces (Remote-SSH, WSL, dev containers, codespaces) work without it |
+| `compiled-object-list`, `source-list`, `source-infos`, `dependency-list`, `deployment-object-list`, `build-output-dir`, `compile-list`, `compiled-object-list-md` | ✅ | see [files](#files-in-the-obi-folder) | File locations (tab *Constants*) |
 
 None of the base or OBI paths may be `/`.
 
@@ -227,7 +242,7 @@ MY_OPTION = "*YES"
 ```
 
 Variables whose names start with `secret` are not substituted and are not written into the build list.
-They are still uploaded to IBM i with the configuration, and the build history stores a copy of the configuration, so they are not a secure place for credentials.
+They are still uploaded to IBM i with the configuration (the user configuration with file mode `600`), so they are not a secure place for credentials. The build history stores the configuration of a build without them.
 
 **Precedence** (lowest to highest): compile settings → per-source settings → language settings → general settings → global variables.
 
@@ -286,7 +301,7 @@ To store data in the build list (and therefore in the build history), send it to
 ```html
 <input id="ticket" placeholder="Ticket" value="{{ compile_list.custom_data.ticket or '' }}">
 <button id="save_ticket">Save</button>
-<script>
+<script nonce="{{ global_stuff['nonce'] }}">
   document.getElementById('save_ticket').addEventListener('click', () => {
     window.vscode.postMessage({
       command: 'save_custom_data',
@@ -299,7 +314,26 @@ To store data in the build list (and therefore in the build history), send it to
 
 The data is stored as `custom_data.<type>` in `compile-list.json`.
 
+The build summary has a Content-Security-Policy: scripts in the template only run with `nonce="{{ global_stuff['nonce'] }}"` (as above). Inline event handlers such as `onclick="…"` and scripts from other sites are blocked; use `addEventListener`.
+
 
 ## Language
 
 The UI is available in English and German and follows VS Code's display language.
+
+
+## VS Code settings and log
+
+These settings are VS Code settings (*File → Preferences → Settings*, search for "OBI"), not part of the project configuration:
+
+| Setting | Default | Description |
+|---|---|---|
+| `obi.build.revealOutput` | `onError` | When the output panel **OBI Build** opens by itself: `onStart`, `onError` or `never` |
+| `obi.build.confirmRun` | `true` | Ask before a build runs |
+| `obi.statusBar.enabled` | `true` | Show the OBI status bar item |
+| `obi.log.writeFiles` | `true` | Write the log into `.obi/log` (`combined.log`, `error.log`) |
+| `obi.log.maxFileSizeMB` | `5` | Maximum size of a log file; 3 files are kept per log (`combined.log`, `combined1.log`, …) |
+| `obi.buildHistory.maxBuilds` | `100` | Builds kept in the [build history](building.md#build-history-size); `0` = unlimited |
+| `obi.buildHistory.maxAgeDays` | `0` | Builds older than this many days are deleted from the build history; `0` = unlimited |
+
+The log is also shown in the output panel **OBI**. Its level is `info` by default; change it with **Developer: Set Log Level… → OBI** (e.g. `Debug` to see every remote command and its output). Values of `secret*` variables are replaced with `***` in the log.

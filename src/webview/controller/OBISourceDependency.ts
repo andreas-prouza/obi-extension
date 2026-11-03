@@ -2,36 +2,19 @@ import * as vscode from 'vscode';
 import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
 import { getUri } from "../../extension/utilities/getUri";
 import { DirTool } from '../../extension/utilities/DirTool';
+import { normalize_source_name } from '../../extension/utilities/SourcePath';
+import { logger } from '../../extension/utilities/Logger';
 import * as path from 'path';
 import { Constants } from '../../shared/Constants';
 import { OBITools } from '../../extension/utilities/OBITools';
-import { AppConfig, SourceConfig, SourceConfigList } from '../../shared/AppConfig';
+import { AppConfig, SourceConfig, SourceConfigList } from '../../extension/config/AppConfig';
 import { Workspace } from '../../extension/utilities/Workspace';
 import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
-import { Dependencies, DependencyList } from '../../shared/Dependency';
+import { Dependencies, DependencyList } from '../../extension/obi/Dependency';
+import { SOURCE_DEPENDENCY_REQUESTS } from '../../shared/messages/SourceConfigMessages';
+import { parse_message } from '../../shared/messages/MessageGuard';
+import { render_template } from '../Templates';
 
-/*
-https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
-https://mozilla.github.io/nunjucks/api.html
-https://www.11ty.dev/docs/languages/nunjucks/
-*/
-const nunjucks = require('nunjucks');
-// configure() returns an Environment
-const env = nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-
-// Register "typename" filter on the environment
-env.addFilter("typename", (obj: any) => {
-  if (obj === null) return "null";
-  if (obj === undefined) return "undefined";
-
-  // If it's a class instance or built-in
-  if (obj.constructor && obj.constructor.name) {
-    return obj.constructor.name;
-  }
-
-  // Fallback
-  return typeof obj;
-});
 
 
 
@@ -74,7 +57,9 @@ export class OBISourceDependency {
 
     OBISourceDependency._context = context;
     OBISourceDependency._extensionUri = extensionUri;
-    OBISourceDependency.source = source_config;
+    OBISourceDependency.source = normalize_source_name(source_config);
+    if (OBISourceDependency.source !== source_config)
+      logger.warn(`Source name '${source_config}' is not in the form lib/file/member`);
 
     if (OBISourceDependency.currentPanel) {
       OBISourceDependency.currentPanel.dispose();
@@ -99,9 +84,6 @@ export class OBISourceDependency {
   private static async generate_html(extensionUri: Uri, webview: Webview): Promise<string> {
 
     const source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
-    const config: AppConfig = AppConfig.get_app_config();
-    const source_dir = path.join(Workspace.get_workspace(), config.general['source-dir'] || 'src');
-
     let source_config: SourceConfig|undefined;
     
     if (source_configs)
@@ -113,27 +95,26 @@ export class OBISourceDependency {
     let dependencies_2: string[] = [];
 
     for (const dep of dependencies[OBISourceDependency.source] || []) {
-      dependencies_1.push({"source": dep, "file": DirTool.get_encoded_file_URI(path.join(config.general['source-dir'] || 'src', dep))} as any);
+      dependencies_1.push({"source": dep, "file": DirTool.get_encoded_source_URI(dep)} as any);
     }
 
     for (const [source, deps] of Object.entries(dependencies)) {
       if (deps.includes(OBISourceDependency.source)) {
-        dependencies_2.push({"source": source, "file": DirTool.get_encoded_file_URI(path.join(config.general['source-dir'] || 'src', source))} as any);
+        dependencies_2.push({"source": source, "file": DirTool.get_encoded_source_URI(source)} as any);
       }
     }
     
-    const html = env.render('source_list/maintain-source-dependency.html', 
+    const html = render_template('source_list/maintain-source-dependency.html', 
       {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),
         config_css: getUri(webview, extensionUri, ["asserts/css", "config.css"]),
-        main_java_script: getUri(webview, extensionUri, ["out", "source_dependency.js"]),
+        main_java_script: getUri(webview, extensionUri, ["out", "webview", "source_dependency.js"]),
         icons: {debug_start: '$(preview)'},
-        src_folder: DirTool.get_encoded_file_URI(source_dir),
         source: OBISourceDependency.source,
         source_list: local_source_list,
         dependency_list_1: dependencies_1,
         dependency_list_2: dependencies_2,
-        source_file: DirTool.get_encoded_file_URI(path.join(config.general['source-dir']||'src', OBISourceDependency.source)),
+        source_file: DirTool.get_encoded_source_URI(OBISourceDependency.source),
         source_config_file: DirTool.get_encoded_file_URI(Constants.OBI_SOURCE_CONFIG_FILE),
         source_config: source_config
       }
@@ -152,40 +133,40 @@ export class OBISourceDependency {
     if (!panel)
       return;
 
-    panel._panel.webview.html = await OBISourceDependency.generate_html(OBISourceDependency._extensionUri, OBISourceDependency.currentPanel?._panel.webview);
+    panel._panel.webview.html = await OBISourceDependency.generate_html(OBISourceDependency._extensionUri, panel._panel.webview);
     
   }
 
 
 
-  private static onReceiveMessage(message: any): void {
+  private static onReceiveMessage(raw: unknown): void {
+
+    const message = parse_message('Source dependency', raw, SOURCE_DEPENDENCY_REQUESTS, text => logger.warn(text));
+    if (!message)
+      return;
 
     const workspaceUri =
-    vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-    ? vscode.workspace.workspaceFolders[0].uri
-    : undefined;
+    Workspace.find_workspace_uri();
 
     if (!workspaceUri)
       return;
 
-    const command = message.command;
-
-    switch (command) {
+    switch (message.command) {
 
       case "add_dependency_1":
-        DependencyList.add_dependency(OBISourceDependency.source, 1, message.source);
+        DependencyList.add_dependency(OBISourceDependency.source, 1, message.source).catch(DirTool.show_save_error);
         break;
 
       case "add_dependency_2":
-        DependencyList.add_dependency(OBISourceDependency.source, 2, message.source);
+        DependencyList.add_dependency(OBISourceDependency.source, 2, message.source).catch(DirTool.show_save_error);
         break;
 
       case "delete_dependency_1":
-        DependencyList.delete_dependency(OBISourceDependency.source, 1, message.source);
+        DependencyList.delete_dependency(OBISourceDependency.source, 1, message.source).catch(DirTool.show_save_error);
         break;
 
       case "delete_dependency_2":
-        DependencyList.delete_dependency(OBISourceDependency.source, 2, message.source);
+        DependencyList.delete_dependency(OBISourceDependency.source, 2, message.source).catch(DirTool.show_save_error);
         break;
 
       case "reload":

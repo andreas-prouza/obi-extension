@@ -6,13 +6,8 @@ import * as path from 'path';
 import { Constants } from '../../shared/Constants';
 import { OBITools } from '../../extension/utilities/OBITools';
 import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
+import { render_template } from '../Templates';
 
-/*
-https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
-https://mozilla.github.io/nunjucks/api.html
-https://www.11ty.dev/docs/languages/nunjucks/
-*/
-const nunjucks = require('nunjucks');
 
 
 
@@ -57,17 +52,16 @@ export class SourceList {
     let filtered_sources_extended = await LocalSourceList.get_filtered_sources_with_details(source_list_file) || [];
 
     for (let source of filtered_sources_extended) {
-      source['path'] = DirTool.get_encoded_source_URI(workspaceUri, path.join(source['source-lib'], source['source-file'], source['source-member']));
+      source['path'] = DirTool.get_encoded_source_URI(`${source['source-lib']}/${source['source-file']}/${source['source-member']}`);
     }
 
     // If a webview panel does not already exist create and show a new one
     const panel = this.createNewPanel(extensionUri);
 
-    nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-    const html = nunjucks.render('source_list/index.html', 
+    const html = render_template('source_list/index.html', 
       {
         global_stuff: OBITools.get_global_stuff(panel.webview, extensionUri),
-        main_java_script: getUri(panel.webview, extensionUri, ["out", "webview.js"]),
+        main_java_script: getUri(panel.webview, extensionUri, ["out", "webview", "source_list.js"]),
         source_list: filtered_sources_extended,
         source_list_file : source_list_file
         //filex: encodeURIComponent(JSON.stringify(fileUri)),
@@ -77,19 +71,6 @@ export class SourceList {
     );
     panel.webview.html = html;
     //panel.webview.html = index_html.html;
-
-    panel.webview.onDidReceiveMessage(
-      (message: any) => {
-        const command = message.command;
-        const text = message.text;
-
-        switch (command) {
-          case "hello":
-            vscode.window.showInformationMessage(text);
-            return;
-        }
-      }
-    );
 
     SourceList.currentPanel = new SourceList(panel, extensionUri);
   

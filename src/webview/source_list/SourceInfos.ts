@@ -5,18 +5,16 @@ import { DirTool } from '../../extension/utilities/DirTool';
 import * as path from 'path';
 import { Constants } from '../../shared/Constants';
 import { OBITools } from '../../extension/utilities/OBITools';
-import { AppConfig } from '../../shared/AppConfig';
+import { AppConfig } from '../../extension/config/AppConfig';
 import { Workspace } from '../../extension/utilities/Workspace';
 import * as source from '../../shared/Source';
 import { SourceListProvider } from './SourceListProvider';
 import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
+import { SOURCE_INFOS_REQUESTS } from '../../shared/messages/SourceListMessages';
+import { parse_message } from '../../shared/messages/MessageGuard';
+import { logger } from '../../extension/utilities/Logger';
+import { render_template } from '../Templates';
 
-/*
-https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
-https://mozilla.github.io/nunjucks/api.html
-https://www.11ty.dev/docs/languages/nunjucks/
-*/
-const nunjucks = require('nunjucks');
 
 
 
@@ -64,13 +62,11 @@ export class SourceInfos {
     SourceInfos._context = context;
     SourceInfos._edit_infos = edit_infos;
 
-    if (SourceInfos.currentPanel) {
-      // If the webview panel already exists reveal it
-      SourceInfos.currentPanel._panel.dispose();
-    }
+    // The new panel opens where the old one was (the user may have moved it to another editor group)
+    const column = SourceInfos.currentPanel?._panel.viewColumn;
+    SourceInfos.currentPanel?._panel.dispose();
 
-    // If a webview panel does not already exist create and show a new one
-    const panel = this.createNewPanel(context.extensionUri);
+    const panel = this.createNewPanel(context.extensionUri, column);
     panel.webview.html = await SourceInfos.generate_html(context.extensionUri, panel.webview);
     
     panel.webview.onDidReceiveMessage(this.onReceiveMessage);
@@ -92,14 +88,13 @@ export class SourceInfos {
     const sources = await LocalSourceList.get_local_sources();
     const source_list: source.IQualifiedSource[] = await LocalSourceList.get_extended_source_infos(sources)||[];
 
-    nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-    const html = nunjucks.render(html_template, 
+    const html = render_template(html_template, 
       {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),
         config_css: getUri(webview, extensionUri, ["asserts/css", "config.css"]),
-        main_java_script: getUri(webview, extensionUri, ["out", "source_infos.js"]),
+        main_java_script: getUri(webview, extensionUri, ["out", "webview", "source_infos.js"]),
         source_list: source_list,
-        source_info_file: DirTool.get_encoded_file_URI(config.general['source-infos'])
+        source_info_file: DirTool.get_encoded_file_URI(config.general['source-infos'] ?? Constants.SOURCE_INFOS)
       }
     );
 
@@ -122,14 +117,16 @@ export class SourceInfos {
 
 
 
-  private static onReceiveMessage(message: any): void {
+  private static onReceiveMessage(raw: unknown): void {
+
+    const message = parse_message('Source infos', raw, SOURCE_INFOS_REQUESTS, text => logger.warn(text));
+    if (!message)
+      return;
 
     const config: AppConfig = AppConfig.get_app_config();
 
     const workspaceUri =
-    vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-    ? vscode.workspace.workspaceFolders[0].uri
-    : undefined;
+    Workspace.find_workspace_uri();
 
     if (!workspaceUri)
       return;
@@ -139,7 +136,12 @@ export class SourceInfos {
     switch (command) {
 
       case "save_config":
-        SourceInfos.save_infos(message.data);
+        try {
+          SourceInfos.save_infos(message.data);
+        }
+        catch (e) {
+          DirTool.show_save_error(e);
+        }
         SourceInfos.update();
         break;
 
@@ -152,23 +154,25 @@ export class SourceInfos {
   private static save_infos(sources: source.ISourceInfos) {
 
     const json_file: string = path.join(Workspace.get_workspace(), AppConfig.get_app_config().general['source-infos']||'.obi/etc/source-infos.json');
-    let source_infos: source.ISourceInfos = DirTool.get_json(json_file) || [];
+    const current = DirTool.read_json_strict<source.ISourceInfos>(json_file);
+    // Older versions created the file as '[]': string keys on an array are dropped by JSON.stringify
+    const source_infos: source.ISourceInfos = current && !Array.isArray(current) ? current : {};
 
     for (const [k, v] of Object.entries(sources)) {
       source_infos[k] = v;
     }
 
-    DirTool.write_file(json_file, JSON.stringify(source_infos, undefined, 2));
+    DirTool.update_json(json_file, source_infos);
   }
 
 
 
-  private static createNewPanel(extensionUri : Uri) {
+  private static createNewPanel(extensionUri : Uri, column: ViewColumn = ViewColumn.One) {
     return window.createWebviewPanel(
       'obi_source_infos_config', // Identifies the type of the webview. Used internally
       'OBI Source infos', // Title of the panel displayed to the user
       // The editor column the panel should be displayed in
-      ViewColumn.One,
+      column,
       // Extra panel configurations
       {
         // Enable JavaScript in the webview

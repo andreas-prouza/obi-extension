@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="{{ global_stuff['theme_mode'] }}">
   <head>
+  {% include "tools/csp.html" %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
     <link rel="stylesheet" href="{{ config_css }}">
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/codicons/codicon.css">
+    <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/codicons/codicon.css">
   </head>
   <body>
 
@@ -26,7 +27,13 @@
     <vscode-text-field id="i-releaser|main-branch" placeholder="main" value="{{ deploy_config['i-releaser']['main-branch'] }}">{{ global_stuff['get_text']('Main branch') | safe }}</vscode-text-field>
     <br/>
     <br/>
-    <vscode-text-field id="i-releaser|auth-token" type="password" value="{{ auth_token }}">🔑 {{ global_stuff['get_text']('HTTP Auth-Token') | safe }}</vscode-text-field>
+    <vscode-text-field id="i-releaser|auth-token" type="password" value=""
+      {% if auth_token_stored %}placeholder="{{ global_stuff['get_text']('Token stored - type to replace') }}"{% endif %}>🔑 {{ global_stuff['get_text']('HTTP Auth-Token') | safe }}</vscode-text-field>
+    {% if auth_token_stored %}
+    <vscode-button id="delete_auth_token" appearance="icon" title="{{ global_stuff['get_text']('Remove stored token') }}">
+      <span class="codicon codicon-trash"></span>
+    </vscode-button>
+    {% endif %}
 
     <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
     

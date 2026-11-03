@@ -1,17 +1,15 @@
+import "../../tools/javascript/toolkit";
 import {
-  allComponents,
-  provideVSCodeDesignSystem,
   Button
 } from "@vscode/webview-ui-toolkit";
 
-import { showAlert } from "../../tools/javascript/alertBox";
+import { page_text, showAlert } from "../../tools/javascript/alertBox";
+import { typed_post } from "../../tools/javascript/post";
+import type { DeploymentConfigRequest } from "../../../shared/messages/DeploymentMessages";
 
-// In order to use all the Webview UI Toolkit web components they
-// must be registered with the browser (i.e. webview) using the
-// syntax below.
-provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
+const post = typed_post<DeploymentConfigRequest>(vscode);
 
 window.addEventListener("load", main);
 
@@ -23,26 +21,30 @@ function main() {
 
   const btn_save_config = document.getElementById("save_config") as Button;
   btn_save_config?.addEventListener("click", save_config);
-  
+
+  const btn_delete_token = document.getElementById("delete_auth_token") as Button;
+  btn_delete_token?.addEventListener("click", () => post({ command: "delete_auth_token" }));
+
   window.addEventListener('message', receive_message);
 
-  showAlert('Configuration reloaded.', 'success');
+  showAlert(page_text('obi_text_reloaded', 'Configuration reloaded.'), 'success');
 }
 
 
 
 function save_config() {
-  console.log('Save deployment config');
 
-  let data = {'i-releaser' : {}};
+  const value = (id: string) => (document.getElementById(id) as HTMLInputElement).value;
+  const data = {
+    'i-releaser': {
+      'url': value('i-releaser|url'),
+      'default-workflow': value('i-releaser|default-workflow'),
+      'main-branch': value('i-releaser|main-branch'),
+      'auth-token': value('i-releaser|auth-token')
+    }
+  };
 
-  data['i-releaser']['url'] = (document.getElementById('i-releaser|url') as HTMLInputElement).value;
-  data['i-releaser']['default-workflow'] = (document.getElementById('i-releaser|default-workflow') as HTMLInputElement).value;
-  data['i-releaser']['main-branch'] = (document.getElementById('i-releaser|main-branch') as HTMLInputElement).value;
-  data['i-releaser']['auth-token'] = (document.getElementById('i-releaser|auth-token') as HTMLInputElement).value;
-
-  console.log('Save deployment config');
-  vscode.postMessage({
+  post({
     command: "save",
     data: data
   });

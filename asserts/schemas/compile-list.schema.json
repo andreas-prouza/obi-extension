@@ -1,0 +1,171 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OBI compile list",
+  "description": "The build list: what is built, in which order and with which commands. Written by OBI, also holds the results of a build.",
+  "type": "object",
+  "required": [
+    "compiles"
+  ],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "description": "Creation or last update of the list."
+    },
+    "git": {
+      "type": "object",
+      "description": "Git state of the project.",
+      "properties": {
+        "branch": {
+          "type": "string",
+          "description": "Branch; missing if HEAD is detached."
+        },
+        "commit": {
+          "type": "string",
+          "description": "Commit hash."
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "description": "Older versions: the configuration of the build. Now in config.json of the build history."
+    },
+    "custom_data": {
+      "type": "object",
+      "description": "Data saved by a custom build summary template."
+    },
+    "compiles": {
+      "type": "array",
+      "description": "Build levels in the order they are built.",
+      "items": {
+        "type": "object",
+        "required": [
+          "level",
+          "sources"
+        ],
+        "properties": {
+          "level": {
+            "type": "integer",
+            "description": "Number of the level."
+          },
+          "sources": {
+            "type": "array",
+            "description": "Sources of this level.",
+            "items": {
+              "type": "object",
+              "required": [
+                "source",
+                "cmds"
+              ],
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "description": "The source.",
+                  "pattern": "^[A-Za-z0-9_$#@.\\-]+/[A-Za-z0-9_$#@.\\-]+/[A-Za-z0-9_$#@.\\-]+$",
+                  "patternErrorMessage": "A source in the form lib/file/member.ext, e.g. mylib/qrpglesrc/hello.rpgle.pgm"
+                },
+                "status": {
+                  "type": "string",
+                  "description": "Status of the source.",
+                  "examples": [
+                    "new",
+                    "in process",
+                    "success",
+                    "failed"
+                  ]
+                },
+                "hash": {
+                  "type": "string",
+                  "description": "Hash of the source after a successful build."
+                },
+                "ignore": {
+                  "type": "boolean",
+                  "description": "Skip this source in the build."
+                },
+                "variables": {
+                  "type": "object",
+                  "description": "Computed values and source-specific settings, for information."
+                },
+                "cmds": {
+                  "type": "array",
+                  "description": "Commands of this source, in the order they run.",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "cmd"
+                    ],
+                    "properties": {
+                      "cmd": {
+                        "type": "string",
+                        "description": "The command."
+                      },
+                      "status": {
+                        "type": "string",
+                        "description": "Status of the command.",
+                        "examples": [
+                          "new",
+                          "in process",
+                          "success",
+                          "failed"
+                        ]
+                      },
+                      "updated": {
+                        "type": "string",
+                        "description": "Time of the last status change."
+                      },
+                      "exit-code": {
+                        "type": "integer",
+                        "description": "Exit code of the command."
+                      },
+                      "stdout": {
+                        "type": "string",
+                        "description": "Output of the command (spooled file)."
+                      },
+                      "stderr": {
+                        "type": "string",
+                        "description": "Error output of the command."
+                      },
+                      "joblog": {
+                        "type": "string",
+                        "description": "Job log of the command."
+                      },
+                      "ignore": {
+                        "type": "boolean",
+                        "description": "Skip this command in the build."
+                      },
+                      "properties": {
+                        "type": "object",
+                        "description": "What a step of the extended source processing sets itself."
+                      },
+                      "change-history": {
+                        "type": "array",
+                        "description": "Changes made to the command in the build summary.",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string"
+                            },
+                            "user": {
+                              "type": "string"
+                            },
+                            "original": {
+                              "type": "string",
+                              "description": "The command before the change."
+                            },
+                            "timestamp": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

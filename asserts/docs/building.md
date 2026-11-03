@@ -35,6 +35,10 @@ Toolbar buttons (left to right):
 
 When a source (`.pgm`, `.srvpgm`, `.module`, `.file`) is open in the editor, the editor title bar also offers **Show single change**, **Run single build** and **Clear diagnostics** for that source.
 
+### Status bar
+
+The status bar shows the active profile and the result of the last build (a check mark with its time, or the number of failed sources), or the running operation, with the elapsed time in the tooltip. Click it for a menu: run build (all changes or the current source), show changes, open build summary, switch profile, cancel the running operation, show build output or log. Turn it off with the setting `obi.statusBar.enabled`.
+
 
 ## Show changes
 
@@ -84,39 +88,52 @@ With `*CURRENT` (or **Show single change** in the editor), only the active sourc
 
 You can add your own HTML (and JavaScript) to the build summary, e.g. a form to record a ticket number with each build.
 See [Custom build summary template](configuration.md#custom-build-summary-template).
+The template is code from your project (Nunjucks templates can run JavaScript in VS Code): it is only used in a trusted workspace. Only use templates you trust.
 
 
 ## Run build
 
 **Run build** in the OBI Build view first runs **Show changes**, then builds. **Run build** in the build summary builds the list as shown, including your changes.
 
+In an editor, `Ctrl+Alt+Shift+B` builds the current source and `Ctrl+Alt+Shift+C` shows its changes (macOS: `Cmd` instead of `Ctrl`).
+
 Steps:
 
-1. **Confirm** the number of sources to build.
+1. **Confirm** the number of sources to build (setting `obi.build.confirmRun` turns the question off).
 2. **Check the remote system**: home directory and `.bashrc` (offers to create them), project folder, configuration and OBI backend.
    If the project is missing on IBM i, **Transfer all** is offered.
-3. **Upload** the configuration (project config, your active user profile, `constants.py`, `logger_config.py`), the sources to build and the build list.
+3. **Upload** the configuration (project config, your active user profile, `constants.py`, `logger_config.py`), the sources to build and the build list (`compile-list.json` and the files directly in `.obi/tmp`, e.g. the lists of changed and dependent objects).
 4. **Run** the OBI backend on IBM i in the remote project folder:
    ```sh
    <remote OBI path>/venv/bin/python -X utf8 <remote OBI path>/main.py -a run -p .
    ```
-5. **Download** `.obi/build-output`, `.obi/tmp` and `.obi/log`. The build summary now shows the result of every command.
-6. **History**: a snapshot of the build (including configuration and git branch/commit) is stored in `.obi/build-history` (see [Build history](#build-history)).
+5. **Download** the results of this build. The build summary now shows the result of every command.
+   * the files directly in `.obi/build-output` (compile list, status, object list, `compiled-object-list.md`) and in `.obi/tmp`
+   * `.obi/log` (cleared before each run)
+   * for each built source: its command outputs in `build-output-dir` (`<lib>/<member>/command-<n>.*`) and its compile messages in `evfevent-output-dir`
+
+   Outputs of earlier builds that are still on the IBM i are not downloaded again. The OBI log lists the duration of each step (`Build timings: upload sources 0:02 · build list 0:01 · remote run 2:31 · download results 0:04 · total 2:38`).
+6. **History**: a snapshot of the build (compile list with git branch/commit, and the configuration without `secret*` variables in `config.json`) is stored in `.obi/build-history` (see [Build history](#build-history)).
 7. **Hashes**: only sources that were built **successfully** get their hash updated in `.obi/etc/object-builds.json`. Failed sources show up again on the next **Show changes**.
 
 Only sources that still have commands that are not `success` are built. So after fixing an error you can simply **Run build** again in the build summary, and only the remaining commands run.
 
-**Cancel** (shown while running) stops the local processing only; a build already started on IBM i continues.
+**Live output:** the output of the OBI backend appears in the output panel **OBI Build** while the build runs (also for *Show changes* with a local OBI). The progress notification shows the elapsed time and the latest line. Open it any time with **OBI: Show build output**. The setting `obi.build.revealOutput` decides when the panel opens by itself: `onError` (default), `onStart` or `never`.
+
+**Cancel** (in the notification or in the OBI Build view) stops the build:
+* before the build runs on IBM i, it stops after the current step (no further upload or build);
+* while the build runs on IBM i, the OBI backend is stopped (`kill -TERM`). An IBM i command that is already running (e.g. a compile) finishes first; the build summary shows the results up to the cancel.
 
 If the OBI backend on IBM i is too old, the extension notifies you after the build.
 
 
 ## Compile errors
 
-The default compile commands use `OPTION(*EVENTF)` and export the event file into `.obi/tmp/evfevent`, which is downloaded after the build.
+The default compile commands use `OPTION(*EVENTF)` and export the event file into the folder `evfevent-output-dir` (default `.obi/tmp/evfevent`), which is downloaded after the build.
 
-Click a **source name** in the build summary: the source opens and its compiler messages are shown in the editor and in the **Problems** view
-(severity < 10 → information, < 20 → warning, otherwise error).
+After every build, the compiler messages of **all** built sources appear in the **Problems** view, each in the file it belongs to: messages in a copybook are shown in the copybook, at the right line and column
+(severity < 10 → information, < 20 → warning, otherwise error). Messages of files outside the project (e.g. a QSYS member) are shown on line 1 of the source, with the member and line in the text.
+A source that builds successfully loses its old messages. Opening a build from the history shows the messages of that build.
 
 **Clear diagnostics** (editor title bar) removes them again.
 
@@ -132,9 +149,19 @@ The **Build history** view lists all builds stored in `.obi/build-history`.
 * Click a **build** to open its build summary, including joblogs, spool files and compile errors of that build.
   **Run build** from a historical build summary builds that list again (all commands are reset to `new`).
 * Click a **source** to open it.
-* 🗑 on a **date** deletes all builds of that date (without confirmation).
+* 🗑 on a **build** deletes that build, 🗑 on a **date** all builds of that date, and **Delete entire build history** in the view title all builds. Each asks first.
 
 History entries are only stored locally. Add `.obi/build-history` to `.gitignore` (see [Configuration](configuration.md#files-in-the-obi-folder)).
+
+### Build history size
+
+The view title shows the number of builds and their size (e.g. `87 builds · 412 MB`).
+After each build and when the workspace opens, older builds are deleted (folders whose name is no timestamp are never deleted):
+
+* `obi.buildHistory.maxBuilds` (default `100`): keep the newest n builds, `0` = unlimited
+* `obi.buildHistory.maxAgeDays` (default `0`): delete builds older than n days, `0` = unlimited
+
+As long as neither setting is set, OBI asks once per workspace before it deletes existing builds (*Delete old builds* / *Keep all*). *Keep all* turns the automatic deletion off until you set one of the settings.
 
 
 ## Other actions

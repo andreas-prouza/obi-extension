@@ -1,3 +1,5 @@
+**Status:** finished (Unreleased)
+
 # Current situation
 
 Raw `console.log` debug statements are used throughout production code instead of the existing
@@ -23,3 +25,10 @@ webview devtools console / extension host console unconditionally.
   posts messages to the extension host logger, or gate `console.log` calls behind a debug flag
 * Remove logging that was clearly left over from debugging (e.g. dumping full config objects) rather
   than converting it
+
+
+## Result
+
+* Extension host: no `console.log` left, except the logger's own fallback for tests (`Logger.ts`), which runs before a log channel exists.
+* Page scripts: all 56 calls were debugging leftovers and are removed, so no webview logger was needed. The three `console.error` calls stay: they report a broken page in the webview devtools.
+* `check-repo` refuses new `console.log` calls.

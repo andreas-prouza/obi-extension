@@ -3,12 +3,6 @@ import { OBITools } from '../../extension/utilities/OBITools';
 import { LogOutput } from './LogOutput';
 import { Workspace } from '../../extension/utilities/Workspace';
 
-/*
-https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
-https://mozilla.github.io/nunjucks/api.html
-https://www.11ty.dev/docs/languages/nunjucks/
-*/
-const nunjucks = require('nunjucks');
 
 
 
@@ -24,7 +18,7 @@ export class LogOutputProvider implements vscode.FileSystemProvider {
   public static getInstance(): LogOutputProvider {
     if (!LogOutputProvider._instance) {
       LogOutputProvider._instance = new LogOutputProvider();
-      OBITools.ext_context.subscriptions.push(
+      OBITools.ext_context?.subscriptions.push(
         vscode.workspace.registerFileSystemProvider(LogOutputProvider.scheme, LogOutputProvider._instance, {
           isReadonly: true
         })
@@ -36,8 +30,12 @@ export class LogOutputProvider implements vscode.FileSystemProvider {
   public static async showOutput(log_type: string, level: number, source: any, cmd_index: any) {
 
     const content = LogOutput.get_log_content(Workspace.get_workspace_uri(), log_type, level, source, cmd_index);
+    if (!content) {
+      vscode.window.showInformationMessage(vscode.l10n.t('No log available for {0}', source));
+      return;
+    }
 
-    const log_type_mapping = {
+    const log_type_mapping: Record<string, string> = {
       'joblog': 'QPJOBLOG',
       'stdout': 'Spool',
       'stderr': 'Error'

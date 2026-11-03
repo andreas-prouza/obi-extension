@@ -5,39 +5,44 @@ import { getUri } from './getUri';
 import { getNonce } from './getNonce';
 import { Constants } from '../../shared/Constants';
 
-import { AppConfig } from '../../shared/AppConfig';
+import { AppConfig } from '../config/AppConfig';
 import { SSH_Tasks } from './SSH_Tasks';
 import * as source from '../../shared/Source';
 import { Workspace } from './Workspace';
 import * as fs from 'fs';
 import { logger } from './Logger';
 import { OBICommands } from '../../extension/obi/OBICommands';
-import { LocaleText } from './LocaleText';
-import { OBIStatus } from '../../shared/OBIStatus';
+import { template_text } from './TemplateTexts';
+import { OperationLock } from './OperationLock';
 import { createBuildList } from '../../extension/obi/compile_list/createBuildList';
-import { Dependencies, DependencyList } from '../../shared/Dependency';
+import { compare_hashes, compute_source_hashes } from '../../extension/obi/compile_list/modules/source_hashes';
+import { Dependencies, DependencyList } from '../obi/Dependency';
 import { GitInfo } from './GitInfo';
+import { is_home_like_remote_base_dir } from './RemotePathGuard';
+import { migrate_project, replace_with_shipped } from '../obi/ProjectMigration';
+import { write_initial_gitignore } from '../obi/GitignoreCheck';
+import { UserCancelledError, get_error_message } from '../../shared/Errors';
+import { show_error } from './Notify';
+import { ProjectState } from '../ProjectState';
 
 
 
 export class OBITools {
 
   public static ext_context?: vscode.ExtensionContext;
-  public static lang: LocaleText | undefined = undefined;
 
-  public static check_remote_sources_status: OBIStatus = OBIStatus.READY;
-  public static transfer_all_status: OBIStatus = OBIStatus.READY;
 
   private static _dependency_list: { ['source']: string[] }|undefined = undefined;
   private static _last_loading_time: number = 0;
 
-  private static _threads: {[key: string]: string} = {};
+  /** Set by the cancel button of the OBI Build view; checked between files while hashing */
+  private static hashing_cancelled: boolean = false;
 
 
 
 
-  public static cancel(thread_name: string) {
-    OBITools._threads[thread_name] = 'cancel';
+  public static cancel_source_hashing(): void {
+    OBITools.hashing_cancelled = true;
   }
 
 
@@ -45,16 +50,34 @@ export class OBITools {
   /**
    * Self check of the extension
    */
+  /** Checks local-obi-dir and shows what is wrong; returns the message ('' if everything is fine) */
+  public static check_local_obi(): string {
+
+    const config = AppConfig.get_app_config();
+    let error_messages: string = '';
+
+    if (config.general['local-obi-dir'] && !DirTool.dir_exists(config.general['local-obi-dir']))
+      error_messages = vscode.l10n.t('Config error: local OBI location \'{0}\' does not exist', config.general['local-obi-dir']);
+
+    if (config.general['local-obi-dir'] && DirTool.dir_exists(config.general['local-obi-dir']) && !OBITools.get_local_obi_python_path())
+      error_messages = vscode.l10n.t('Local OBI error: the virtual environment is missing in \'{0}\'. Have you run the setup script?', config.general['local-obi-dir']);
+
+    if (error_messages.length > 0)
+      vscode.window.showErrorMessage(error_messages);
+
+    return error_messages;
+  }
+
+
+
   public static self_check() {
     if (!vscode.workspace.workspaceFolders || !OBITools.ext_context) {
-      vscode.window.showErrorMessage('No workspace is opened!');
+      vscode.window.showErrorMessage(vscode.l10n.t('No workspace is opened!'));
       return;
     }
 
     const ws = Workspace.get_workspace();
     const ext_ws = path.join(OBITools.ext_context.asAbsolutePath('.'), 'obi-media');
-    const current_version: string = vscode.extensions.getExtension('andreas-prouza.obi')?.packageJSON['version'];
-    let previous_version: string | undefined = OBITools.ext_context.workspaceState.get('obi.version');
     const config: AppConfig = AppConfig.get_app_config();
 
     if (config.general['local-base-dir'] == '/')
@@ -62,6 +85,9 @@ export class OBITools {
 
     if (config.general['remote-base-dir'] == '/')
       throw Error("Root for 'remote-base-dir' is not allowed!");
+
+    if (config.general['remote-base-dir'] && is_home_like_remote_base_dir(config.general['remote-base-dir']))
+      throw Error(`'remote-base-dir' must not be the home directory of the SSH user ('${config.general['remote-base-dir']}'). Use a sub folder, e.g. '~/${path.basename(ws)}'.`);
 
     if (config.general['local-obi-dir'] == '/')
       throw Error("Root for 'local-obi-dir' is not allowed!");
@@ -79,14 +105,15 @@ export class OBITools {
     if (!DirTool.dir_exists(path.join(ws, '.obi', 'tmp'))) {
       fs.mkdirSync(path.join(ws, '.obi', 'tmp'), { recursive: true });
     }
+    // All three files are JSON objects (source → …)
     if (!DirTool.file_exists(path.join(ws, config.general['source-infos'] || 'source-infos.json'))) {
-      DirTool.write_file(path.join(ws, config.general['source-infos'] || 'source-infos.json'), '[]');
+      DirTool.write_file(path.join(ws, config.general['source-infos'] || 'source-infos.json'), '{}');
     }
     if (!DirTool.file_exists(path.join(ws, config.general['dependency-list'] || 'dependency.json'))) {
-      DirTool.write_file(path.join(ws, config.general['dependency-list'] || 'dependency.json'), '');
+      DirTool.write_file(path.join(ws, config.general['dependency-list'] || 'dependency.json'), '{}');
     }
     if (!DirTool.file_exists(path.join(ws, config.general['compiled-object-list'] || 'object-build.json'))) {
-      DirTool.write_file(path.join(ws, config.general['compiled-object-list'] || 'object-build.json'), '');
+      DirTool.write_file(path.join(ws, config.general['compiled-object-list'] || 'object-build.json'), '{}');
     }
 
     if (!DirTool.dir_exists(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME))) {
@@ -102,50 +129,49 @@ export class OBITools {
       fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
     }
 
-    AppConfig.self_check();
-
-    let previous_version_int = 0;
-    if (previous_version) {
-      const match = previous_version.match(/^(\d+)\.(\d+)\.(\d+)$/);
-      if (match) {
-        // Pad each group to 2 digits
-        const major = match[1].padStart(2, '0');
-        const minor = match[2].padStart(2, '0');
-        const patch = match[3].padStart(2, '0');
-        previous_version_int = parseInt(major + minor + patch);
-      }
-    }
-
-    if (previous_version_int <= 208) {
-      fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
-      fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'logger_config.py'), path.join(ws, '.obi', 'etc', 'logger_config.py'));
-    }
-    if (previous_version_int <= 221) {
-      let config = AppConfig.get_project_app_config(Workspace.get_workspace_uri());
-      config.general['compiled-object-list'] = Constants.COMPILED_OBJECT_LIST;
-      config.general['remote-source-list'] = Constants.REMOTE_SOURCE_LIST;
-      config.general['source-list'] = Constants.SOURCE_LIST;
-      config.general['dependency-list'] = Constants.DEPENDENCY_LIST;
-      const toml_file = path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_FILE);
-      DirTool.write_toml(toml_file, config);
-      AppConfig.reset();
-    }
-    if (previous_version_int <= 324) {
-      fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
-    }
-    if (previous_version_int <= 607) {
-      fs.copyFileSync(path.join(ext_ws, '.obi', 'etc', 'constants.py'), path.join(ws, '.obi', 'etc', 'constants.py'));
-    }
-
-    OBITools.ext_context.workspaceState.update('obi.version', current_version);
+    OBITools.check_local_obi();
 
     DependencyList.get_dependencies().then(dependency_list => {;
       if (!dependency_list || Object.keys(dependency_list).length === 0) {
-        vscode.window.showWarningMessage('Missing source dependencies');
+        vscode.window.showWarningMessage(vscode.l10n.t('Missing source dependencies'));
       }
     });
 
 
+  }
+
+
+
+  /**
+   * Brings the project files to the current schema (once per project, the version is stored in the project).
+   * Missing settings are added, nothing is overwritten; differing OBI Python config files are only replaced on request.
+   */
+  public static migrate_project_files(context: vscode.ExtensionContext): void {
+
+    const ws = Workspace.get_workspace();
+    const media_dir = path.join(context.extensionPath, 'obi-media');
+    const result = migrate_project(ws, media_dir);
+
+    if (result.from_version == result.to_version)
+      return;
+
+    logger.info(`Project migrated from schema ${result.from_version} to ${result.to_version}: ${result.changed_files.join(', ')}`);
+    AppConfig.reset();
+
+    if (result.changed_files.length > 0)
+      vscode.window.showInformationMessage(vscode.l10n.t('OBI updated project files to schema version {0}: {1}. Please review and commit them.', result.to_version, result.changed_files.join(', ')));
+
+    for (const file of result.differing_files) {
+      const replace = vscode.l10n.t('Replace (keep backup)');
+      vscode.window.showInformationMessage(
+        vscode.l10n.t('{0} differs from the version shipped with this OBI extension. Replace it with the shipped version?', file),
+        replace, vscode.l10n.t('Keep')).then(choice => {
+          if (choice !== replace)
+            return;
+          const backup = replace_with_shipped(ws, media_dir, file);
+          vscode.window.showInformationMessage(vscode.l10n.t('{0} replaced. Backup: {1}', file, backup));
+        });
+    }
   }
 
 
@@ -186,9 +212,7 @@ export class OBITools {
     if (!config.general['remote-obi-dir'])
       return undefined;
 
-    const remote_obi_python: string = `${config.general['remote-obi-dir']}/venv/bin/python`;
-
-    return remote_obi_python;
+    return `${await SSH_Tasks.get_remote_obi_dir()}/${Constants.REMOTE_OBI_PYTHON_PATH}`;
   }
 
 
@@ -197,13 +221,9 @@ export class OBITools {
   public static async check_remote(): Promise<boolean> {
 
     if (! await OBITools.check_remote_basics()) {
-      vscode.window.showWarningMessage('Missing OBI project on remote system.');
-      try {
-        await OBITools.transfer_project_folder(false);
-      }
-      catch {
-        return false;
-      }
+      vscode.window.showWarningMessage(vscode.l10n.t('Missing OBI project on remote system.'));
+      // Without a successful transfer the build can't run on the IBM i
+      return await OBITools.do_transfer_project_folder(false);
     }
 
     return true;
@@ -220,27 +240,23 @@ export class OBITools {
     if (!check)
       return false;
 
-    check = await SSH_Tasks.check_remote_paths(['/home/$USER/.bashrc']);
+    const bashrc = `${await SSH_Tasks.get_remote_home()}/.bashrc`;
+    check = await SSH_Tasks.check_remote_paths([bashrc]);
     if (check)
       return true;
 
-    const answer = await vscode.window.showErrorMessage(`Missing /home/$USER.bashrc. Run setup?`, { modal: true }, ...['Yes', 'No']);
-    switch (answer) {
-      case 'No':
+    const create = vscode.l10n.t('Create');
+    const answer = await vscode.window.showWarningMessage(vscode.l10n.t('Missing {0}. Create it with the PATH to the open source packages (/QOpenSys/pkgs/bin)?', bashrc), { modal: true }, create);
+    if (answer === create) {
+      try {
+        await SSH_Tasks.executeCommand(`echo 'export PATH="/QOpenSys/pkgs/bin:$PATH"' >> "$HOME/.bashrc"`);
+      }
+      catch (e: unknown) {
+        show_error(vscode.l10n.t('Creating {0} failed', bashrc), e);
         return false;
-      case undefined: // Canceled
-        return false;
-      case 'Yes':
-        try {
-          await SSH_Tasks.executeCommand(`echo 'export PATH="/QOpenSys/pkgs/bin:$PATH"' > /home/$USER/.bashrc`);
-        }
-        catch (e: any) {
-          logger.error(e, e.stack);
-          vscode.window.showErrorMessage(`Error creating /home/$USER.bashrc: ${e.message}`);
-          return false;
-        }
-        vscode.window.showInformationMessage(`/home/$USER.bashrc created.`);
-        return true;
+      }
+      vscode.window.showInformationMessage(vscode.l10n.t('{0} created.', bashrc));
+      return true;
     }
 
     return false;
@@ -254,29 +270,26 @@ export class OBITools {
 
     let check: boolean;
 
-    check = await SSH_Tasks.check_remote_paths(['/home/$USER']);
+    const home = await SSH_Tasks.get_remote_home();
+    check = await SSH_Tasks.check_remote_paths([home]);
     if (check)
       return true;
 
-    const answer = await vscode.window.showErrorMessage(`Missing home directory. Run setup?`, { modal: true }, ...['Yes', 'No']);
-    switch (answer) {
-      case 'No':
-        return false;
-      case undefined: // Canceled
-        return false;
-      case 'Yes':
-        try {
-          await SSH_Tasks.executeCommand(`mkdir -p /home/$USER/.ssh && chmod 755 /home/$USER && chmod 700 /home/$USER/.ssh && echo 'export PATH="/QOpenSys/pkgs/bin:$PATH"' > /home/$USER/.bashrc`);
+    const create = vscode.l10n.t('Create');
+    const answer = await vscode.window.showWarningMessage(vscode.l10n.t('Missing home directory {0}. Create it?', home), { modal: true }, create);
+    if (answer === create) {
+      try {
+        await SSH_Tasks.executeCommand(`mkdir -p "$HOME/.ssh" && chmod 755 "$HOME" && chmod 700 "$HOME/.ssh" && echo 'export PATH="/QOpenSys/pkgs/bin:$PATH"' >> "$HOME/.bashrc"`);
+      }
+      catch (e: unknown) {
+        if (!get_error_message(e).includes('No such file or directory')) {
+          show_error(vscode.l10n.t('Creating the home directory failed'), e);
+          return false;
         }
-        catch (e: any) {
-          logger.error(e, e.stack);
-          if (!e.message.includes('No such file or directory')) {
-            vscode.window.showErrorMessage(`Error creating home directory: ${e.message}`);
-            return false;
-          }
-        }
-        vscode.window.showInformationMessage(`Home directory created.`);
-        return true;
+        logger.warn(get_error_message(e));
+      }
+      vscode.window.showInformationMessage(vscode.l10n.t('Home directory created.'));
+      return true;
     }
 
     return false;
@@ -289,7 +302,7 @@ export class OBITools {
     const config = AppConfig.get_app_config();
     const remote_base_dir: string | undefined = config.general['remote-base-dir'];
     const remote_obi_dir: string | undefined = config.general['remote-obi-dir'];
-    const remote_obi_python: string = `${config.general['remote-obi-dir']}/venv/bin/python`;
+    const remote_obi_python: string = `${config.general['remote-obi-dir']}/${Constants.REMOTE_OBI_PYTHON_PATH}`;
 
     let check: boolean;
 
@@ -313,121 +326,9 @@ export class OBITools {
 
 
 
-  public static async check_remote_sources(): Promise<boolean> {
-
-    if (OBITools.check_remote_sources_status != OBIStatus.READY) {
-      vscode.window.showErrorMessage('Remote check is already running');
-      return false;
-    }
-
-    OBITools.check_remote_sources_status = OBIStatus.IN_PROCESS;
-    let result: boolean = false;
-
-    try {
-      result = await OBITools.process_check_remote_sources();
-    }
-    catch (e: any) {
-      logger.error(e, e.stack);
-      vscode.window.showErrorMessage('Error occured during remote source check');
-    }
-
-    OBITools.check_remote_sources_status = OBIStatus.READY;
-
-    return result;
-  }
-
-
-
-  public static async process_check_remote_sources(): Promise<boolean> {
-
-    const config = AppConfig.get_app_config();
-    const ws: string = Workspace.get_workspace();
-
-    if (!config.general['remote-source-list'])
-      return false;
-
-    const result = await vscode.window.withProgress({
-      location: vscode.ProgressLocation.Notification,
-      title: `Remote source check`,
-    },
-      async progress => {
-
-        progress.report({
-          message: `Check remote sources`
-        });
-
-        if (!await OBITools.check_remote()) {
-          return false;
-        }
-
-        progress.report({
-          message: `Get remote source hashes`
-        });
-
-        await OBICommands.get_remote_source_list();
-        const remote_source_list: source.ISource = DirTool.get_json(path.join(ws, config.general['remote-source-list']));
-
-        progress.report({
-          message: `Get local source hashes`
-        });
-
-        const current_hash_list = await OBITools.retrieve_current_source_hashes();
-
-        progress.report({
-          message: `Compare remote vs. local`
-        });
-
-        const changed_sources: source.ISourceList = await OBITools.compare_source_change(current_hash_list, remote_source_list);
-        const all_sources: string[] = [...changed_sources['changed-sources'], ...changed_sources['new-objects']];
-
-        if (all_sources.length) {
-          const answer = await vscode.window.showErrorMessage(`${all_sources.length} changed sources. Do you want to transfer to remote?\n\n${all_sources.slice(0, 5).join('\n')}`, { modal: true }, ...['Yes', 'No']);
-          switch (answer) {
-            case 'No':
-              return false;
-            case undefined: // Canceled
-              return false;
-            case 'Yes':
-              await SSH_Tasks.transferSources(all_sources);
-              vscode.window.showInformationMessage(`Sources transfered to ${config.connection['remote-host']}`);
-          }
-        }
-
-        if (changed_sources['old-sources'] && changed_sources['old-sources'].length) {
-          const answer = await vscode.window.showErrorMessage(`${changed_sources['old-sources'].length} not needed sources on remote system.\nDo you want to delete them?\n\n${changed_sources['old-sources'].join('\n')}`, { modal: true }, ...['Yes', 'No']);
-          switch (answer) {
-            case 'No':
-              return false;
-            case undefined: // Canceled
-              return false;
-            case 'Yes':
-              await SSH_Tasks.delete_sources(changed_sources['old-sources']);
-              vscode.window.showInformationMessage(`Sources transfered to ${config.connection['remote-host']}`);
-          }
-        }
-        vscode.window.showInformationMessage('Remote source check finished');
-        return true;
-      })
-
-    return result;
-  }
-
-
   public static contains_obi_project(): boolean {
 
-    if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length == 0) {
-      return false;
-    }
-
-    const ws = vscode.workspace.workspaceFolders[0].uri.fsPath;
-
-    if (!DirTool.file_exists(path.join(ws, Constants.OBI_APP_CONFIG_FILE)))
-      return false;
-
-    //if (!AppConfig.attributes_missing())
-    //  return false;
-
-    return true;
+    return Workspace.get_obi_folders().length > 0;
   }
 
 
@@ -435,7 +336,7 @@ export class OBITools {
   public static async initialize_folder(): Promise<void> {
 
     if (!vscode.workspace.workspaceFolders || !OBITools.ext_context) {
-      vscode.window.showErrorMessage('No workspace is opened!');
+      vscode.window.showErrorMessage(vscode.l10n.t('No workspace is opened!'));
       return;
     }
 
@@ -455,12 +356,14 @@ export class OBITools {
       }));
     }
 
-    Promise.all(copies).then(() => {
-      vscode.window.showInformationMessage(`${copies.length} files copied`);
-      vscode.commands.executeCommand("workbench.action.reloadWindow");
+    Promise.all(copies).then(async () => {
+      write_initial_gitignore(ws);
+      vscode.window.showInformationMessage(vscode.l10n.t('{0} files copied', copies.length));
+      // The OBI views and commands appear without reloading the window
+      await ProjectState.update();
     })
-      .catch((reason: Error) => {
-        vscode.window.showErrorMessage(reason.message);
+      .catch((reason: unknown) => {
+        show_error(vscode.l10n.t('Copying the project template failed'), reason);
       });
 
   }
@@ -473,6 +376,8 @@ export class OBITools {
     const styleUri = getUri(webview, extensionUri, ["asserts/css", "style.css"]);
 
     const asserts_uri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'asserts'));
+    // Front-end libraries, copied from node_modules by scripts/copy-vendor.js
+    const vendor_uri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'out', 'vendor'));
     const nonce = getNonce();
 
     let theme_mode = 'light';
@@ -481,14 +386,16 @@ export class OBITools {
 
     result = {
       asserts_uri: asserts_uri,
+      vendor_uri: vendor_uri,
       styleUri: styleUri,
       nonce: nonce,
+      csp_source: webview.cspSource,
       current_date: new Date().toLocaleString(),
       theme_mode: theme_mode,
       get_text: (v: string) => {
-        return LocaleText.localeText?.get_Text(v);
+        return template_text(v);
       },
-      locale: LocaleText.localeText?.current_locale,
+      locale: vscode.env.language,
     }
 
     if (!OBITools.contains_obi_project()) {
@@ -509,28 +416,6 @@ export class OBITools {
 
 
 
-  public static override_dict(from_dict: Record<string, any>, to_dict: Record<string, any>): any {
-    if (to_dict == undefined)
-      to_dict = {};
-
-    for (let [k, v] of Object.entries(from_dict)) {
-      if (typeof v === 'object' && v !== null && to_dict[k] && !(v instanceof Array) && !(v instanceof Date))
-        v = OBITools.override_dict(from_dict[k], to_dict[k]);
-
-      if (v == undefined)
-        continue;
-      if ((typeof v == 'string') && v.length == 0)
-        continue;
-      if (v instanceof Array && v.length == 0)
-        continue;
-
-      to_dict[k] = v;
-    }
-    //return {...to_dict, ...from_dict};
-    return to_dict;
-  }
-
-
   /** Writes a compile-list object to disk, refreshing its `git` branch/commit info first. */
   public static write_compile_list(file_path: string, compile_list: Record<string, unknown>): void {
     GitInfo.attach_git_info(compile_list, Workspace.get_workspace());
@@ -538,7 +423,7 @@ export class OBITools {
   }
 
 
-  public static update_compile_list(ignore_sources: string[], ignore_sources_cmd: { [key: string]: [string] | null }, compileListFileName?: string): void {
+  public static update_compile_list(ignore_sources: string[], ignore_sources_cmd: Record<string, string[]>, compileListFileName?: string): void {
     let compile_list: any = OBITools.get_compile_list(Workspace.get_workspace_uri(), compileListFileName) || {};
 
     const default_path = path.join(Workspace.get_workspace(), AppConfig.get_app_config().general['compile-list']);
@@ -589,7 +474,7 @@ export class OBITools {
 
     if (!compileListFileName) {
       if (!config.general['compile-list']) {
-        vscode.window.showErrorMessage('OBI config is invalid');
+        vscode.window.showErrorMessage(vscode.l10n.t('OBI config is invalid'));
         throw Error('OBI config is invalid');
       }
     }
@@ -713,7 +598,7 @@ export class OBITools {
     }
 
     const file: string = path.join(Workspace.get_workspace(), config.general['compiled-object-list']);
-    const source_hash_list: source.ISource = DirTool.get_json(file) || {};
+    const source_hash_list: source.ISource = DirTool.read_json_strict<source.ISource>(file) || {};
 
     if (!(old_source in source_hash_list)) {
       return;
@@ -724,61 +609,15 @@ export class OBITools {
     }
     delete source_hash_list[old_source];
 
-    DirTool.write_json(file, source_hash_list);
+    DirTool.update_json(file, source_hash_list);
   }
 
 
 
-  public static async get_changed_sources(): Promise<source.ISourceList> { // results: source.Source[]
-
-    const t0 = performance.now();
-    const current_hash_list = await OBITools.retrieve_current_source_hashes();
-    const t1 = performance.now();
-    logger.info(`1. It took ${((t1 - t0) / 1000).toFixed(2)} seconds.`);
-
-    const t2 = performance.now();
-    const changed_sources: source.ISourceList = await OBITools.compare_source_change(current_hash_list);
-    const t3 = performance.now();
-    logger.info(`2. It took ${((t3 - t2) / 1000).toFixed(2)} seconds.`);
-
-    return changed_sources;
-  }
-
-
-
-  public static async get_dependend_sources(changed_sources: source.ISourceList): Promise<string[]> {
-
-    let dependend_sources: string[] = [];
-    const config = AppConfig.get_app_config();
-
-    const all_sources: string[] = Object.assign([], changed_sources['changed-sources'], changed_sources['new-objects']);
-
-    const dependency_list: Dependencies = await DependencyList.get_dependencies();
-    for (const [k, v] of Object.entries(dependency_list)) {
-      for (let i = 0; i < all_sources.length; i++) {
-        if (v.includes(all_sources[i]) && !all_sources.includes(k) && !dependend_sources.includes(k)) {
-          dependend_sources.push(k);
-          await OBITools.add_all_dependend_sources(dependend_sources, k);
-        }
-      }
-    }
-
-    return dependend_sources;
-  }
-
-
-
-  public static async add_all_dependend_sources(dependend_sources: string[], source: string): Promise<string[]> {
-
-    const dependency_list: Dependencies = await DependencyList.get_dependencies();
-
-    for (const [k, v] of Object.entries(dependency_list)) {
-      if (v.includes(source) && source !== k && !dependend_sources.includes(k)) {
-        dependend_sources.push(k);
-        await OBITools.add_all_dependend_sources(dependend_sources, k);
-      }
-    }
-    return dependend_sources;
+  /** Sources that are new or changed since the last successful build */
+  public static async get_changed_sources(): Promise<source.ISourceList> {
+    const hashes = await OBITools.retrieve_current_source_hashes();
+    return { ...compare_hashes(hashes, OBITools.get_source_hash_list(Workspace.get_workspace()) || {}), 'old-sources': [] };
   }
 
 
@@ -798,200 +637,65 @@ export class OBITools {
     if (!source)
       changed_sources = await OBITools.get_changed_sources();
 
-    logger.info('Get dependend sources');
-    const dependend_sources: string[] = await OBITools.get_dependend_sources(changed_sources);
-
-    await createBuildList(source);
+    // Dependents come from the build order (computed once)
+    const build = await createBuildList(source, source ? undefined : changed_sources);
+    const dependend_sources: string[] = build.dependents;
 
     logger.info('Clean dir');
     DirTool.clean_dir(path.join(Workspace.get_workspace(), '.obi', 'tmp'));
     DirTool.write_file(path.join(Workspace.get_workspace(), Constants.CHANGED_OBJECT_LIST), JSON.stringify(changed_sources, undefined, 2));
     DirTool.write_file(path.join(Workspace.get_workspace(), Constants.DEPENDEND_OBJECT_LIST), JSON.stringify(dependend_sources, undefined, 2));
 
-    //return changed_sources;
     return [...changed_sources['changed-sources'], ...changed_sources['new-objects'], ...dependend_sources];
   }
 
 
 
-  public static async compare_source_change(results: source.ISource[], last_source_hashes?: source.ISource | undefined): Promise<source.ISourceList> {
-
-    // Get all sources which are new or have changed
-    if (!last_source_hashes)
-      last_source_hashes = OBITools.get_source_hash_list(Workspace.get_workspace()) || {};
-
-    let changed_sources: string[] = [];
-    let new_sources: string[] = [];
-    let old_sources: string[] = [];
-
-    logger.info(`Check ${results.length} sources`);
-
-    //----------------------------------------
-    // First start all processes
-    //----------------------------------------
-
-    const t6 = performance.now();
-    let promise_list: Promise<source.ISourceList>[] = [];
-
-    // check for changed sources
-    results.map((source_item: source.ISource) => {
-      promise_list.push(OBITools.check_source_change_item(source_item, last_source_hashes));
-    });
-    const t7 = performance.now();
-    logger.info(`Start check_source_change_item: It took ${((t7 - t6) / 1000).toFixed(2)} seconds.`);
-
-    //----------------------------------------
-    // Then get the results
-    //----------------------------------------
-    const t0 = performance.now();
-    const all_promises = await Promise.all(promise_list);
-    const t1 = performance.now();
-    logger.info(`Change check: It took ${((t1 - t0) / 1000).toFixed(2)} seconds.`);
-
-    all_promises.map((source_item_list: source.ISourceList) => {
-      if (source_item_list['changed-sources'].length > 0)
-        changed_sources.push(source_item_list['changed-sources'][0]);
-      if (source_item_list['new-objects'].length > 0)
-        new_sources.push(source_item_list['new-objects'][0]);
-    });
-
-    logger.info(`new_sources: ${new_sources.length}, changed-sources: ${changed_sources.length}`);
-
-    return {
-      "new-objects": new_sources,
-      "changed-sources": changed_sources,
-      "old-sources": old_sources
-    };
-  }
-
-
-
-  private static async check_source_change_item(source_item: source.ISource, last_source_hashes: source.ISource): Promise<source.ISourceList> {
-
-    const source_name: string = Object.keys(source_item)[0];
-    const k_source: string = source_name.replace(/\\/g, '/');
-    const v_hash: string = source_item[source_name];
-    let source_changed = true;
-
-    if (!(k_source in last_source_hashes)) {
-      return { "changed-sources": [], "new-objects": [k_source] };
-    }
-
-    if (k_source in last_source_hashes) {
-
-      if (last_source_hashes[k_source] == v_hash) {
-        source_changed = false;
-        return { "changed-sources": [], "new-objects": [] };
-      }
-    }
-
-    if (source_changed)
-      return { "changed-sources": [k_source], "new-objects": [] };
-
-    return { "changed-sources": [], "new-objects": [] };
-
-  }
-
-
-
-
-  public static async retrieve_current_source_hashes(): Promise<source.ISource[]> {
-
-    logger.info('Start retrieve_current_source_hashes');
-    delete OBITools._threads['retrieve_current_source_hashes'];
-    let p1 = performance.now();
+  /**
+   * MD5 of every source ('/'-separated path relative to the source folder → hash). Unchanged files are taken
+   * from the cache (.obi/cache/source-hashes.json); use_cache = false hashes every file.
+   */
+  public static async retrieve_current_source_hashes(use_cache: boolean = true): Promise<Record<string, string>> {
 
     const config = AppConfig.get_app_config();
-    const max_threads = config.general['max-threads'] || 20;
-    const source_dir = path.join(Workspace.get_workspace(), config.general['source-dir'] || 'src');
+    const started = performance.now();
+    OBITools.hashing_cancelled = false;
 
-    const sources = await DirTool.get_all_files_in_dir2(
-      source_dir,
-      '.',
-      config.general['supported-object-types'] || ['pgm', 'file', 'srvpgm']
-    );
+    const hashes = await compute_source_hashes(DirTool.get_local_source_dir(), config.general['supported-object-types'] || ['pgm', 'file', 'srvpgm'], {
+      concurrency: config.general['max-threads'] || 20,
+      cache_file: path.join(Workspace.get_workspace(), Constants.SOURCE_HASH_CACHE_FILE),
+      use_cache: use_cache,
+      is_cancelled: () => OBITools.hashing_cancelled || OperationLock.token.isCancellationRequested
+    });
 
-    let p2 = performance.now();
-    logger.info(`Duration: ${((p2 - p1) / 1000).toFixed(2)} seconds`);
-
-    logger.info(`Get checksum of sources`);
-
-    let checksum_calls = [];
-    let counter = 0;
-    let hash_values: source.ISource[] = [];
-
-    p1 = performance.now();
-    if (sources) {
-
-      //OBITools.parallel(sources, )
-      //... eher mit dowhile und Promise.all und immer dazuhängen ...
-      for (const source of sources) {
-
-        if (OBITools._threads['retrieve_current_source_hashes'] == 'cancel') {
-          delete OBITools._threads['retrieve_current_source_hashes'];
-          throw Error('Operation canceled by user');
-        }
-        counter++;
-        checksum_calls.push(DirTool.checksumFile(source_dir, source));
-        if (counter > max_threads) {
-          const all_promises = await Promise.all(checksum_calls);
-          if (all_promises)
-            hash_values = [...hash_values, ...all_promises];
-          counter = 0;
-          checksum_calls = [];
-        }
-      }
-
-      const all_promises = await Promise.all(checksum_calls);
-      if (all_promises)
-        hash_values = [...hash_values, ...all_promises];
-    }
-
-    p2 = performance.now();
-    logger.info(`In total ${hash_values.length} hash values. Duration: ${((p2 - p1) / 1000).toFixed(2)} seconds`);
-    return hash_values;
+    logger.info(`${Object.keys(hashes).length} source hashes in ${((performance.now() - started) / 1000).toFixed(2)} seconds`);
+    return hashes;
   }
 
 
 
-
-  public static async parallel(arr: [], fn: Function, threads: number = 10) {
-    const result = [];
-    while (arr.length) {
-      const res = await Promise.all(arr.splice(0, threads).map(x => fn(x)));
-      result.push(res);
-    }
-    return result.flat();
+  /** Transfers the project to the IBM i (after confirmation). Returns true if the transfer was done successfully. */
+  public static async transfer_project_folder(silent: boolean | undefined): Promise<boolean> {
+    return (await OperationLock.run('Transfer', () => OBITools.do_transfer_project_folder(silent))) ?? false;
   }
 
 
 
-  public static async transfer_project_folder(silent: boolean | undefined) {
-
-    if (OBITools.transfer_all_status != OBIStatus.READY) {
-      vscode.window.showErrorMessage('Transfer is already running');
-      return;
-    }
-
-    OBITools.transfer_all_status = OBIStatus.IN_PROCESS;
-    let result: boolean = false;
+  /** Without lock: also used during a build (check_remote). */
+  public static async do_transfer_project_folder(silent: boolean | undefined): Promise<boolean> {
 
     try {
-      await OBITools.process_transfer_project_folder(silent);
+      return await OBITools.process_transfer_project_folder(silent);
     }
-    catch (e: any) {
-      logger.error(e, e.stack);
-      vscode.window.showErrorMessage('Error occured during transfer to remote');
+    catch (e: unknown) {
+      show_error(vscode.l10n.t('Transfer to the IBM i failed'), e);
+      return false;
     }
-
-    OBITools.transfer_all_status = OBIStatus.READY;
-
-    return;
   }
 
 
 
-  public static async process_transfer_project_folder(silent: boolean | undefined) {
+  public static async process_transfer_project_folder(silent: boolean | undefined): Promise<boolean> {
 
     const config = AppConfig.get_app_config();
 
@@ -1002,100 +706,59 @@ export class OBITools {
     const remote_dir: string = config.general['remote-base-dir'];
 
     if (!silent) {
-      const answer = await vscode.window.showErrorMessage(`Do you want to transfer all?\nThis can take several minutes.\n\nRemote folder: ${remote_dir}`, { modal: true }, ...['Only minimum', 'Yes', 'No']);
+      const minimum = vscode.l10n.t('Only minimum');
+      const all = vscode.l10n.t('Transfer all');
+      const answer = await vscode.window.showWarningMessage(
+        vscode.l10n.t('Transfer the project to the IBM i?'),
+        { modal: true, detail: vscode.l10n.t('The remote folder \'{0}\' will be deleted and uploaded again.\n\n"{1}" uploads the configuration only, "{2}" the whole project (this can take several minutes).', remote_dir, minimum, all) },
+        minimum, all);
 
       switch (answer) {
 
-        case 'No':
-          vscode.window.showErrorMessage('Transfer canceled by user');
-          throw new Error('Transfer canceled by user');
-
         case undefined:
-          vscode.window.showErrorMessage('Transfer canceled by user');
-          throw new Error('Transfer canceled by user');
+          throw new UserCancelledError('Transfer cancelled by user');
 
-        case 'Only minimum':
+        case minimum:
           //Transfer minimum setup;
           await OBITools.transfer_minimum_now(local_dir, remote_dir);
-          break;
+          return true;
 
-        case 'Yes':
+        case all:
           await OBITools.transfer_all_now(local_dir, remote_dir);
-          break;
+          return true;
       }
     }
 
+    return false;
   }
 
 
 
 
   private static async transfer_all_now(local_dir: string, remote_dir: string) {
-    vscode.window.showInformationMessage('Start transfer');
+    vscode.window.showInformationMessage(vscode.l10n.t('Start transfer'));
 
-    const result = await SSH_Tasks.cleanup_directory();
-    if (!result) {
-      vscode.window.showErrorMessage('Cleanup of remote directory failed!');
+    // cleanup_directory shows the reason itself
+    if (!await SSH_Tasks.cleanup_directory())
       throw Error('Cleanup of remote directory failed!');
-      return;
-    }
 
-    logger.info(`Transer local dir ${local_dir} to ${remote_dir}`);
+    logger.info(`Transfer local dir ${local_dir} to ${remote_dir}`);
     await SSH_Tasks.transfer_dir(local_dir, remote_dir);
   }
 
 
 
   private static async transfer_minimum_now(local_dir: string, remote_dir: string) {
-    vscode.window.showInformationMessage('Start transfer');
+    vscode.window.showInformationMessage(vscode.l10n.t('Start transfer'));
 
-    const result = await SSH_Tasks.cleanup_directory();
-    if (!result) {
-      vscode.window.showErrorMessage('Cleanup of remote directory failed!');
+    // cleanup_directory shows the reason itself
+    if (!await SSH_Tasks.cleanup_directory())
       throw Error('Cleanup of remote directory failed!');
-      return;
-    }
 
-    logger.info(`Transer local dir ${local_dir}/.obi to ${remote_dir}/.obi`);
+    logger.info(`Transfer local dir ${local_dir}/.obi to ${remote_dir}/.obi`);
     await SSH_Tasks.transfer_dir(`${local_dir}/.obi/etc`, `${remote_dir}/.obi/etc`);
     await SSH_Tasks.transfer_dir(`${local_dir}/${Constants.BUILD_OUTPUT_DIR}`, `${remote_dir}/${Constants.BUILD_OUTPUT_DIR}`);
   }
 
-
-  public static convert_local_filepath_2_obi_filepath(local_file_path: string, remove_src?: boolean): string {
-
-    const config = AppConfig.get_app_config();
-    const src_dir: string = config.general['source-dir'] || 'src';
-
-    local_file_path = local_file_path.replace(Workspace.get_workspace(), '')
-    local_file_path = local_file_path.replace(/\\/g, '/');
-    if (remove_src)
-      local_file_path = local_file_path.replace(`${src_dir}/`, '');
-    local_file_path = local_file_path.replace(/^\/+/, '');
-
-    return local_file_path;
-  }
-
-
-
-  public static async reload_obi_extension_on_config_change() {
-
-    const ws_uri = Workspace.get_workspace_uri();
-
-    // Create a file system watcher
-    const watcher_project = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(ws_uri, Constants.OBI_APP_CONFIG_FILE));
-    const watcher_user = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(ws_uri, AppConfig.get_current_profile_app_config_file()));
-
-    // File change events
-    watcher_project.onDidChange(uri => {
-      vscode.window.showInformationMessage(`Project config file changed: ${uri.fsPath}`);
-      vscode.commands.executeCommand("workbench.action.reloadWindow");
-    });
-    watcher_user.onDidChange(uri => {
-      vscode.window.showInformationMessage(`User config file changed: ${uri.fsPath}`);
-      vscode.commands.executeCommand("workbench.action.reloadWindow");
-    });
-
-  }
 
 }

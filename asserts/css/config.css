@@ -23,6 +23,11 @@ vscode-text-field.missing_value {
   z-index: 1;
 }
 
+.save-hint {
+  opacity: 0.8;
+  font-size: 0.9em;
+}
+
 vscode-text-field, vscode-button {
   vertical-align: middle;
 }

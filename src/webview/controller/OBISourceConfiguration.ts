@@ -2,34 +2,17 @@ import * as vscode from 'vscode';
 import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
 import { getUri } from "../../extension/utilities/getUri";
 import { DirTool } from '../../extension/utilities/DirTool';
+import { normalize_source_name } from '../../extension/utilities/SourcePath';
+import { logger } from '../../extension/utilities/Logger';
 import * as path from 'path';
 import { Constants } from '../../shared/Constants';
 import { OBITools } from '../../extension/utilities/OBITools';
-import { AppConfig, SourceConfig, SourceConfigList } from '../../shared/AppConfig';
+import { AppConfig, SourceConfig, SourceConfigList } from '../../extension/config/AppConfig';
 import { Workspace } from '../../extension/utilities/Workspace';
+import { SOURCE_CONFIG_REQUESTS } from '../../shared/messages/SourceConfigMessages';
+import { parse_message } from '../../shared/messages/MessageGuard';
+import { render_template } from '../Templates';
 
-/*
-https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
-https://mozilla.github.io/nunjucks/api.html
-https://www.11ty.dev/docs/languages/nunjucks/
-*/
-const nunjucks = require('nunjucks');
-// configure() returns an Environment
-const env = nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-
-// Register "typename" filter on the environment
-env.addFilter("typename", (obj: any) => {
-  if (obj === null) return "null";
-  if (obj === undefined) return "undefined";
-
-  // If it's a class instance or built-in
-  if (obj.constructor && obj.constructor.name) {
-    return obj.constructor.name;
-  }
-
-  // Fallback
-  return typeof obj;
-});
 
 
 
@@ -70,13 +53,15 @@ export class OBISourceConfiguration {
 
     OBISourceConfiguration._context = context;
     OBISourceConfiguration._extensionUri = extensionUri;
-    OBISourceConfiguration.source_config = OBITools.convert_local_filepath_2_obi_filepath(source_config);
+    OBISourceConfiguration.source_config = normalize_source_name(source_config);
+    if (OBISourceConfiguration.source_config !== source_config)
+      logger.warn(`Source name '${source_config}' is not in the form lib/file/member`);
 
-    if (OBISourceConfiguration.currentPanel) {
-      OBISourceConfiguration.currentPanel.dispose();
-    }
-    // If a webview panel does not already exist create and show a new one
-    const panel = this.createNewPanel(extensionUri);
+    // The new panel opens where the old one was (the user may have moved it to another editor group)
+    const column = OBISourceConfiguration.currentPanel?._panel.viewColumn;
+    OBISourceConfiguration.currentPanel?.dispose();
+
+    const panel = this.createNewPanel(extensionUri, column);
 
     panel.webview.html = await OBISourceConfiguration.generate_html(extensionUri, panel.webview);
     
@@ -93,21 +78,19 @@ export class OBISourceConfiguration {
   private static async generate_html(extensionUri: Uri, webview: Webview): Promise<string> {
 
     const source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
-    const config: AppConfig = AppConfig.get_app_config();
-
     let source_config: SourceConfig|undefined;
     
     if (source_configs)
       source_config = source_configs[OBISourceConfiguration.source_config];
     
-    const html = env.render('controller/config_source_details.html', 
+    const html = render_template('controller/config_source_details.html', 
       {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),
         config_css: getUri(webview, extensionUri, ["asserts/css", "config.css"]),
-        main_java_script: getUri(webview, extensionUri, ["out", "source_config.js"]),
+        main_java_script: getUri(webview, extensionUri, ["out", "webview", "source_config.js"]),
         icons: {debug_start: '$(preview)'},
         source: OBISourceConfiguration.source_config,
-        source_file: DirTool.get_encoded_file_URI(path.join(config.general['source-dir']||'src', OBISourceConfiguration.source_config)),
+        source_file: DirTool.get_encoded_source_URI(OBISourceConfiguration.source_config),
         source_config_file: DirTool.get_encoded_file_URI(Constants.OBI_SOURCE_CONFIG_FILE),
         source_config: source_config
       }
@@ -126,154 +109,148 @@ export class OBISourceConfiguration {
     if (!panel)
       return;
 
-    panel._panel.webview.html = await OBISourceConfiguration.generate_html(OBISourceConfiguration._extensionUri, OBISourceConfiguration.currentPanel?._panel.webview);
+    panel._panel.webview.html = await OBISourceConfiguration.generate_html(OBISourceConfiguration._extensionUri, panel._panel.webview);
     
   }
 
 
 
-  private static onReceiveMessage(message: any): void {
+  private static onReceiveMessage(raw: unknown): void {
+
+    const message = parse_message('Source config', raw, SOURCE_CONFIG_REQUESTS, text => logger.warn(text));
+    if (!message)
+      return;
 
     const workspaceUri =
-    vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-    ? vscode.workspace.workspaceFolders[0].uri
-    : undefined;
+    Workspace.find_workspace_uri();
 
     if (!workspaceUri)
       return;
 
-    const command = message.command;
+    try {
+      switch (message.command) {
 
-    switch (command) {
+        case "add_source_cmd":
+          OBISourceConfiguration.add_source_cmd(message.key, message.value);
+          break;
 
-      case "add_source_cmd":
-        OBISourceConfiguration.add_source_cmd(message.key, message.value);
-        break;
+        case "delete_source_cmd":
+          OBISourceConfiguration.delete_source_cmd(message.key);
+          break;
 
-      case "delete_source_cmd":
-        OBISourceConfiguration.delete_source_cmd(message.key);
-        break;
+        case "add_source_setting":
+          OBISourceConfiguration.add_source_setting(message.key, message.type == 'list' ? message.value.split(/\r?\n/) : message.value);
+          break;
 
-      case "add_source_setting":
+        case "delete_source_setting":
+          OBISourceConfiguration.delete_source_setting(message.key);
+          break;
 
-        switch(message.type) {
-          case "list":
-            message.value = message.value.split(/\r?\n/);
-            break;
-        }
-        OBISourceConfiguration.add_source_setting(message.key, message.value);
-        break;
+        case "save_config":
+          OBISourceConfiguration.save_config(message.settings, message.source_cmds, message.steps);
+          break;
 
-      case "delete_source_setting":
-        OBISourceConfiguration.delete_source_setting(message.key);
-        break;
-
-      case "save_config":
-        OBISourceConfiguration.save_config(message.settings, message.source_cmds, message.steps);
-        break;
-
-      case "reload":
-        OBISourceConfiguration.update();
-        break;
+        case "reload":
+          OBISourceConfiguration.update();
+          break;
+      }
+    }
+    catch (e) {
+      DirTool.show_save_error(e);
     }
     return;
   }
 
 
 
-  private static delete_source_setting(key:string) {
-    let source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
-    const source_name:string = OBISourceConfiguration.source_config;
+  private static source_config_file(): string {
+    return path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE);
+  }
 
-    if (source_configs && source_configs[source_name] && source_configs[source_name].settings){
-      delete source_configs[source_name].settings[key];
+
+  /** source-config.toml as stored; {} if it doesn't exist. Throws ConfigFileError if it can't be parsed. */
+  private static read_source_configs(): SourceConfigList {
+    return DirTool.read_toml_strict<SourceConfigList>(OBISourceConfiguration.source_config_file()) ?? {};
+  }
+
+
+  /** The entry of the current source, created if missing. */
+  private static current_entry(source_configs: SourceConfigList): SourceConfig {
+    const source_name: string = OBISourceConfiguration.source_config;
+    if (!source_configs[source_name])
+      source_configs[source_name] = {"source-cmds": {}, settings: {}, steps: []};
+    return source_configs[source_name];
+  }
+
+
+
+  private static delete_source_setting(key:string) {
+    const source_configs = OBISourceConfiguration.read_source_configs();
+    const entry = source_configs[OBISourceConfiguration.source_config];
+
+    if (entry && entry.settings){
+      delete entry.settings[key];
     }
 
-    DirTool.write_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs || {});
+    DirTool.update_toml(OBISourceConfiguration.source_config_file(), source_configs);
   }
 
 
 
   private static delete_source_cmd(key:string) {
-    let source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
-    const source_name:string = OBISourceConfiguration.source_config;
+    const source_configs = OBISourceConfiguration.read_source_configs();
+    const entry = source_configs[OBISourceConfiguration.source_config];
 
-    if (source_configs && source_configs[source_name] && source_configs[source_name]['source-cmds']){
-      delete source_configs[source_name]['source-cmds'][key];
+    if (entry && entry['source-cmds']){
+      delete entry['source-cmds'][key];
     }
 
-    DirTool.write_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs || {});
+    DirTool.update_toml(OBISourceConfiguration.source_config_file(), source_configs);
   }
 
 
 
   private static add_source_cmd(key:string, value:string) {
-    let source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
-    let source_config: SourceConfig = {"source-cmds": {key: value}, settings: {}, steps: []};
-    const source_name:string = OBISourceConfiguration.source_config;
+    const source_configs = OBISourceConfiguration.read_source_configs();
+    const entry = OBISourceConfiguration.current_entry(source_configs);
 
-    if (!source_configs || !source_configs[source_name]){
-      source_configs = {source_name : source_config};
-    }
-    else {
-      if (!source_configs[source_name]['source-cmds']) {
-        source_configs[source_name]['source-cmds'] = {};
-      }
+    entry['source-cmds'] = { ...(entry['source-cmds'] ?? {}), [key]: value };
 
-      source_configs[source_name]['source-cmds'][key] = value;
-    }
-
-    DirTool.write_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs);
+    DirTool.update_toml(OBISourceConfiguration.source_config_file(), source_configs);
   }
 
 
 
-  private static add_source_setting(key:string, value:string) {
-    let source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
-    let source_config: SourceConfig = {"source-cmds": {}, settings: {key: value}, steps: []};
-    const source_name:string = OBISourceConfiguration.source_config;
+  private static add_source_setting(key:string, value: string | string[]) {
+    const source_configs = OBISourceConfiguration.read_source_configs();
+    const entry = OBISourceConfiguration.current_entry(source_configs);
 
-    if (!source_configs || !source_configs[source_name]){
-      source_configs = {source_name : source_config};
-    }
-    else {
-      if (!source_configs[source_name].settings) {
-        source_configs[source_name].settings = {};
-      }
+    entry.settings = { ...(entry.settings ?? {}), [key]: value };
 
-      source_configs[source_name].settings[key] = value;
-    }
-
-    DirTool.write_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs);
+    DirTool.update_toml(OBISourceConfiguration.source_config_file(), source_configs);
   }
 
 
 
-  private static save_config(settings: any, source_cmds: any, steps:string[]) {
+  private static save_config(settings: Record<string, string | string[]>, source_cmds: Record<string, string>, steps:string[]) {
 
-    let source_configs: SourceConfigList|undefined = AppConfig.get_source_configs();
-    let source_config: SourceConfig = {"source-cmds": source_cmds, settings: settings, steps: steps};
-    const source_name:string = OBISourceConfiguration.source_config;
+    const source_configs = OBISourceConfiguration.read_source_configs();
+    source_configs[OBISourceConfiguration.source_config] = {"source-cmds": source_cmds, settings: settings, steps: steps};
 
-    if (!source_configs)
-      source_configs = {source_name : source_config};
-    else
-      source_configs[source_name] = source_config;
+    DirTool.update_toml(OBISourceConfiguration.source_config_file(), source_configs);
 
-    DirTool.write_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs);
-
-    vscode.window.showInformationMessage('Source configuration saved');
+    vscode.window.showInformationMessage(vscode.l10n.t('Source configuration saved'));
 
 }
 
 
 
-  private static createNewPanel(extensionUri : Uri) {
+  private static createNewPanel(extensionUri : Uri, column: ViewColumn = ViewColumn.One) {
     return window.createWebviewPanel(
       'obi_source_config', // Identifies the type of the webview. Used internally
       'OBI source config', // Title of the panel displayed to the user
       // The editor column the panel should be displayed in
-      ViewColumn.One,
+      column,
       // Extra panel configurations
       {
         // Enable JavaScript in the webview

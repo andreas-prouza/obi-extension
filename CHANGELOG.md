@@ -1,3 +1,83 @@
+## [Unreleased]
+
+**Requires VS Code 1.90 or newer** (before: 1.66).
+
+**After updating:** run *Transfer all* once to remove personal files that older versions uploaded to the IBM i. Empty sources built with an older version show up as changed once. Custom build summary templates need `nonce="{{ global_stuff['nonce'] }}"` on inline scripts, and inline `on…=` handlers no longer work.
+
+### Features
+* **Live build output and cancel**: output panel **OBI Build** while a build runs; cancel from the notification or the view; command **OBI: Show build output**, setting `obi.build.revealOutput` ([spec](docs/features/remote-build-output-and-cancel.md))
+* **Compile errors** of all built sources in the Problems view, in the right file (copybooks too) and column ([spec](docs/features/compile-diagnostics.md))
+* **Status bar item**: profile, running operation, last build result, quick menu; setting `obi.statusBar.enabled` ([spec](docs/features/status-bar.md))
+* **Build history clean-up**: settings `obi.buildHistory.maxBuilds` (100) and `obi.buildHistory.maxAgeDays`, size in the view title, *Delete entire build history*; asks once before deleting existing builds ([spec](docs/features/build-history-retention.md))
+* **SSH login options**: keys with passphrase, `ssh-agent` (Pageant on Windows), `ssh-port`, `~`/`$HOME` in `ssh-key`, prompted passwords can be saved, clearer login errors ([spec](docs/features/ssh-authentication-options.md))
+* **No window reloads** after *Initialize* or config changes; the OBI views update in place ([spec](docs/features/reload-free-config-changes.md))
+* Webview panels keep their editor group, scroll position and opened sections ([spec](docs/features/webview-state-updates.md))
+* **Walkthrough** under *Help → Get Started*, command **OBI: Initialize project in this folder** ([spec](docs/features/settings-walkthrough-keybindings.md))
+* **Keybindings** `Ctrl+Alt+Shift+B` (build current source) and `Ctrl+Alt+Shift+C` (show its changes); setting `obi.build.confirmRun`
+* **JSON schemas** for `dependency.json`, `source-infos.json`, source filters and `compile-list.json` ([spec](docs/features/json-schemas.md))
+* Multi-root workspaces: OBI uses the first folder with an OBI project ([spec](docs/features/multi-root-workspace.md))
+* The configuration pages say that saving drops comments in the TOML file ([spec](docs/features/toml-format-preserving-save.md))
+
+### Security
+* Remote commands are quoted correctly, and source names are validated; before, `;`, `$()` or spaces in paths and names reached the IBM i shell ([spec](docs/bugfix/remote-command-quoting.md))
+* Deleting the remote project folder is guarded: no system folders, no home directory, confirmation with the absolute path ([spec](docs/bugfix/remote-delete-guard.md))
+* Local OBI commands run without a shell ([spec](docs/features/command-injection-hardening.md))
+* Webview messages are validated ([spec](docs/features/webview-message-protocol.md)); all webviews have a Content-Security-Policy ([spec](docs/features/webview-csp.md))
+* SSH host keys are verified (fingerprint on first connect, `~/.ssh/known_hosts`, command **OBI: Forget stored SSH host key**) ([spec](docs/features/ssh-host-key-verification.md))
+* OBI is disabled in untrusted and virtual workspaces ([spec](docs/features/workspace-trust.md))
+* Secrets stay secret:
+  * no `secret*` values in the log ([spec](docs/features/log-level-and-rotation.md)), the build history ([spec](docs/features/compile-list-size.md)) or the webview console ([spec](docs/features/replace-console-log-with-logger.md))
+  * stored passwords and tokens are no longer sent to webviews ([spec](docs/bugfix/secrets-in-webview-html.md))
+  * personal and generated files are no longer uploaded; the user config goes up with mode `600` ([spec](docs/bugfix/sensitive-files-upload.md))
+  * new projects get a `.gitignore` for personal files ([spec](docs/features/project-template-gitignore.md))
+* Log rotation (5 MB, 3 files), log level via *Developer: Set Log Level… → OBI*, settings `obi.log.writeFiles` and `obi.log.maxFileSizeMB`
+* Source descriptions can't inject script ([spec](docs/bugfix/source-description-xss.md)); profile names are validated ([spec](docs/bugfix/profile-name-validation.md))
+
+### Bugfixes
+* Config files:
+  * a fresh clone no longer rewrites `app-config.toml`; the schema version is in `.obi/etc/obi-project.json` (commit it) ([spec](docs/bugfix/config-migration-on-fresh-clone.md))
+  * a save after a syntax error no longer wipes the file ([spec](docs/bugfix/config-overwrite-on-parse-error.md)); writes are atomic and failures reported ([spec](docs/bugfix/swallowed-write-errors.md))
+  * new projects get valid `source-infos.json`, `dependency.json`, `object-builds.json` (bugs.md #18)
+  * user config changes are picked up reliably ([spec](docs/features/config-cache-invalidation.md))
+* Operations:
+  * only one OBI operation runs at a time ([spec](docs/bugfix/operation-lock.md))
+  * *Cancel* stops local OBI processes with their children; they also stop on reload ([spec](docs/bugfix/system-cmd-exit-handling.md))
+  * Escape in a prompt no longer shows an error ([spec](docs/bugfix/input-cancel-shows-error.md)); a cancelled transfer stops the build
+  * incomplete transfers are reported; a missing `compile-list.json` fails the build ([spec](docs/bugfix/partial-transfer-failures.md))
+  * error messages name the cause, are shown once and offer *Show log* ([spec](docs/features/error-messages.md))
+* SSH: keepalive every 60 s instead of 3.6 s ([spec](docs/bugfix/ssh-keepalive-interval.md)); `~` is the real home directory ([spec](docs/bugfix/remote-home-directory.md)); `ssh-concurrency` is used (bugs.md #12)
+* Build list:
+  * self-referencing variables no longer crash *Show changes* ([spec](docs/bugfix/self-referencing-variable.md)); unresolved placeholders are reported ([spec](docs/bugfix/unresolved-cmd-parameters.md))
+  * `LIBL` as a string no longer adds one library per character (the Python OBI still has this bug in `get_set_libl_cmd`)
+  * *Activate extended source processing* (`USE_ESP`) works (bugs.md #24)
+  * stable source order within a level; empty sources no longer always shown as changed (bugs.md #15); `dependency.json` changes are picked up
+* Build history: builds without local OBI were missing, *Delete by date* around midnight, sort order ([spec](docs/bugfix/build-history-timestamps.md)); the delete button of a build shows, deleting asks first (bugs.md #3, #6)
+* Source filters: *show empty folders*, invalid regular expressions, duplicates and the filter icon ([spec](docs/features/source-filter-tree-performance.md))
+* Paths: Windows source names, `local-base-dir` everywhere ([spec](docs/bugfix/windows-source-path.md)); file links in remote workspaces, `cloud-ws-ssh-remote-host` no longer needed ([spec](docs/bugfix/remote-workspace-uris.md)); *Open file* and *Source quick search* open the right file
+* Views: missing or broken files no longer break them ([spec](docs/bugfix/missing-files-break-views.md)); OBI Build view keeps its busy state ([spec](docs/bugfix/controller-view-retain-context.md)); native tree icons ([spec](docs/features/native-tree-icons.md))
+* Configuration page: several save and tab errors fixed; the selected tab is no longer stored in the OS keychain ([spec](docs/bugfix/secret-storage-ui-state.md))
+* Clean shutdown: SSH closed, all commands and listeners disposed ([spec](docs/bugfix/disposables-and-deactivate.md))
+* Profile switch no longer rewrites unchanged `workspace-settings.json` ([spec](docs/features/file-watcher-debounce.md))
+* Complete German texts ([spec](docs/features/localisation.md))
+* Removed the never-working remote source check ([spec](docs/bugfix/old-sources-cleanup.md))
+
+### Performance
+* *Show changes* hashes each source at most once, with a cache ([spec](docs/features/source-hashing.md)); config read once per run ([spec](docs/features/build-list-config-caching.md)); build order on a dependency graph, cycles reported with their path ([spec](docs/features/dependency-graph.md))
+* `compile-list.json` about 75 % smaller ([spec](docs/features/compile-list-size.md))
+* Builds download only their own results, over one SFTP channel; build step timings in the log ([spec](docs/features/ssh-transfer-optimization.md))
+* Config cached until a file changes ([spec](docs/features/config-cache-invalidation.md)); file watchers focused and debounced ([spec](docs/features/file-watcher-debounce.md)); source filter tree reads the sources once ([spec](docs/features/source-filter-tree-performance.md))
+* OBI only starts in OBI workspaces ([spec](docs/features/activation-events.md))
+* Package: about 120 files / 3 MB instead of 5,500 files / 20 MB ([spec](docs/features/vsix-package-size.md)); webview scripts 211 KB instead of about 2.3 MB ([spec](docs/features/webview-bundling.md))
+
+### Development
+* Tests: `npm test` works again ([spec](docs/bugfix/test-setup.md)), `npm run test:unit`, `npm run test:coverage` with thresholds ([spec](docs/features/test-coverage.md)), golden test for the build list, no-project check
+* CI on Linux and Windows and with VS Code 1.90: type check, lint baseline (256), `check:repo`, tests, `npm audit`, VSIX size; Dependabot ([spec](docs/features/continuous-integration.md))
+* TypeScript `strict` mode ([spec](docs/features/strict-typescript.md)); typed errors ([spec](docs/features/typed-error-handling.md)) and webview messages
+* Module structure: `shared/` is pure, import cycles are counted ([spec](docs/features/module-structure.md)); commands via `register_command`
+* Dependencies: front-end libraries from npm ([spec](docs/features/dependency-hygiene.md)), pinned versions ([spec](docs/features/pin-dependency-versions.md)), `wildcard-match` replaced by `minimatch`, unused packages removed
+* Localisation via `vscode.l10n` ([spec](docs/features/localisation.md)); minimum VS Code 1.90 ([spec](docs/features/vscode-engine-bump.md))
+* Dead code removed ([spec](docs/features/remove-dead-code.md)); `CONTRIBUTING.md`, package check table in `docs/technik.md` ([spec](docs/features/repository-hygiene.md))
+
 ## [1.3.3]
 
 * Docu

@@ -1,25 +1,27 @@
+import "../../tools/javascript/toolkit";
 import {
-  allComponents,
-  provideVSCodeDesignSystem,
   Button,
   TextField
 } from "@vscode/webview-ui-toolkit";
 
-import { showAlert } from "../../tools/javascript/alertBox";
+import { page_text, showAlert } from "../../tools/javascript/alertBox";
+import { init_source_select } from "../../tools/javascript/sourceSelect";
+import { typed_post } from "../../tools/javascript/post";
+import type { SourceDependencyRequest } from "../../../shared/messages/SourceConfigMessages";
 
 
-// In order to use all the Webview UI Toolkit web components they
-// must be registered with the browser (i.e. webview) using the
-// syntax below.
-provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
+const post = typed_post<SourceDependencyRequest>(vscode);
 
 window.addEventListener("load", main);
 
 
 
 function main() {
+
+  init_source_select('source_list_1');
+  init_source_select('source_list_2');
 
   let button = document.getElementById("add_dependency_1") as Button;
   button?.addEventListener("click", add_dependency_1);
@@ -45,22 +47,21 @@ function main() {
 
   window.addEventListener('message', receive_message);
 
-  showAlert('Configuration reloaded.', 'success');
+  showAlert(page_text('obi_text_reloaded', 'Configuration reloaded.'), 'success');
 }
 
 
 
 
-function delete_dependency(type: number, id: string) {
+function delete_dependency(type: 1 | 2, id: string) {
   
   const button = document.getElementById(id);
   const source: string|null|undefined = button?.getAttribute('source');
 
-  console.log(`Delete dependency ${type} ${source}`);
 
-  vscode.postMessage({
+  post({
     command: `delete_dependency_${type}`,
-    source: source
+    source: source ?? ''
   });
   reload();
 
@@ -83,17 +84,16 @@ function add_dependency_2() {
 }
 
 
-function add_dependency(type: number, source: string) {
+function add_dependency(type: 1 | 2, source: string) {
 
-  console.log(`Add dependency ${source}, type: ${type}`);
 
   if (source.trim() == "") {
-    showAlert("Please choose a source.", "info");
+    showAlert(page_text('obi_text_choose_source', 'Please choose a source.'), 'info');
     return;
   }
 
-  vscode.postMessage({
-    command: "add_dependency_" + type,
+  post({
+    command: `add_dependency_${type}`,
     source: source.trim()
   });
   reload();
@@ -106,7 +106,7 @@ function add_dependency(type: number, source: string) {
 
 
 function reload() {
-  vscode.postMessage({
+  post({
     command: "reload"
   });
 }

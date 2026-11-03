@@ -1,19 +1,17 @@
+import "../../tools/javascript/toolkit";
 import {
-  allComponents,
-  provideVSCodeDesignSystem,
   Button,
   Checkbox
 } from "@vscode/webview-ui-toolkit";
 
 import * as source from '../../../shared/Source';
-import { showAlert } from "../../tools/javascript/alertBox";
+import { page_text, showAlert } from "../../tools/javascript/alertBox";
+import { typed_post } from "../../tools/javascript/post";
+import type { SourceFilterRequest } from "../../../shared/messages/SourceListMessages";
 
-// In order to use all the Webview UI Toolkit web components they
-// must be registered with the browser (i.e. webview) using the
-// syntax below.
-provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
+const post = typed_post<SourceFilterRequest>(vscode);
 
 window.addEventListener("load", main);
 
@@ -24,7 +22,6 @@ function main() {
   // a given toolkit component can be imported and used to type cast a reference
   // to the element (i.e. the `as Button` syntax)
 
-  console.log('Main ...');
 
   const save_button = document.getElementById("save_config") as Button;
   save_button?.addEventListener("click", save_config);
@@ -42,7 +39,7 @@ function main() {
       });
   }
 
-  showAlert('Configuration reloaded.', 'success');
+  showAlert(page_text('obi_text_reloaded', 'Configuration reloaded.'), 'success');
 }
 
 
@@ -54,13 +51,12 @@ function delete_filter(id: string) {
   const file: string|null|undefined = button?.getAttribute('file');
   const member: string|null|undefined = button?.getAttribute('member');
 
-  console.log(`Delete ${lib}, ${file}, ${member}`);
 
-  vscode.postMessage({
+  post({
     command: "delete_filter",
-    lib: lib,
-    file: file,
-    member: member
+    lib: lib ?? '',
+    file: file ?? '',
+    member: member ?? ''
   });
 
 }
@@ -75,7 +71,6 @@ function add_filter() {
   const regex: boolean = (document.getElementById("new_regex") as Checkbox)?.checked;
   const show_empty_folders: boolean = (document.getElementById("new_show_empty_folders") as Checkbox)?.checked;
 
-  console.log(`Add filter ${new_libs}, ${new_files}, ${new_members}, regex: ${regex}, show_empty_folders: ${show_empty_folders}`);
 
   for (let new_lib of new_libs) {
     for (let new_file of new_files) {
@@ -87,7 +82,7 @@ function add_filter() {
         if (new_member == '')
           new_member = regex? '.*' : '*';
     
-        vscode.postMessage({
+        post({
           command: "add_filter",
           lib: new_lib.trim(),
           file: new_file.trim(),
@@ -142,7 +137,7 @@ function save_config() {
     els = document.getElementsByClassName(`source_filter_${counter}`);
   }
 
-  vscode.postMessage({
+  post({
     command: 'save_config',
     data: filter
   });

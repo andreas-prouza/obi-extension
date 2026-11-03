@@ -1,13 +1,12 @@
-import * as fs from 'fs';
 import * as path from 'path';
-import { OBIConstants } from './obi_constants';
-import { deepListMerge } from './dict_tools';
 import { addBuildCmds } from './build_cmds';
 import { getActiveExtendedSourcesConfig } from './app_config_tools';
-import { AppConfig } from '../../../../shared/AppConfig';
+import { DependencyGraph } from './dependency_graph';
+import { AppConfig } from '../../../config/AppConfig';
 import { Workspace } from '../../../utilities/Workspace';
 import { DirTool } from '../../../utilities/DirTool';
 import { logger } from '../../../utilities/Logger';
+import { Constants } from '../../../../shared/Constants';
 
 
 export function getBuildOrder(
@@ -15,265 +14,55 @@ export function getBuildOrder(
   targetList: string[] = [],
   appConfig?: any
 ): any {
+  return getBuildPlan(dependencyDict, targetList, appConfig).tree;
+}
+
+
+/** Graph of dependency.json; dependents without source file are skipped */
+export function create_dependency_graph(dependencyDict: Record<string, string[]>): DependencyGraph {
+  const source_root = DirTool.get_local_source_dir();
+  return new DependencyGraph(dependencyDict, source => DirTool.file_exists(path.join(source_root, source)));
+}
+
+
+/** Build order of the targets and their dependents, plus the list of dependents (computed once) */
+export function getBuildPlan(
+  dependencyDict: Record<string, string[]>,
+  targetList: string[] = [],
+  appConfig?: any
+): { tree: any; dependents: string[] } {
   
   if (!appConfig) {
     appConfig = AppConfig.get_app_config();
   }
-  const objectsTree = getTargetsDependedObjects(dependencyDict, targetList);
   const ws = Workspace.get_workspace();
+  const graph = create_dependency_graph(dependencyDict);
 
-  DirTool.write_json(path.join(ws, '.obi/tmp/objects_tree.json'), objectsTree);
+  const dependendObjects = graph.affected_by(targetList);
+  DirTool.write_json(path.join(ws, Constants.DEPENDEND_OBJECT_LIST), dependendObjects);
 
-  const dependendObjects = getTargetsOnlyDependedObjects(dependencyDict, targetList);
-  DirTool.write_json(path.join(ws, OBIConstants.get('DEPENDEND_OBJECT_LIST')), dependendObjects);
+  const levels = graph.build_levels(targetList);
+  DirTool.write_json(path.join(ws, '.obi/tmp/objects_tree.json'), Object.fromEntries(levels.flatMap(level => level.sources).map(source => [source, dependencyDict[source] ?? []])));
 
-  const allObjectsToBuild = Array.from(new Set([...targetList, ...dependendObjects]));
+  let targetTree: { level: number; sources: { source: string; cmds: unknown[] }[] }[] =
+    levels.map(level => ({ level: level.level, sources: level.sources.map(source => ({ source: source, cmds: [] })) }));
 
-  let orderedTargetTree = getTargetsByLevel(objectsTree);
-  
   if (appConfig.global.settings.general.ALWAYS_TRANSFER_RELATED_COPYBOOKS) {
-    const copySources = getCopySources(dependencyDict, allObjectsToBuild);
+    // Copybooks the build uses, unless they are built anyway
+    const in_build = new Set(levels.flatMap(level => level.sources));
+    const copySources = graph.dependencies_of([...in_build]).filter(dep => dep.toLowerCase().endsWith('.cpy') && !in_build.has(dep));
     logger.info(`Found copy sources: ${copySources.join(', ')}`);
     if (copySources.length > 0) {
-      orderedTargetTree.unshift({
-        level: 0,
-        sources: copySources.map(src => ({ source: src, cmds: [] }))
-      });
+      targetTree = [{ level: 0, sources: copySources.map(src => ({ source: src, cmds: [] })) }, ...targetTree];
     }
   }
 
+  DirTool.write_json(path.join(ws, '.obi/tmp/ordered_target_tree.json'), targetTree);
+  DirTool.write_json(path.join(ws, '.obi/tmp/new_target_tree.json'), targetTree);
 
-
-  DirTool.write_json(path.join(ws, '.obi/tmp/ordered_target_tree.json'), orderedTargetTree);
-
-  let newTargetTree: any = removeDuplicities(orderedTargetTree);
-  DirTool.write_json(path.join(ws, '.obi/tmp/new_target_tree.json'), newTargetTree);
-
-  if (!appConfig) {
-    appConfig = AppConfig.get_app_config();
-  }
   const extended_sources_config = getActiveExtendedSourcesConfig();
 
-  addBuildCmds(newTargetTree, appConfig, extended_sources_config);
+  addBuildCmds(targetTree, appConfig, extended_sources_config);
 
-  newTargetTree = { timestamp: new Date().toISOString(), compiles: newTargetTree };
-
-  return newTargetTree;
-}
-
-
-
-export function getTargetsDependedObjects(
-  dependencyDict: Record<string, string[]>,
-  targets: string[] = [],
-  result: Record<string, any> = {}
-): Record<string, any> {
-  const targetsObjects: Record<string, any> = {};
-
-  for (const target of targets) {
-    targetsObjects[target] = getTargetDependedObjects(dependencyDict, target);
-  }
-
-  return targetsObjects;
-}
-
-
-
-export function getTargetDependedObjects(
-  dependencyDict: Record<string, string[]>,
-  target: string,
-  result: Record<string, any> = {},
-  processed: Record<string, number> = {}
-): Record<string, any> {
-  const dependendObjects: Record<string, any> = {};
-  const srcBasePath = AppConfig.get_app_config()?.['general']?.['source-dir'] || 'src';
-  const ws = Workspace.get_workspace();
-
-  for (const obj in dependencyDict) {
-    
-    if (dependendObjects.hasOwnProperty(obj)) {
-      continue;
-    }
-    
-    if (dependencyDict[obj].includes(target)) {
-      if (!fs.existsSync(path.join(ws, srcBasePath, obj))) {
-        continue;
-      }
-
-      if (!processed[obj]) {
-        processed[obj] = 0;
-      }
-      processed[obj] += 1;
-
-      if (processed[obj] > 50) {
-        const maxKey = Object.keys(processed).reduce((a, b) => processed[a] > processed[b] ? a : b, '');
-        const error = `Looks like a recursion while processing dependencies. Please check the dependency tree of ${maxKey}.`;
-        logger.error(error);
-        throw new Error(error);
-      }
-
-      dependendObjects[obj] = getTargetDependedObjects(dependencyDict, obj, result, processed);
-    }
-  }
-
-  return dependendObjects;
-}
-
-export function getTargetsOnlyDependedObjects(
-  dependencyDict: Record<string, string[]>,
-  targets: string[] = []
-): string[] {
-  let targetsObjects: string[] = [];
-
-  for (const target of targets) {
-    targetsObjects = targetsObjects.concat(getTargetOnlyDependedObjects(dependencyDict, target, targets));
-  }
-
-  return Array.from(new Set(targetsObjects));
-}
-
-
-export function getTargetOnlyDependedObjects(
-  dependencyDict: Record<string, string[]>,
-  target: string,
-  origTargets: string[],
-  processed: string[] = []
-): string[] {
-  let dependendObjects: string[] = [];
-  const srcBasePath = AppConfig.get_app_config()['general']?.['source-dir'] || 'src';
-  const ws = Workspace.get_workspace();
-
-  for (const obj in dependencyDict) {
-    if (dependencyDict[obj].includes(target)) {
-
-      processed.push(obj);
-
-      if (!DirTool.file_exists(path.join(ws, srcBasePath, obj))) {
-        continue;
-      }
-
-      if (origTargets.includes(obj)) {
-        continue;
-      }
-      dependendObjects = dependendObjects.concat([obj], getTargetOnlyDependedObjects(dependencyDict, obj, origTargets, processed));
-    }
-  }
-
-  return dependendObjects;
-}
-
-
-
-export function removeDuplicities(targetTree: any[] = []): any[] {
-  
-  logger.debug('Sort target tree by level');
-
-  const sortedTree = [...targetTree].sort((a, b) => a.level - b.level);
-
-  logger.info('Remove duplicities from build order');
-
-  //for (const levelItem of sortedTree) {
-  //  for (const obj of levelItem.sources) {
-  //    for (const revLevelItem of [...sortedTree].reverse()) {
-  //      const revLevelSources = revLevelItem.sources.map((item: any) => item.source);
-  //      for (let i = 0; i < sortedTree.length; i++) {
-  //        const sources = sortedTree[i].sources.map((item: any) => item.source);
-  //        if (
-  //          sortedTree[i].level < revLevelItem.level &&
-  //          revLevelSources.includes(obj.source) &&
-  //          sources.includes(obj.source)
-  //        ) {
-  //          sortedTree[i].sources = sortedTree[i].sources.filter((item: any) => item.source !== obj.source);
-  //        }
-  //      }
-  //    }
-  //  }
-  //}
-
-  const optimizeTree = (sortedTree: any[]): any[] => {
-    const seenSources = new Set();
-    
-    // 1. Reverse the tree to start from the highest level (Level 5 -> Level 1)
-    // We use slice() to avoid mutating the original array order during iteration
-    const reversedTree = [...sortedTree].reverse();
-
-    for (const levelItem of reversedTree) {
-      // 2. Filter sources: keep only those NOT seen in a higher level
-      levelItem.sources = levelItem.sources.filter((obj: any) => {
-        if (seenSources.has(obj.source)) {
-          return false; // Duplicate found at a higher level, remove from this lower level
-        } else {
-          seenSources.add(obj.source); // Mark as seen
-          return true;
-        }
-      });
-    }
-
-    return sortedTree;
-  };
-
-  const result = optimizeTree(sortedTree);
-
-  return result;
-  //return sortedTree;
-}
-
-
-
-export function getTargetsByLevel(targetTree: Record<string, any> = {}, level: number = 1): any[] {
-  let newTargetTree: any[] = [];
-
-  for (const obj in targetTree) {
-    let loopLevelObj = newTargetTree.find(item => item.level === level);
-    if (!loopLevelObj) {
-      loopLevelObj = { level: level, sources: [] };
-      newTargetTree.push(loopLevelObj);
-    }
-
-    if (loopLevelObj.sources.some((item: any) => item.source === obj)) {
-      continue;
-    }
-
-    loopLevelObj.sources.push({ source: obj, cmds: [] });
-
-    const nextObjs = targetTree[obj];
-    for (const nextObj in nextObjs) {
-      let loopNextLevelObj = newTargetTree.find(item => item.level === level + 1);
-      if (!loopNextLevelObj) {
-        loopNextLevelObj = { level: level + 1, sources: [] };
-        newTargetTree.push(loopNextLevelObj);
-      }
-
-      if (loopNextLevelObj.sources.some((item: any) => item.source === nextObj)) {
-        continue;
-      }
-
-      loopNextLevelObj.sources.push({ source: nextObj, cmds: [] });
-
-      const extendedTree = getTargetsByLevel(nextObjs[nextObj], level + 2);
-      newTargetTree = deepListMerge(extendedTree, newTargetTree);
-    }
-  }
-
-  return newTargetTree.sort((a, b) => a.level - b.level);
-}
-
-
-
-export function getCopySources(
-  dependencyDict: Record<string, string[]>,
-  targets: string[],
-  allDependencies: Set<string> = new Set()
-): string[] {
-  for (const target of targets) {
-    const directDependencies = dependencyDict[target] || [];
-    for (const dep of directDependencies) {
-      if (!allDependencies.has(dep)) {
-        allDependencies.add(dep);
-        getCopySources(dependencyDict, [dep], allDependencies);
-      }
-    }
-  }
-
-  return Array.from(allDependencies).filter(dep => dep.toLowerCase().endsWith('.cpy'));
+  return { tree: { timestamp: new Date().toISOString(), compiles: targetTree }, dependents: dependendObjects };
 }

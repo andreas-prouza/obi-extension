@@ -4,9 +4,12 @@ import { OBITools } from '../../extension/utilities/OBITools';
 import { Constants } from '../../shared/Constants';
 import * as DeploymentConfig from './DeploymentConfig';
 import { logger } from '../../extension/utilities/Logger';
+import { I_RELEASER_REQUESTS } from '../../shared/messages/DeploymentMessages';
+import { parse_message } from '../../shared/messages/MessageGuard';
+import { show_error } from '../../extension/utilities/Notify';
+import { render_template } from '../Templates';
 
 
-const nunjucks = require('nunjucks');
 
 
 
@@ -36,7 +39,7 @@ export class I_Releaser implements vscode.WebviewViewProvider {
 		webviewView.webview.options = {
 			// Allow scripts in the webview
 			enableScripts: true,
-      enableCommandUris: true,
+      enableCommandUris: false,   // no command: links on this page
 			localResourceRoots: [
         vscode.Uri.joinPath(I_Releaser._extensionUri, "out"),
         vscode.Uri.joinPath(I_Releaser._extensionUri, "asserts")
@@ -46,7 +49,10 @@ export class I_Releaser implements vscode.WebviewViewProvider {
 
 		webviewView.webview.html = await I_Releaser.getHTML(webviewView);
 
-		webviewView.webview.onDidReceiveMessage(data => {
+		webviewView.webview.onDidReceiveMessage((raw: unknown) => {
+			const data = parse_message('i-Releaser', raw, I_RELEASER_REQUESTS, text => logger.warn(text));
+			if (!data)
+				return;
 			switch (data.command) {
 				case 'open_web_app':
 					{
@@ -63,12 +69,10 @@ export class I_Releaser implements vscode.WebviewViewProvider {
 
 		const html_template = 'deployment/i-releaser.html';
 
-    nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-
-    const html = nunjucks.render(html_template, 
+    const html = render_template(html_template, 
       {
         global_stuff: OBITools.get_global_stuff(webviewView.webview, this._extensionUri),
-				main_java_script: getUri(webviewView.webview, this._extensionUri, ["out", "i_releaser.js"]),
+				main_java_script: getUri(webviewView.webview, this._extensionUri, ["out", "webview", "i_releaser.js"]),
 				workspace_exist: vscode.workspace.workspaceFolders != undefined,
 				config: DeploymentConfig.DeploymentConfig.get_deployment_config(),
 				workflows: await I_Releaser.get_workflows()
@@ -93,14 +97,14 @@ export class I_Releaser implements vscode.WebviewViewProvider {
 		const config: DeploymentConfig.Config = DeploymentConfig.DeploymentConfig.get_deployment_config();
 
 		if (!config['i-releaser'].url) {
-			vscode.window.showWarningMessage('Missing deployment config');
+			vscode.window.showWarningMessage(vscode.l10n.t('Missing deployment config'));
 			return {};
 		}
 
-		const auth_token = await OBITools.ext_context.secrets.get(`obi|deployment|http_auth_token`);
+		const auth_token = await OBITools.ext_context?.secrets.get(`obi|deployment|http_auth_token`);
 
 		if (!auth_token) {
-			vscode.window.showErrorMessage('Missing HTTP auth token for i-Releaser. Please check the config');
+			vscode.window.showErrorMessage(vscode.l10n.t('Missing HTTP auth token for i-Releaser. Please check the configuration.'));
 			return {};
 		}
 
@@ -112,9 +116,8 @@ export class I_Releaser implements vscode.WebviewViewProvider {
 			}
 			return data;
 		}
-		catch (e: any){
-			logger.error(e, e.stack);
-			vscode.window.showErrorMessage(`i-Releaser error: ${e.message}`);
+		catch (e: unknown){
+			show_error(vscode.l10n.t('i-Releaser request failed'), e);
 		}
 
 		return {};

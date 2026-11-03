@@ -1,14 +1,7 @@
-import {
-  allComponents,
-  provideVSCodeDesignSystem
-} from "@vscode/webview-ui-toolkit";
-
-
-
-// In order to use all the Webview UI Toolkit web components they
-// must be registered with the browser (i.e. webview) using the
-// syntax below.
-provideVSCodeDesignSystem().register(allComponents);
+/** Translated text rendered into the page (tools/alertBox.html), or the English fallback */
+export function page_text(id: string, fallback: string): string {
+  return document.getElementById(id)?.textContent?.trim() || fallback;
+}
 
 
 export function showAlert(text: string, type: 'success' | 'info' | 'error' = 'info') {

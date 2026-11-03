@@ -7,13 +7,11 @@ import { Constants } from '../../shared/Constants';
 import { OBITools } from '../../extension/utilities/OBITools';
 import { Workspace } from '../../extension/utilities/Workspace';
 import { I_Releaser } from './I_Releaser';
+import { DEPLOYMENT_CONFIG_REQUESTS } from '../../shared/messages/DeploymentMessages';
+import { parse_message } from '../../shared/messages/MessageGuard';
+import { logger } from '../../extension/utilities/Logger';
+import { render_template } from '../Templates';
 
-/*
-https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
-https://mozilla.github.io/nunjucks/api.html
-https://www.11ty.dev/docs/languages/nunjucks/
-*/
-const nunjucks = require('nunjucks');
 
 
 
@@ -104,14 +102,13 @@ export class DeploymentConfig {
 
     const auth_token = await context.secrets.get(`obi|deployment|http_auth_token`);
 
-    nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-    
-    const html = nunjucks.render('deployment/deployment-config.html', 
+    const html = render_template('deployment/deployment-config.html', 
       {
         global_stuff: OBITools.get_global_stuff(webview, extensionUri),
         config_css: getUri(webview, extensionUri, ["asserts/css", "config.css"]),
-        main_java_script: getUri(webview, extensionUri, ["out", "deployment_config.js"]),
-        auth_token: auth_token,
+        main_java_script: getUri(webview, extensionUri, ["out", "webview", "deployment_config.js"]),
+        // Never pass the secret itself into the page: only whether one is stored
+        auth_token_stored: auth_token !== undefined && auth_token.length > 0,
         deploy_config: config
       }
     );
@@ -129,18 +126,20 @@ export class DeploymentConfig {
     if (!panel)
       return;
 
-    panel._panel.webview.html = await DeploymentConfig.generate_html(DeploymentConfig._context, DeploymentConfig._extensionUri, DeploymentConfig.currentPanel?._panel.webview);
+    panel._panel.webview.html = await DeploymentConfig.generate_html(DeploymentConfig._context, DeploymentConfig._extensionUri, panel._panel.webview);
     
   }
 
 
 
-  private static onReceiveMessage(message: any): void {
+  private static onReceiveMessage(raw: unknown): void {
+
+    const message = parse_message('Deployment config', raw, DEPLOYMENT_CONFIG_REQUESTS, text => logger.warn(text));
+    if (!message)
+      return;
 
     const workspaceUri =
-    vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-    ? vscode.workspace.workspaceFolders[0].uri
-    : undefined;
+    Workspace.find_workspace_uri();
 
     if (!workspaceUri)
       return;
@@ -150,11 +149,20 @@ export class DeploymentConfig {
     switch (command) {
 
       case "save":
-        DeploymentConfig.save_config(message.data);
+        try {
+          DeploymentConfig.save_config(message.data);
+        }
+        catch (e) {
+          DirTool.show_save_error(e);
+        }
         break;
 
       case "reload":
         DeploymentConfig.update();
+        break;
+
+      case "delete_auth_token":
+        OBITools.ext_context?.secrets.delete('obi|deployment|http_auth_token').then(() => DeploymentConfig.update());
         break;
 
     }
@@ -166,10 +174,12 @@ export class DeploymentConfig {
   private static save_config(data : Config) {
 
     const toml_file: string = path.join(Workspace.get_workspace(), Constants.DEPLOYMENT_CONFIG_FILE);
-    data['i-releaser']['auth-token']
-    OBITools.ext_context.secrets.store('obi|deployment|http_auth_token', data['i-releaser']['auth-token'] || '');
+    // An empty field means "unchanged"; removing is an explicit action (delete_auth_token)
+    const auth_token = data['i-releaser']['auth-token'];
+    if (auth_token && auth_token.length > 0)
+      OBITools.ext_context?.secrets.store('obi|deployment|http_auth_token', auth_token);
     delete data['i-releaser']['auth-token'];
-    DirTool.write_toml(toml_file, data);
+    DirTool.update_toml(toml_file, data);
     I_Releaser.refresh();
 
   }
@@ -186,7 +196,7 @@ export class DeploymentConfig {
       {
         // Enable JavaScript in the webview
         enableScripts: true,
-        enableCommandUris: true,
+        enableCommandUris: false,   // no command: links on this page
         enableFindWidget: true,
         // Restrict the webview to only load resources from the `out` directory
         localResourceRoots: [

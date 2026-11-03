@@ -23,10 +23,35 @@
         },
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "Watching for changes...", 
-          "endsPattern": "Watching for changes..." 
+          "beginsPattern": "Watching for changes...",
+          "endsPattern": "Watching for changes..."
         }
       }
+    },
+    {
+      "type": "npm",
+      "script": "compile",
+      "label": "npm: compile",
+      "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "compile-tests",
+      "label": "npm: compile-tests",
+      "problemMatcher": "$tsc"
+    },
+    {
+      // Fresh copy of the test fixture for the "Extension Tests" launch configuration.
+      "label": "tests: copy workspace",
+      "type": "shell",
+      "command": "node -e \"const fs=require('fs');fs.rmSync('.vscode-test/workspace',{recursive:true,force:true});fs.cpSync('test-resources/appconfig','.vscode-test/workspace',{recursive:true})\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "tests: prepare",
+      "dependsOn": ["npm: compile", "npm: compile-tests", "tests: copy workspace"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
     }
   ]
 }

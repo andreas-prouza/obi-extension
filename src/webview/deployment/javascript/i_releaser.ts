@@ -1,15 +1,13 @@
+import "../../tools/javascript/toolkit";
 import {
-  allComponents,
-  provideVSCodeDesignSystem,
   Button
 } from "@vscode/webview-ui-toolkit";
+import { typed_post } from "../../tools/javascript/post";
+import type { IReleaserRequest } from "../../../shared/messages/DeploymentMessages";
 
-// In order to use all the Webview UI Toolkit web components they
-// must be registered with the browser (i.e. webview) using the
-// syntax below.
-provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
+const post = typed_post<IReleaserRequest>(vscode);
 
 window.addEventListener("load", main);
 
@@ -29,7 +27,7 @@ function main() {
 
 function open_web_app() {
 
-  vscode.postMessage({
+  post({
     command: "open_web_app"
   });
 }

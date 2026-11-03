@@ -1,4 +1,4 @@
-import { getBuildOrder, getTargetsOnlyDependedObjects } from './dependency';
+import { create_dependency_graph, getBuildOrder } from './dependency';
 
 export function mergeSourcesIntoCompileList(
   compileList: any,
@@ -71,7 +71,7 @@ export function resetDependentStatuses(
     }
   }
 
-  const dependents = getTargetsOnlyDependedObjects(dependencyDict, sourceNames);
+  const dependents = create_dependency_graph(dependencyDict).affected_by(sourceNames);
   const affected = Array.from(new Set([...sourceNames, ...dependents]));
   const reset: string[] = [];
 

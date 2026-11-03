@@ -1,0 +1,18 @@
+{
+  "include": [
+    "out-test/**"
+  ],
+  "exclude": [
+    "out-test/test/**"
+  ],
+  "temp-directory": "coverage/tmp",
+  "reports-dir": "coverage",
+  "reporter": [
+    "text-summary",
+    "html"
+  ],
+  "check-coverage": true,
+  "lines": 70,
+  "branches": 75,
+  "functions": 65
+}

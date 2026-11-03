@@ -1,3 +1,9 @@
+# Harden local command execution
+
+| Type | Severity | Status | Source | Depends on |
+|---|---|---|---|---|
+| Feature | 🔴 | finished (dead `OBICommands.run_system_cmd` was removed with test-setup) | – | – |
+
 # Current situation
 
 `SystemCmdExecution.run_system_cmd()` ([src/extension/utilities/SystemCmdExecution.ts](../../src/extension/utilities/SystemCmdExecution.ts))

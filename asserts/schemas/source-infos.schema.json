@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OBI source infos",
+  "description": "Descriptions of the sources, shown in the source filter view and the quick search.",
+  "type": "object",
+  "propertyNames": {
+    "pattern": "^[A-Za-z0-9_$#@.\\-]+/[A-Za-z0-9_$#@.\\-]+/[A-Za-z0-9_$#@.\\-]+$",
+    "patternErrorMessage": "A source in the form lib/file/member.ext, e.g. mylib/qrpglesrc/hello.rpgle.pgm"
+  },
+  "additionalProperties": {
+    "type": "object",
+    "properties": {
+      "description": {
+        "type": "string",
+        "description": "Description of the source."
+      }
+    }
+  }
+}

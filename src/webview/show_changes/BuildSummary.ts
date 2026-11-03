@@ -3,36 +3,24 @@ import * as path from 'path';
 //import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
 import { getUri } from "../../extension/utilities/getUri";
 import { DirTool } from '../../extension/utilities/DirTool';
+import { BUILD_SUMMARY_REQUESTS } from '../../shared/messages/BuildSummaryMessages';
+import { inside, is_plain_object, parse_message } from '../../shared/messages/MessageGuard';
 import { Constants } from '../../shared/Constants';
 import { OBITools } from '../../extension/utilities/OBITools';
-import { AppConfig } from '../../shared/AppConfig';
+import { AppConfig } from '../../extension/config/AppConfig';
 import { Workspace } from '../../extension/utilities/Workspace';
 import { logger } from '../../extension/utilities/Logger';
 import { OBICommands } from '../../extension/obi/OBICommands';
 import { LogOutputProvider } from './LogOutputProvider';
-import { show_diagnostic_infos } from '../../extension/source/compile-diagnostics';
+import { CompileDiagnostics } from '../../extension/source/CompileDiagnostics';
 import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
-import { DependencyList } from '../../shared/Dependency';
+import { DependencyList } from '../../extension/obi/Dependency';
 import { mergeSourcesIntoCompileList, resetDependentStatuses } from '../../extension/obi/compile_list/modules/add_sources';
 import { ISourceInfos } from '../../shared/Source';
 import { SystemCmdExecution } from '../../extension/utilities/SystemCmdExecution';
+import { OperationLock } from '../../extension/utilities/OperationLock';
+import { render_template } from '../Templates';
 
-/*
-https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
-https://mozilla.github.io/nunjucks/api.html
-https://www.11ty.dev/docs/languages/nunjucks/
-*/
-const nunjucks = require('nunjucks');
-
-
-interface Compile_list {
-  level: string,
-  source_list: [
-    {
-      source: string,
-    }
-  ]
-}
 
 
 export class BuildSummary {
@@ -72,91 +60,84 @@ export class BuildSummary {
     logger.info('Render BuildSummary');
     BuildSummary._extensionUri = extensionUri;
     BuildSummary._current_compile_output_folder = summary_file_path;
-
-    if (BuildSummary.currentPanel) {
-      // If the webview panel already exists reveal it
-      BuildSummary.currentPanel._panel.dispose();
-    }
-
+    // The Problems view shows the messages of the displayed build (current or from the history)
+    CompileDiagnostics.load_for_compile_list(BuildSummary.get_compile_list(), CompileDiagnostics.evfevent_root(summary_file_path));
 
     if (!workspaceUri){
-      vscode.window.showErrorMessage("No workspace opened");
+      vscode.window.showErrorMessage(vscode.l10n.t('No workspace is opened!'));
       return
     }
 
-    const config = AppConfig.get_app_config();
+    // An open panel is reused: it stays in its editor group, and the page keeps its scroll position and open sections
+    if (BuildSummary.currentPanel) {
+      const existing = BuildSummary.currentPanel._panel;
+      existing.webview.html = BuildSummary.generate_html(extensionUri, existing.webview);
+      existing.reveal(undefined, false);
+      return;
+    }
 
-    const src_dir: string = config.general['source-dir'] || 'src';
-
-    // If a webview panel does not already exist create and show a new one
     const panel = BuildSummary.createNewPanel(extensionUri);
 
     panel.webview.html = BuildSummary.generate_html(extensionUri, panel.webview);
     //panel.webview.html = index_html.html;
 
-    panel.webview.onDidReceiveMessage(
-      (message: any) => {
-        const command: string|undefined = message.command;
-
-        switch (command) {
-          case "hello":
-            vscode.window.showInformationMessage(message.text);
-            return;
-
-          case "show_log":
-            //LogOutput.render(workspaceUri, message.type, message.level, message.source, message.cmd_index);
-            LogOutputProvider.showOutput(message.type, message.level, message.source, message.cmd_index);
-            return;
-
-          case "run_build":
-            OBICommands.rerun_build(message.ignore_sources, message.ignore_sources_cmd);
-            return;
-
-          case "open_file":
-            
-            const file_path = path.join(Workspace.get_workspace(), src_dir, message.source);
-            const fileUri = vscode.Uri.file(file_path);
-            vscode.workspace.openTextDocument(fileUri).then(doc => {
-              vscode.window.showTextDocument(doc).then(editor => {;
-                show_diagnostic_infos(path.join(Workspace.get_workspace(), BuildSummary._current_compile_output_folder || Constants.OBI_TMP_DIR, Constants.EVFEVENT_OUTPUT_FOLDER, message.source))
-              });
-            });
-            return;
-
-          case "file_content":
-
-            BuildSummary.currentPanel._panel.webview.postMessage(
-              {
-                command: 'file_content',
-                content: DirTool.get_file_content(message.path)
-              });
-            return;
-
-          case "save_custom_data":
-
-            let compile_list: any = BuildSummary.get_compile_list();
-            if (!compile_list['custom_data']) {
-              compile_list['custom_data'] = {};
-            }
-            compile_list['custom_data'][message.type] = message.data;
-
-            OBITools.write_compile_list(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), compile_list);
-
-            return;
-
-          case "add_source":
-            BuildSummary.add_sources();
-            return;
-
-          case "edit_cmd":
-            BuildSummary.edit_cmd(message.level, message.source, message.cmd_index);
-            return;
-        }
-      }
-    );
+    panel.webview.onDidReceiveMessage((raw: unknown) => BuildSummary.on_message(raw));
 
     BuildSummary.currentPanel = new BuildSummary(panel, extensionUri);
   
+  }
+
+
+
+  /** Handles a message of the page. Messages that don't match BUILD_SUMMARY_REQUESTS are ignored. */
+  public static on_message(raw: unknown): void {
+
+    const message = parse_message('Build summary', raw, BUILD_SUMMARY_REQUESTS, text => logger.warn(text));
+    if (!message)
+      return;
+
+    switch (message.command) {
+      case "show_log":
+        LogOutputProvider.showOutput(message.type, Number(message.level), message.source, message.cmd_index);
+        return;
+
+      case "run_build":
+        OBICommands.rerun_build(message.ignore_sources, message.ignore_sources_cmd);
+        return;
+
+      case "open_file": {
+        const file_path = inside(DirTool.get_local_source_dir(), message.source);
+        if (!file_path) {
+          logger.warn(`Build summary: ${message.source} is not inside the source folder`);
+          return;
+        }
+        const root = CompileDiagnostics.evfevent_root(BuildSummary._current_compile_output_folder);
+        if (root)
+          CompileDiagnostics.load_source(message.source, root);
+        vscode.workspace.openTextDocument(vscode.Uri.file(file_path)).then(doc => vscode.window.showTextDocument(doc));
+        return;
+      }
+
+      case "save_custom_data": {
+        const compile_list = BuildSummary.get_compile_list();
+        if (!compile_list)
+          return;
+        if (!is_plain_object(compile_list['custom_data']))
+          compile_list['custom_data'] = {};
+        compile_list['custom_data'][message.type] = message.data;
+
+        OBITools.write_compile_list(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), compile_list);
+        return;
+      }
+
+      case "add_source":
+        BuildSummary.add_sources();
+        return;
+
+      case "edit_cmd":
+        BuildSummary.edit_cmd(message.level, message.source, message.cmd_index);
+        return;
+    }
   }
 
 
@@ -166,13 +147,20 @@ export class BuildSummary {
    * (together with their computed dependents) into it, preserving already existing entries.
    */
   public static async add_sources(extensionUri?: vscode.Uri, workspaceUri?: vscode.Uri): Promise<void> {
+    // The compile-list must not change while a build runs
+    await OperationLock.run('Edit build summary', () => BuildSummary.do_add_sources(extensionUri, workspaceUri));
+  }
+
+
+
+  private static async do_add_sources(extensionUri?: vscode.Uri, workspaceUri?: vscode.Uri): Promise<void> {
 
     const ws_uri = workspaceUri || Workspace.get_workspace_uri();
     const ext_uri = extensionUri || BuildSummary._extensionUri;
 
     const compile_list: any = BuildSummary.get_compile_list();
     if (!compile_list) {
-      vscode.window.showErrorMessage('No build summary found. Run "Show changes" first.');
+      vscode.window.showErrorMessage(vscode.l10n.t('No build summary found. Run "Show changes" first.'));
       return;
     }
 
@@ -187,7 +175,7 @@ export class BuildSummary {
     const candidates = Object.entries(source_info_list).filter(([source]) => !existing_sources.has(source));
 
     if (candidates.length === 0) {
-      vscode.window.showInformationMessage('All sources are already part of the build summary.');
+      vscode.window.showInformationMessage(vscode.l10n.t('All sources are already part of the build summary.'));
       return;
     }
 
@@ -228,9 +216,9 @@ export class BuildSummary {
       BuildSummary.render(ext_uri, ws_uri, BuildSummary._current_compile_output_folder);
     }
 
-    let message = `Added ${added.length} source(s) to the build summary.`;
+    let message = vscode.l10n.t('Added {0} source(s) to the build summary.', added.length);
     if (reset.length > 0) {
-      message += ` ${reset.length} source(s) had their status reset due to dependency changes.`;
+      message += ' ' + vscode.l10n.t('{0} source(s) had their status reset due to dependency changes.', reset.length);
     }
     vscode.window.showInformationMessage(message);
   }
@@ -253,15 +241,13 @@ export class BuildSummary {
 
     await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
-      title: 'Adding sources via local OBI...',
+      title: vscode.l10n.t('Adding sources with the local OBI…'),
       cancellable: false
     }, async (progress) => {
       for (const source of selected_sources) {
         progress.report({ message: source });
-        const quote = process.platform === 'win32' ? '"' : "'";
-        const cmd = `${OBITools.get_local_obi_python_path()} -X utf8 ${path.join(app_config.general['local-obi-dir'], 'main.py')} -a add_source -p . --source=${quote}${source}${quote} --compile-list-dir=${quote}${compile_list_dir}${quote}`;
-        logger.info(`CMD: ${cmd}`);
-        await SystemCmdExecution.run_system_cmd(Workspace.get_workspace(), cmd, 'add_sources');
+        const args = OBICommands.local_obi_args(app_config, 'add_source', source, [`--compile-list-dir=${compile_list_dir}`]);
+        await SystemCmdExecution.run_system_cmd(Workspace.get_workspace(), OBICommands.local_obi_python(), args, 'add_sources');
       }
     });
 
@@ -286,6 +272,13 @@ export class BuildSummary {
    * Lets the user modify a build command's text, recording the previous value in the cmd's change-history.
    */
   public static async edit_cmd(level: string, source: string, cmd_index: number): Promise<void> {
+    // The compile-list must not change while a build runs
+    await OperationLock.run('Edit build summary', () => BuildSummary.do_edit_cmd(level, source, cmd_index));
+  }
+
+
+
+  private static async do_edit_cmd(level: string, source: string, cmd_index: number): Promise<void> {
 
     const compile_list: any = BuildSummary.get_compile_list();
     if (!compile_list) {
@@ -297,12 +290,12 @@ export class BuildSummary {
     const cmd_entry = source_item?.['cmds']?.[cmd_index];
 
     if (!cmd_entry) {
-      vscode.window.showErrorMessage('Command not found.');
+      vscode.window.showErrorMessage(vscode.l10n.t('Command not found.'));
       return;
     }
 
     const new_cmd = await vscode.window.showInputBox({
-      title: `Edit build command for ${source}`,
+      title: vscode.l10n.t('Edit build command of {0}', source),
       value: cmd_entry['cmd'],
       ignoreFocusOut: true
     });
@@ -333,7 +326,7 @@ export class BuildSummary {
     await BuildSummary.update();
 
     if (reset.length > 0) {
-      vscode.window.showInformationMessage(`${reset.length} source(s) had their status reset due to the command change.`);
+      vscode.window.showInformationMessage(vscode.l10n.t('{0} source(s) had their status reset due to the command change.', reset.length));
     }
   }
 
@@ -360,22 +353,35 @@ export class BuildSummary {
 
 
 
+  /** Config of the displayed history entry: config.json, or the config embedded by older versions */
+  private static build_config(): Record<string, unknown> | undefined {
+    const folder = BuildSummary._current_compile_output_folder;
+    if (!folder)
+      return undefined;
+    const snapshot_file = path.resolve(Workspace.get_workspace(), folder, Constants.BUILD_HISTORY_CONFIG_FILE);
+    const snapshot = DirTool.file_exists(snapshot_file) ? DirTool.get_json(snapshot_file, false) : undefined;
+    if (snapshot && typeof snapshot === 'object')
+      return snapshot;
+    return BuildSummary.get_compile_list()?.['config'];
+  }
+
+
+
   private static generate_html(extensionUri: vscode.Uri, webview: vscode.Webview): string {
 
     const ws: vscode.Uri = Workspace.get_workspace_uri();
     const config = AppConfig.get_app_config();
 
-    nunjucks.configure([
-      Constants.HTML_TEMPLATE_DIR,
-      path.join(ws.fsPath, path.dirname(Constants.VSCODE_CUSTOM_BUILD_LIST_TEMPLATE))
-    ]);
+    // The custom template of the workspace is code (Nunjucks can run JavaScript): only in a trusted workspace
+    const custom_dir = vscode.workspace.isTrusted ? path.join(ws.fsPath, path.dirname(Constants.VSCODE_CUSTOM_BUILD_LIST_TEMPLATE)) : undefined;
 
     const compile_list = BuildSummary.get_compile_list();
 
-    if (compile_list) {
-      for (let level_item of (compile_list['compiles'] as any) ) {
-        for (let source of level_item['sources']) {
-          source['file'] = DirTool.get_encoded_file_URI(path.join(config.general['source-dir'], source['source']));
+    if (compile_list && Array.isArray(compile_list['compiles'])) {
+      for (const level_item of compile_list['compiles']) {
+        for (const source of Array.isArray(level_item?.['sources']) ? level_item['sources'] : []) {
+          if (typeof source?.['source'] === 'string')
+            source['file'] = DirTool.get_encoded_source_URI(source['source']);
         }
       }
     }
@@ -385,10 +391,10 @@ export class BuildSummary {
       created_timestamp = new Date(compile_list['timestamp']).toLocaleString();
     }
 
-    const html = nunjucks.render('show_changes/index.html', 
+    const html = render_template('show_changes/index.html', 
       {
       global_stuff: OBITools.get_global_stuff(webview, extensionUri),
-      main_java_script: getUri(webview, extensionUri, ["out", "show_changes.js"]),
+      main_java_script: getUri(webview, extensionUri, ["out", "webview", "show_changes.js"]),
       //filex: encodeURIComponent(JSON.stringify(fileUri)),
       object_list: BuildSummary.get_object_list(ws),
       compile_list: compile_list,
@@ -397,10 +403,11 @@ export class BuildSummary {
       compile_file: path.resolve(ws.fsPath, BuildSummary._current_compile_output_folder ?? Constants.BUILD_OUTPUT_DIR, 'compile-list.json').replace(/\\/g, '/'),
       log_file_uri: DirTool.get_encoded_file_URI(Constants.OBI_LOG_FILE),
       is_compile_list_completed: OBITools.is_compile_list_completed(compile_list),
-      compile_app_config: compile_list['config'] ?? config,
+      compile_app_config: BuildSummary.build_config() ?? config,
       app_config: config,
-      custom_build_list_template: path.basename(Constants.VSCODE_CUSTOM_BUILD_LIST_TEMPLATE)
-      }
+      custom_build_list_template: custom_dir ? path.basename(Constants.VSCODE_CUSTOM_BUILD_LIST_TEMPLATE) : undefined
+      },
+      custom_dir
     );
 
     return html;
@@ -417,7 +424,7 @@ export class BuildSummary {
     if (!panel)
       return;
 
-    panel._panel.webview.html = BuildSummary.generate_html(BuildSummary._extensionUri, BuildSummary.currentPanel?._panel.webview);
+    panel._panel.webview.html = BuildSummary.generate_html(BuildSummary._extensionUri, panel._panel.webview);
     
   }
 
@@ -464,33 +471,23 @@ export class BuildSummary {
       logger.info(`${dependend_object_list}: ${DirTool.file_exists(dependend_object_list)}`);
       return undefined;
     }
-      
-    const fs = require("fs");
-    let compile_list = fs.readFileSync(changed_object_list);
-    // Converting to JSON 
-    compile_list = JSON.parse(compile_list);
 
-    let dependend_sources = fs.readFileSync(dependend_object_list);
-    // Converting to JSON 
-    dependend_sources = JSON.parse(dependend_sources);
+    // Unreadable files give empty lists instead of breaking the whole page
+    const changed = DirTool.get_json(changed_object_list, false);
+    const dependend = DirTool.get_json(dependend_object_list, false);
+    const string_list = (value: unknown): string[] => Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
+    const with_file = (sources: string[]) => sources.map(source => ({ source: source, file: DirTool.get_encoded_source_URI(source) }));
 
-    for (let index = 0; index < compile_list['new-objects'].length; index++) {
-      compile_list['new-objects'][index] = {source: compile_list['new-objects'][index], file: DirTool.get_encoded_source_URI(workspaceUri, compile_list['new-objects'][index])};
-    }
-    for (let index = 0; index < compile_list['changed-sources'].length; index++) {
-      compile_list['changed-sources'][index] = {source: compile_list['changed-sources'][index], file: DirTool.get_encoded_source_URI(workspaceUri, compile_list['changed-sources'][index])};
-    }
-    for (let index = 0; index < dependend_sources.length; index++) {
-      dependend_sources[index] = {source: dependend_sources[index], file: DirTool.get_encoded_source_URI(workspaceUri, dependend_sources[index])};
-    }
+    const new_sources = with_file(string_list(changed?.['new-objects']));
+    const changed_sources = with_file(string_list(changed?.['changed-sources']));
 
-    logger.info(`compile_list['new-objects']: ${compile_list['new-objects'].length}`);
-    logger.info(`compile_list['changed-sources']: ${compile_list['changed-sources'].length}`);
+    logger.info(`compile_list['new-objects']: ${new_sources.length}`);
+    logger.info(`compile_list['changed-sources']: ${changed_sources.length}`);
 
     return {
-      new_sources : compile_list['new-objects'], 
-      changed_sources: compile_list['changed-sources'], 
-      dependend_sources: dependend_sources
+      new_sources : new_sources,
+      changed_sources: changed_sources,
+      dependend_sources: with_file(string_list(dependend))
     }
   }
 
@@ -504,7 +501,7 @@ export class BuildSummary {
 
     return vscode.window.createWebviewPanel(
       'show_changes', // Identifies the type of the webview. Used internally
-      'Build summary', // Title of the panel displayed to the user
+      vscode.l10n.t('Build summary'), // Title of the panel displayed to the user
       // The editor column the panel should be displayed in
       vscode.ViewColumn.One,
       // Extra panel configurations

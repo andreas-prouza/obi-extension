@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="{{ global_stuff['theme_mode'] }}">
   <head>
+  {% include "tools/csp.html" %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table.min.css">
     
     <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
     <link rel="stylesheet" href="{{ config_css }}">
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/codicons/codicon.css">
+    <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/codicons/codicon.css">
 
   </head>
   <body>
@@ -23,6 +23,7 @@
     </div>
     
     📝 <a href='command:vscode.open?{{ source_config_file }}'>{{  global_stuff['get_text']('Open source config file') | safe }}</a>
+    <p class="save-hint">ℹ️ {{ global_stuff['get_text']('Saving rewrites the TOML file: comments in it are not kept.') | safe }}</p>
 
   
     <h3>{{ global_stuff['get_text']('Compile settings') | safe }}</h3>

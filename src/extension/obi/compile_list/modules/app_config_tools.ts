@@ -1,7 +1,8 @@
 import * as path from 'path';
 import { minimatch } from "minimatch";
 import { getSourceProperties } from './properties';
-import { ExtendedSourceProcessingList } from '../../../../shared/EspConfig';
+import { ExtendedSourceProcessingList } from '../../../config/EspConfig';
+import { BuildListContext } from './context';
 
 // Combines the project-level ESP config with the active user/profile ESP config,
 // mirroring how they are both applied in src/webview/controller/OBIConfiguration.ts.
@@ -16,13 +17,13 @@ export function getActiveExtendedSourcesConfig(): any {
   };
 }
 
-export function getSteps(source: string, appConfig: any, extended_sources_config: any): Array<string | object> {
+export function getSteps(source: string, appConfig: any, extended_sources_config: any, ctx?: BuildListContext): Array<string | object> {
   let initSteps: Array<string | object> = [];
   if (appConfig.global?.steps?.['*ALL']) {
     initSteps = appConfig.global.steps['*ALL'];
   }
 
-  const extendedSteps = getExtendedSteps(source, appConfig, extended_sources_config);
+  const extendedSteps = getExtendedSteps(source, appConfig, extended_sources_config, ctx);
   if (extendedSteps) {
     return [...initSteps, ...extendedSteps];
   }
@@ -47,12 +48,17 @@ function getGlobalSteps(source: string, appConfig: any): Array<string | object> 
 
 
 
-function getExtendedSteps(source: string, appConfig: any, extended_sources_config: any): Array<string | object> | null {
+function getExtendedSteps(source: string, appConfig: any, extended_sources_config: any, ctx?: BuildListContext): Array<string | object> | null {
   if (!extended_sources_config?.extended_source_processing) {
     return null;
   }
+  // "Activate extended source processing" on the config page; on by default, as in the Python OBI
+  const use_esp = appConfig.global?.settings?.general?.USE_ESP;
+  if (use_esp === false || use_esp === 'false') {
+    return null;
+  }
 
-  const sourceProperties = getSourceProperties(appConfig, source);
+  const sourceProperties = getSourceProperties(appConfig, source, ctx);
   let resultSteps: Array<string | object> = [];
   let allowMultipleMatches = true;
 

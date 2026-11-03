@@ -6,8 +6,11 @@ import { Constants } from '../../shared/Constants';
 import { logger } from '../../extension/utilities/Logger';
 import * as source from '../../shared/Source';
 import { Workspace } from '../../extension/utilities/Workspace';
-import { AppConfig } from '../../shared/AppConfig';
 import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
+import { history_dir_name, local_date_label, parse_history_dir } from './HistoryTimestamp';
+import { register_command } from '../../extension/utilities/Registration';
+import { folder_size, format_size, select_expired } from './HistoryRetention';
+import { ExtensionSettings } from '../../extension/utilities/ExtensionSettings';
 
 
 interface IBuildHistorys {
@@ -32,17 +35,37 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
   }
 
 
-  public static escaped_date2date(escaped_date: string): Date {
-    const parsableDir = escaped_date.replace(/\./g, ":");
-    const normalized = parsableDir.replace(" ", "T")
-      .replace("_", "T")
-      .replace(/:(\d+)$/, ".$1")
-      .substring(0, 23);
-    return new Date(normalized);
+  private static warned_dirs: Set<string> = new Set();
+  /** Workspace state: the answer to the one-time question before the first automatic deletion */
+  private static retention_state: vscode.Memento | undefined;
+  private static retention_question_open = false;
+  private size_generation = 0;
+
+  /** Date of a history folder; undefined (logged once) if the folder name is not a timestamp. */
+  public static parse_dir(dir: string): Date | undefined {
+    const date = parse_history_dir(dir);
+    if (!date && !BuildHistoryProvider.warned_dirs.has(dir)) {
+      BuildHistoryProvider.warned_dirs.add(dir);
+      logger.warn(`Build history: folder name is not a timestamp, ignored: ${dir}`);
+    }
+    return date;
   }
 
   public static date2escaped_date(date: string): string {
-    return date.replace(/:/g, ".").replace(" ", "_");
+    return history_dir_name(date);
+  }
+
+
+  /** Tree item of one build. */
+  private static build_item(dir: string, dirPath: string, date: Date): BuildHistoryItem {
+    const item = new BuildHistoryItem(date.toLocaleTimeString(), vscode.TreeItemCollapsibleState.Collapsed, dirPath, 'build', dir, local_date_label(date));
+    item.build_time = date;
+    return item;
+  }
+
+  /** Newest build first (by time, not by the locale-formatted label). */
+  private static newest_first(a: BuildHistoryItem, b: BuildHistoryItem): number {
+    return (b.build_time?.getTime() ?? 0) - (a.build_time?.getTime() ?? 0);
   }
 
 
@@ -70,7 +93,6 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
       return [];
     }
 
-    const config = AppConfig.get_app_config();
     const build_history_dirs = DirTool.list_dir(build_history_path);
     const source_info_list = await LocalSourceList.get_source_info_list();
 
@@ -91,31 +113,14 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
             const dirPath = path.join(build_history_path, dir);
             
             if (DirTool.dir_exists(dirPath) && this.matches_filter(dirPath)) {
-              const date: Date = BuildHistoryProvider.escaped_date2date(dir);
-              const tzOffset = date.getTimezoneOffset() * 60000;
-              const dirDate = new Date(date.getTime() - tzOffset).toISOString().split('T')[0];
-
-              if (dirDate === element.label) {
-                return new BuildHistoryItem(
-                  date.toLocaleTimeString(),
-                  vscode.TreeItemCollapsibleState.Collapsed,
-                  dirPath,
-                  'build',
-                  dir,
-                  dirDate
-                );
-              }
+              const date = BuildHistoryProvider.parse_dir(dir);
+              if (date && local_date_label(date) === element.label)
+                return BuildHistoryProvider.build_item(dir, dirPath, date);
             }
             return null;
           })
           .filter((item): item is BuildHistoryItem => item !== null)
-          .sort((a, b) => {
-            // Extract the string value from either a string or a TreeItemLabel object
-            const labelA = typeof a.label === 'string' ? a.label : (a.label?.label ?? '');
-            const labelB = typeof b.label === 'string' ? b.label : (b.label?.label ?? '');
-
-            return labelB.localeCompare(labelA);
-          });
+          .sort(BuildHistoryProvider.newest_first);
 
         return Promise.resolve(historyItems);
       }
@@ -124,44 +129,40 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
       if (element.contextValue === 'buildHistoryBuild') {
         
         const compileListPath = path.join(element.file_path, 'compile-list.json');
+        if (!fs.existsSync(compileListPath))
+          return Promise.resolve([]);
 
-        if (fs.existsSync(compileListPath)) {
+        const compileList = DirTool.get_json(compileListPath, false);
+        if (!compileList || typeof compileList !== 'object')
+          return Promise.resolve([new BuildHistoryItem('compile-list.json could not be read', vscode.TreeItemCollapsibleState.None, compileListPath, 'warning')]);
 
-          const compileList = JSON.parse(fs.readFileSync(compileListPath, 'utf-8'));
-          const sources: BuildHistoryItem[] = [];
-          
-          if (compileList.compiles) {
-          
-            for (const compile of compileList.compiles) {
-          
-              if (compile.sources) {
-          
-                for (const src of compile.sources) {
+        const sources: BuildHistoryItem[] = [];
+        for (const compile of Array.isArray(compileList.compiles) ? compileList.compiles : []) {
+          for (const src of Array.isArray(compile?.sources) ? compile.sources : []) {
 
-                  const item = new BuildHistoryItem(
-                    src.source,
-                    vscode.TreeItemCollapsibleState.None,
-                    '',
-                    'source',
-                    undefined,
-                    undefined,
-                    undefined,
-                    (source_info_list[src.source] || {}).description
-                  );
+            if (typeof src?.source !== 'string')
+              continue;
 
-                  item.command = {
-                    command: 'vscode.open',
-                    title: 'Open Source',
-                    arguments: [vscode.Uri.joinPath(Workspace.get_workspace_uri(), config.general['source-dir'], src.source)]
-                  };
-                  sources.push(item);
-                }
-              }
-            }
+            const item = new BuildHistoryItem(
+              src.source,
+              vscode.TreeItemCollapsibleState.None,
+              '',
+              'source',
+              undefined,
+              undefined,
+              undefined,
+              (source_info_list[src.source] || {}).description
+            );
+
+            item.command = {
+              command: 'vscode.open',
+              title: vscode.l10n.t('Open source'),
+              arguments: [DirTool.get_file_URI(path.join(DirTool.get_local_source_dir_relative(), src.source))]
+            };
+            sources.push(item);
           }
-          return Promise.resolve(sources);
         }
-        return Promise.resolve([]);
+        return Promise.resolve(sources);
       }
       return Promise.resolve([]);
     }
@@ -173,14 +174,9 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
       const dirPath = path.join(build_history_path, dir);
       if (DirTool.dir_exists(dirPath) && this.matches_filter(dirPath)) {
         // The dir name is the timestamp
-        try {
-          const date: Date = BuildHistoryProvider.escaped_date2date(dir);
-          const tzOffset = date.getTimezoneOffset() * 60000;
-          
-          dateGroups.add(new Date(date.getTime() - tzOffset).toISOString().split('T')[0]);
-        } catch (e) {
-          logger.error(`Invalid date format for build history directory: ${dir}`);
-        }
+        const date = BuildHistoryProvider.parse_dir(dir);
+        if (date)
+          dateGroups.add(local_date_label(date));
       }
     });
 
@@ -262,20 +258,14 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
           if (!DirTool.dir_exists(dirPath) || !BuildHistoryProvider.get_sources_from_build(dirPath).has(source_filter)) {
             return null;
           }
-          const date = BuildHistoryProvider.escaped_date2date(dir);
-          const tzOffset = date.getTimezoneOffset() * 60000;
-          const dirDate = new Date(date.getTime() - tzOffset).toISOString().split('T')[0];
-          if (dirDate !== element.label) {
+          const date = BuildHistoryProvider.parse_dir(dir);
+          if (!date || local_date_label(date) !== element.label) {
             return null;
           }
-          return new BuildHistoryItem(date.toLocaleTimeString(), vscode.TreeItemCollapsibleState.Collapsed, dirPath, 'build', dir, dirDate);
+          return BuildHistoryProvider.build_item(dir, dirPath, date);
         })
         .filter((item): item is BuildHistoryItem => item !== null)
-        .sort((a, b) => {
-          const labelA = typeof a.label === 'string' ? a.label : (a.label?.label ?? '');
-          const labelB = typeof b.label === 'string' ? b.label : (b.label?.label ?? '');
-          return labelB.localeCompare(labelA);
-        });
+        .sort(BuildHistoryProvider.newest_first);
     }
 
     // Level 1: distinct build dates that contain this source
@@ -287,13 +277,9 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
         if (!DirTool.dir_exists(dirPath) || !BuildHistoryProvider.get_sources_from_build(dirPath).has(source_filter)) {
           continue;
         }
-        try {
-          const date = BuildHistoryProvider.escaped_date2date(dir);
-          const tzOffset = date.getTimezoneOffset() * 60000;
-          dates.add(new Date(date.getTime() - tzOffset).toISOString().split('T')[0]);
-        } catch (e) {
-          logger.error(`Invalid date format for build history directory: ${dir}`);
-        }
+        const date = BuildHistoryProvider.parse_dir(dir);
+        if (date)
+          dates.add(local_date_label(date));
       }
       return Array.from(dates)
         .sort((a, b) => b.localeCompare(a))
@@ -338,6 +324,92 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
 
   async refresh(): Promise<void> {
     this._onDidChangeTreeData.fire();
+    this.update_size();
+  }
+
+
+  /** "87 builds · 412 MB" next to the view title, computed in the background */
+  private update_size(): void {
+    const tree = BuildHistoryProvider._treeView;
+    if (!tree || !this.workspaceRoot)
+      return;
+
+    const generation = ++this.size_generation;
+    const root = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR);
+    const builds = DirTool.dir_exists(root) ? DirTool.list_dir(root).filter(dir => DirTool.dir_exists(path.join(root, dir))).length : 0;
+    folder_size(root)
+      .then(bytes => {
+        // Only the result of the latest refresh
+        if (generation === this.size_generation)
+          tree.description = builds === 0 ? undefined : builds === 1 ? vscode.l10n.t('1 build · {0}', format_size(bytes)) : vscode.l10n.t('{0} builds · {1}', builds, format_size(bytes));
+      })
+      .catch((e: unknown) => logger.debug(`Build history size: ${e}`));
+  }
+
+
+  public static init_retention(state: vscode.Memento): void {
+    BuildHistoryProvider.retention_state = state;
+  }
+
+
+  /**
+   * Deletes the builds beyond obi.buildHistory.maxBuilds and older than obi.buildHistory.maxAgeDays,
+   * never `keep` (the build just written) and never folders without timestamp. Returns the number of deleted builds.
+   */
+  public static async apply_retention(keep?: string): Promise<number> {
+    const root = path.join(Workspace.get_workspace(), Constants.BUILD_HISTORY_DIR);
+    if (!DirTool.dir_exists(root))
+      return 0;
+
+    const max_builds = ExtensionSettings.build_history_max_builds();
+    const entries = DirTool.list_dir(root)
+      .filter(dir => DirTool.dir_exists(path.join(root, dir)))
+      .map(dir => ({ dir, date: parse_history_dir(dir) }));
+    const expired = select_expired(entries, { max_builds, max_age_days: ExtensionSettings.build_history_max_age_days() }, new Date(), keep);
+
+    if (expired.length === 0 || !(await BuildHistoryProvider.retention_allowed(expired.length, max_builds)))
+      return 0;
+
+    for (const dir of expired)
+      await fs.promises.rm(path.join(root, dir), { recursive: true, force: true });
+    logger.info(`Build history: ${expired.length} old builds deleted: ${expired.join(', ')}`);
+    BuildHistoryProvider._instance?.refresh();
+    return expired.length;
+  }
+
+
+  /** Existing history is only deleted automatically if the user set a limit or agreed once in this workspace */
+  private static async retention_allowed(count: number, max_builds: number): Promise<boolean> {
+    if (ExtensionSettings.build_history_limit_configured())
+      return true;
+
+    const state = BuildHistoryProvider.retention_state;
+    const decision = state?.get<'delete' | 'keep'>('obi.buildHistory.retention');
+    if (decision || !state || BuildHistoryProvider.retention_question_open)
+      return decision === 'delete';
+
+    BuildHistoryProvider.retention_question_open = true;
+    try {
+      const delete_text = vscode.l10n.t('Delete old builds');
+      const keep_text = vscode.l10n.t('Keep all');
+      const answer = await vscode.window.showInformationMessage(
+        vscode.l10n.t('The build history contains {0} builds more than the newest {1} (setting obi.buildHistory.maxBuilds). Delete them now and keep the history limited after each build?', count, max_builds),
+        delete_text, keep_text);
+      // Dismissed: ask again next time
+      if (answer === delete_text || answer === keep_text)
+        await state.update('obi.buildHistory.retention', answer === delete_text ? 'delete' : 'keep');
+      return answer === delete_text;
+    }
+    finally {
+      BuildHistoryProvider.retention_question_open = false;
+    }
+  }
+
+
+  /** Modal question; true if confirmed */
+  private static async confirm_delete(question: string): Promise<boolean> {
+    const delete_text = vscode.l10n.t('Delete');
+    return await vscode.window.showWarningMessage(question, { modal: true }, delete_text) === delete_text;
   }
 
 
@@ -385,7 +457,7 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
   private async search(): Promise<void> {
     const build_history_path = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR);
     if (!DirTool.dir_exists(build_history_path)) {
-      vscode.window.showInformationMessage('No build history found.');
+      vscode.window.showInformationMessage(vscode.l10n.t('No build history found.'));
       return;
     }
 
@@ -401,7 +473,7 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
     }
 
     if (all_sources.size === 0) {
-      vscode.window.showInformationMessage('No sources found in build history.');
+      vscode.window.showInformationMessage(vscode.l10n.t('No sources found in the build history.'));
       return;
     }
 
@@ -451,9 +523,10 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
     // reveal() is only wired up for the date-based hierarchy
     await instance.set_view_mode('date');
 
-    const date = BuildHistoryProvider.escaped_date2date(historyDirName);
-    const tzOffset = date.getTimezoneOffset() * 60000;
-    const dateLabel = new Date(date.getTime() - tzOffset).toISOString().split('T')[0];
+    const date = BuildHistoryProvider.parse_dir(historyDirName);
+    if (!date)
+      return;
+    const dateLabel = local_date_label(date);
 
     // force the provider's internal model in sync with disk before looking the new node up
     await instance.refresh();
@@ -491,70 +564,68 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
     // create (registerTreeDataProvider is not needed in addition to createTreeView for the same view id)
     const tree = vscode.window.createTreeView('obi.build-history', options);
     BuildHistoryProvider._treeView = tree;
+    context.subscriptions.push(tree, this._onDidChangeTreeData);
+    this.update_size();
 
     vscode.commands.executeCommand('setContext', 'obi.build-history.view-mode', this.view_mode);
     vscode.commands.executeCommand('setContext', 'obi.build-history.filter-active', false);
 
-    vscode.commands.registerCommand('obi.build-history.switch-to-source-view', () => {
+    register_command(context, 'obi.build-history.switch-to-source-view', () => {
       this.set_view_mode('source');
     });
 
-    vscode.commands.registerCommand('obi.build-history.switch-to-date-view', () => {
+    register_command(context, 'obi.build-history.switch-to-date-view', () => {
       this.set_view_mode('date');
     });
 
-    vscode.commands.registerCommand('obi.build-history.search', () => {
+    register_command(context, 'obi.build-history.search', () => {
       this.search();
     });
 
-    vscode.commands.registerCommand('obi.build-history.update', () => {
+    register_command(context, 'obi.build-history.update', () => {
       this.refresh();
     });
 
-    vscode.commands.registerCommand('obi.build-history.delete-item', (item: BuildHistoryItem) => {
+    register_command(context, 'obi.build-history.delete-item', async (item: BuildHistoryItem) => {
       if (item && item.file_path && DirTool.dir_exists(item.file_path)) {
+        if (!(await BuildHistoryProvider.confirm_delete(vscode.l10n.t('Delete build {0} {1}?', item.dateLabel ?? '', String(item.label)))))
+          return;
         fs.rmSync(item.file_path, { recursive: true, force: true });
         this.refresh();
       }
     });
 
-    vscode.commands.registerCommand('obi.build-history.delete-date', (item: BuildHistoryItem) => {
+    register_command(context, 'obi.build-history.delete-date', async (item: BuildHistoryItem) => {
       const build_history_path = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR);
       if (item && item.date && DirTool.dir_exists(build_history_path)) {
-        const build_history_dirs = DirTool.list_dir(build_history_path);
-        build_history_dirs.forEach(dir => {
-          const dirPath = path.join(build_history_path, dir);
-          if (DirTool.dir_exists(dirPath)) {
-            try {
-              const dirDate = BuildHistoryProvider.escaped_date2date(dir).toISOString().split('T')[0];
-              if (dirDate === item.date) {
-                fs.rmSync(dirPath, { recursive: true, force: true });
-              }
-            } catch (e) {
-              logger.error(`Invalid date format for build history directory: ${dir}`);
-            }
-          }
+        // Same local date as the tree labels (before: UTC date, so builds around midnight were missed)
+        const dirs = DirTool.list_dir(build_history_path).filter(dir => {
+          const date = DirTool.dir_exists(path.join(build_history_path, dir)) ? BuildHistoryProvider.parse_dir(dir) : undefined;
+          return date !== undefined && local_date_label(date) === item.date;
         });
+        if (dirs.length === 0 || !(await BuildHistoryProvider.confirm_delete(dirs.length === 1 ? vscode.l10n.t('Delete the build of {0}?', item.date) : vscode.l10n.t('Delete {0} builds of {1}?', dirs.length, item.date))))
+          return;
+        for (const dir of dirs)
+          fs.rmSync(path.join(build_history_path, dir), { recursive: true, force: true });
         this.refresh();
       }
     });
 
-//    const buildHistoryPath = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR, '**/*');
-  /*  const buildHistoryRootPath = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR);
-    DirTool.dir_exists(buildHistoryRootPath) || fs.mkdirSync(buildHistoryRootPath);
-    const watcherRootPath = vscode.workspace.createFileSystemWatcher(buildHistoryRootPath);
-    const watcher = vscode.workspace.createFileSystemWatcher(buildHistoryPath);
-
-    watcher.onDidCreate(() => this.refresh());
-    watcher.onDidChange(() => this.refresh());
-    watcher.onDidDelete(() => this.refresh());
-
-    watcherRootPath.onDidCreate(() => this.refresh());
-    watcherRootPath.onDidChange(() => this.refresh());
-    watcherRootPath.onDidDelete(() => this.refresh());
-
-    context.subscriptions.push(watcher, watcherRootPath, tree);
-    */
+    register_command(context, 'obi.build-history.delete-all', async () => {
+      const build_history_path = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR);
+      const dirs = DirTool.dir_exists(build_history_path) ? DirTool.list_dir(build_history_path).filter(dir => DirTool.dir_exists(path.join(build_history_path, dir))) : [];
+      if (dirs.length === 0) {
+        vscode.window.showInformationMessage(vscode.l10n.t('No build history found.'));
+        return;
+      }
+      const bytes = await folder_size(build_history_path);
+      const question = dirs.length === 1 ? vscode.l10n.t('Delete the build history (1 build, {0})?', format_size(bytes)) : vscode.l10n.t('Delete all {0} builds ({1})?', dirs.length, format_size(bytes));
+      if (!(await BuildHistoryProvider.confirm_delete(question)))
+        return;
+      for (const dir of dirs)
+        await fs.promises.rm(path.join(build_history_path, dir), { recursive: true, force: true });
+      this.refresh();
+    });
   }
 
 
@@ -566,6 +637,7 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
 export class BuildHistoryItem extends vscode.TreeItem {
 
   public readonly file_path: string;
+  public build_time?: Date;
   public readonly date?: string;
   public readonly dirName?: string;
   public readonly dateLabel?: string;
@@ -575,7 +647,7 @@ export class BuildHistoryItem extends vscode.TreeItem {
     label: string,
     collapsibleState: vscode.TreeItemCollapsibleState,
     file_path: string,
-    type: 'date' | 'build' | 'source' | 'source-root' | 'date-by-source',
+    type: 'date' | 'build' | 'source' | 'source-root' | 'date-by-source' | 'warning',
     fileName?: string,
     dateLabel?: string,
     sourceFilter?: string,
@@ -601,7 +673,7 @@ export class BuildHistoryItem extends vscode.TreeItem {
 
       this.command = {
         command: 'obi.open_build_summary',
-        title: 'Open Build Summary',
+        title: vscode.l10n.t('Open build summary'),
         arguments: [path.join(this.file_path, 'compile-list.json')]
       };
 
@@ -620,6 +692,10 @@ export class BuildHistoryItem extends vscode.TreeItem {
       this.date = label;
       this.sourceFilter = sourceFilter;
       this.id = `date-by-source-${sourceFilter}-${label}`;
+    } else if (type === 'warning') {
+      this.tooltip = label;
+      this.contextValue = 'buildHistoryWarning';
+      this.iconPath = new vscode.ThemeIcon('warning');
     } else { // source
       this.tooltip = source_description ? `Source: ${label} (${source_description})` : `Source: ${label}`;
       this.contextValue = 'buildHistorySource';

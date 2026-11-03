@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="{{ global_stuff['theme_mode'] }}">
   <head>
+  {% include "tools/csp.html" %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table.min.css">
 
     <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
     <link rel="stylesheet" href="{{ config_css }}">
-    <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/codicons/codicon.css">
+    <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/codicons/codicon.css">
 
   </head>
   <body>
@@ -76,14 +76,14 @@
     <br/><br/>
     <br/><br/>
 
-    <script src="{{ global_stuff['asserts_uri'] }}/js/jquery.min.js"></script>
-    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table.min.js"></script>
-    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-de.js"></script>
-    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-en.js"></script>
-    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-resizable.min.js"></script>
-    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-filter-control.min.js"></script>
+    <script src="{{ global_stuff['vendor_uri'] }}/jquery/jquery.min.js"></script>
+    <script src="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table.min.js"></script>
+    <script src="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table-de-DE.min.js"></script>
+    <script src="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table-en-US.min.js"></script>
+    <script src="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table-resizable.min.js"></script>
+    <script src="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table-filter-control.min.js"></script>
   
-    <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ global_stuff['vendor_uri'] }}/bootstrap/bootstrap.bundle.min.js"></script>
 
     <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
   </body>

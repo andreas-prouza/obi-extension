@@ -20,6 +20,9 @@
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|connection|remote-host" placeholder="IBM i host (or IP)"
         value="{{ app_config['connection']['remote-host'] }}">{{ global_stuff['get_text']('Remote host') | safe }}</vscode-text-field>
 
+      <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-1" regex_validator="^\d*$" type="number" id="{{ class_prefix }}|connection|ssh-port" placeholder="22"
+        value="{{ app_config['connection']['ssh-port'] }}">{{ global_stuff['get_text']('SSH port') | safe }}<label style="visibility: hidden;" id="hint_{{ class_prefix }}|connection|ssh-port">&nbsp;&nbsp;&nbsp;⚠️ Only numbers</label></vscode-text-field>
+
       <br />
       <br />
 
@@ -32,6 +35,15 @@
       <vscode-text-field class="{{ class_prefix }}_save_app type_file" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|connection|ssh-key" placeholder="~/.ssh/ibmi_rsa"
         value="{{ app_config['connection']['ssh-key'] }}">🔑 {{ global_stuff['get_text']('SSH Key') | safe }}</vscode-text-field>
       <br />
+      <br />
+
+      <div style="display: flex; align-items: center">
+      <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox"
+              {% if app_config['connection']['ssh-agent'] %}checked{% endif %}
+              panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|connection|ssh-agent">
+      </vscode-checkbox>
+      {{ global_stuff['get_text']('Use the SSH agent (Pageant on Windows)') | safe }}
+      </div>
       <br />
 
       {% if class_prefix != 'user' %}
@@ -53,8 +65,13 @@
 
         <br />
         <br />
-        <vscode-text-field class="" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|SSH_PASSWORD" type="password"
-          value="{{ SSH_PASSWORD }}">🔑 {{ global_stuff['get_text']('Password') | safe }}</vscode-text-field>
+        <vscode-text-field class="" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|SSH_PASSWORD" type="password" value=""
+          {% if ssh_password_stored %}placeholder="{{ global_stuff['get_text']('Password stored - type to replace') }}"{% endif %}>🔑 {{ global_stuff['get_text']('Password') | safe }}</vscode-text-field>
+        {% if ssh_password_stored %}
+        <vscode-button id="delete_ssh_password" appearance="icon" title="{{ global_stuff['get_text']('Remove stored password') }}">
+          <span class="codicon codicon-trash"></span>
+        </vscode-button>
+        {% endif %}
 
         <br />
         <br />
@@ -66,10 +83,6 @@
 
       <h3>{{ global_stuff['get_text']('Project locations') | safe }}</h3>
 
-      <vscode-text-field class="{{ class_prefix }}_save_app type_text" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|general|cloud-ws-ssh-remote-host" size="80" placeholder="andy-workspace.code.prouza.dev"
-        value="{{ app_config['general']['cloud-ws-ssh-remote-host'] }}">{{ global_stuff['get_text']('Cloud workspace host (ℹ️ only when using remote workspaces)') | safe }}</vscode-text-field>
-      <br />
-      <br />
 
       <vscode-text-field class="{{ class_prefix }}_save_app type_text {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|general|local-base-dir" size="80"
         value="{{ app_config['general']['local-base-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Local path') | safe }}</vscode-text-field>
@@ -87,11 +100,6 @@
       <br />
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|general|source-dir" placeholder="src"
         value="{{ app_config['general']['source-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Source directory') | safe }}</vscode-text-field>
-
-      <br />
-      <br />
-      <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|general|check-remote-source-on-startup" 
-      {% if app_config['general']['check-remote-source-on-startup'] == true %}checked{% endif %}>{{ global_stuff['get_text']('Check remote sources on start up') | safe }}</vscode-checkbox>
 
       <br />
       <br />
@@ -558,11 +566,6 @@
             
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-4" id="{{ class_prefix }}|general|remote-source-list" placeholder=".obi/etc/source-list-remote.toml"
-        value="{{ app_general['remote-source-list'] }}">{{ global_stuff['get_text']('Remote source list') | safe }}</vscode-text-field>
-            
-      <br/>
-      <br/>
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-4" id="{{ class_prefix }}|general|source-list" placeholder=".obi/etc/source-list-local.toml"
         value="{{ app_general['source-list'] }}">{{ global_stuff['get_text']('Local source list') | safe }}</vscode-text-field>
             
@@ -598,7 +601,7 @@
     
       <br/>
       <br/>
-      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-4" id="{{ class_prefix }}|general|evfevent-output-dir" placeholder=".obi/build-output/evfevent"
+      <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-4" id="{{ class_prefix }}|general|evfevent-output-dir" placeholder=".obi/tmp/evfevent"
         value="{{ app_general['evfevent-output-dir'] }}">{{ global_stuff['get_text']('EVF Event output dir') | safe }}</vscode-text-field>
     
 

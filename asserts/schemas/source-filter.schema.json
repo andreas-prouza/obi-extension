@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OBI source filter",
+  "description": "A source is part of the filter if it matches at least one entry.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "source-lib",
+      "source-file",
+      "source-member"
+    ],
+    "properties": {
+      "source-lib": {
+        "type": "string",
+        "description": "Library. With use-regex a regular expression, otherwise a pattern with * and ?. Not case-sensitive."
+      },
+      "source-file": {
+        "type": "string",
+        "description": "Source file. With use-regex a regular expression, otherwise a pattern with * and ?. Not case-sensitive."
+      },
+      "source-member": {
+        "type": "string",
+        "description": "Source member. With use-regex a regular expression, otherwise a pattern with * and ?. Not case-sensitive."
+      },
+      "use-regex": {
+        "type": "boolean",
+        "default": false,
+        "description": "The three values are regular expressions."
+      },
+      "show-empty-folders": {
+        "type": "boolean",
+        "default": false,
+        "description": "Also show libraries and source files without members."
+      }
+    }
+  }
+}

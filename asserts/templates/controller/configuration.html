@@ -2,20 +2,20 @@
 <html lang="en" data-bs-theme="{{ global_stuff['theme_mode'] }}">
 
 <head>
+  {% include "tools/csp.html" %}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/bootstrap/css/bootstrap-table.min.css">
+  <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table.min.css">
 
   <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
   <link rel="stylesheet" href="{{ config_css }}">
-  <link rel="stylesheet" href="{{ global_stuff['asserts_uri'] }}/codicons/codicon.css">
+  <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/codicons/codicon.css">
 </head>
 
 
-<body>
+<body data-panel="{{ panel or 'project_cfg' }}" data-panel-tab="{{ panel_tab or 'tab-1' }}">
   
   <div id="still_missing"><br/><b>⚠️ {{ global_stuff['get_text']('There are still missing values ...') | safe }}</b><br/><br/></div>
   <div id="error_text" class="error config_error" show="{%if error_text | length > 0 %}true{% else %}false{% endif %}"><b>⚠️ {{ error_text | safe }}</b></div>
@@ -24,6 +24,7 @@
     <vscode-button class="save-button" id="save_config">{{  global_stuff['get_text']('Save') | safe }}</vscode-button>
     {% include "tools/alertBox.html" %}
   </div>
+  <p class="save-hint">ℹ️ {{ global_stuff['get_text']('Saving rewrites the TOML file: comments in it are not kept.') | safe }}</p>
 
   {% set current_profile = global_stuff['current_profile'] | replace('.toml', '') | replace('.user-app-config-', '') | replace('.user-app-config', '') %}
   {% set current_profile = ' (' + current_profile + ')' if current_profile | length > 0 else '' %}
@@ -107,20 +108,16 @@
   <br />
 
   
-  <script src="{{ global_stuff['asserts_uri'] }}/js/jquery.min.js"></script>
-  <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table.min.js"></script>
-  <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-de.js"></script>
-  <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-en.js"></script>
-  <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-resizable.min.js"></script>
-  <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap-table-filter-control.min.js"></script>
+  <script src="{{ global_stuff['vendor_uri'] }}/jquery/jquery.min.js"></script>
+  <script src="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table.min.js"></script>
+  <script src="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table-de-DE.min.js"></script>
+  <script src="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table-en-US.min.js"></script>
+  <script src="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table-resizable.min.js"></script>
+  <script src="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table-filter-control.min.js"></script>
 
-  <script src="{{ global_stuff['asserts_uri'] }}/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ global_stuff['vendor_uri'] }}/bootstrap/bootstrap.bundle.min.js"></script>
 
   <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
-  <script>
-    panel = "{{ panel or 'project_cfg' }}";
-    panel_tab = "{{ panel_tab or 'tab-1' }}";
-  </script>
 
 </body>
 

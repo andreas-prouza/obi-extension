@@ -1,15 +1,13 @@
+import "../../tools/javascript/toolkit";
 import {
-  allComponents,
-  provideVSCodeDesignSystem,
   Button
 } from "@vscode/webview-ui-toolkit";
+import { typed_post } from "../../tools/javascript/post";
+import type { ControllerRequest } from "../../../shared/messages/ControllerMessages";
 
-// In order to use all the Webview UI Toolkit web components they
-// must be registered with the browser (i.e. webview) using the
-// syntax below.
-provideVSCodeDesignSystem().register(allComponents);
 
 const vscode = acquireVsCodeApi();
+const post = typed_post<ControllerRequest>(vscode);
 let initialized = false;
 
 window.addEventListener("load", main);
@@ -20,8 +18,6 @@ function main() {
   // a given toolkit component can be imported and used to type cast a reference
   // to the element (i.e. the `as Button` syntax)
 
-  console.log("Main is called");
-  console.log(vscode.getState());
 
   const elements = document.getElementsByClassName("controller_refresh");
 
@@ -65,11 +61,10 @@ function main() {
 function change_profile(event: Event) {
 
   const value = (event.target as HTMLSelectElement).value || "";
-  console.log(`Profile changed to ${value}`);
   
   updateState({ selected_profile: value });
 
-  vscode.postMessage({
+  post({
     command: "change_profile",
     profile: value
   });
@@ -84,7 +79,7 @@ function get_run_type() : string {
 
 function run_build() {
 
-  let command: string = 'run_single_build';
+  let command: 'run_build' | 'run_single_build' = 'run_single_build';
   const run_build_ring = document.getElementById("running_ring");
 
   run_build_ring?.setAttribute("data-process", "run_build");
@@ -96,7 +91,7 @@ function run_build() {
     command = 'run_build';
   }
 
-  vscode.postMessage({
+  post({
     command: command
   });
 }
@@ -104,7 +99,7 @@ function run_build() {
 
 function show_changes() {
 
-  let command: string = 'show_single_changes';
+  let command: 'show_changes' | 'show_single_changes' = 'show_single_changes';
 
   const running_ring = document.getElementById("running_ring");
 
@@ -117,35 +112,34 @@ function show_changes() {
     command = 'show_changes';
   }
 
-  vscode.postMessage({
+  post({
     command: command
   });
 }
 
 
 function delete_current_profile() {
-  console.log("Delete current profile command issued");
-  vscode.postMessage({
+  post({
     command: "delete_current_profile"
   });
 }
 
 
 function copy_profile() {
-  vscode.postMessage({
+  post({
     command: "copy_profile"
   });
 }
 
 
 function cancel_running() {
-  vscode.postMessage({
+  post({
     command: "cancel_running"
   });
 }
 
 function controller_refresh() {
-  vscode.postMessage({
+  post({
     command: "refresh"
   });
 }
@@ -161,6 +155,16 @@ function receive_message(e: MessageEvent) {
         running_ring.style.display='none';
       }
       break;
+
+    case 'running_state': {
+      // Busy state of the extension (OperationLock), also for operations not started from this view
+      const ring = document.getElementById("running_ring");
+      if (ring) {
+        ring.style.display = e.data.running ? 'flex' : 'none';
+        ring.title = e.data.running ?? '';
+      }
+      break;
+    }
 
     case 'update_build_summary_timestamp':
 
@@ -181,11 +185,9 @@ function receive_message(e: MessageEvent) {
       
     case 'update_current_profile':
 
-      console.log(`update_current_profile: `, e.data);
       update_profile_drp(e.data.profiles);
       set_current_profile(e.data.current_profile);
      
-      console.log(vscode.getState());
       break;
   }
 }

@@ -1,15 +1,9 @@
 
 import { Disposable, WebviewPanel, window, Uri, ViewColumn } from "vscode";
 import { Constants } from '../../shared/Constants';
-import { AppConfig } from '../../shared/AppConfig';
 import { BuildSummary } from './BuildSummary';
+import { render_template } from '../Templates';
 
-/*
-https://medium.com/@andy.neale/nunjucks-a-javascript-template-engine-7731d23eb8cc
-https://mozilla.github.io/nunjucks/api.html
-https://www.11ty.dev/docs/languages/nunjucks/
-*/
-const nunjucks = require('nunjucks');
 
 
 
@@ -43,20 +37,15 @@ export class LogOutput {
    * @param extensionUri The URI of the directory containing the extension.
    */
   public static render(workspaceUri: Uri, log_type: string, level: number, source: string, cmd_index: number) {
-    if (LogOutput.currentPanel) {
-      // If the webview panel already exists reveal it
-      LogOutput.currentPanel.dispose();
-      //LogOutput.currentPanel._panel.reveal(ViewColumn.One);
-      //return;
-    }
+    // The new panel opens where the old one was (the user may have moved it to another editor group)
+    const column = LogOutput.currentPanel?._panel.viewColumn;
+    LogOutput.currentPanel?.dispose();
 
-    // If a webview panel does not already exist create and show a new one
-    const panel = this.createNewPanel(log_type);
+    const panel = this.createNewPanel(log_type, column);
 
     const log_content = LogOutput.get_log_content(workspaceUri, log_type, level, source, cmd_index);
 
-    nunjucks.configure(Constants.HTML_TEMPLATE_DIR);
-    const html = nunjucks.render('show_changes/show_log.html', 
+    const html = render_template('show_changes/show_log.html', 
       {
         log_type: log_type,
         source: source,
@@ -71,12 +60,12 @@ export class LogOutput {
 
 
 
-  private static createNewPanel(log_type: string) {
+  private static createNewPanel(log_type: string, column: ViewColumn = ViewColumn.One) {
     return window.createWebviewPanel(
       'show_log', // Identifies the type of the webview. Used internally
       log_type, // Title of the panel displayed to the user
       // The editor column the panel should be displayed in
-      ViewColumn.One,
+      column,
       // Extra panel configurations
       {
         enableFindWidget: true,
@@ -89,33 +78,30 @@ export class LogOutput {
 
 
 
+  /** Log of one command from the current compile-list; '' if the list, level, source or command doesn't exist */
   public static get_log_content(workspaceUri: Uri, log_type: string, level: number, source: string, cmd_index: number): string {
 
-    const fs = require("fs"); 
-    
-    const config = AppConfig.get_app_config();
-    let compile_list = BuildSummary.get_compile_list();
+    const compile_list = BuildSummary.get_compile_list();
+    if (!compile_list || !Array.isArray(compile_list['compiles']))
+      return '';
 
     for (const level_item of compile_list['compiles']) {
 
-      const i_level = level_item['level'];
-      const i_sources = level_item['sources'];
-
-      if (level != i_level)
+      if (level != level_item?.['level'] || !Array.isArray(level_item['sources']))
         continue;
 
-      for (let i_source of i_sources) {
+      for (const i_source of level_item['sources']) {
 
-        if (i_source['source'] != source)
+        if (i_source?.['source'] != source)
           continue;
 
-        return i_source['cmds'][cmd_index][log_type];
-
+        const cmds = i_source['cmds'];
+        const content = Array.isArray(cmds) ? cmds[cmd_index]?.[log_type] : undefined;
+        return typeof content === 'string' ? content : '';
       }
-      
     }
 
-    return ''
+    return '';
   }
   
 

@@ -1,4 +1,5 @@
 import * as path from 'path';
+import * as v8 from 'v8';
 import Mocha from 'mocha';
 import { glob } from 'glob';
 
@@ -22,6 +23,8 @@ export function run(): Promise<void> {
                 try {
                     // Run the mocha test
                     mocha.run(failures => {
+                        if (process.env.NODE_V8_COVERAGE)
+                            v8.takeCoverage();
                         if (failures > 0) {
                             e(new Error(`${failures} tests failed.`));
                         } else {
