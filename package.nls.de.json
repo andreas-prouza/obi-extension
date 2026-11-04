@@ -34,6 +34,8 @@
   "obi.log.maxFileSizeMB": "Maximale Größe einer Log-Datei in MB; je Log werden 3 Dateien behalten.",
   "obi.buildHistory.maxBuilds": "Höchstens so viele Builds in der Build-Historie behalten (0 = unbegrenzt). Ältere Builds werden nach jedem Build gelöscht. Solange weder diese Einstellung noch `#obi.buildHistory.maxAgeDays#` gesetzt ist, fragt OBI einmal pro Workspace vor dem Löschen.",
   "obi.buildHistory.maxAgeDays": "Builds, die älter als so viele Tage sind, aus der Build-Historie löschen (0 = unbegrenzt).",
+  "obi.backend.autoUpdateLocal": "Das lokale OBI-Backend (`local-obi-dir`, ein Git-Checkout) beim Start von VS Code mit `git pull` aktualisieren. Nur Fast-Forward: ein Checkout mit eigenen Commits oder Änderungen bleibt unverändert.",
+  "obi.backend.autoUpdateRemote": "Das OBI-Backend auf dem IBM i (`remote-obi-dir`, ein Git-Checkout) mit `git pull` aktualisieren, einmal pro VS-Code-Sitzung vor dem ersten Build. Nur Fast-Forward: ein Checkout mit eigenen Commits oder Änderungen bleibt unverändert.",
   "obi.ssh.forget-host-key": "OBI: Gespeicherten SSH Host Key vergessen",
   "obi.source.edit-compile-config": "OBI: Individuelle Build Konfiguration",
   "obi.deployment.maintain": "OBI: Deployment Konfiguration",

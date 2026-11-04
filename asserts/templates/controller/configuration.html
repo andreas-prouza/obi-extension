@@ -68,6 +68,11 @@
         💡 {{  global_stuff['get_text']('This config will override the project config and should contain user specific definitions (target lib mapping, local obi path, ...)') | safe }}
         <br/>
         <br/>
+        {{ global_stuff['get_text']('Greyed-out fields use the value of the project configuration. {0} sets your own value, {1} uses the project value again.')
+          | replace('{0}', '<span class="codicon codicon-edit"></span>')
+          | replace('{1}', '<span class="codicon codicon-discard"></span>') | safe }}
+        <br/>
+        <br/>
       
         📝 <a href='command:vscode.open?{{ user_config_file }}'>{{  global_stuff['get_text']('Open user config file') | safe }}</a>
         <br/>

@@ -16,6 +16,11 @@ import { logger } from '../../extension/utilities/Logger';
 import { ProjectState } from '../../extension/ProjectState';
 import { show_error } from '../../extension/utilities/Notify';
 import { render_template } from '../Templates';
+import { delete_paths, set_paths } from '../../shared/DictTools';
+
+
+/** Tables of app-config.toml whose values the user config can override */
+const APP_CONFIG_TABLES = ['connection', 'general', 'global'];
 
 
 
@@ -105,6 +110,8 @@ export class OBIConfiguration {
         main_java_script: getUri(webview, extensionUri, ["out", "webview", "config.js"]),
         icons: {debug_start: '$(preview)'},
         user_config: user_config,
+        // Values set in the user config: these fields override the project config (config_field.html)
+        user_overrides: set_paths(user_config),
         project_config: project_config,
         // Never pass the secret itself into the page: only whether one is stored
         ssh_password_stored: pwd !== undefined && pwd.length > 0,
@@ -176,7 +183,7 @@ export class OBIConfiguration {
     switch (message.command) {
 
       case "save_config":
-        OBIConfiguration.save_config(message.target == 'user', workspaceUri, message.data);
+        OBIConfiguration.save_config(message.target == 'user', workspaceUri, message.data, message.unset);
         break;
 
       case "save_ssh_password":
@@ -380,7 +387,11 @@ export class OBIConfiguration {
 
 
 
-  public static save_config(isUser: boolean, workspaceUri: Uri, data: any) {
+  /**
+   * `unset` (user config only): paths like 'general|source-dir' of values that are removed from the file,
+   * so the project value applies again.
+   */
+  public static save_config(isUser: boolean, workspaceUri: Uri, data: any, unset: string[] = []) {
 
     // App config
     let toml_file = path.join(workspaceUri.fsPath, Constants.OBI_APP_CONFIG_FILE);
@@ -436,6 +447,9 @@ export class OBIConfiguration {
       new_config.global.steps = data['global']['steps'];
     if (data['global'] && data['global']['compile-cmds'])
       new_config.global['compile-cmds'] = data['global']['compile-cmds'];
+
+    if (isUser)
+      delete_paths(new_config, unset.filter(key => APP_CONFIG_TABLES.includes(key.split('|')[0])));
 
     DirTool.update_toml(toml_file, new_config);
     AppConfig.reset();

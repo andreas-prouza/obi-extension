@@ -1,3 +1,26 @@
+## [Unreleased]
+
+**After updating:** older versions wrote `false` for every checkbox of the user configuration (`ssh-agent`, *Always transfer related copybooks*, *Activate extended source processing*), and the user configuration could contain default paths such as `source-dir = "src"`. These values now show as overridden in the user tab: click ↺ and save to use the project value again.
+
+### Features
+* **User configuration: override per value.** Each value of the user tab is either taken from the project configuration (greyed out, not saved) or overridden (✎). ↺ removes the value from the user configuration, so the project value applies again ([spec](docs/features/user-config-override.md))
+* **Start an i-Releaser workflow from the build summary:**
+  * The button is shown when all commands succeeded. It sends the build list without joblogs to i-Releaser and links to the new deployment.
+  * The URL is in `.obi/etc/deployment.toml`. The token goes into VS Code's secret storage, one per URL, and is sent in the `Authorization` header (i-Releaser 3.1.0 or newer).
+  * The command **OBI: deployment config** is available again.
+  * This replaces custom build summary templates that called i-Releaser themselves; since 1.4.1 they can't reach the server.
+  * [docs](asserts/docs/building.md#i-releaser-deployment), [spec](docs/features/i-releaser-deployment.md)
+* **Update the OBI backend automatically** with `git pull`: settings `obi.backend.autoUpdateLocal` (local backend, when VS Code starts) and `obi.backend.autoUpdateRemote` (backend on IBM i, once per session before the first build). Only fast-forward updates; a message says when the backend's `requirements.txt` changed and its setup script has to run again ([docs](asserts/docs/configuration.md#updating-the-obi-backend), [spec](docs/features/backend-auto-update.md))
+
+### Bugfixes
+* Saving the configuration page no longer writes unchecked checkboxes as `false` into the user configuration, where they overrode the project configuration
+* Clearing a value in the user tab removes it from the user configuration; before, the old value stayed
+* A user configuration without `[general]` no longer overrides project values (e.g. `source-dir`) with defaults
+* *Activate extended source processing* is shown checked when it isn't set (it is on by default), so saving the project configuration no longer turns it off
+* **Update** (shown after a run of an older OBI backend) also updates the backend on IBM i, which runs every build. Before, it only pulled the local backend, and without `local-obi-dir` it ran `git pull` in the wrong folder
+* Webviews: no more CSP error for the source maps of bootstrap and tom-select when the developer tools are open
+
+
 ## [1.4.2]
 
 ### Bugfixes

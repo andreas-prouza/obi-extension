@@ -46,6 +46,18 @@ export class ExtensionSettings {
   }
 
 
+  /** git pull of the local OBI backend (local-obi-dir) when VS Code starts */
+  public static backend_auto_update_local(): boolean {
+    return vscode.workspace.getConfiguration('obi').get<boolean>('backend.autoUpdateLocal', false);
+  }
+
+
+  /** git pull of the OBI backend on the IBM i (remote-obi-dir), once per session before its first use */
+  public static backend_auto_update_remote(): boolean {
+    return vscode.workspace.getConfiguration('obi').get<boolean>('backend.autoUpdateRemote', false);
+  }
+
+
   public static status_bar_enabled(): boolean {
     return vscode.workspace.getConfiguration('obi').get<boolean>('statusBar.enabled', true);
   }

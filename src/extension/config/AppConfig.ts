@@ -432,11 +432,12 @@ export class AppConfig {
   }
 
 
+  /** Only the values of the user config file: no defaults, they would override the project config */
   public static get_user_app_config(workspace: vscode.Uri): AppConfig {
 
     const user_app_config: AppConfig|undefined = DirTool.get_toml(path.join(workspace.fsPath, AppConfig.get_current_profile_app_config_file()));
 
-    const app_config: AppConfig = new AppConfig(user_app_config?.connection, user_app_config?.general, user_app_config?.global);
+    const app_config: AppConfig = new AppConfig(user_app_config?.connection, user_app_config?.general ?? ({} as ConfigGeneral), user_app_config?.global);
 
     return app_config;
 

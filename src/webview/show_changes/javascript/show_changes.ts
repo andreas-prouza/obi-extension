@@ -37,7 +37,11 @@ function main() {
   const add_source_button = document.getElementById('add_source') as Button;
   if (add_source_button)
     add_source_button.addEventListener('click', add_source);
-  
+
+  const start_deployment_button = document.getElementById('start_deployment');
+  if (start_deployment_button)
+    start_deployment_button.addEventListener('click', () => post({ command: 'start_deployment' }));
+
   const joblogButton = document.getElementsByClassName("joblog");
   for (let i = 0; i < joblogButton.length; i++) {
     joblogButton[i].addEventListener("click", function (e) {show_log('joblog', joblogButton[i]);});

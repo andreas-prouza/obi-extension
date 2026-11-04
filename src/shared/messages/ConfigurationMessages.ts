@@ -1,5 +1,5 @@
 // Messages of the configuration page (config.ts → OBIConfiguration.ts)
-import { MessageOf, is_config_key, is_index, is_json_array, is_plain_object, is_source_name, is_string, one_of, optional } from './MessageGuard';
+import { MessageOf, is_config_key, is_config_path_list, is_index, is_json_array, is_plain_object, is_source_name, is_string, one_of, optional } from './MessageGuard';
 
 
 /** Remembered tab of the page; validated again before it is stored */
@@ -8,7 +8,8 @@ const target = one_of('user', 'project');
 
 
 export const CONFIGURATION_REQUESTS = {
-  save_config: { ...ui, target: target, data: is_plain_object },
+  // unset: user config only; values that take the project value again (removed from the file)
+  save_config: { ...ui, target: target, data: is_plain_object, unset: optional(is_config_path_list) },
   save_ssh_password: { ...ui, password: is_string },
   delete_ssh_password: { ...ui },
   add_language_attribute: { ...ui, user_project: target, language: is_config_key, attribute: is_config_key },

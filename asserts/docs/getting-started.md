@@ -31,6 +31,7 @@ VS Code also has a short walkthrough: *Help → Get Started → Get started with
    `setup.sh` creates a Python virtual environment (`venv`) and installs the required modules.
    Before each build the extension checks that `<obi path>/venv/bin/python` exists.
    See the [OBI repository](https://github.com/andreas-prouza/obi) for details.
+   The extension can keep it up to date with `git pull`: see [Updating the OBI backend](configuration.md#updating-the-obi-backend).
 
 
 ## 2. Initialize the project

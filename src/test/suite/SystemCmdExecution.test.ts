@@ -30,6 +30,14 @@ suite('SystemCmdExecution', () => {
   });
 
 
+  test('env is added to the environment of VS Code', async () => {
+    const lines: string[] = [];
+    await SystemCmdExecution.run_system_cmd(cwd, 'node', ['-e', 'console.log(process.env.OBI_TEST_ENV + "|" + (process.env.PATH ? "path" : ""))'], 'test-env',
+      { env: { OBI_TEST_ENV: 'set' }, on_line: (line, stream) => { if (stream === 'stdout') lines.push(line); } });
+    assert.deepStrictEqual(lines, ['set|path']);
+  });
+
+
   test('starting the same id twice is refused', async () => {
     const running = SystemCmdExecution.run_system_cmd(cwd, 'node', ['-e', 'setTimeout(()=>{}, 300)'], 'test-twice');
     await assert.rejects(() => SystemCmdExecution.run_system_cmd(cwd, 'node', ['-e', '0'], 'test-twice'), /already running/);

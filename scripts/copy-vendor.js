@@ -26,10 +26,18 @@ const FILES = [
   ['@vscode/codicons/dist/codicon.ttf', 'codicons/codicon.ttf'],
 ];
 
+// The source maps are not copied: with open DevTools the webview would request them, and the CSP
+// (default-src 'none') blocks that with an error in the console
+const SOURCE_MAP_COMMENT = /\s*(\/\/# sourceMappingURL=\S+|\/\*# sourceMappingURL=\S+ \*\/)\s*$/;
+
 fs.rmSync(TARGET, { recursive: true, force: true });
 for (const [from, to] of FILES) {
+  const source = path.join(ROOT, 'node_modules', from);
   const target = path.join(TARGET, to);
   fs.mkdirSync(path.dirname(target), { recursive: true });
-  fs.copyFileSync(path.join(ROOT, 'node_modules', from), target);
+  if (/\.(js|css)$/.test(to))
+    fs.writeFileSync(target, fs.readFileSync(source, 'utf8').replace(SOURCE_MAP_COMMENT, '\n'));
+  else
+    fs.copyFileSync(source, target);
 }
 console.log(`copy-vendor: ${FILES.length} files → out/vendor`);

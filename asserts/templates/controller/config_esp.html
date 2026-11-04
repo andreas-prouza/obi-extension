@@ -1,14 +1,16 @@
-
+{% from "controller/config_field.html" import field with context %}
 <div class="esp-container">
 
-  <div style="display: flex; align-items: center">
-    <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox" 
-            {% if general_settings['USE_ESP'] %}checked{% endif %} 
+  {# On by default (as in the OBI backend): a missing value is shown checked, so saving doesn't turn it off #}
+  {% call field('global|settings|general|USE_ESP', 'check') %}
+    <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox"
+            {% if general_settings['USE_ESP'] !== false and general_settings['USE_ESP'] !== 'false' %}checked{% endif %}
             panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|USE_ESP">
+      {{ global_stuff['get_text']('Activate extended source processing') | safe }}
     </vscode-checkbox>
-    {{ global_stuff['get_text']('Activate extended source processing') | safe }}
-  </div>
-  
+  {% endcall %}
+  <br />
+
   <br />
 
   {% for esp in extended_source_processing_list %}

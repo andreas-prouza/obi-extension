@@ -6,7 +6,7 @@ import { SSH_Tasks } from '../../extension/utilities/SSH_Tasks';
 
 
 // bugs.md #9: contributed in package.json, but never registered. Implement them or remove them from package.json.
-const KNOWN_UNREGISTERED = ['obi.showErrors', 'obi.show.tools', 'obi.get-remote-compiled-object-list', 'obi.deployment.maintain'];
+const KNOWN_UNREGISTERED = ['obi.showErrors', 'obi.show.tools', 'obi.get-remote-compiled-object-list'];
 
 
 suite('Extension registration', () => {

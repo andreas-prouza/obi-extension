@@ -20,6 +20,11 @@ import { ISourceInfos } from '../../shared/Source';
 import { SystemCmdExecution } from '../../extension/utilities/SystemCmdExecution';
 import { OperationLock } from '../../extension/utilities/OperationLock';
 import { render_template } from '../Templates';
+import { DeploymentConfig } from '../deployment/DeploymentConfig';
+import { CUSTOM_DATA_KEY, IReleaserError, deployment_data, deployment_of, get_workflows, show_details_url, start_workflow } from '../../shared/IReleaser';
+import { UserCancelledError } from '../../shared/Errors';
+import { require_trust } from '../../extension/utilities/Trust';
+import { show_error } from '../../extension/utilities/Notify';
 
 
 
@@ -137,7 +142,120 @@ export class BuildSummary {
       case "edit_cmd":
         BuildSummary.edit_cmd(message.level, message.source, message.cmd_index);
         return;
+
+      case "start_deployment":
+        BuildSummary.start_deployment();
+        return;
     }
+  }
+
+
+
+  /**
+   * Starts an i-Releaser workflow with the displayed build list (without joblogs) and stores the deployment
+   * in it (custom_data['i-releaser']). URL from deployment.toml, token from the secret storage.
+   */
+  public static async start_deployment(): Promise<void> {
+    // The URL comes from the workspace, and the token is sent there
+    if (!require_trust(vscode.l10n.t('Starting an i-Releaser workflow')))
+      return;
+    await OperationLock.run('Start i-Releaser workflow', token => BuildSummary.do_start_deployment(token));
+  }
+
+
+
+  private static async do_start_deployment(lock_token: vscode.CancellationToken): Promise<void> {
+
+    const configure = vscode.l10n.t('Open deployment config');
+    const open_config = (choice: string | undefined) => {
+      if (choice === configure && OBITools.ext_context)
+        DeploymentConfig.render(OBITools.ext_context);
+    };
+
+    const base = DeploymentConfig.i_releaser_url();
+    if (!base) {
+      vscode.window.showErrorMessage(vscode.l10n.t('No i-Releaser URL in {0}.', Constants.DEPLOYMENT_CONFIG_FILE), configure).then(open_config);
+      return;
+    }
+    const auth_token = await DeploymentConfig.get_auth_token(base);
+    if (!auth_token) {
+      vscode.window.showErrorMessage(vscode.l10n.t('No i-Releaser token is stored for {0}.', base), configure).then(open_config);
+      return;
+    }
+
+    const compile_list_file = path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name());
+    const compile_list = BuildSummary.get_compile_list();
+    if (!compile_list) {
+      vscode.window.showErrorMessage(vscode.l10n.t('No build summary found. Run "Show changes" first.'));
+      return;
+    }
+
+    try {
+      const workflows = await BuildSummary.with_progress(vscode.l10n.t('Loading the workflows of i-Releaser…'), lock_token,
+        signal => get_workflows(base, auth_token, signal));
+      if (workflows.length === 0) {
+        vscode.window.showWarningMessage(vscode.l10n.t('i-Releaser has no workflows for this token.'));
+        return;
+      }
+
+      // The default workflow first; the pick also confirms the start
+      const default_workflow = DeploymentConfig.get_deployment_config()['i-releaser']['default-workflow'];
+      const items: vscode.QuickPickItem[] = workflows
+        .sort((a, b) => Number(b === default_workflow) - Number(a === default_workflow))
+        .map(name => ({ label: name, description: name === default_workflow ? vscode.l10n.t('Default workflow') : undefined }));
+      const picked = await vscode.window.showQuickPick(items, {
+        title: vscode.l10n.t('Start i-Releaser workflow ({0})', base),
+        placeHolder: vscode.l10n.t('Workflow for this build list'),
+        ignoreFocusOut: true
+      });
+      if (!picked)
+        return;
+
+      const record = await BuildSummary.with_progress(vscode.l10n.t('Starting i-Releaser workflow {0}…', picked.label), lock_token,
+        signal => start_workflow(base, auth_token, picked.label, deployment_data(compile_list), signal));
+
+      if (!is_plain_object(compile_list['custom_data']))
+        compile_list['custom_data'] = {};
+      compile_list['custom_data'][CUSTOM_DATA_KEY] = record;
+      OBITools.write_compile_list(compile_list_file, compile_list);
+      await BuildSummary.update();
+
+      const open = vscode.l10n.t('Open');
+      vscode.window.showInformationMessage(vscode.l10n.t('i-Releaser workflow {0} started: deployment {1}.', picked.label, String(record.id)), open)
+        .then(choice => {
+          if (choice === open)
+            vscode.env.openExternal(vscode.Uri.parse(show_details_url(base, record.id)));
+        });
+    }
+    catch (e: unknown) {
+      show_error(vscode.l10n.t('Starting the i-Releaser workflow failed'), e);
+    }
+  }
+
+
+
+  /** Runs an i-Releaser request with a cancellable notification; aborts after 60 s */
+  private static async with_progress<T>(title: string, lock_token: vscode.CancellationToken, fn: (signal: AbortSignal) => Promise<T>): Promise<T> {
+    return vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: title, cancellable: true }, async (_progress, progress_token) => {
+      const controller = new AbortController();
+      let timed_out = false;
+      const timer = setTimeout(() => { timed_out = true; controller.abort(); }, 60_000);
+      const subscriptions = [progress_token, lock_token].map(token => token.onCancellationRequested(() => controller.abort()));
+      try {
+        return await fn(controller.signal);
+      }
+      catch (e: unknown) {
+        if (timed_out)
+          throw new IReleaserError(vscode.l10n.t('No answer within 60 seconds'));
+        if (controller.signal.aborted)
+          throw new UserCancelledError();
+        throw e;
+      }
+      finally {
+        clearTimeout(timer);
+        subscriptions.forEach(subscription => subscription.dispose());
+      }
+    });
   }
 
 
@@ -386,6 +504,13 @@ export class BuildSummary {
       }
     }
 
+    // i-Releaser of deployment.toml: button to start a workflow, link to the deployment started for this build list
+    const i_releaser_url = DeploymentConfig.i_releaser_url();
+    const deployment = i_releaser_url ? deployment_of(compile_list) : undefined;
+    const i_releaser = i_releaser_url ? {
+      deployment: deployment ? { id: String(deployment.id), link: show_details_url(i_releaser_url, deployment.id) } : undefined
+    } : undefined;
+
     let created_timestamp = 'Unsupported timestamp';
     if (compile_list && compile_list['timestamp']) {
       created_timestamp = new Date(compile_list['timestamp']).toLocaleString();
@@ -405,7 +530,8 @@ export class BuildSummary {
       is_compile_list_completed: OBITools.is_compile_list_completed(compile_list),
       compile_app_config: BuildSummary.build_config() ?? config,
       app_config: config,
-      custom_build_list_template: custom_dir ? path.basename(Constants.VSCODE_CUSTOM_BUILD_LIST_TEMPLATE) : undefined
+      custom_build_list_template: custom_dir ? path.basename(Constants.VSCODE_CUSTOM_BUILD_LIST_TEMPLATE) : undefined,
+      i_releaser: i_releaser
       },
       custom_dir
     );

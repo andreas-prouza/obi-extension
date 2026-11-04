@@ -1,4 +1,4 @@
-
+{% from "controller/config_field.html" import field with context %}
 {% set app_global=app_config['global'] %}
 {% set app_general=app_config['general'] %}
 {% set general_settings=app_config['global']['settings']['general'] %}
@@ -17,33 +17,42 @@
 
       <h3>{{ global_stuff['get_text']('Connection settings') | safe }}</h3>
 
+      {% call field('connection|remote-host') %}
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|connection|remote-host" placeholder="IBM i host (or IP)"
         value="{{ app_config['connection']['remote-host'] }}">{{ global_stuff['get_text']('Remote host') | safe }}</vscode-text-field>
+      {% endcall %}
 
+      {% call field('connection|ssh-port') %}
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-1" regex_validator="^\d*$" type="number" id="{{ class_prefix }}|connection|ssh-port" placeholder="22"
         value="{{ app_config['connection']['ssh-port'] }}">{{ global_stuff['get_text']('SSH port') | safe }}<label style="visibility: hidden;" id="hint_{{ class_prefix }}|connection|ssh-port">&nbsp;&nbsp;&nbsp;⚠️ Only numbers</label></vscode-text-field>
+      {% endcall %}
 
       <br />
       <br />
 
+      {% call field('connection|ssh-concurrency') %}
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-1" regex_validator="^\d*$" type="number" id="{{ class_prefix }}|connection|ssh-concurrency" placeholder="5"
         value="{{ app_config['connection']['ssh-concurrency'] }}">{{ global_stuff['get_text']('SSH Concurrency') | safe }}<label style="visibility: hidden;" id="hint_{{ class_prefix }}|connection|ssh-concurrency">&nbsp;&nbsp;&nbsp;⚠️ Only numbers</label></vscode-text-field>
+      {% endcall %}
 
       <br />
       <br />
 
+      {% call field('connection|ssh-key') %}
       <vscode-text-field class="{{ class_prefix }}_save_app type_file" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|connection|ssh-key" placeholder="~/.ssh/ibmi_rsa"
         value="{{ app_config['connection']['ssh-key'] }}">🔑 {{ global_stuff['get_text']('SSH Key') | safe }}</vscode-text-field>
+      {% endcall %}
       <br />
       <br />
 
-      <div style="display: flex; align-items: center">
+      {% call field('connection|ssh-agent', 'check') %}
       <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox"
               {% if app_config['connection']['ssh-agent'] %}checked{% endif %}
               panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|connection|ssh-agent">
+        {{ global_stuff['get_text']('Use the SSH agent (Pageant on Windows)') | safe }}
       </vscode-checkbox>
-      {{ global_stuff['get_text']('Use the SSH agent (Pageant on Windows)') | safe }}
-      </div>
+      {% endcall %}
+      <br />
       <br />
 
       {% if class_prefix != 'user' %}
@@ -84,22 +93,28 @@
       <h3>{{ global_stuff['get_text']('Project locations') | safe }}</h3>
 
 
+      {% call field('general|local-base-dir') %}
       <vscode-text-field class="{{ class_prefix }}_save_app type_text {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|general|local-base-dir" size="80"
         value="{{ app_config['general']['local-base-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Local path') | safe }}</vscode-text-field>
+      {% endcall %}
       <br />
       <br />
-      <vscode-text-field 
-        class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" 
-        panel="{{ class_prefix }}_tab-1" 
+      {% call field('general|remote-base-dir') %}
+      <vscode-text-field
+        class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}"
+        panel="{{ class_prefix }}_tab-1"
         id="{{ class_prefix }}|general|remote-base-dir" size="80" placeholder="path-in-ifs"
         title="{{ global_stuff['get_text']('Tip: Remote ifs path') | safe }}"
         value="{{ app_config['general']['remote-base-dir'] | replace('"$HOME"', '$HOME' ) }}">
         💡 {{ global_stuff['get_text']('Remote ifs path') | safe }}
       </vscode-text-field>
+      {% endcall %}
       <br />
       <br />
+      {% call field('general|source-dir') %}
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|general|source-dir" placeholder="src"
         value="{{ app_config['general']['source-dir'] | replace('"$HOME"', '$HOME' ) }}">{{ global_stuff['get_text']('Source directory') | safe }}</vscode-text-field>
+      {% endcall %}
 
       <br />
       <br />
@@ -110,28 +125,32 @@
       
       <h3>{{ global_stuff['get_text']('External OBI module') | safe }} <a href="https://github.com/andreas-prouza/obi" target="_blank">🔗</a></h3>
 
-      <vscode-text-field 
+      {% call field('general|local-obi-dir') %}
+      <vscode-text-field
         title="{{ global_stuff['get_text']('Tip: Local OBI path') | safe }}"
-        class="{{ class_prefix }}_save_app" 
-        panel="{{ class_prefix }}_tab-1" 
-        id="{{ class_prefix }}|general|local-obi-dir" 
-        size="80" 
+        class="{{ class_prefix }}_save_app"
+        panel="{{ class_prefix }}_tab-1"
+        id="{{ class_prefix }}|general|local-obi-dir"
+        size="80"
         placeholder="/home/prouza/project/obi"
         value="{{ app_config['general']['local-obi-dir'] | replace('"$HOME"', '$HOME' ) }}">
         💡 {{ global_stuff['get_text']('Local OBI path (if exist)') | safe }}
       </vscode-text-field>
+      {% endcall %}
       <br />
       <br />
-      <vscode-text-field 
-        title="{{ global_stuff['get_text']('Tip: Remote OBI path') | safe }}" 
-        class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" 
-        panel="{{ class_prefix }}_tab-1" 
-        id="{{ class_prefix }}|general|remote-obi-dir" 
-        size="80" 
+      {% call field('general|remote-obi-dir') %}
+      <vscode-text-field
+        title="{{ global_stuff['get_text']('Tip: Remote OBI path') | safe }}"
+        class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}"
+        panel="{{ class_prefix }}_tab-1"
+        id="{{ class_prefix }}|general|remote-obi-dir"
+        size="80"
         placeholder="/home/prouza/project/obi"
         value="{{ app_config['general']['remote-obi-dir'] | replace('"$HOME"', '$HOME' ) }}">
         💡 {{ global_stuff['get_text']('Remote OBI path') | safe }}
       </vscode-text-field>
+      {% endcall %}
     </section>
   </vscode-panel-view>
 
@@ -185,14 +204,15 @@
       <h2>{{ global_stuff['get_text']('Global settings') | safe }}</h2>
       <br />
 
-      <div style="display: flex; align-items: center">
-      <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox" 
-              {% if general_settings['ALWAYS_TRANSFER_RELATED_COPYBOOKS'] %}checked{% endif %} 
+      {% call field('global|settings|general|ALWAYS_TRANSFER_RELATED_COPYBOOKS', 'check') %}
+      <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox"
+              {% if general_settings['ALWAYS_TRANSFER_RELATED_COPYBOOKS'] %}checked{% endif %}
               panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|ALWAYS_TRANSFER_RELATED_COPYBOOKS">
+        {{ global_stuff['get_text']('Always transfer related copybooks') | safe }}
       </vscode-checkbox>
-      {{ global_stuff['get_text']('Always transfer related copybooks') | safe }}
-      </div>
-      
+      {% endcall %}
+      <br />
+
       <br />
       <hr />
       <br />
@@ -201,8 +221,10 @@
       <table border="1">
         <tr><td>&nbsp;</td><td>
           <br />
+          {% call field('global|settings|general|TARGET_LIB') %}
           <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|TARGET_LIB" placeholder="*SOURCE"
       value="{{ general_settings['TARGET_LIB'] }}">TARGET_LIB (⚠️ this overrules target lib generation)</vscode-text-field>
+          {% endcall %}
 
       <br />
       <br />
@@ -248,40 +270,60 @@
       <br />
       <br />
 
+      {% call field('global|settings|general|TGTRLS') %}
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|TGTRLS" placeholder="*CURRENT"
         value="{{ general_settings['TGTRLS'] }}">TGTRLS</vscode-text-field>
-        
+      {% endcall %}
+
+      {% call field('global|settings|general|DBGVIEW') %}
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|DBGVIEW" placeholder="*ALL"
         value="{{ general_settings['DBGVIEW'] }}">DBGVIEW</vscode-text-field>
+      {% endcall %}
+      {% call field('global|settings|general|TGTCCSID') %}
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|TGTCCSID" placeholder="*JOB"
         value="{{ general_settings['TGTCCSID'] }}">TGTCCSID</vscode-text-field>
+      {% endcall %}
+      {% call field('global|settings|general|STGMDL') %}
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|STGMDL" placeholder="*SNGLVL"
         value="{{ general_settings['STGMDL'] }}">STGMDL</vscode-text-field>
+      {% endcall %}
+      {% call field('global|settings|general|ACTGRP') %}
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|ACTGRP" placeholder="*CALLER|NAME|*NEW"
         value="{{ general_settings['ACTGRP'] }}">ACTGRP</vscode-text-field>
+      {% endcall %}
       <br />
       <br />
+      {% call field('global|settings|general|LIBL') %}
       <vscode-text-area class="{{ class_prefix }}_save_app type_array {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|LIBL" size="50"
         placeholder="$(TARGET_LIB)&#10;QGPL" value="{% if general_settings['LIBL'] %}{{ general_settings['LIBL'] | join('\n') }}{% endif %}">LIBL</vscode-text-area>
+      {% endcall %}
       <br />
       <br />
+      {% call field('global|settings|general|INCLUDE_BNDDIR') %}
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|INCLUDE_BNDDIR" size="50"
         placeholder="PROUZADIR" value="{{ general_settings['INCLUDE_BNDDIR'] }}">INCLUDE_BNDDIR</vscode-text-field>
+      {% endcall %}
       <br />
       <br />
+      {% call field('global|settings|general|INCDIR_RPGLE') %}
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|INCDIR_RPGLE" size="80"
         placeholder="'./src/prouzalib' './src/prouzalib2'"
         value="{{ general_settings['INCDIR_RPGLE'] | replace('"$HOME"', '$HOME' ) }}">INCDIR RPGLE</vscode-text-field>
+      {% endcall %}
       <br />
       <br />
+      {% call field('global|settings|general|INCDIR_SQLRPGLE') %}
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|INCDIR_SQLRPGLE" size="80"
         placeholder="''./src/prouzalib'' ''./src/prouzalib2''"
         value="{{ general_settings['INCDIR_SQLRPGLE'] | replace('"$HOME"', '$HOME' ) }}">INCDIR SQLRPGLE</vscode-text-field>
+      {% endcall %}
       <br />
       <br />
+      {% call field('global|settings|general|TARGET_LIB_MAPPING') %}
       <vscode-text-area class="{{ class_prefix }}_save_app type_dict" cols="20" rows="{{ general_settings['TARGET_LIB_MAPPING']|length }}" resize="both"  panel="{{ class_prefix }}_tab-2" id="{{ class_prefix }}|global|settings|general|TARGET_LIB_MAPPING"
         placeholder="prouzalib=prouzat1&#10;prouzalib2=prouzat2"
         value="{% for k, v in general_settings['TARGET_LIB_MAPPING'] %}{% if loop.index0 > 0 %}{{ '\n' }}{% endif %}{{ k }}={{ v }}{% endfor %}">TARGET_LIB_MAPPING</vscode-text-area>
+      {% endcall %}
       <br />
       
       <br />
@@ -531,30 +573,40 @@
   <vscode-panel-view id="view-system-3">
     <section class="section-config">
       
-      <vscode-text-area style="width: 100%;" class="{{ class_prefix }}_save_app type_array {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-3" id="{{ class_prefix }}|general|supported-object-types" 
+      {% call field('general|supported-object-types', 'wide') %}
+      <vscode-text-area style="width: 100%;" class="{{ class_prefix }}_save_app type_array {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-3" id="{{ class_prefix }}|general|supported-object-types"
         placeholder="pgm&#10;file&#10;srvpgm&#10;cpy" value="{% if app_general['supported-object-types'] %}{{ app_general['supported-object-types'] | join('\n') }}{% endif %}">
         {{ global_stuff['get_text']('Supported object types (logger.sqlrpgle.srvpgm --> <code>srvpgm</code>)') | safe }}</vscode-text-area>
+      {% endcall %}
 
       <br/>
       <br/>
 
+      {% call field('general|file-system-encoding') %}
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-3" id="{{ class_prefix }}|general|file-system-encoding" placeholder="utf-8"
         value="{{ app_general['file-system-encoding'] }}">{{ global_stuff['get_text']('File system encoding') | safe }}</vscode-text-field>
+      {% endcall %}
 
       <br/>
       <br/>
+      {% call field('general|console-output-encoding') %}
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-3" id="{{ class_prefix }}|general|console-output-encoding" placeholder="utf-8"
         value="{{ app_general['console-output-encoding'] }}">{{ global_stuff['get_text']('Console output encoding') | safe }}</vscode-text-field>
+      {% endcall %}
 
       <br/>
       <br/>
+      {% call field('general|max-threads') %}
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-3" id="{{ class_prefix }}|general|max-threads" placeholder="20"
         value="{{ app_general['max-threads'] }}">{{ global_stuff['get_text']('Maximum number of threads') | safe }}</vscode-text-field>
+      {% endcall %}
 
       <br/>
       <br/>
+      {% call field('general|max-parallel-builds') %}
       <vscode-text-field class="{{ class_prefix }}_save_app" panel="{{ class_prefix }}_tab-3" regex_validator="^\d*$" type="number" id="{{ class_prefix }}|general|max-parallel-builds" placeholder="1"
         value="{{ app_general['max-parallel-builds'] }}">{{ global_stuff['get_text']('Sources built in parallel on IBM i') | safe }}<label style="visibility: hidden;" id="hint_{{ class_prefix }}|general|max-parallel-builds">&nbsp;&nbsp;&nbsp;⚠️ Only numbers</label></vscode-text-field>
+      {% endcall %}
     
     </section>
 
@@ -566,48 +618,66 @@
 
     <section class="section-config">
 
+      {% call field('general|compiled-object-list') %}
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-4" id="{{ class_prefix }}|general|compiled-object-list" placeholder=".obi/etc/object-builds.toml"
         value="{{ app_general['compiled-object-list'] }}">{{ global_stuff['get_text']('Compiled object list') | safe }}</vscode-text-field>
-            
+      {% endcall %}
+
       <br/>
       <br/>
+      {% call field('general|source-list') %}
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-4" id="{{ class_prefix }}|general|source-list" placeholder=".obi/etc/source-list-local.toml"
         value="{{ app_general['source-list'] }}">{{ global_stuff['get_text']('Local source list') | safe }}</vscode-text-field>
-            
+      {% endcall %}
+
       <br/>
       <br/>
+      {% call field('general|source-infos') %}
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-4" id="{{ class_prefix }}|general|source-infos" placeholder=".obi/etc/source-infos.json"
         value="{{ app_general['source-infos'] }}">{{ global_stuff['get_text']('Extended source infos') | safe }}</vscode-text-field>
-            
+      {% endcall %}
+
       <br/>
       <br/>
+      {% call field('general|dependency-list') %}
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-4" id="{{ class_prefix }}|general|dependency-list" placeholder=".obi/etc/dependency.toml"
         value="{{ app_general['dependency-list'] }}">{{ global_stuff['get_text']('Dependency list') | safe }}</vscode-text-field>
-            
+      {% endcall %}
+
       <br/>
       <br/>
+      {% call field('general|deployment-object-list') %}
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-4" id="{{ class_prefix }}|general|deployment-object-list" placeholder=".obi/build-output/object-list.txt"
         value="{{ app_general['deployment-object-list'] }}">{{ global_stuff['get_text']('Deployment object list') | safe }}</vscode-text-field>
-            
+      {% endcall %}
+
       <br/>
       <br/>
+      {% call field('general|build-output-dir') %}
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-4" id="{{ class_prefix }}|general|build-output-dir" placeholder=".obi/build-output/objects"
         value="{{ app_general['build-output-dir'] }}">{{ global_stuff['get_text']('Build output dir') | safe }}</vscode-text-field>
-    
+      {% endcall %}
+
       <br/>
       <br/>
+      {% call field('general|compile-list') %}
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-4" id="{{ class_prefix }}|general|compile-list" placeholder=".obi/build-output/compile-list.json"
         value="{{ app_general['compile-list'] }}">{{ global_stuff['get_text']('Compile list') | safe }}</vscode-text-field>
-    
+      {% endcall %}
+
       <br/>
       <br/>
+      {% call field('general|compiled-object-list-md') %}
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-4" id="{{ class_prefix }}|general|compiled-object-list-md" placeholder=".obi/build-output/compiled-object-list.md"
         value="{{ app_general['compiled-object-list-md'] }}">{{ global_stuff['get_text']('Compiled object list md') | safe }}</vscode-text-field>
-    
+      {% endcall %}
+
       <br/>
       <br/>
+      {% call field('general|evfevent-output-dir') %}
       <vscode-text-field class="{{ class_prefix }}_save_app {% if class_prefix == 'project' %}mandatory{% endif %}" panel="{{ class_prefix }}_tab-4" id="{{ class_prefix }}|general|evfevent-output-dir" placeholder=".obi/tmp/evfevent"
         value="{{ app_general['evfevent-output-dir'] }}">{{ global_stuff['get_text']('EVF Event output dir') | safe }}</vscode-text-field>
+      {% endcall %}
     
 
     </section>

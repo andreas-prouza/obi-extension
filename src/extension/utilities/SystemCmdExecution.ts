@@ -15,6 +15,8 @@ export interface SystemCmdOptions {
     on_line?: (line: string, stream: 'stdout' | 'stderr') => void;
     /** Cancelling stops the program (like abort_system_cmd) */
     token?: CancelToken;
+    /** Added to the environment of VS Code */
+    env?: Record<string, string>;
 }
 
 
@@ -46,7 +48,8 @@ export class SystemCmdExecution {
 
         // POSIX: own process group, so abort_system_cmd can stop the program *and* its children
         logger.info(`${id} | start | cmd: ${cmd}`);
-        const child = spawn(command, args, { cwd: cwd, shell: false, detached: process.platform !== 'win32' });
+        const env = options.env ? { ...process.env, ...options.env } : undefined;
+        const child = spawn(command, args, { cwd: cwd, shell: false, detached: process.platform !== 'win32', env });
         SystemCmdExecution.processes[id] = child;
 
         return new Promise<void>((resolve, reject) => {
