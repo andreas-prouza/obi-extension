@@ -16,6 +16,7 @@ import { Workspace } from './extension/utilities/Workspace';
 import { OBISourceConfiguration } from './webview/controller/OBISourceConfiguration';
 import { DirTool } from './extension/utilities/DirTool';
 import { I_Releaser } from './webview/deployment/I_Releaser';
+import { DeploymentConfig } from './webview/deployment/DeploymentConfig';
 import { OBISourceDependency } from './webview/controller/OBISourceDependency';
 import { LocalSourceList } from './extension/utilities/LocalSourceList';
 import { QuickSettings } from './webview/quick_settings/QuickSettings';
@@ -35,6 +36,7 @@ import { secret_values } from './shared/Redact';
 import { OPEN_CONFIGURATION, show_error } from './extension/utilities/Notify';
 import { remove_secrets_from_history } from './extension/obi/HistorySecrets';
 import { ProjectState } from './extension/ProjectState';
+import { BackendUpdate } from './extension/obi/BackendUpdate';
 import { FILE_CALLBACKS } from './file_callbacks';
 
 
@@ -138,10 +140,11 @@ function register_project_features(context: vscode.ExtensionContext): void {
 		vscode.window.registerWebviewViewProvider(I_Releaser.viewType, i_releaser)
 	);
 
-	/*register_command(context, 'obi.deployment.maintain', () => {
-		DeploymentConfig.render(context)
-	});
-	*/
+	// URL and token of i-Releaser, for "Start i-Releaser workflow" in the build summary
+	register_command(context, 'obi.deployment.maintain', () => DeploymentConfig.render(context));
+	register_command(context, 'obi.deployment.open-web-app', () => DeploymentConfig.open_web_app());
+	// Icons in the OBI Build view only for projects with an i-Releaser URL
+	DeploymentConfig.update_context();
 
 
 	//--------------------------------------------------------
@@ -331,6 +334,8 @@ function start_project_services(context: vscode.ExtensionContext): void {
 	StatusBar.init(context);
 	BuildHistoryProvider.apply_retention().catch((e: unknown) => logger.warn(`Build history retention failed: ${e}`));
 	LocalSourceList.load_source_list();
+	// Setting obi.backend.autoUpdateLocal: git pull of the local OBI backend, once per session
+	BackendUpdate.update_local_on_start(OBITools.get_local_obi_dir()).catch((e: unknown) => logger.warn(`Updating the local OBI backend failed: ${e}`));
 }
 
 

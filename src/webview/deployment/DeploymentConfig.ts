@@ -11,6 +11,7 @@ import { DEPLOYMENT_CONFIG_REQUESTS } from '../../shared/messages/DeploymentMess
 import { parse_message } from '../../shared/messages/MessageGuard';
 import { logger } from '../../extension/utilities/Logger';
 import { render_template } from '../Templates';
+import { base_url, configured_workflows } from '../../shared/IReleaser';
 
 
 
@@ -19,6 +20,7 @@ export type Config = {
   "i-releaser": {
     url?: string,
     "default-workflow"?: string,
+    workflows?: unknown,   // as written in the file: read with configured_workflows
     "main-branch"?: string,
     "auth-token"?: string
   } 
@@ -86,11 +88,68 @@ export class DeploymentConfig {
 
   public static get_deployment_config() : Config {
     const toml_file: string = path.join(Workspace.get_workspace(), Constants.DEPLOYMENT_CONFIG_FILE);
-    const config: Config|undefined = DirTool.get_toml(toml_file);
-    if (!config) {
+    // Most projects have no deployment config: no warning in the log (the build summary asks on every render)
+    const config: Config|undefined = DirTool.file_exists(toml_file) ? DirTool.get_toml(toml_file) : undefined;
+    if (!config || typeof config['i-releaser'] !== 'object' || config['i-releaser'] === null) {
       return {"i-releaser": {}};
     }
     return config;
+  }
+
+
+
+  /** http(s) URL of i-Releaser from deployment.toml without trailing "/", undefined if there is none */
+  public static i_releaser_url(): string | undefined {
+    return base_url(DeploymentConfig.get_deployment_config()['i-releaser'].url);
+  }
+
+
+
+  /** Context key obi.i-releaser-configured: the i-Releaser icons in the OBI Build view */
+  public static async update_context(): Promise<void> {
+    let configured = false;
+    try {
+      configured = DeploymentConfig.i_releaser_url() !== undefined;
+    }
+    catch (e: unknown) {
+      logger.warn(`${Constants.DEPLOYMENT_CONFIG_FILE}: ${e}`);
+    }
+    await vscode.commands.executeCommand('setContext', 'obi.i-releaser-configured', configured);
+  }
+
+
+
+  /** Opens i-Releaser (URL of deployment.toml) in the browser */
+  public static async open_web_app(): Promise<void> {
+    const base = DeploymentConfig.i_releaser_url();
+    if (!base) {
+      vscode.window.showErrorMessage(vscode.l10n.t('No i-Releaser URL in {0}.', Constants.DEPLOYMENT_CONFIG_FILE));
+      return;
+    }
+    await vscode.env.openExternal(vscode.Uri.parse(`${base}/`));
+  }
+
+
+
+  // One token per i-Releaser (origin): a project with another URL in deployment.toml never gets it
+  private static token_key(url: unknown): string | undefined {
+    const base = base_url(url);
+    return base ? `obi|deployment|http_auth_token|${new URL(base).origin}` : undefined;
+  }
+
+  public static async get_auth_token(url: unknown): Promise<string | undefined> {
+    const key = DeploymentConfig.token_key(url);
+    const token = key ? await OBITools.ext_context?.secrets.get(key) : undefined;
+    return token && token.length > 0 ? token : undefined;
+  }
+
+  /** false if the URL is no http(s) URL */
+  public static async store_auth_token(url: unknown, token: string): Promise<boolean> {
+    const key = DeploymentConfig.token_key(url);
+    if (!key || !OBITools.ext_context)
+      return false;
+    await OBITools.ext_context.secrets.store(key, token);
+    return true;
   }
 
 
@@ -100,7 +159,7 @@ export class DeploymentConfig {
 
     const config = DeploymentConfig.get_deployment_config();
 
-    const auth_token = await context.secrets.get(`obi|deployment|http_auth_token`);
+    const auth_token = await DeploymentConfig.get_auth_token(config['i-releaser'].url);
 
     const html = render_template('deployment/deployment-config.html', 
       {
@@ -109,7 +168,8 @@ export class DeploymentConfig {
         main_java_script: getUri(webview, extensionUri, ["out", "webview", "deployment_config.js"]),
         // Never pass the secret itself into the page: only whether one is stored
         auth_token_stored: auth_token !== undefined && auth_token.length > 0,
-        deploy_config: config
+        deploy_config: config,
+        workflows: configured_workflows(config['i-releaser'].workflows)
       }
     );
 
@@ -161,9 +221,12 @@ export class DeploymentConfig {
         DeploymentConfig.update();
         break;
 
-      case "delete_auth_token":
-        OBITools.ext_context?.secrets.delete('obi|deployment|http_auth_token').then(() => DeploymentConfig.update());
+      case "delete_auth_token": {
+        const key = DeploymentConfig.token_key(DeploymentConfig.get_deployment_config()['i-releaser'].url);
+        if (key)
+          OBITools.ext_context?.secrets.delete(key).then(() => DeploymentConfig.update());
         break;
+      }
 
     }
     return;
@@ -176,10 +239,22 @@ export class DeploymentConfig {
     const toml_file: string = path.join(Workspace.get_workspace(), Constants.DEPLOYMENT_CONFIG_FILE);
     // An empty field means "unchanged"; removing is an explicit action (delete_auth_token)
     const auth_token = data['i-releaser']['auth-token'];
-    if (auth_token && auth_token.length > 0)
-      OBITools.ext_context?.secrets.store('obi|deployment|http_auth_token', auth_token);
+    if (auth_token && auth_token.length > 0) {
+      DeploymentConfig.store_auth_token(data['i-releaser'].url, auth_token).then(stored => {
+        if (!stored)
+          vscode.window.showErrorMessage(vscode.l10n.t('The token was not stored: enter the http(s) URL of i-Releaser first.'));
+        DeploymentConfig.update();
+      });
+    }
     delete data['i-releaser']['auth-token'];
+    // One name per line on the page; no list means all workflows of i-Releaser
+    const workflows = configured_workflows(data['i-releaser'].workflows);
+    if (workflows.length > 0)
+      data['i-releaser'].workflows = workflows;
+    else
+      delete data['i-releaser'].workflows;
     DirTool.update_toml(toml_file, data);
+    DeploymentConfig.update_context();
     I_Releaser.refresh();
 
   }

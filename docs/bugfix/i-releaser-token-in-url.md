@@ -2,9 +2,9 @@
 
 | Type | Severity | Status | Source | Depends on |
 |---|---|---|---|---|
-| Bugfix | 🟡 | draft (decision 2026-10-23: fix when the deployment views are enabled again and the i-Releaser API accepts the header) | [security.md S13](../improvements/security.md#s13--i-releaser-auth-token-in-the-url-query) | Server-side support in i-Releaser |
+| Bugfix | 🟡 | ready, partly done (2026-11-04): header, URL building and status check are in [IReleaser.ts](../../src/shared/IReleaser.ts), used by the build summary and `I_Releaser.get_workflows`. Open: rejecting `http` URLs (the i-Releaser in use runs on `http`) | [security.md S13](../improvements/security.md#s13--i-releaser-auth-token-in-the-url-query) | i-Releaser 3.1.0 accepts the header |
 
-Fix before the deployment views (`when: 1==2`) are enabled again.
+Fix before the deployment views (`when: 1==2`) are enabled again. See [i-releaser-deployment.md](../features/i-releaser-deployment.md).
 
 
 # Current situation

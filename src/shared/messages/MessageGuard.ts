@@ -87,6 +87,16 @@ export const is_config_key: Guard<string> = (v): v is string =>
   typeof v === 'string' && v.length > 0 && v.length <= 256 && !FORBIDDEN_KEYS.has(v) && !v.startsWith('__');
 
 
+/** Paths of config values, e.g. 'general|source-dir': at most 1000, each with 2–8 parts that are config keys */
+export const is_config_path_list: Guard<string[]> = (v): v is string[] =>
+  Array.isArray(v) && v.length <= 1000 && v.every(item => {
+    if (typeof item !== 'string' || item.length > 2048)
+      return false;
+    const parts = item.split('|');
+    return parts.length >= 2 && parts.length <= 8 && parts.every(is_config_key);
+  });
+
+
 /** JSON array without prototype keys */
 export const is_json_array: Guard<unknown[]> = (v): v is unknown[] => Array.isArray(v) && is_json_value(v);
 

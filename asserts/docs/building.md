@@ -28,9 +28,8 @@ Toolbar buttons (left to right):
 | Button | Action |
 |---|---|
 | Reset compiled object list | Mark all current sources as built (see [below](#reset-compiled-object-list)) |
-| Transfer all to remote | Copy the project to the IFS (see [below](#transfer-all)) |
-| Get last build results from IBM i | Download the results of the last build again |
 | Dependency list | Open `.obi/etc/dependency.json` |
+| i-Releaser config, Open i-Releaser | Only when [i-Releaser](#i-releaser-deployment) is configured: open the deployment config, or i-Releaser in the browser |
 | Configuration | Open the configuration |
 
 When a source (`.pgm`, `.srvpgm`, `.module`, `.file`) is open in the editor, the editor title bar also offers **Show single change**, **Run single build** and **Clear diagnostics** for that source.
@@ -68,6 +67,7 @@ With `*CURRENT` (or **Show single change** in the editor), only the active sourc
 * **Run build**: shown as long as not all commands succeeded
 * **Add source**: add further sources (multi-select, searchable by name and description). Their dependent objects are added too.
   An added source that is already in the list gets new build commands. Dependent objects that were already built successfully are reset so they are built again (their commands and output are kept). With `ALWAYS_TRANSFER_RELATED_COPYBOOKS`, the copybooks they use are added on level 0. The levels of the whole list are calculated again, so a source can move to a higher level. This is the same with and without a local OBI.
+* **Start i-Releaser workflow**: shown when all commands succeeded and an [i-Releaser](#i-releaser-deployment) is configured. After the start, **i-Releaser deployment** links to the deployment.
 
 **New sources / Changed sources / Dependent objects**: overview with links to the sources.
 
@@ -83,6 +83,27 @@ With `*CURRENT` (or **Show single change** in the editor), only the active sourc
 
 > The checkboxes are only respected by the **Run build** button inside the build summary.
 > **Run build** in the OBI Build view always creates a new build list first.
+
+### i-Releaser deployment
+
+[i-Releaser](https://github.com/andreas-prouza/i-releaser) (3.1.0 or newer) deploys the objects of a build. To start a deployment from the build summary:
+
+1. Run **OBI: deployment config** from the Command Palette and enter the URL of i-Releaser and an API token. The URL goes into `.obi/etc/deployment.toml`, which is committed with the project:
+
+   ```toml
+   [i-releaser]
+   url = "https://ireleaser.example.com"
+   default-workflow = "Deploy OBI Build"
+   # Optional: only offer these workflows (and the default-workflow)
+   workflows = ["Deploy OBI Build", "Deploy OBI Build Test"]
+   ```
+
+   The token is stored in VS Code's secret storage, separately for each i-Releaser URL. If a project uses another URL, the token is not sent there.
+2. When all commands succeeded, click **Start i-Releaser workflow** and pick the workflow. The `default-workflow` comes first. Without `workflows`, the list shows all workflows the token may read. With `workflows`, it shows those in their order. On the config page, enter them one per line. A listed name that i-Releaser doesn't know is reported in a warning; check the spelling and the token's permissions.
+
+The build list goes to i-Releaser as the deployment's custom data, without joblogs, spool files and errors. i-Releaser accepts at most 64 KB. The deployment (id, workflow, project, version) is stored in the build list as `custom_data.i-releaser`, and **i-Releaser deployment** opens it in the browser.
+
+Requires a trusted workspace. The token is sent in the `Authorization` header; use an `https` URL, otherwise it travels unencrypted.
 
 ### Custom content
 
@@ -174,7 +195,7 @@ Use it after migrating existing sources, or when you know that IBM i is in sync 
 
 ### Transfer all
 
-Copies the project to the IFS folder configured as *remote ifs path*:
+Command Palette: **OBI: Transfer all to remote**. It is also offered when a build finds no project on IBM i. Copies the project to the IFS folder configured as *remote ifs path*:
 
 * **Only minimum**: `.obi/etc` and `.obi/build-output`
 * **Yes**: the whole project folder (without `.git`, `.vscode`, `.gitignore`, `*.pyc`, ...)
@@ -183,7 +204,7 @@ Copies the project to the IFS folder configured as *remote ifs path*:
 
 ### Get last build results from IBM i
 
-Downloads the build output of the last build from IBM i again, updates the build history and the hashes, and refreshes the build summary.
+Command Palette: **OBI: Get last build results from IBM i**. Downloads the build output of the last build from IBM i again, updates the build history and the hashes, and refreshes the build summary.
 Useful if the connection was lost during a build.
 
 

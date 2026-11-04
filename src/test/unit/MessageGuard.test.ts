@@ -1,6 +1,6 @@
 import assert from 'assert';
 import * as path from 'path';
-import { inside, is_json_value, is_number, is_plain_object, is_string, one_of, optional, parse_message } from '../../shared/messages/MessageGuard';
+import { inside, is_config_path_list, is_json_value, is_number, is_plain_object, is_string, one_of, optional, parse_message } from '../../shared/messages/MessageGuard';
 
 
 suite('Webview message validation', () => {
@@ -13,6 +13,17 @@ suite('Webview message validation', () => {
     assert.strictEqual(is_plain_object([]), false);
     assert.strictEqual(is_plain_object(new Date()), false);
     assert.strictEqual(is_json_value(Number.NaN), false);
+  });
+
+
+  test('config value paths (save_config unset): 2-8 config keys, no prototype keys', () => {
+    assert.strictEqual(is_config_path_list(['general|source-dir', 'global|settings|general|USE_ESP', 'global|settings|language|sqlrpgle.pgm|TGTRLS']), true);
+    assert.strictEqual(is_config_path_list([]), true);
+    for (const item of ['general', 'general|', '|x', 'general|__proto__', 'constructor|x', 'a|b|c|d|e|f|g|h|i', 'x|__y'])
+      assert.strictEqual(is_config_path_list([item]), false, item);
+    assert.strictEqual(is_config_path_list('general|source-dir'), false);
+    assert.strictEqual(is_config_path_list([1]), false);
+    assert.strictEqual(is_config_path_list(new Array(1001).fill('general|x')), false);
   });
 
 

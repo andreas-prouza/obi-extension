@@ -68,7 +68,7 @@ Severity: 🔴 high (data loss / security / feature unusable), 🟠 medium (wron
 
 ## 9. 🟠 Contributed commands that are not registered
 * **Where:** [package.json](../package.json), [extension.ts:137-142](../src/extension.ts#L137-L142)
-* **Current:** `obi.showErrors`, `obi.show.tools`, `obi.get-remote-compiled-object-list` and `obi.deployment.maintain` (registration commented out) appear in the Command Palette but fail with "command not found".
+* **Current:** `obi.showErrors`, `obi.show.tools` and `obi.get-remote-compiled-object-list` appear in the Command Palette but fail with "command not found". (`obi.deployment.maintain` is registered again, for the i-Releaser deployment in the build summary.)
 * **Expected:** register them or remove them from `package.json`.
 * **Status:** open (decision needed). A test now checks that every contributed command is registered; these four are listed there as known exceptions (`src/test/suite/extension.test.ts`).
 

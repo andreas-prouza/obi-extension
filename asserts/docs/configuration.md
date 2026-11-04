@@ -17,8 +17,9 @@
 - [Custom build summary template](#custom-build-summary-template)
 - [Language](#language)
 - [VS Code settings and log](#vs-code-settings-and-log)
+- [Updating the OBI backend](#updating-the-obi-backend)
 
-OBI has no VS Code settings. Everything is stored in the project folder under `.obi`.
+The configuration is stored in the project folder under `.obi`. Only personal preferences are [VS Code settings](#vs-code-settings-and-log).
 
 
 ## Opening the configuration
@@ -51,6 +52,14 @@ You can also edit the TOML files directly (links *Open project config file* / *O
   It has the same structure, and every value set there **overrides** the project configuration.
   Empty values do not override.
 
+In the user tab, each value of the project configuration has a button:
+
+* Greyed-out fields use the **project value**. They are not saved in your user configuration, so later changes of the project configuration apply to you as well.
+* <kbd>✎</kbd> (edit) **overrides** the value: the field becomes editable and gets a marker on the left. The value is saved in your user configuration, also `false` for a checkbox.
+* <kbd>↺</kbd> (discard) uses the **project value again**: on *Save*, the value is removed from your user configuration. Clearing a field does the same.
+
+> ℹ️ Older versions saved every checkbox of the user tab, so `ssh-agent`, *Always transfer related copybooks* and *Activate extended source processing* may be set to `false` in your user configuration. They are shown as overridden; click ↺ and save if you want the project value.
+
 On each build, the project configuration and your active user configuration are uploaded to IBM i, so the OBI backend uses the same settings.
 
 
@@ -66,6 +75,7 @@ On each build, the project configuration and your active user configuration are 
 | `etc/.user-extended-source-processing-config*.toml` | Extended source processing, user/profile | ❌ local |
 | `etc/dependency.json` | [Dependencies](dependencies.md) | ✅ commit |
 | `etc/source-infos.json` | [Source descriptions](sources.md#source-descriptions) | ✅ commit |
+| `etc/deployment.toml` | URL and workflows of [i-Releaser](building.md#i-releaser-deployment) (the token is in VS Code's secret storage) | ✅ commit |
 | `etc/object-builds.json` | Hashes of the last successful builds (change detection) | ❌ local, usually (it reflects what *you* built) |
 | `etc/constants.py`, `etc/logger_config.py` | Settings for the OBI backend; do not modify | ✅ commit |
 | `etc/source-list-local.json` | Generated source list | ❌ local |
@@ -320,7 +330,7 @@ To store data in the build list (and therefore in the build history), send it to
 
 The data is stored as `custom_data.<type>` in `compile-list.json`.
 
-The build summary has a Content-Security-Policy: scripts in the template only run with `nonce="{{ global_stuff['nonce'] }}"` (as above). Inline event handlers such as `onclick="…"` and scripts from other sites are blocked; use `addEventListener`.
+The build summary has a Content-Security-Policy: scripts in the template only run with `nonce="{{ global_stuff['nonce'] }}"` (as above). Inline event handlers such as `onclick="…"` and scripts from other sites are blocked; use `addEventListener`. The page can't connect to any server either: to start an i-Releaser deployment, use the built-in [Start i-Releaser workflow](building.md#i-releaser-deployment).
 
 
 ## Language
@@ -341,5 +351,24 @@ These settings are VS Code settings (*File → Preferences → Settings*, search
 | `obi.log.maxFileSizeMB` | `5` | Maximum size of a log file; 3 files are kept per log (`combined.log`, `combined1.log`, …) |
 | `obi.buildHistory.maxBuilds` | `100` | Builds kept in the [build history](building.md#build-history-size); `0` = unlimited |
 | `obi.buildHistory.maxAgeDays` | `0` | Builds older than this many days are deleted from the build history; `0` = unlimited |
+| `obi.backend.autoUpdateLocal` | `false` | [Update the local OBI backend](#updating-the-obi-backend) when VS Code starts |
+| `obi.backend.autoUpdateRemote` | `false` | [Update the OBI backend on IBM i](#updating-the-obi-backend) once per VS Code session, before the first build |
 
 The log is also shown in the output panel **OBI**. Its level is `info` by default; change it with **Developer: Set Log Level… → OBI** (e.g. `Debug` to see every remote command and its output). Values of `secret*` variables are replaced with `***` in the log.
+
+## Updating the OBI backend
+
+The OBI backend is a git checkout (see [Getting started](getting-started.md#1-prepare-your-ibm-i)). The extension can update it with `git pull`:
+
+| Setting | When | Which backend |
+|---|---|---|
+| `obi.backend.autoUpdateLocal` | When VS Code starts | `local-obi-dir` |
+| `obi.backend.autoUpdateRemote` | Once per VS Code session, before the backend runs on IBM i for the first time (usually the first build) | `remote-obi-dir` on the IBM i of the active profile |
+
+* Only fast-forward updates: a checkout with own commits, or with local changes that conflict with the update, stays as it is, and the error is shown.
+* A message says when the backend was updated. If its `requirements.txt` changed, run the setup script of the backend again (e.g. `./setup.sh` on IBM i, `setup.bat` on Windows), so the `venv` gets the new Python packages.
+* If the update on IBM i fails (e.g. the IBM i has no internet access), the error is shown and the build goes on with the installed backend. Each IBM i is updated at most once per session, also if it failed.
+* While the local backend is updated, OBI is busy (status bar); cancel it from the status bar menu or the **OBI Build** view.
+* The backend on IBM i is often shared by the team: an update applies to everyone, and your user needs write access to its folder.
+
+Without these settings, OBI shows **Update** after a run of an older backend. It updates the local backend (if `local-obi-dir` is set) and the one on IBM i.

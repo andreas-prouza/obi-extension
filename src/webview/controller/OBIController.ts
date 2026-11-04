@@ -8,16 +8,13 @@ import { Constants } from '../../shared/Constants';
 import { BuildSummary } from '../show_changes/BuildSummary';
 import { AppConfig } from '../../extension/config/AppConfig';
 import { Workspace } from '../../extension/utilities/Workspace';
-import { SystemCmdExecution } from '../../extension/utilities/SystemCmdExecution';
 import { logger } from '../../extension/utilities/Logger';
 import { validate_new_profile_name } from '../../shared/Profile';
-import { UserCancelledError } from '../../shared/Errors';
 import { OperationLock } from '../../extension/utilities/OperationLock';
 import { CONTROLLER_REQUESTS } from '../../shared/messages/ControllerMessages';
 import { parse_message } from '../../shared/messages/MessageGuard';
-import { show_error } from '../../extension/utilities/Notify';
 import { OBICommands } from '../../extension/obi/OBICommands';
-import { require_trust } from '../../extension/utilities/Trust';
+import { BackendUpdate } from '../../extension/obi/BackendUpdate';
 import { render_template } from '../Templates';
 
 
@@ -76,20 +73,9 @@ export class OBIController implements vscode.WebviewViewProvider {
             vscode.l10n.t('An update for the OBI backend is available.'),
             update
           ).then(async selection => {
-            if (selection === update) {
-              if (!require_trust(vscode.l10n.t('Updating the OBI backend')))
-                return;
-
-              try {
-                await SystemCmdExecution.run_system_cmd(OBITools.get_local_obi_dir() ?? '', 'git', ['pull'], 'update_obi');
-                vscode.window.showInformationMessage(vscode.l10n.t('OBI backend updated successfully.'));
-              } catch (error: unknown) {
-                if (error instanceof UserCancelledError)
-                  vscode.window.showInformationMessage(vscode.l10n.t('Update of the OBI backend was cancelled.'));
-                else
-                  show_error(vscode.l10n.t('Updating the OBI backend failed'), error);
-              }
-            }
+            // status.json comes from the backend that ran last: the local one (show changes) or the one on the IBM i (build)
+            if (selection === update)
+              await BackendUpdate.update_now(OBITools.get_local_obi_dir());
           });
         }
 

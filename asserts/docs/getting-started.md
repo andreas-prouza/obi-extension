@@ -31,6 +31,7 @@ VS Code also has a short walkthrough: *Help → Get Started → Get started with
    `setup.sh` creates a Python virtual environment (`venv`) and installs the required modules.
    Before each build the extension checks that `<obi path>/venv/bin/python` exists.
    See the [OBI repository](https://github.com/andreas-prouza/obi) for details.
+   The extension can keep it up to date with `git pull`: see [Updating the OBI backend](configuration.md#updating-the-obi-backend).
 
 
 ## 2. Initialize the project
@@ -119,7 +120,7 @@ See [Sources](sources.md) for working with sources in the extension.
 2. Select `*ALL` and click **Show changes**. The build summary lists all new and changed sources.
 3. Click **Run build** and confirm.
 
-On the first build, OBI detects that the project is missing on IBM i and offers **Transfer all** (also available as a toolbar button in the OBI Build view):
+On the first build, OBI detects that the project is missing on IBM i and offers **Transfer all** (also available in the Command Palette as **OBI: Transfer all to remote**):
 
 * **Only minimum**: transfers only `.obi/etc` and `.obi/build-output`. Sources are transferred with each build anyway.
 * **Transfer all**: transfers the whole project folder (without `.git`, `.vscode` and similar).

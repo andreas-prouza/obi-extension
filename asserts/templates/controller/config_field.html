@@ -1,0 +1,30 @@
+{#
+  A value of the config page: {% call field('general|source-dir') %}<vscode-text-field ...>{% endcall %}
+
+  In the user tab with a button to override the project value or to use it again.
+  Inherited fields are disabled and show the value of the project tab (config.ts); on saving, their key is removed
+  from the user config. Overridden values stay in the user config.
+
+  key:  path of the value, i.e. the id of the field without 'user|' / 'project|'
+  kind: '' | 'check' (checkbox) | 'wide' (full width)
+#}
+{% macro field(key, kind='') %}
+{%- if class_prefix == 'user' -%}
+  {%- set overridden = key in (user_overrides or []) -%}
+  {%- set title_overridden = global_stuff['get_text']('Overrides the project configuration. Click to use the project value again') -%}
+  {%- set title_inherited = global_stuff['get_text']('Value of the project configuration. Click to override it in the user configuration') -%}
+  <span class="cfg_field{% if kind %} {{ kind }}{% endif %} {{ 'overridden' if overridden else 'inherited' }}" data-override-key="{{ key }}">
+    <vscode-button appearance="icon" class="override_toggle"
+      aria-pressed="{{ 'true' if overridden else 'false' }}"
+      title="{{ title_overridden if overridden else title_inherited }}"
+      aria-label="{{ title_overridden if overridden else title_inherited }}"
+      data-title-overridden="{{ title_overridden }}"
+      data-title-inherited="{{ title_inherited }}">
+      <span class="codicon {{ 'codicon-discard' if overridden else 'codicon-edit' }}"></span>
+    </vscode-button>
+    {{ caller() }}
+  </span>
+{%- else -%}
+  <span class="cfg_field{% if kind %} {{ kind }}{% endif %}">{{ caller() }}</span>
+{%- endif -%}
+{% endmacro %}

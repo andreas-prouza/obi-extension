@@ -42,3 +42,33 @@ vscode-text-area::part(control) {
   width: 100%;
 }
 
+/* A value of the config page (config_field.html); in the user tab with the override button */
+.cfg_field {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  vertical-align: bottom;
+}
+
+.cfg_field.check {
+  align-items: center;
+}
+
+.cfg_field.wide {
+  display: flex;
+}
+
+.cfg_field.wide > :not(.override_toggle) {
+  flex: 1;
+}
+
+.cfg_field[data-override-key] {
+  border-left: 2px solid transparent;
+  padding-left: 4px;
+}
+
+/* Same marker as a modified setting in the VS Code settings editor */
+.cfg_field.overridden {
+  border-left-color: var(--vscode-settings-modifiedItemIndicator, var(--vscode-focusBorder));
+}
+

@@ -52,7 +52,7 @@ The full rules are in [docs/architecture.md](docs/architecture.md). In short:
 * **Security comes first.** Quote values for the remote shell with `sh_quote`, validate messages from webviews with the message tables in `src/shared/messages`, and never write secrets to logs or files.
 * **Structure:** `shared/` has pure code and imports nothing from `extension/` or `webview/`; `extension/` is the logic; `webview/` the pages and views; `extension.ts` and `file_callbacks.ts` wire them together.
 * **TypeScript:** no new `any`. Put logic that doesn't need VS Code into a module without a `vscode` import, so it can be unit-tested.
-* **npm packages** need a GitHub repository, several forks and at least 200 stars, and no known security problems. If none qualifies, ask first. Checked packages are listed in [docs/technik.md](docs/technik.md#package-prüfung).
+* **npm packages** need a GitHub repository, several forks and at least 200 stars, and no known security problems. If none qualifies, ask first. Checked packages are listed in [docs/architecture.md](docs/architecture.md#reviewed-packages).
 * **GUI:** use native VS Code icons where possible, and Nunjucks templates for HTML. Webviews have a strict CSP: no inline scripts or event handlers.
 * **Commands and settings** must be declared in `package.json`. Register commands with `register_command`.
 * **Texts** shown to users go through `vscode.l10n.t` and need an entry in `l10n/bundle.l10n.json` and `l10n/bundle.l10n.de.json`.

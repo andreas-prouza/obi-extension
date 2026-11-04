@@ -8,6 +8,8 @@ export const BUILD_SUMMARY_REQUESTS = {
   open_file: { source: is_source_name },
   add_source: {},
   edit_cmd: { level: is_string, source: is_source_name, cmd_index: is_number },
+  // i-Releaser workflow for the displayed build list: URL, token and workflow are chosen in the extension
+  start_deployment: {},
   // Sent by custom build summary templates (window.vscode.postMessage)
   save_custom_data: { type: matches(/^[a-z][a-z0-9_-]{0,63}$/), data: json_value(1_000_000) },
 };

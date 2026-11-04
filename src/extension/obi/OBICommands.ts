@@ -28,6 +28,7 @@ import { config_without_secrets } from '../../shared/Redact';
 import * as fs from 'fs';
 import { PhaseTimer, result_download_plan } from './ResultDownload';
 import { ExtensionSettings } from '../utilities/ExtensionSettings';
+import { BackendUpdate } from './BackendUpdate';
 
 
 
@@ -237,6 +238,7 @@ export class OBICommands {
       progress.report({
         message: vscode.l10n.t('Generate build script on the IBM i. If it takes too long, use OBI locally (see documentation).')
       });
+      await BackendUpdate.update_remote_once(token);
       const ssh_cmd = await OBICommands.get_remote_obi_cmd('create', source_list.length == 1 ? source_list[0] : undefined, true);
       await SSH_Tasks.execute_streaming(ssh_cmd, { report_pid: true, token, on_line: line => BuildOutput.line(line) });
 
@@ -272,6 +274,7 @@ export class OBICommands {
   /** Runs the build on the IBM i; output goes to "OBI Build", the progress shows the elapsed time and the latest line */
   public static async execute_remote_build(progress?: vscode.Progress<{ message?: string }>, token?: vscode.CancellationToken) {
 
+    await BackendUpdate.update_remote_once(token);
     const ssh_cmd = await OBICommands.get_remote_obi_cmd('run', undefined, true);
     const started = Date.now();
     let last_report = 0;

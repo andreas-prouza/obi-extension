@@ -44,6 +44,8 @@ function main() {
 
   init_source_select('config_source_list');
 
+  init_overrides();
+
   check_inputs();
 
   const save_button = document.getElementById("save_config") as Button;
@@ -260,6 +262,77 @@ function main() {
 
 
 
+
+
+
+//----------------------------
+// User config: override a value of the project config or use it again (config_field.html)
+//----------------------------
+
+/** Text field, text area or checkbox of the config page */
+type ConfigField = HTMLElement & { value: string; checked: boolean; disabled: boolean };
+
+
+function override_field(wrapper: HTMLElement): ConfigField | null {
+  return wrapper.querySelector<ConfigField>('.user_save_app');
+}
+
+
+/** An inherited field shows the value of the project tab (also unsaved changes there) */
+function show_project_value(wrapper: HTMLElement): void {
+  const field = override_field(wrapper);
+  const project = document.getElementById(`project|${wrapper.dataset.overrideKey}`) as ConfigField | null;
+  if (!field)
+    return;
+  if (field.classList.contains('type_checkbox'))
+    field.checked = project?.checked ?? false;
+  else
+    field.value = project?.value ?? '';
+}
+
+
+function set_overridden(wrapper: HTMLElement, overridden: boolean): void {
+  wrapper.classList.toggle('overridden', overridden);
+  wrapper.classList.toggle('inherited', !overridden);
+
+  const field = override_field(wrapper);
+  if (field)
+    field.disabled = !overridden;
+  if (!overridden)
+    show_project_value(wrapper);
+
+  const toggle = wrapper.querySelector<HTMLElement>('.override_toggle');
+  if (!toggle)
+    return;
+  const title = (overridden ? toggle.dataset.titleOverridden : toggle.dataset.titleInherited) ?? '';
+  toggle.title = title;
+  toggle.setAttribute('aria-label', title);
+  toggle.setAttribute('aria-pressed', String(overridden));
+  const icon = toggle.querySelector('.codicon');
+  icon?.classList.toggle('codicon-discard', overridden);
+  icon?.classList.toggle('codicon-edit', !overridden);
+}
+
+
+function init_overrides(): void {
+  document.querySelectorAll<HTMLElement>('.cfg_field[data-override-key]').forEach(wrapper => {
+    set_overridden(wrapper, wrapper.classList.contains('overridden'));
+
+    wrapper.querySelector('.override_toggle')?.addEventListener('click', () => {
+      const overridden = !wrapper.classList.contains('overridden');
+      set_overridden(wrapper, overridden);
+      if (overridden)
+        override_field(wrapper)?.focus();
+    });
+
+    const project = document.getElementById(`project|${wrapper.dataset.overrideKey}`);
+    for (const event of ['input', 'change'])
+      project?.addEventListener(event, () => {
+        if (wrapper.classList.contains('inherited'))
+          show_project_value(wrapper);
+      });
+  });
+}
 
 
 
@@ -900,9 +973,11 @@ function save_config(class_prefix:string) {
 
   const app_elements = document.getElementsByClassName(`${class_prefix}_save_app`);
   let json_string: string = '';
+  // User config: values that take the project value again (removed from the file)
+  const unset: string[] = [];
 
   for (let i = 0; i < app_elements.length; i++) {
-    
+
     let item = {};
     const el2: string[] = app_elements[i].id.split('|');
 
@@ -915,6 +990,15 @@ function save_config(class_prefix:string) {
     }
 
     const elem_value = (app_elements[i] as HTMLInputElement).value.replaceAll('\\', '\\\\').replaceAll('"', '\\\"');
+
+    if (class_prefix === 'user') {
+      const inherited = app_elements[i].closest('.cfg_field.inherited') !== null;
+      const blank = !app_elements[i].classList.contains('type_checkbox') && (elem_value.trim().length == 0 || elem_value == 'NaN');
+      if (inherited || blank) {
+        unset.push(el2.slice(1).join('|'));
+        continue;
+      }
+    }
 
     if (elem_value.length == 0 || elem_value == 'NaN')
       continue;
@@ -985,7 +1069,8 @@ function save_config(class_prefix:string) {
     target: class_prefix,
     panel: panel,
     panel_tab: panel_tab,
-    data: app_config
+    data: app_config,
+    unset: class_prefix === 'user' ? unset : undefined
   });
 }
 

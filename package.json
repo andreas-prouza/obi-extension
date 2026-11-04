@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "1.4.2",
+  "version": "1.5.3",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -221,8 +221,14 @@
       {
         "command": "obi.deployment.maintain",
         "title": "%obi.deployment.maintain%",
-        "icon": "$(settings-gear)",
-        "when": "1==2 && obi.contains_obi_project && obi.valid-config"
+        "icon": "$(rocket)",
+        "when": "obi.contains_obi_project"
+      },
+      {
+        "command": "obi.deployment.open-web-app",
+        "title": "%obi.deployment.open-web-app%",
+        "icon": "$(globe)",
+        "when": "obi.contains_obi_project"
       },
       {
         "command": "obi.build-history.update",
@@ -340,19 +346,19 @@
           "group": "navigation@40"
         },
         {
-          "command": "obi.transfer-all",
-          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
-          "group": "navigation@60"
-        },
-        {
-          "command": "obi.get-remote-build-results",
-          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
-          "group": "navigation@62"
-        },
-        {
           "command": "obi.controller.dependency-list",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
           "group": "navigation@65"
+        },
+        {
+          "command": "obi.deployment.maintain",
+          "when": "obi.contains_obi_project && obi.i-releaser-configured && view == obi.controller",
+          "group": "navigation@66"
+        },
+        {
+          "command": "obi.deployment.open-web-app",
+          "when": "obi.contains_obi_project && obi.i-releaser-configured && view == obi.controller",
+          "group": "navigation@67"
         },
         {
           "command": "obi.controller.config",
@@ -481,6 +487,14 @@
         {
           "command": "obi.initialize-folder",
           "when": "!obi.contains_obi_project"
+        },
+        {
+          "command": "obi.deployment.maintain",
+          "when": "obi.contains_obi_project"
+        },
+        {
+          "command": "obi.deployment.open-web-app",
+          "when": "obi.contains_obi_project && obi.i-releaser-configured"
         }
       ]
     },
@@ -592,6 +606,18 @@
           "minimum": 0,
           "scope": "resource",
           "description": "%obi.buildHistory.maxAgeDays%"
+        },
+        "obi.backend.autoUpdateLocal": {
+          "type": "boolean",
+          "default": false,
+          "scope": "machine",
+          "description": "%obi.backend.autoUpdateLocal%"
+        },
+        "obi.backend.autoUpdateRemote": {
+          "type": "boolean",
+          "default": false,
+          "scope": "machine",
+          "description": "%obi.backend.autoUpdateRemote%"
         }
       }
     },
@@ -710,7 +736,7 @@
     "test:unit": "npm run compile-tests && mocha --ui tdd \"out-test/test/unit/**/*.test.js\"",
     "test:coverage": "npm run pretest && node -e \"require('fs').rmSync('coverage',{recursive:true,force:true})\" && node ./out-test/test/runTest.js --coverage && c8 report",
     "lint": "eslint src/",
-    "lint:ci": "eslint src/ --max-warnings 253",
+    "lint:ci": "eslint src/ --max-warnings 251",
     "check:repo": "node scripts/check-repo.js",
     "postinstall": "node -e \"require('fs').rmSync('node_modules/ssh2/test',{recursive:true,force:true})\""
   },

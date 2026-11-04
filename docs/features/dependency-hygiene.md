@@ -58,7 +58,8 @@ Related: [pin-dependency-versions.md](pin-dependency-versions.md) (`"latest"` ve
 ## 4. Replace the deprecated webview toolkit
 
 * Inventory the toolkit components in use: `vscode-button`, `vscode-text-field`, `vscode-checkbox`, `vscode-dropdown` / `vscode-option`, `vscode-panels` / `vscode-panel-tab` / `vscode-panel-view`, `vscode-divider`, `vscode-text-area`, `vscode-data-grid` (imported in `main.ts`).
-* Evaluate replacements against the package criteria (GitHub repo, several forks, ≥ 200 stars), e.g. `@vscode-elements/elements`. Write the result (stars/forks at evaluation time) into `docs/technik.md`, section *Package-Prüfung*, as required by [architecture.md](../architecture.md#npm). The file is referenced there but doesn't exist yet.
+* Evaluate replacements against the package criteria (GitHub repo, several forks, ≥ 200 stars), e.g. `@vscode-elements/elements`. Write the result (stars/forks at evaluation time) into [architecture.md → Reviewed packages](../architecture.md#reviewed-packages).
+  **Result (2026-10-23):** `@vscode-elements/elements` meets the criteria and has all components in use (button, text field, checkbox, dropdown/option, tabs/panels, divider, text area; `vscode-data-grid` is only registered in `main.ts`). The migration touches all templates and webview scripts. It is a task of its own, done panel by panel, with a check of every page in the UI.
 * If no candidate meets the criteria: **ask** before continuing. The fallback is plain HTML elements styled with the VS Code theme CSS variables (`--vscode-button-background`, …).
 * Migrate panel by panel; keep the element ids so the scripts stay unchanged as far as possible.
 

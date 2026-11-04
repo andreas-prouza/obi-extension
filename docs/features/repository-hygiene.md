@@ -56,13 +56,13 @@ Short sections:
 * The items of `ToDo.md` and `docs/bugs2.md` are in [bugs.md](../bugs.md) (#30–#34). Both files are **still there**: `docs/bugs2.md` is not in git, so deleting it can't be undone. The owner deletes them.
 * `open-tasks.md` stays as an inbox. "Add status to each feature" is done; "Remove Transfer all" and the asynchronous processing on the IBM i are open.
 * Spec status values follow [architecture.md](../architecture.md#features): `draft`, `ready`, `finished`.
-* `docs/technik.md` lists all runtime dependencies. `wildcard-match` failed the criteria and was replaced by `minimatch`. `winston-transport` and `@ibm/ibmi-eventf-parser` are below 200 stars: the exceptions still need approval.
+* `docs/technik.md` lists all runtime dependencies (moved to [architecture.md → Reviewed packages](../architecture.md#reviewed-packages) on 2026-11-04). `wildcard-match` failed the criteria and was replaced by `minimatch`. `winston-transport` and `@ibm/ibmi-eventf-parser` are below 200 stars: the exceptions still need approval.
 * `.gitignore`: nothing to add. `out-test` and `.vscode-test/` are there, and `launch.json` uses `.vscode-test/temp-*`, not the empty `temp-extensions` and `temp-user-data` in the project root.
 
 
 ### Definition of done
 * `ToDo.md` and `bugs2.md` items moved and the files deleted
 * Spec workflow and status values documented
-* `docs/technik.md` exists with the package check table
+* `docs/technik.md` exists with the package check table (now [architecture.md → Reviewed packages](../architecture.md#reviewed-packages))
 * `CONTRIBUTING.md` exists and is linked from the README
 * `.gitignore` updated

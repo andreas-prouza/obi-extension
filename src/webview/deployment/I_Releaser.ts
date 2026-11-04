@@ -8,6 +8,7 @@ import { I_RELEASER_REQUESTS } from '../../shared/messages/DeploymentMessages';
 import { parse_message } from '../../shared/messages/MessageGuard';
 import { show_error } from '../../extension/utilities/Notify';
 import { render_template } from '../Templates';
+import { get_workflows, workflow_choices } from '../../shared/IReleaser';
 
 
 
@@ -56,7 +57,7 @@ export class I_Releaser implements vscode.WebviewViewProvider {
 			switch (data.command) {
 				case 'open_web_app':
 					{
-						vscode.commands.executeCommand('workbench.action.openRecent');
+						DeploymentConfig.DeploymentConfig.open_web_app();
 						break;
 					}
 			}
@@ -92,35 +93,32 @@ export class I_Releaser implements vscode.WebviewViewProvider {
 
 
 
-	public static async get_workflows(): Promise<{}> {
+	public static async get_workflows(): Promise<{ name: string }[]> {
 
-		const config: DeploymentConfig.Config = DeploymentConfig.DeploymentConfig.get_deployment_config();
+		const url = DeploymentConfig.DeploymentConfig.i_releaser_url();
 
-		if (!config['i-releaser'].url) {
+		if (!url) {
 			vscode.window.showWarningMessage(vscode.l10n.t('Missing deployment config'));
-			return {};
+			return [];
 		}
 
-		const auth_token = await OBITools.ext_context?.secrets.get(`obi|deployment|http_auth_token`);
+		const auth_token = await DeploymentConfig.DeploymentConfig.get_auth_token(url);
 
 		if (!auth_token) {
 			vscode.window.showErrorMessage(vscode.l10n.t('Missing HTTP auth token for i-Releaser. Please check the configuration.'));
-			return {};
+			return [];
 		}
 
 		try {
-			const response = await fetch(`${config['i-releaser'].url}/api/get_workflows?auth-token=${auth_token}`);
-			const data = await response.json();
-			if (data['Error']) {
-				throw Error(`i-Releaser: ${data['Error']}`);
-			}
-			return data;
+			const ir_config = DeploymentConfig.DeploymentConfig.get_deployment_config()['i-releaser'];
+			return workflow_choices(await get_workflows(url, auth_token), ir_config.workflows, ir_config['default-workflow'])
+				.choices.map(name => ({ name: name }));
 		}
 		catch (e: unknown){
 			show_error(vscode.l10n.t('i-Releaser request failed'), e);
 		}
 
-		return {};
+		return [];
 	}
 
 }
