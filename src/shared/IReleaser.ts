@@ -90,8 +90,11 @@ async function request(base: string, token: string, method: 'GET' | 'POST', api_
 
   if (!response.ok || data === undefined) {
     const message = is_object(data) ? (data['message'] ?? data['Error']) : undefined;
+    // 3.1.0 answers a wrong token with "not permitted": "not logged in" means the token wasn't read
+    const hint = response.status === 401 && message === 'You are not logged in'
+      ? ' (i-Releaser ignored the token in the Authorization header: i-Releaser 3.1.0 or newer is needed)' : '';
     if (message !== undefined)
-      throw new IReleaserError(`HTTP ${response.status}: ${typeof message === 'string' ? message : JSON.stringify(message)}`);
+      throw new IReleaserError(`HTTP ${response.status}: ${typeof message === 'string' ? message : JSON.stringify(message)}${hint}`);
     throw new IReleaserError(`HTTP ${response.status} without JSON answer. i-Releaser 3.1.0 or newer is needed.`);
   }
   // Format of older versions
@@ -109,6 +112,32 @@ export async function get_workflows(base: string, token: string, signal?: AbortS
     throw new IReleaserError('Unexpected answer of get_workflows');
   return data.map(workflow => is_object(workflow) ? workflow['name'] : undefined)
     .filter((name): name is string => typeof name === 'string' && name.length > 0);
+}
+
+
+
+/** The `workflows` list of deployment.toml: trimmed, without empty and duplicate names; [] if it isn't a list */
+export function configured_workflows(value: unknown): string[] {
+  if (!Array.isArray(value))
+    return [];
+  const names = value.filter((v): v is string => typeof v === 'string').map(v => v.trim()).filter(v => v.length > 0);
+  return [...new Set(names)];
+}
+
+
+
+/**
+ * Workflows to offer, the default first: with a `workflows` list the listed ones and the default,
+ * otherwise all of i-Releaser. Only names i-Releaser knows; `unknown` are the configured names it doesn't know.
+ */
+export function workflow_choices(available: string[], workflows: unknown, default_workflow: unknown): { choices: string[]; unknown: string[] } {
+  const configured = configured_workflows(workflows);
+  const named = configured_workflows([default_workflow, ...configured]);
+  const offered = configured.length > 0 ? named : configured_workflows([...named, ...available]);
+  return {
+    choices: offered.filter(name => available.includes(name)),
+    unknown: named.filter(name => !available.includes(name))
+  };
 }
 
 

@@ -1,7 +1,7 @@
 import assert from 'assert';
 import * as http from 'http';
 import { AddressInfo } from 'net';
-import { IReleaserError, base_url, deployment_data, deployment_of, get_workflows, show_details_url, start_workflow } from '../../shared/IReleaser';
+import { IReleaserError, base_url, configured_workflows, deployment_data, deployment_of, get_workflows, show_details_url, start_workflow, workflow_choices } from '../../shared/IReleaser';
 
 
 interface Received { method?: string; url?: string; headers: http.IncomingHttpHeaders; body: string }
@@ -79,6 +79,8 @@ suite('i-Releaser client', () => {
     const answers = [
       { reply: json(401, { status: 'error', message: 'Your authentication-token is not permitted' }), expected: /^HTTP 401: Your authentication-token is not permitted$/ },
       { reply: json(422, { status: 'error', message: { detail: 'too large' } }), expected: /^HTTP 422: \{"detail":"too large"\}$/ },
+      // A version that reads the token only from the URL
+      { reply: json(401, { status: 'error', message: 'You are not logged in' }), expected: /^HTTP 401: You are not logged in \(i-Releaser ignored the token .*3\.1\.0 or newer is needed\)$/ },
       // Older i-Releaser: redirect to the login page, or the page itself
       { reply: { status: 302, body: '', headers: { Location: '/login' } }, expected: /HTTP 302 without JSON answer\. i-Releaser 3\.1\.0 or newer is needed/ },
       { reply: { status: 200, body: '<html>login</html>' }, expected: /HTTP 200 without JSON answer/ },
@@ -138,5 +140,28 @@ suite('i-Releaser client', () => {
     assert.deepStrictEqual(deployment_of({ custom_data: { json: { meta_file: { general: { id: 3 } } } } }), { id: 3 });
     for (const compile_list of [undefined, {}, { custom_data: [] }, { custom_data: { 'i-releaser': { id: {} } } }, { custom_data: { json: 'x' } }])
       assert.strictEqual(deployment_of(compile_list), undefined, JSON.stringify(compile_list));
+  });
+
+
+  test('configured_workflows: trimmed names of a list', () => {
+    assert.deepStrictEqual(configured_workflows([' A ', '', 'B', 'A', 7, '  ']), ['A', 'B']);
+    for (const value of [undefined, 'A', { A: 1 }, []])
+      assert.deepStrictEqual(configured_workflows(value), [], JSON.stringify(value));
+  });
+
+
+  test('workflow_choices: the list of deployment.toml, the default first, only names i-Releaser knows', () => {
+    const available = ['Test', 'Prod', 'UAT'];
+    // No list: all workflows of i-Releaser
+    assert.deepStrictEqual(workflow_choices(available, undefined, undefined), { choices: ['Test', 'Prod', 'UAT'], unknown: [] });
+    assert.deepStrictEqual(workflow_choices(available, [], ' UAT '), { choices: ['UAT', 'Test', 'Prod'], unknown: [] });
+    // A list: in its order, plus the default
+    assert.deepStrictEqual(workflow_choices(available, ['UAT', 'Test'], ''), { choices: ['UAT', 'Test'], unknown: [] });
+    assert.deepStrictEqual(workflow_choices(available, ['UAT', 'Test'], 'Prod'), { choices: ['Prod', 'UAT', 'Test'], unknown: [] });
+    assert.deepStrictEqual(workflow_choices(available, ['Test', 'UAT'], 'UAT'), { choices: ['UAT', 'Test'], unknown: [] });
+    // Names i-Releaser doesn't know (typo, or no permission of the token)
+    assert.deepStrictEqual(workflow_choices(available, ['UAT', 'Tset'], 'Prdo'), { choices: ['UAT'], unknown: ['Prdo', 'Tset'] });
+    assert.deepStrictEqual(workflow_choices(available, ['Tset'], undefined), { choices: [], unknown: ['Tset'] });
+    assert.deepStrictEqual(workflow_choices(available, undefined, 'Prdo'), { choices: ['Test', 'Prod', 'UAT'], unknown: ['Prdo'] });
   });
 });

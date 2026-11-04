@@ -6,6 +6,7 @@ import { Workspace } from "./extension/utilities/Workspace";
 import { BuildHistoryProvider } from "./webview/build_history/BuildHistoryProvider";
 import { AppConfig } from "./extension/config/AppConfig";
 import { SourceListProvider } from "./webview/source_list/SourceListProvider";
+import { DeploymentConfig } from "./webview/deployment/DeploymentConfig";
 
 
 /** What happens when files of the project change (see HealthyWatchdog) */
@@ -20,6 +21,7 @@ export const FILE_CALLBACKS: FileCallback[] = [
     SourceListProvider.get_instance().refresh();
   } },
   { pattern: Constants.DEPENDENCY_LIST, delay: 200, action: () => DependencyList.load_dependencies() },
+  { pattern: Constants.DEPLOYMENT_CONFIG_FILE, delay: 200, action: () => DeploymentConfig.update_context() },
   // The folders themselves too (deleted)
   { pattern: `${Constants.SOURCE_FILTER_FOLDER_NAME}{,/**}`, delay: 200, action: () => SourceListProvider.get_instance().refresh() },
   { pattern: `${Constants.BUILD_HISTORY_DIR}{,/*,/*/compile-list.json}`, delay: 500, action: () => BuildHistoryProvider.get_instance().refresh() },

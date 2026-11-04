@@ -29,6 +29,8 @@
   1. Requires a trusted workspace: the URL comes from the workspace, and the token is sent there. Runs under the `OperationLock`.
   2. Token from the secret storage under `obi|deployment|http_auth_token|<origin>`. Without it: an error with *Open deployment config*.
   3. `GET /api/get_workflows`, then a QuickPick with the `default-workflow` first. The pick also confirms the start.
+     * With a `workflows` list in `deployment.toml` (config page: one per line), only these and the default, in their order (`workflow_choices`).
+     * Configured names that i-Releaser doesn't return (typo, no permission) are shown in a warning; if none is left, there is no QuickPick.
   4. `POST /api/start_workflow/<workflow>`. The body is the build list without `joblog`/`stdout`/`stderr`, without `config` (older lists contain it with secret variables), and without earlier deployments (`custom_data.i-releaser`, `custom_data.json`).
   5. Stores `{ id, workflow, project, deploy_version, started }` as `custom_data['i-releaser']` and re-renders the page. A message offers *Open*.
 * Requests ([IReleaser.ts](../../src/shared/IReleaser.ts), no vscode import):
@@ -54,10 +56,12 @@ Earlier tokens under the key `obi|deployment|http_auth_token` aren't used any mo
   * the token is never in a message;
   * not reachable, and cancelled;
   * the request body;
-  * stored deployments.
+  * stored deployments;
+  * the workflow choice (`workflows`, default, unknown names).
 * **Integration**, [IReleaserDeployment.test.ts](../../src/test/suite/IReleaserDeployment.test.ts):
   * the button and the link;
   * a full start with workflow order, headers, body and stored record;
+  * the `workflows` list: limits the QuickPick, warns about unknown names; saved from the config page one per line;
   * no request without a token for the URL (even when another URL has one) or without a pick;
   * untrusted workspace;
   * the message from the page carries no fields.

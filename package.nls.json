@@ -39,6 +39,7 @@
   "obi.ssh.forget-host-key": "OBI: Forget stored SSH host key",
   "obi.source.edit-compile-config": "OBI: Individual build settings",
   "obi.deployment.maintain": "OBI: deployment config",
+  "obi.deployment.open-web-app": "OBI: open i-Releaser",
   "obi.copy-profile-config": "OBI: Copy profile configuration",
   "Welcome": "Welcome",
   "deployment": "Deployment",

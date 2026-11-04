@@ -369,5 +369,7 @@
   "Start i-Releaser workflow": "i-Releaser-Workflow starten",
   "Start i-Releaser workflow ({0})": "i-Releaser-Workflow starten ({0})",
   "The token was not stored: enter the http(s) URL of i-Releaser first.": "Das Token wurde nicht gespeichert: zuerst die http(s)-URL von i-Releaser eingeben.",
-  "Workflow for this build list": "Workflow für diese Build-Liste"
+  "Workflow for this build list": "Workflow für diese Build-Liste",
+  "i-Releaser doesn't know these workflows of {0}: {1}": "i-Releaser kennt diese Workflows aus {0} nicht: {1}",
+  "Workflows to choose from (one per line, empty: all of i-Releaser)": "Workflows zur Auswahl (einer pro Zeile, leer: alle von i-Releaser)"
 }

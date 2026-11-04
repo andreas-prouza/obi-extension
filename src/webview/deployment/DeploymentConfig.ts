@@ -11,7 +11,7 @@ import { DEPLOYMENT_CONFIG_REQUESTS } from '../../shared/messages/DeploymentMess
 import { parse_message } from '../../shared/messages/MessageGuard';
 import { logger } from '../../extension/utilities/Logger';
 import { render_template } from '../Templates';
-import { base_url } from '../../shared/IReleaser';
+import { base_url, configured_workflows } from '../../shared/IReleaser';
 
 
 
@@ -20,6 +20,7 @@ export type Config = {
   "i-releaser": {
     url?: string,
     "default-workflow"?: string,
+    workflows?: unknown,   // as written in the file: read with configured_workflows
     "main-branch"?: string,
     "auth-token"?: string
   } 
@@ -104,6 +105,32 @@ export class DeploymentConfig {
 
 
 
+  /** Context key obi.i-releaser-configured: the i-Releaser icons in the OBI Build view */
+  public static async update_context(): Promise<void> {
+    let configured = false;
+    try {
+      configured = DeploymentConfig.i_releaser_url() !== undefined;
+    }
+    catch (e: unknown) {
+      logger.warn(`${Constants.DEPLOYMENT_CONFIG_FILE}: ${e}`);
+    }
+    await vscode.commands.executeCommand('setContext', 'obi.i-releaser-configured', configured);
+  }
+
+
+
+  /** Opens i-Releaser (URL of deployment.toml) in the browser */
+  public static async open_web_app(): Promise<void> {
+    const base = DeploymentConfig.i_releaser_url();
+    if (!base) {
+      vscode.window.showErrorMessage(vscode.l10n.t('No i-Releaser URL in {0}.', Constants.DEPLOYMENT_CONFIG_FILE));
+      return;
+    }
+    await vscode.env.openExternal(vscode.Uri.parse(`${base}/`));
+  }
+
+
+
   // One token per i-Releaser (origin): a project with another URL in deployment.toml never gets it
   private static token_key(url: unknown): string | undefined {
     const base = base_url(url);
@@ -141,7 +168,8 @@ export class DeploymentConfig {
         main_java_script: getUri(webview, extensionUri, ["out", "webview", "deployment_config.js"]),
         // Never pass the secret itself into the page: only whether one is stored
         auth_token_stored: auth_token !== undefined && auth_token.length > 0,
-        deploy_config: config
+        deploy_config: config,
+        workflows: configured_workflows(config['i-releaser'].workflows)
       }
     );
 
@@ -219,7 +247,14 @@ export class DeploymentConfig {
       });
     }
     delete data['i-releaser']['auth-token'];
+    // One name per line on the page; no list means all workflows of i-Releaser
+    const workflows = configured_workflows(data['i-releaser'].workflows);
+    if (workflows.length > 0)
+      data['i-releaser'].workflows = workflows;
+    else
+      delete data['i-releaser'].workflows;
     DirTool.update_toml(toml_file, data);
+    DeploymentConfig.update_context();
     I_Releaser.refresh();
 
   }

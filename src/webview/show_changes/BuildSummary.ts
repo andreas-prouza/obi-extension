@@ -21,7 +21,7 @@ import { SystemCmdExecution } from '../../extension/utilities/SystemCmdExecution
 import { OperationLock } from '../../extension/utilities/OperationLock';
 import { render_template } from '../Templates';
 import { DeploymentConfig } from '../deployment/DeploymentConfig';
-import { CUSTOM_DATA_KEY, IReleaserError, deployment_data, deployment_of, get_workflows, show_details_url, start_workflow } from '../../shared/IReleaser';
+import { CUSTOM_DATA_KEY, IReleaserError, deployment_data, deployment_of, get_workflows, show_details_url, start_workflow, workflow_choices } from '../../shared/IReleaser';
 import { UserCancelledError } from '../../shared/Errors';
 import { require_trust } from '../../extension/utilities/Trust';
 import { show_error } from '../../extension/utilities/Notify';
@@ -156,6 +156,7 @@ export class BuildSummary {
    * in it (custom_data['i-releaser']). URL from deployment.toml, token from the secret storage.
    */
   public static async start_deployment(): Promise<void> {
+    logger.info('Start i-Releaser workflow: clicked');
     // The URL comes from the workspace, and the token is sent there
     if (!require_trust(vscode.l10n.t('Starting an i-Releaser workflow')))
       return;
@@ -171,37 +172,49 @@ export class BuildSummary {
       if (choice === configure && OBITools.ext_context)
         DeploymentConfig.render(OBITools.ext_context);
     };
+    // Every stop also goes to the log: a notification is easily missed
+    const report = (level: 'error' | 'warning', text: string, actions: string[] = []) => {
+      logger.warn(`Start i-Releaser workflow: ${text}`);
+      (level === 'error' ? vscode.window.showErrorMessage(text, ...actions) : vscode.window.showWarningMessage(text, ...actions)).then(open_config);
+    };
 
     const base = DeploymentConfig.i_releaser_url();
+    logger.info(`Start i-Releaser workflow: ${base ?? 'no URL'}`);
     if (!base) {
-      vscode.window.showErrorMessage(vscode.l10n.t('No i-Releaser URL in {0}.', Constants.DEPLOYMENT_CONFIG_FILE), configure).then(open_config);
+      report('error', vscode.l10n.t('No i-Releaser URL in {0}.', Constants.DEPLOYMENT_CONFIG_FILE), [configure]);
       return;
     }
     const auth_token = await DeploymentConfig.get_auth_token(base);
     if (!auth_token) {
-      vscode.window.showErrorMessage(vscode.l10n.t('No i-Releaser token is stored for {0}.', base), configure).then(open_config);
+      report('error', vscode.l10n.t('No i-Releaser token is stored for {0}.', base), [configure]);
       return;
     }
 
     const compile_list_file = path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name());
     const compile_list = BuildSummary.get_compile_list();
     if (!compile_list) {
-      vscode.window.showErrorMessage(vscode.l10n.t('No build summary found. Run "Show changes" first.'));
+      report('error', vscode.l10n.t('No build summary found. Run "Show changes" first.'));
       return;
     }
 
     try {
       const workflows = await BuildSummary.with_progress(vscode.l10n.t('Loading the workflows of i-Releaser…'), lock_token,
         signal => get_workflows(base, auth_token, signal));
+      logger.info(`Start i-Releaser workflow: i-Releaser has ${JSON.stringify(workflows)}`);
       if (workflows.length === 0) {
-        vscode.window.showWarningMessage(vscode.l10n.t('i-Releaser has no workflows for this token.'));
+        report('warning', vscode.l10n.t('i-Releaser has no workflows for this token.'));
         return;
       }
 
       // The default workflow first; the pick also confirms the start
-      const default_workflow = DeploymentConfig.get_deployment_config()['i-releaser']['default-workflow'];
-      const items: vscode.QuickPickItem[] = workflows
-        .sort((a, b) => Number(b === default_workflow) - Number(a === default_workflow))
+      const ir_config = DeploymentConfig.get_deployment_config()['i-releaser'];
+      const { choices, unknown } = workflow_choices(workflows, ir_config.workflows, ir_config['default-workflow']);
+      if (unknown.length > 0)
+        report('warning', vscode.l10n.t("i-Releaser doesn't know these workflows of {0}: {1}", Constants.DEPLOYMENT_CONFIG_FILE, unknown.join(', ')), [configure]);
+      if (choices.length === 0)
+        return;
+      const default_workflow = ir_config['default-workflow']?.trim();
+      const items: vscode.QuickPickItem[] = choices
         .map(name => ({ label: name, description: name === default_workflow ? vscode.l10n.t('Default workflow') : undefined }));
       const picked = await vscode.window.showQuickPick(items, {
         title: vscode.l10n.t('Start i-Releaser workflow ({0})', base),

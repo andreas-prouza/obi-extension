@@ -1,4 +1,19 @@
-## [Unreleased]
+## [1.5.3]
+
+### Features
+* **OBI Build view:** when `deployment.toml` has an i-Releaser URL, the view title shows **OBI: deployment config** (🚀) and **OBI: open i-Releaser** (🌐, opens i-Releaser in the browser, also in the Command Palette). **Transfer all to remote** and **Get last build results from IBM i** were removed from the view title; they are still in the Command Palette ([docs](asserts/docs/building.md))
+
+
+## [1.5.2]
+
+### Features
+* **i-Releaser: a list of workflows to choose from.** `workflows = [...]` in `.obi/etc/deployment.toml` limits the workflows that **Start i-Releaser workflow** offers, in this order and with the `default-workflow` first. On the config page, enter one per line. Without the list, all workflows the token may read are offered. Listed names that i-Releaser doesn't know (a typo, or no permission) are shown in a warning ([docs](asserts/docs/building.md#i-releaser-deployment))
+
+### Bugfixes
+* **Start i-Releaser workflow:** when i-Releaser ignores the token (versions older than 3.1.0 read it only from the URL), the error says that 3.1.0 or newer is needed; before, it only said "You are not logged in". Each step and each stop is also written to the OBI log
+
+
+## [1.5.1]
 
 **After updating:** older versions wrote `false` for every checkbox of the user configuration (`ssh-agent`, *Always transfer related copybooks*, *Activate extended source processing*), and the user configuration could contain default paths such as `source-dir = "src"`. These values now show as overridden in the user tab: click ↺ and save to use the project value again.
 

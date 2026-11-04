@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "1.4.2",
+  "version": "1.5.3",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -221,7 +221,13 @@
       {
         "command": "obi.deployment.maintain",
         "title": "%obi.deployment.maintain%",
-        "icon": "$(settings-gear)",
+        "icon": "$(rocket)",
+        "when": "obi.contains_obi_project"
+      },
+      {
+        "command": "obi.deployment.open-web-app",
+        "title": "%obi.deployment.open-web-app%",
+        "icon": "$(globe)",
         "when": "obi.contains_obi_project"
       },
       {
@@ -340,19 +346,19 @@
           "group": "navigation@40"
         },
         {
-          "command": "obi.transfer-all",
-          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
-          "group": "navigation@60"
-        },
-        {
-          "command": "obi.get-remote-build-results",
-          "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
-          "group": "navigation@62"
-        },
-        {
           "command": "obi.controller.dependency-list",
           "when": "obi.contains_obi_project && (view == obi.controller || (!obi.valid-config && view == obi-config-invalid))",
           "group": "navigation@65"
+        },
+        {
+          "command": "obi.deployment.maintain",
+          "when": "obi.contains_obi_project && obi.i-releaser-configured && view == obi.controller",
+          "group": "navigation@66"
+        },
+        {
+          "command": "obi.deployment.open-web-app",
+          "when": "obi.contains_obi_project && obi.i-releaser-configured && view == obi.controller",
+          "group": "navigation@67"
         },
         {
           "command": "obi.controller.config",
@@ -485,6 +491,10 @@
         {
           "command": "obi.deployment.maintain",
           "when": "obi.contains_obi_project"
+        },
+        {
+          "command": "obi.deployment.open-web-app",
+          "when": "obi.contains_obi_project && obi.i-releaser-configured"
         }
       ]
     },

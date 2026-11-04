@@ -120,7 +120,7 @@ See [Sources](sources.md) for working with sources in the extension.
 2. Select `*ALL` and click **Show changes**. The build summary lists all new and changed sources.
 3. Click **Run build** and confirm.
 
-On the first build, OBI detects that the project is missing on IBM i and offers **Transfer all** (also available as a toolbar button in the OBI Build view):
+On the first build, OBI detects that the project is missing on IBM i and offers **Transfer all** (also available in the Command Palette as **OBI: Transfer all to remote**):
 
 * **Only minimum**: transfers only `.obi/etc` and `.obi/build-output`. Sources are transferred with each build anyway.
 * **Transfer all**: transfers the whole project folder (without `.git`, `.vscode` and similar).

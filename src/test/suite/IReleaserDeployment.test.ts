@@ -177,6 +177,82 @@ suite('i-Releaser deployment from the build summary', () => {
   });
 
 
+  test('start: the workflows of deployment.toml limit the choice', async () => {
+    const ir = await i_releaser();
+    try {
+      await DeploymentConfig.store_auth_token(ir.url, 'TOKEN-1');
+      sinon.stub(BuildSummary, 'get_compile_list').callsFake(() => completed_list());
+      const warning = sinon.stub(vscode.window, 'showWarningMessage').resolves(undefined);
+      const pick = sinon.stub(vscode.window, 'showQuickPick').resolves(undefined);
+      const labels = () => (pick.lastCall.args[0] as vscode.QuickPickItem[]).map(item => item.label);
+
+      await deployment_toml(`[i-releaser]\nurl = "${ir.url}"\nworkflows = ["Deploy OBI Build Test"]\n`);
+      await BuildSummary.start_deployment();
+      assert.deepStrictEqual(labels(), ['Deploy OBI Build Test']);
+      assert.ok(warning.notCalled);
+
+      // A name i-Releaser doesn't know is reported, the others are offered
+      await deployment_toml(`[i-releaser]\nurl = "${ir.url}"\nworkflows = ["Deploy OBI Build Test", "Deploy Typo"]\n`);
+      await BuildSummary.start_deployment();
+      assert.deepStrictEqual(labels(), ['Deploy OBI Build Test']);
+      assert.match(String(warning.lastCall.args[0]), /doesn't know these workflows of .*deployment\.toml: Deploy Typo/);
+
+      // None known: nothing to pick
+      pick.resetHistory();
+      await deployment_toml(`[i-releaser]\nurl = "${ir.url}"\nworkflows = ["Deploy Typo"]\n`);
+      await BuildSummary.start_deployment();
+      assert.ok(pick.notCalled);
+      assert.match(String(warning.lastCall.args[0]), /Deploy Typo/);
+      assert.ok(ir.received.every(r => r.url === '/api/get_workflows'), 'no workflow was started');
+    }
+    finally {
+      await ir.close();
+    }
+  });
+
+
+  test('deployment config page: the workflows, one per line', async () => {
+    const toml_file = path.join(Workspace.get_workspace(), Constants.DEPLOYMENT_CONFIG_FILE);
+    await deployment_toml('[i-releaser]\nurl = "http://athoed40:8011"\nworkflows = ["A", "B"]\n');
+    const html = await DeploymentConfig['generate_html'](OBITools.ext_context!, vscode.Uri.file(Constants.EXTENSION_ROOT), fake_webview);
+    assert.match(html, /id="i-releaser\|workflows"[^>]*value='A\nB'/);
+
+    const save = (workflows: string[]) => DeploymentConfig['save_config']({
+      'i-releaser': { url: 'http://athoed40:8011', 'default-workflow': 'A', workflows: workflows, 'main-branch': '', 'auth-token': '' }
+    });
+    save([' B ', '', 'C', 'B', '']);
+    assert.deepStrictEqual(DeploymentConfig.get_deployment_config()['i-releaser'].workflows, ['B', 'C']);
+    save(['', '  ']);
+    assert.ok(!('workflows' in DeploymentConfig.get_deployment_config()['i-releaser']), 'no list: all workflows of i-Releaser');
+    assert.ok(!(await fse.readFile(toml_file, 'utf8')).includes('auth-token'));
+  });
+
+
+  test('OBI Build view: the i-Releaser icons only with a URL; the web app opens the URL', async () => {
+    const exec = sinon.spy(vscode.commands, 'executeCommand');
+    const configured = () => exec.getCalls().filter(c => c.args[0] === 'setContext' && c.args[1] === 'obi.i-releaser-configured').pop()?.args[2];
+    const open = sinon.stub(vscode.env, 'openExternal').resolves(true);
+    const error = sinon.stub(vscode.window, 'showErrorMessage').resolves(undefined);
+
+    await fse.remove(path.join(Workspace.get_workspace(), Constants.DEPLOYMENT_CONFIG_FILE));
+    await DeploymentConfig.update_context();
+    assert.strictEqual(configured(), false);
+    await DeploymentConfig.open_web_app();
+    assert.ok(open.notCalled);
+    assert.match(String(error.firstCall.args[0]), /No i-Releaser URL/);
+
+    await deployment_toml('[i-releaser]\nurl = "javascript:alert(1)"\n');
+    await DeploymentConfig.update_context();
+    assert.strictEqual(configured(), false, 'no http(s) URL');
+
+    await deployment_toml('[i-releaser]\nurl = "http://athoed40:8011/ir/"\n');
+    await DeploymentConfig.update_context();
+    assert.strictEqual(configured(), true);
+    await DeploymentConfig.open_web_app();
+    assert.strictEqual(open.firstCall.args[0].toString(), 'http://athoed40:8011/ir/');
+  });
+
+
   test('start: refused in an untrusted workspace', async function () {
     await deployment_toml('[i-releaser]\nurl = "http://127.0.0.1:9"\n');
     try {
