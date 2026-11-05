@@ -102,5 +102,14 @@ suite('Templates', () => {
       assert.strictEqual(checked({ USE_ESP: true }), true);
       assert.strictEqual(checked({ USE_ESP: false }), false);
     });
+
+
+    test('SSH compression is on unless switched off', () => {
+      const checked = (connection: object) => /\schecked\b/.test(render('project', { connection }).match(/<vscode-checkbox\b[^>]*ssh-compression">/)?.[0] ?? '');
+
+      assert.strictEqual(checked({}), true);
+      assert.strictEqual(checked({ 'ssh-compression': true }), true);
+      assert.strictEqual(checked({ 'ssh-compression': false }), false);
+    });
   });
 });

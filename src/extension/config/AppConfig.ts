@@ -24,6 +24,7 @@ export interface IConfigConnectionProperties {
   'ssh-concurrency' : number;
   'ssh-port' : number;
   'ssh-agent' : boolean;
+  'ssh-compression' : boolean;
 }
 
 export interface IConfigGeneralProperties {
@@ -74,14 +75,17 @@ export class ConfigConnection {
   public ['ssh-port']?: number;
   /** Use the running SSH agent (Pageant on Windows) */
   public ['ssh-agent']?: boolean;
+  /** zlib compression of the SSH connection (default true) */
+  public ['ssh-compression']?: boolean;
 
-  constructor(remote_host?: string, ssh_key?: string, ssh_user?: string, ssh_concurrency?: number, ssh_port?: number, ssh_agent?: boolean) {
+  constructor(remote_host?: string, ssh_key?: string, ssh_user?: string, ssh_concurrency?: number, ssh_port?: number, ssh_agent?: boolean, ssh_compression?: boolean) {
     this['remote-host'] = remote_host;
     this['ssh-key'] = ssh_key;
     this['ssh-user'] = ssh_user;
     this['ssh-concurrency'] = ssh_concurrency;
     this['ssh-port'] = ssh_port;
     this['ssh-agent'] = ssh_agent;
+    this['ssh-compression'] = ssh_compression;
   }
 
   public attributes_missing(): boolean {
@@ -306,7 +310,8 @@ export class AppConfig {
       AppConfig.get_string(con?.['ssh-user']),
       con?.['ssh-concurrency'],
       con?.['ssh-port'],
-      con?.['ssh-agent']
+      con?.['ssh-agent'],
+      con?.['ssh-compression']
   );
     this.general = gen ?? new ConfigGeneral();
     this.global = glob ?? new ConfigGlobal();
@@ -342,7 +347,8 @@ export class AppConfig {
         AppConfig.get_string(con_dict['ssh-user']),
         con_dict['ssh-concurrency'],
         con_dict['ssh-port'],
-        con_dict['ssh-agent']
+        con_dict['ssh-agent'],
+        con_dict['ssh-compression']
       );
     }
     

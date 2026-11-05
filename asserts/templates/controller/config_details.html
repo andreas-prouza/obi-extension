@@ -55,6 +55,17 @@
       <br />
       <br />
 
+      {# Default on: only an explicit false unchecks it #}
+      {% call field('connection|ssh-compression', 'check') %}
+      <vscode-checkbox class="{{ class_prefix }}_save_app type_checkbox"
+              {% if app_config['connection']['ssh-compression'] !== false and app_config['connection']['ssh-compression'] !== 'false' %}checked{% endif %}
+              panel="{{ class_prefix }}_tab-1" id="{{ class_prefix }}|connection|ssh-compression">
+        {{ global_stuff['get_text']('Compress the SSH connection') | safe }}
+      </vscode-checkbox>
+      {% endcall %}
+      <br />
+      <br />
+
       {% if class_prefix != 'user' %}
         <vscode-text-field class="" readonly="true"
           value="">{{ global_stuff['get_text']('User (is only available in user config)') | safe }}</vscode-text-field>

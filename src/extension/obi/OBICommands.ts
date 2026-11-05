@@ -25,6 +25,7 @@ import { CompileDiagnostics } from '../source/CompileDiagnostics';
 import { StatusBar } from '../StatusBar';
 import { require_trust } from '../utilities/Trust';
 import { config_without_secrets } from '../../shared/Redact';
+import { strip_cmd_logs } from '../../shared/CompileListLogs';
 import * as fs from 'fs';
 import { PhaseTimer, result_download_plan } from './ResultDownload';
 import { ExtensionSettings } from '../utilities/ExtensionSettings';
@@ -247,6 +248,34 @@ export class OBICommands {
 
 
 
+  /**
+   * Uploads the build list without the logs of earlier runs (docs/features/compile-list-logs.md): the backend overwrites
+   * them anyway. The local file keeps its logs for the build summary. A file that isn't valid JSON goes up unchanged.
+   */
+  private static async upload_build_list_without_logs(config: AppConfig): Promise<void> {
+
+    const compile_list = config.general['compile-list'];
+    if (!compile_list || !config.general['local-base-dir'])
+      throw Error(`Config attribute 'general.compile-list' or 'general.local-base-dir' missing`);
+
+    const local = path.join(Workspace.get_workspace(), config.general['local-base-dir'], compile_list);
+    let content: string;
+    try {
+      const data: unknown = JSON.parse(fs.readFileSync(local, 'utf8'));
+      if (typeof data !== 'object' || data === null || Array.isArray(data))
+        throw new Error('not a JSON object');
+      content = JSON.stringify(strip_cmd_logs(data as Record<string, unknown>));
+    }
+    catch (e: unknown) {
+      logger.warn(`Build list ${local} is uploaded with its logs: ${get_error_message(e)}`);
+      await SSH_Tasks.transfer_files([compile_list]);
+      return;
+    }
+    await SSH_Tasks.upload_content(path.posix.join(...compile_list.split(/[\\/]/)), content);
+  }
+
+
+
   public static async transfer_build_list(progress: vscode.Progress<{
     message?: string;
     increment?: number;
@@ -257,7 +286,7 @@ export class OBICommands {
     progress.report({
       message: vscode.l10n.t('Transfer build list to the IBM i')
     });
-    await SSH_Tasks.transfer_files([config.general['compile-list']]);
+    await OBICommands.upload_build_list_without_logs(config);
     // The OBI needs the lists of changed and dependent objects, not the compile messages of earlier builds (.obi/tmp/evfevent)
     const tmp_dir = path.join(Workspace.get_workspace(), Constants.OBI_TMP_DIR);
     const tmp_files = DirTool.dir_exists(tmp_dir)

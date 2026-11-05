@@ -127,9 +127,34 @@ suite('Transfers report failures', () => {
     await OBICommands.transfer_build_list({ report: () => undefined });
 
     const uploaded = put_files.getCalls().flatMap(call => call.args[0].map((file: { remote: string }) => file.remote));
-    assert.ok(uploaded.some(remote => remote.endsWith('/.obi/build-output/compile-list.json')), uploaded.join(', '));
     assert.ok(uploaded.some(remote => remote.endsWith('/.obi/tmp/changed-object-list.json')), uploaded.join(', '));
     assert.ok(!uploaded.some(remote => remote.includes('evfevent')), uploaded.join(', '));
+  });
+
+
+  test('the build list goes up without the logs of earlier runs; the local file keeps them (compile-list-logs.md)', async () => {
+    const local = path.join(Workspace.get_workspace(), '.obi', 'build-output', 'compile-list.json');
+    const compile_list = { timestamp: 't', compiles: [{ level: 1, sources: [{ source: 'lib/qrpglesrc/a.rpgle.pgm',
+      cmds: [{ cmd: 'CRTBNDRPG', status: 'failed', joblog: 'J'.repeat(1000), stdout: 'S', stderr: 'E' }] }] }] };
+    fs.mkdirSync(path.dirname(local), { recursive: true });
+    fs.writeFileSync(local, JSON.stringify(compile_list, null, 2));
+    sinon.stub(NodeSSH.prototype, 'execCommand').resolves({ code: 0, stdout: '/home/MAX', stderr: '', signal: null });
+    sinon.stub(NodeSSH.prototype, 'putFiles').resolves();
+    const written: { remote: string; content: string }[] = [];
+    const sftp = {
+      writeFile: (remote: string, content: string, callback: (error?: Error) => void) => { written.push({ remote, content }); callback(); },
+      end: sinon.spy()
+    };
+    sinon.stub(NodeSSH.prototype, 'requestSFTP').resolves(sftp as never);
+
+    await OBICommands.transfer_build_list({ report: () => undefined });
+
+    assert.strictEqual(written.length, 1);
+    assert.ok(written[0].remote.endsWith('/.obi/build-output/compile-list.json'), written[0].remote);
+    assert.deepStrictEqual(JSON.parse(written[0].content), { timestamp: 't', compiles: [{ level: 1, sources: [{ source: 'lib/qrpglesrc/a.rpgle.pgm',
+      cmds: [{ cmd: 'CRTBNDRPG', status: 'failed' }] }] }] });
+    assert.ok(sftp.end.calledOnce);
+    assert.deepStrictEqual(JSON.parse(fs.readFileSync(local, 'utf8')), compile_list, 'local file unchanged');
   });
 
 

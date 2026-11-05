@@ -132,6 +132,7 @@ In the **User configuration**, set:
   For a key with a passphrase, OBI asks for the passphrase and offers to save it in the OS keychain (VS Code's secret storage). A wrong saved passphrase is removed and asked for again.
 * **Use the SSH agent** (`ssh-agent = true`): use the keys of the running `ssh-agent` (`SSH_AUTH_SOCK`), on Windows Pageant.
 * **SSH port** (`ssh-port`): if the SSH daemon doesn't listen on port 22.
+* **Compress the SSH connection** (`ssh-compression`, on by default): compresses the transfers (zlib). Turn it off on a fast LAN to save CPU time.
 
 Without a key you can enter a **Password** instead. It is stored in VS Code's secret storage, not in the configuration file.
 If no password is stored, OBI asks for it and offers to save it (*Save*, *Not now*, *Never for this profile*). A host or user entered at the prompt can be saved to the user configuration of the active profile.
