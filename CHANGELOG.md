@@ -1,3 +1,10 @@
+## [1.5.5]
+
+### Features
+* **SSH compression:** the SSH connection is compressed (zlib), so builds download their results faster: a `compile-list.json` with joblogs shrinks to about a tenth. Turn it off with `ssh-compression = false` (config page: *Compress the SSH connection*), e.g. on a fast LAN. The OBI log shows what the server agreed to (`SSH compression: C->S zlib@openssh.com, S->C zlib@openssh.com`) ([docs](asserts/docs/configuration.md#connection), [spec](docs/features/compile-list-logs.md))
+* **Rebuilds upload the build list without the joblogs and spool files of the earlier run.** The local build summary keeps them until the next build ([spec](docs/features/compile-list-logs.md))
+
+
 ## [1.5.4]
 
 ### Features

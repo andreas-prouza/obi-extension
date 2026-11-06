@@ -339,6 +339,7 @@
   "Saving rewrites the TOML file: comments in it are not kept.": "Beim Speichern wird die TOML-Datei neu geschrieben: Kommentare darin gehen verloren.",
   "SSH port": "SSH-Port",
   "Use the SSH agent (Pageant on Windows)": "SSH-Agent verwenden (unter Windows Pageant)",
+  "Compress the SSH connection": "SSH-Verbindung komprimieren",
   "Save to profile": "Im Profil speichern",
   "Save '{0}' as {1} in your user configuration?": "'{0}' als {1} in Ihrer Benutzerkonfiguration speichern?",
   "Saving the user configuration failed": "Speichern der Benutzerkonfiguration fehlgeschlagen",

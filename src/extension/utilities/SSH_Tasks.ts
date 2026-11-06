@@ -15,7 +15,7 @@ import { HostKeyCheck, HostKeyStore } from './HostKeyStore';
 import { LineSplitter, parse_obi_pid } from './OutputLines';
 import * as fs from 'fs';
 import { OPEN_CONFIGURATION, show_error } from './Notify';
-import { auth_methods, classify_login_error, expand_local_path, ssh_agent, ssh_port } from './SshAuth';
+import { auth_methods, classify_login_error, compression_reporter, expand_local_path, ssh_agent, ssh_algorithms, ssh_compression, ssh_port } from './SshAuth';
 import { DirTool } from './DirTool';
 import * as os from 'os';
 import { DownloadPlan, run_limited, ssh_concurrency } from '../obi/ResultDownload';
@@ -49,6 +49,8 @@ export interface ConnectOptions {
   passphrase?: string;
   /** SSH_AUTH_SOCK or 'pageant' */
   agent?: string;
+  /** Offer zlib compression (ssh-compression) */
+  compression?: boolean;
 }
 
 
@@ -62,8 +64,8 @@ export class SSH_Tasks {
   private static ssh_user: string | undefined = undefined;
   private static host: string | undefined = undefined;
   private static port: number = Constants.SSH_PORT;
-  /** Target of the open connection */
-  private static connected: { host: string; port: number; username: string } | undefined = undefined;
+  /** Target and compression of the open connection */
+  private static connected: { host: string; port: number; username: string; compression: boolean } | undefined = undefined;
   private static connectionPromise: Promise<boolean> | undefined = undefined;
   private static remote_home: string | undefined = undefined;
 
@@ -181,7 +183,11 @@ export class SSH_Tasks {
    * `host_verifier` gets the raw host key and returns whether it is trusted.
    */
   public static build_connect_config(options: ConnectOptions, host_verifier: (key: Buffer) => boolean): Config {
+    const algorithms = ssh_algorithms(options.compression === true);
     return {
+      ...(algorithms ? { algorithms } : {}),
+      // Logs the compression the server agreed to; ssh2's other debug output is dropped
+      debug: compression_reporter(summary => logger.info(`SSH compression: ${summary}`)),
       host: options.host,
       port: options.port,
       username: options.username,
@@ -218,7 +224,7 @@ export class SSH_Tasks {
       checks.length = 0;
       try {
         await SSH_Tasks.ssh.connect(config);
-        SSH_Tasks.connected = { host: options.host, port: options.port, username: options.username };
+        SSH_Tasks.connected = { host: options.host, port: options.port, username: options.username, compression: options.compression === true };
         return;
       }
       catch (e: unknown) {
@@ -242,7 +248,8 @@ export class SSH_Tasks {
     const config = AppConfig.get_app_config();
     const connected = SSH_Tasks.connected;
     return this.ssh.isConnected() && connected?.username === config.connection['ssh-user'] && connected?.host === config.connection['remote-host']
-      && connected?.port === ssh_port(config.connection['ssh-port']);
+      && connected?.port === ssh_port(config.connection['ssh-port'])
+      && connected?.compression === ssh_compression(config.connection['ssh-compression']);
   }
 
 
@@ -275,6 +282,7 @@ export class SSH_Tasks {
         const agent = ssh_agent(config.connection['ssh-agent'], process.platform, process.env);
         if (config.connection['ssh-agent'] && !agent)
           logger.warn('ssh-agent = true, but no agent is running (SSH_AUTH_SOCK is not set)');
+        const compression = ssh_compression(config.connection['ssh-compression']);
 
         if (!SSH_Tasks.host || SSH_Tasks.host.length == 0) {
           SSH_Tasks.host = await vscode.window.showInputBox({ title: vscode.l10n.t('Enter an IBM i hostname/IP'), placeHolder: "my-ibm-i", ignoreFocusOut: true });
@@ -304,7 +312,7 @@ export class SSH_Tasks {
         // An encrypted key needs its passphrase: ask (again, if the stored one is wrong)
         for (let attempt = 1; ; attempt++) {
           try {
-            await SSH_Tasks.connect_verified({ host: SSH_Tasks.host, port: SSH_Tasks.port, username: SSH_Tasks.ssh_user ?? '', password: pwd, private_key_path: ssh_key, passphrase, agent });
+            await SSH_Tasks.connect_verified({ host: SSH_Tasks.host, port: SSH_Tasks.port, username: SSH_Tasks.ssh_user ?? '', password: pwd, private_key_path: ssh_key, passphrase, agent, compression });
             break;
           }
           catch (e: unknown) {
@@ -328,7 +336,7 @@ export class SSH_Tasks {
         if (passphrase_prompted && passphrase)
           SSH_Tasks.offer_save_secret(`${secret_key}|passphrase`, passphrase, 'passphrase', current_profile);
         vscode.window.showInformationMessage(vscode.l10n.t('Connected to {0}', SSH_Tasks.host));
-        logger.info(`Connected to ${SSH_Tasks.host}`);
+        logger.info(`Connected to ${SSH_Tasks.host} (compression ${compression ? 'offered' : 'off'})`);
 
         if (callback) {
           const result = await callback();
@@ -832,6 +840,35 @@ export class SSH_Tasks {
     }));
     logger.info(`Upload: ${files.join(', ')}`);
     await SSH_Tasks.ssh.putFiles(transfer_list, { concurrency: SSH_Tasks.concurrency() });
+  }
+
+
+
+  /** Writes `content` to a file of the remote project folder (path relative to remote-base-dir); creates missing folders */
+  public static async upload_content(relative: string, content: string): Promise<void> {
+
+    await this.connect();
+
+    const remote = `${await SSH_Tasks.get_remote_base_dir()}/${relative.replace(/\\/g, '/')}`;
+    logger.info(`Upload: ${remote}`);
+    const write = (sftp: SFTPWrapper) => new Promise<void>((resolve, reject) =>
+      sftp.writeFile(remote, content, error => error ? reject(error) : resolve()));
+
+    const sftp = await SSH_Tasks.ssh.requestSFTP();
+    try {
+      try {
+        await write(sftp);
+      }
+      catch (e: unknown) {
+        if (get_error_message(e) !== 'No such file')
+          throw e;
+        await SSH_Tasks.ssh.mkdir(path.posix.dirname(remote), 'sftp', sftp);
+        await write(sftp);
+      }
+    }
+    finally {
+      sftp.end();
+    }
   }
 
 

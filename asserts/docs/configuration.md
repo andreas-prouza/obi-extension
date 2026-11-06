@@ -119,6 +119,7 @@ Section `[connection]`.
 | `ssh-agent` | | `true`: use the running SSH agent (`SSH_AUTH_SOCK`, on Windows Pageant) |
 | `ssh-port` | | SSH port (default 22) |
 | `ssh-concurrency` | | Number of files transferred in parallel (1–32, default 5). More can be faster over slow connections; the SSH server may limit it |
+| `ssh-compression` | | `true` (default): compress the SSH connection (zlib). Build results such as `compile-list.json` with its joblogs shrink to about a tenth. On a fast LAN, `false` saves CPU time. If the server doesn't support compression, the connection is uncompressed. The *OBI* log shows the result of each connection, e.g. `SSH compression: C->S zlib@openssh.com, S->C zlib@openssh.com` (`none`: uncompressed) |
 
 **Password**: entered in the user configuration, but stored in VS Code's secret storage (per profile, host and user), never in a file.
 Without key and stored password you are prompted when connecting. See [SSH setup](ssh.md).

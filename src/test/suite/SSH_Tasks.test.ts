@@ -7,6 +7,7 @@ import { SSH_Tasks } from '../../extension/utilities/SSH_Tasks';
 import { Workspace } from '../../extension/utilities/Workspace';
 import { OBITools } from '../../extension/utilities/OBITools';
 import { UserCancelledError } from '../../shared/Errors';
+import { logger } from '../../extension/utilities/Logger';
 
 
 function response(stdout: string, code: number = 0): SSHExecCommandResponse {
@@ -104,6 +105,24 @@ suite('SSH_Tasks remote paths and commands', () => {
     assert.strictEqual(config.keepaliveInterval, 60000);
     assert.strictEqual(config.keepaliveCountMax, 3);
     assert.strictEqual(config.readyTimeout, 30000);
+    assert.strictEqual(config.algorithms, undefined, 'compression not requested');
+  });
+
+
+  test('connect options: compression offers zlib first (compile-list-logs.md)', () => {
+    const config = SSH_Tasks.build_connect_config({ host: 'host', port: 22, username: 'user', password: 'pwd', compression: true }, () => true);
+    assert.deepStrictEqual(config.algorithms, { compress: ['zlib@openssh.com', 'zlib', 'none'] });
+  });
+
+
+  test('connect options: the agreed compression is logged, no other debug output', () => {
+    const info = sinon.spy(logger, 'info');
+    const debug = sinon.spy(logger, 'debug');
+    const config = SSH_Tasks.build_connect_config({ host: 'host', port: 22, username: 'user', password: 'pwd' }, () => true);
+    for (const line of ['Outbound: Sending USERAUTH_REQUEST (password)', 'Handshake: C->S compression: none', 'Handshake: S->C compression: none'])
+      config.debug?.(line);
+    assert.deepStrictEqual(info.getCalls().map(call => call.args[0]), ['SSH compression: C->S none, S->C none']);
+    assert.ok(debug.notCalled);
   });
 
 

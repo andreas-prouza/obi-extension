@@ -1,5 +1,40 @@
 import * as path from 'path';
+import type { Algorithms } from 'ssh2';
 // No vscode imports: this module is unit-tested in plain Node.
+
+
+/** ssh-compression: on unless set to false (default true) */
+export function ssh_compression(value: unknown): boolean {
+  return value !== false && value !== 'false';
+}
+
+
+/**
+ * Algorithms for ssh2. ssh2 lists `none` first, so without this compression is never negotiated.
+ * A server that doesn't support zlib falls back to `none`.
+ */
+export function ssh_algorithms(compression: boolean): Algorithms | undefined {
+  return compression ? { compress: ['zlib@openssh.com', 'zlib', 'none'] } : undefined;
+}
+
+
+/**
+ * `debug` function for ssh2 that reports only the compression agreed in the handshake
+ * ("Handshake: C->S compression: zlib@openssh.com", then S->C), e.g. "C->S zlib@openssh.com, S->C zlib@openssh.com".
+ * Every other debug line is dropped, so nothing of the login gets into the log.
+ */
+export function compression_reporter(report: (summary: string) => void): (line: string) => void {
+  let client_to_server: string | undefined;
+  return (line: string) => {
+    const match = /^Handshake: (C->S|S->C) compression: (\S+)$/.exec(line);
+    if (!match)
+      return;
+    if (match[1] === 'C->S')
+      client_to_server = match[2];
+    else
+      report(`C->S ${client_to_server ?? '?'}, S->C ${match[2]}`);
+  };
+}
 
 
 /** Local path with ~, $VAR / ${VAR} and %VAR% expanded (e.g. the ssh-key setting) */

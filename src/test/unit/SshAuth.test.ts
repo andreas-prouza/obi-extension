@@ -1,7 +1,7 @@
 import assert from 'assert';
 import * as os from 'os';
 import * as path from 'path';
-import { auth_methods, classify_login_error, expand_local_path, ssh_agent, ssh_port } from '../../extension/utilities/SshAuth';
+import { auth_methods, classify_login_error, compression_reporter, expand_local_path, ssh_agent, ssh_algorithms, ssh_compression, ssh_port } from '../../extension/utilities/SshAuth';
 
 
 suite('SSH authentication options', () => {
@@ -33,6 +33,35 @@ suite('SSH authentication options', () => {
     assert.strictEqual(ssh_agent('true', 'darwin', { SSH_AUTH_SOCK: '/a' }), '/a');
     assert.strictEqual(ssh_agent(false, 'linux', { SSH_AUTH_SOCK: '/a' }), undefined);
     assert.strictEqual(ssh_agent(undefined, 'win32', {}), undefined);
+  });
+
+
+  test('compression: on unless false; zlib offered before none', () => {
+    for (const value of [undefined, true, 'true', '', 0])
+      assert.strictEqual(ssh_compression(value), true, JSON.stringify(value));
+    assert.strictEqual(ssh_compression(false), false);
+    assert.strictEqual(ssh_compression('false'), false);
+    assert.deepStrictEqual(ssh_algorithms(true), { compress: ['zlib@openssh.com', 'zlib', 'none'] });
+    assert.strictEqual(ssh_algorithms(false), undefined);
+  });
+
+
+  test('compression reporter: only the agreed compression of the handshake is reported', () => {
+    const reports: string[] = [];
+    const debug = compression_reporter(summary => reports.push(summary));
+    for (const line of [
+      'Socket connected',
+      'Handshake: (local) C->S compression: zlib@openssh.com,zlib,none',
+      'Handshake: (remote) C->S compression: none,zlib@openssh.com',
+      'Handshake: C->S compression: zlib@openssh.com',
+      'Handshake: (local) S->C compression: zlib@openssh.com,zlib,none',
+      'Handshake: S->C compression: zlib@openssh.com',
+      'Outbound: Sending USERAUTH_REQUEST (password)',
+      'Handshake: C->S compression: none',
+      'Handshake: S->C compression: none',
+    ])
+      debug(line);
+    assert.deepStrictEqual(reports, ['C->S zlib@openssh.com, S->C zlib@openssh.com', 'C->S none, S->C none']);
   });
 
 

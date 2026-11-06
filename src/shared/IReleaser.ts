@@ -1,6 +1,7 @@
 // Client for the web API of i-Releaser 3.1.0 or newer (docs/webapi.md of i-Releaser).
 // The token goes in the Authorization header, never in the URL.
 
+import { strip_cmd_logs } from './CompileListLogs';
 
 /** Failed request. The message is for the user and never contains the token. */
 export class IReleaserError extends Error {}
@@ -173,25 +174,13 @@ export async function start_workflow(base: string, token: string, workflow: stri
  */
 export function deployment_data(compile_list: JsonObject): JsonObject {
 
-  const data: JsonObject = JSON.parse(JSON.stringify(compile_list));
+  const data = strip_cmd_logs(compile_list);
   delete data['config'];
 
   const custom_data = data['custom_data'];
   if (is_object(custom_data)) {
     delete custom_data[CUSTOM_DATA_KEY];
     delete custom_data[TEMPLATE_CUSTOM_DATA_KEY];
-  }
-
-  for (const level of Array.isArray(data['compiles']) ? data['compiles'] : []) {
-    for (const source of is_object(level) && Array.isArray(level['sources']) ? level['sources'] : []) {
-      for (const cmd of is_object(source) && Array.isArray(source['cmds']) ? source['cmds'] : []) {
-        if (!is_object(cmd))
-          continue;
-        delete cmd['joblog'];
-        delete cmd['stdout'];
-        delete cmd['stderr'];
-      }
-    }
   }
   return data;
 }
