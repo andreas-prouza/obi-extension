@@ -105,25 +105,23 @@ export class DeploymentConfig {
 
 
 
-  /** Context key obi.i-releaser-configured: the i-Releaser icons in the OBI Build view */
-  public static async update_context(): Promise<void> {
-    let configured = false;
+  /**
+   * Opens i-Releaser (URL of deployment.toml) in the browser.
+   * The icon is always shown: without a URL (or without deployment.toml) it offers the config page.
+   */
+  public static async open_web_app(): Promise<void> {
+    let base: string | undefined;
     try {
-      configured = DeploymentConfig.i_releaser_url() !== undefined;
+      base = DeploymentConfig.i_releaser_url();
     }
     catch (e: unknown) {
       logger.warn(`${Constants.DEPLOYMENT_CONFIG_FILE}: ${e}`);
     }
-    await vscode.commands.executeCommand('setContext', 'obi.i-releaser-configured', configured);
-  }
-
-
-
-  /** Opens i-Releaser (URL of deployment.toml) in the browser */
-  public static async open_web_app(): Promise<void> {
-    const base = DeploymentConfig.i_releaser_url();
     if (!base) {
-      vscode.window.showErrorMessage(vscode.l10n.t('No i-Releaser URL in {0}.', Constants.DEPLOYMENT_CONFIG_FILE));
+      const configure = vscode.l10n.t('Open deployment config');
+      const choice = await vscode.window.showErrorMessage(vscode.l10n.t('No i-Releaser URL in {0}.', Constants.DEPLOYMENT_CONFIG_FILE), configure);
+      if (choice === configure && OBITools.ext_context)
+        await DeploymentConfig.render(OBITools.ext_context);
       return;
     }
     await vscode.env.openExternal(vscode.Uri.parse(`${base}/`));
@@ -253,8 +251,7 @@ export class DeploymentConfig {
       data['i-releaser'].workflows = workflows;
     else
       delete data['i-releaser'].workflows;
-    DirTool.update_toml(toml_file, data);
-    DeploymentConfig.update_context();
+    DirTool.update_toml(toml_file, data);   // creates deployment.toml if there is none yet
     I_Releaser.refresh();
 
   }

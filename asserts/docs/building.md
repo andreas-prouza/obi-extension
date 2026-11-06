@@ -29,7 +29,7 @@ Toolbar buttons (left to right):
 |---|---|
 | Reset compiled object list | Mark all current sources as built (see [below](#reset-compiled-object-list)) |
 | Dependency list | Open `.obi/etc/dependency.json` |
-| i-Releaser config, Open i-Releaser | Only when [i-Releaser](#i-releaser-deployment) is configured: open the deployment config, or i-Releaser in the browser |
+| i-Releaser config, Open i-Releaser | Open the [i-Releaser](#i-releaser-deployment) deployment config, or i-Releaser in the browser. Without a URL in `.obi/etc/deployment.toml`, **Open i-Releaser** offers the deployment config |
 | Configuration | Open the configuration |
 
 When a source (`.pgm`, `.srvpgm`, `.module`, `.file`) is open in the editor, the editor title bar also offers **Show single change**, **Run single build** and **Clear diagnostics** for that source.

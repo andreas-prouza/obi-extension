@@ -143,8 +143,6 @@ function register_project_features(context: vscode.ExtensionContext): void {
 	// URL and token of i-Releaser, for "Start i-Releaser workflow" in the build summary
 	register_command(context, 'obi.deployment.maintain', () => DeploymentConfig.render(context));
 	register_command(context, 'obi.deployment.open-web-app', () => DeploymentConfig.open_web_app());
-	// Icons in the OBI Build view only for projects with an i-Releaser URL
-	DeploymentConfig.update_context();
 
 
 	//--------------------------------------------------------

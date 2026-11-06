@@ -228,26 +228,21 @@ suite('i-Releaser deployment from the build summary', () => {
   });
 
 
-  test('OBI Build view: the i-Releaser icons only with a URL; the web app opens the URL', async () => {
-    const exec = sinon.spy(vscode.commands, 'executeCommand');
-    const configured = () => exec.getCalls().filter(c => c.args[0] === 'setContext' && c.args[1] === 'obi.i-releaser-configured').pop()?.args[2];
+  test('OBI Build view: open i-Releaser without deployment.toml or URL offers the config; with a URL it opens it', async () => {
     const open = sinon.stub(vscode.env, 'openExternal').resolves(true);
     const error = sinon.stub(vscode.window, 'showErrorMessage').resolves(undefined);
 
     await fse.remove(path.join(Workspace.get_workspace(), Constants.DEPLOYMENT_CONFIG_FILE));
-    await DeploymentConfig.update_context();
-    assert.strictEqual(configured(), false);
     await DeploymentConfig.open_web_app();
     assert.ok(open.notCalled);
     assert.match(String(error.firstCall.args[0]), /No i-Releaser URL/);
+    assert.strictEqual(error.firstCall.args[1], 'Open deployment config');
 
     await deployment_toml('[i-releaser]\nurl = "javascript:alert(1)"\n');
-    await DeploymentConfig.update_context();
-    assert.strictEqual(configured(), false, 'no http(s) URL');
+    await DeploymentConfig.open_web_app();
+    assert.ok(open.notCalled, 'no http(s) URL');
 
     await deployment_toml('[i-releaser]\nurl = "http://athoed40:8011/ir/"\n');
-    await DeploymentConfig.update_context();
-    assert.strictEqual(configured(), true);
     await DeploymentConfig.open_web_app();
     assert.strictEqual(open.firstCall.args[0].toString(), 'http://athoed40:8011/ir/');
   });

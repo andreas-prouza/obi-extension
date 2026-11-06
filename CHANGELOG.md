@@ -1,3 +1,9 @@
+## [1.5.4]
+
+### Features
+* **OBI Build view:** the i-Releaser icons **OBI: deployment config** (🚀) and **OBI: open i-Releaser** (🌐) are always shown, also without `.obi/etc/deployment.toml`. Without an i-Releaser URL, **OBI: open i-Releaser** offers to open the deployment config; saving it creates `deployment.toml` ([docs](asserts/docs/building.md))
+
+
 ## [1.5.3]
 
 ### Features
