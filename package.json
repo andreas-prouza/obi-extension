@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "1.5.5",
+  "version": "1.6.1",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -265,6 +265,21 @@
         "icon": "$(clear-all)"
       },
       {
+        "command": "obi.timeline.show-compile-messages",
+        "title": "%obi.timeline.show-compile-messages%",
+        "icon": "$(warning)"
+      },
+      {
+        "command": "obi.timeline.reveal-in-history",
+        "title": "%obi.timeline.reveal-in-history%",
+        "icon": "$(history)"
+      },
+      {
+        "command": "obi.timeline.delete-build",
+        "title": "%obi.timeline.delete-build%",
+        "icon": "$(trash)"
+      },
+      {
         "command": "obi.open.file",
         "title": "%obi.open.file%"
       },
@@ -495,6 +510,35 @@
         {
           "command": "obi.deployment.open-web-app",
           "when": "obi.contains_obi_project"
+        },
+        {
+          "command": "obi.timeline.show-compile-messages",
+          "when": "false"
+        },
+        {
+          "command": "obi.timeline.reveal-in-history",
+          "when": "false"
+        },
+        {
+          "command": "obi.timeline.delete-build",
+          "when": "false"
+        }
+      ],
+      "timeline/item/context": [
+        {
+          "command": "obi.timeline.show-compile-messages",
+          "when": "timelineItem == obi.build.source && !listMultiSelection",
+          "group": "1_obi@1"
+        },
+        {
+          "command": "obi.timeline.reveal-in-history",
+          "when": "timelineItem =~ /^obi\\.build/ && !listMultiSelection",
+          "group": "1_obi@2"
+        },
+        {
+          "command": "obi.timeline.delete-build",
+          "when": "timelineItem =~ /^obi\\.build/ && !listMultiSelection",
+          "group": "1_obi@3"
         }
       ]
     },

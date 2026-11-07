@@ -4,6 +4,7 @@ import { DependencyList } from "./extension/obi/Dependency";
 import { LocalSourceList } from "./extension/utilities/LocalSourceList";
 import { Workspace } from "./extension/utilities/Workspace";
 import { BuildHistoryProvider } from "./webview/build_history/BuildHistoryProvider";
+import { BuildIndex } from "./webview/build_history/BuildIndex";
 import { AppConfig } from "./extension/config/AppConfig";
 import { SourceListProvider } from "./webview/source_list/SourceListProvider";
 
@@ -22,5 +23,8 @@ export const FILE_CALLBACKS: FileCallback[] = [
   { pattern: Constants.DEPENDENCY_LIST, delay: 200, action: () => DependencyList.load_dependencies() },
   // The folders themselves too (deleted)
   { pattern: `${Constants.SOURCE_FILTER_FOLDER_NAME}{,/**}`, delay: 200, action: () => SourceListProvider.get_instance().refresh() },
-  { pattern: `${Constants.BUILD_HISTORY_DIR}{,/*,/*/compile-list.json}`, delay: 500, action: () => BuildHistoryProvider.get_instance().refresh() },
+  { pattern: `${Constants.BUILD_HISTORY_DIR}{,/*,/*/compile-list.json}`, delay: 500, action: () => {
+    BuildHistoryProvider.get_instance().refresh();
+    BuildIndex.changed();   // Timeline
+  } },
 ];

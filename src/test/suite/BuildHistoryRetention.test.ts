@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import { Constants } from '../../shared/Constants';
 import { Workspace } from '../../extension/utilities/Workspace';
 import { BuildHistoryItem, BuildHistoryProvider } from '../../webview/build_history/BuildHistoryProvider';
-import { local_date_label } from '../../webview/build_history/HistoryTimestamp';
+import { local_date_label, parse_history_dir } from '../../webview/build_history/HistoryTimestamp';
 import { reset_workspace } from './workspace_fixture';
 
 
@@ -136,7 +136,9 @@ suite('Build history retention', () => {
       await handlers.get('obi.build-history.delete-item')!(build_item);
       assert.deepStrictEqual(remaining(), [today, yesterday].sort());
       assert.strictEqual(confirm.firstCall.args[0], `Delete the build of ${local_date_label(new Date())}?`);
-      assert.strictEqual(confirm.secondCall.args[0], 'Delete build yesterday 12:00:00?');
+      // Date and time of the folder name, like the tree labels
+      const built = parse_history_dir(yesterday)!;
+      assert.strictEqual(confirm.secondCall.args[0], `Delete build ${local_date_label(built)} ${built.toLocaleTimeString()}?`);
 
       confirm.resolves('Delete' as unknown as vscode.MessageItem);
       await handlers.get('obi.build-history.delete-date')!(date_item);

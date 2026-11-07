@@ -155,9 +155,11 @@ The default compile commands use `OPTION(*EVENTF)` and export the event file int
 
 After every build, the compiler messages of **all** built sources appear in the **Problems** view, each in the file it belongs to: messages in a copybook are shown in the copybook, at the right line and column
 (severity < 10 → information, < 20 → warning, otherwise error). Messages of files outside the project (e.g. a QSYS member) are shown on line 1 of the source, with the member and line in the text.
-A source that builds successfully loses its old messages. Opening a build from the history shows the messages of that build.
+A source whose commands ran in the build loses its old messages, also when the build failed before the compile (e.g. at `CHGATR`). A source the build didn't reach keeps the messages of its last compile. Opening a build from the history shows the messages of that build.
 
-**Clear diagnostics** (editor title bar) removes them again.
+Opening a source of the build list reads its messages again. After a window reload or a restart of VS Code, the first source you open (or the editors that were open) loads the messages of the whole current build list again, copybooks included.
+
+**Clear diagnostics** (editor title bar) removes them again. They come back with the next build or when you open a build summary.
 
 
 ## Build history
@@ -184,6 +186,24 @@ After each build and when the workspace opens, older builds are deleted (folders
 * `obi.buildHistory.maxAgeDays` (default `0`): delete builds older than n days, `0` = unlimited
 
 As long as neither setting is set, OBI asks once per workspace before it deletes existing builds (*Delete old builds* / *Keep all*). *Keep all* turns the automatic deletion off until you set one of the settings.
+
+### Timeline
+
+*Requires VS Code 1.145 or newer. With older versions OBI works as before, just without these entries.*
+
+The **Timeline** view (Explorer, below the files) shows the OBI builds next to the git commits and local saves:
+
+* **Source** open in the editor: every build that contained it, newest first, e.g. *Build failed · failed at command 2 of 3*. *current version* means the source hasn't changed since that build.
+* **Folder** of sources selected in the Explorer: one entry per build with sources of that folder (*Build failed (1 of 5) · 5 sources in this folder*).
+* **Workspace timeline** (no file selected): one entry per build.
+
+Hover over an entry for the commands or the sources of the build. Click an entry to open its build summary, with joblogs and spool files. The context menu offers:
+
+* **Show Compile Messages of this Build**: loads the compile messages of that build for this source into the Problems view.
+* **Reveal in Build History**: selects the build in the Build history view.
+* **Delete Build**: deletes the build after a confirmation.
+
+To hide the builds, untick **OBI builds** in the filter menu of the Timeline view.
 
 
 ## Other actions

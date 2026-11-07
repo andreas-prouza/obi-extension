@@ -2,6 +2,7 @@
 // No vscode imports: this module is unit-tested in plain Node.
 
 import { format_elapsed } from './OutputLines';
+import { is_failed, source_status } from '../../shared/BuildStatus';
 
 
 export interface LastBuild {
@@ -33,10 +34,11 @@ export function summarize_build(compile_list: CompileListLike | undefined, time:
   let failed = 0;
   for (const level of compile_list?.compiles ?? []) {
     for (const source of level.sources ?? []) {
-      if (source.ignore)
+      const status = source_status(source);
+      if (status === 'ignored')
         continue;
       total++;
-      if ((source.cmds ?? []).some(cmd => !cmd.ignore && cmd.status !== 'success'))
+      if (is_failed(status))
         failed++;
     }
   }

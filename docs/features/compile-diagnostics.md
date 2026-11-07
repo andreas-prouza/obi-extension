@@ -57,6 +57,19 @@ The `fileLocation` of a marker comes from the FILEID record:
 * `obi.clearDiagnostics` calls `CompileDiagnostics.clear()`.
 
 
+## Follow-up (2026-11-07): keep the Problems view up to date
+
+Reported: after a build, the messages of the open sources were not updated, and opening a source of the build list later showed nothing.
+
+* The messages only live in memory. After a window reload or restart they were gone, and nothing loaded them again. Now `CompileDiagnostics.init` listens to `onDidOpenTextDocument` (and handles the editors that are already open). The first source opened after the start loads the whole current build list (`compile-list`, live `evfevent-output-dir`), so copybooks get their messages too. After that, an opened source of the *shown* build is read again. The shown build is the one that was loaded last: the live build after a build, or a history build opened in the build summary.
+* Old messages were only removed when the source succeeded (`status == 'success'`). Now they are removed whenever the source's commands ran (`compiled_in_build`: status `success`/`failed`, or a non-ignored command that isn't `new`). Example: a failed `CHGATR` before the compile. Sources the build didn't reach keep the messages of their last compile.
+* `init` created a second `obi-compiler` collection if one had been created on demand before (`get_collection`). The first one's messages stayed forever. Now `init` reuses it.
+* *Clear diagnostics* stays in effect when sources are opened, until the next build or build summary.
+* `load_for_compile_list` logs `Compile messages: n sources of the build list, m with messages (<folder>)`. If a real build still shows nothing, this line tells whether the EVFEVENT files arrived.
+* Not changed: a stale EVFEVENT file on the IBM i (the source's compile didn't run this time) is still downloaded and shown as that source's last compile result.
+* Tests: [CompileDiagnostics.test.ts](../../src/test/suite/CompileDiagnostics.test.ts) (failed before the compile, not reached, opening after a start, opening again after the events changed, Clear).
+
+
 # Tests
 
 * Unit tests with evfevent fixtures (put sample files into `test-resources/evfevent/`): a main-source error, a copybook error, a QSYS include, and an error with token columns.

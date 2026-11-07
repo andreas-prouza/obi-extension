@@ -11,6 +11,8 @@ import { history_dir_name, local_date_label, parse_history_dir } from './History
 import { register_command } from '../../extension/utilities/Registration';
 import { folder_size, format_size, select_expired } from './HistoryRetention';
 import { ExtensionSettings } from '../../extension/utilities/ExtensionSettings';
+import { BuildIndex } from './BuildIndex';
+import { inside } from '../../shared/messages/MessageGuard';
 
 
 interface IBuildHistorys {
@@ -216,26 +218,8 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
    * Reads the distinct source names referenced by a single build-history folder's compile-list.json.
    */
   private static get_sources_from_build(dirPath: string): Set<string> {
-    const sources = new Set<string>();
-    const compileListPath = path.join(dirPath, 'compile-list.json');
-
-    if (!fs.existsSync(compileListPath)) {
-      return sources;
-    }
-
-    try {
-      const compileList = JSON.parse(fs.readFileSync(compileListPath, 'utf-8'));
-      for (const compile of compileList.compiles || []) {
-        for (const src of compile.sources || []) {
-          if (src.source) {
-            sources.add(src.source);
-          }
-        }
-      }
-    } catch (e) {
-      logger.error(`Failed to parse compile-list.json in ${dirPath}: ${e}`);
-    }
-    return sources;
+    // Shared with the Timeline: each compile-list.json is read once per change, not for every tree node
+    return new Set(BuildIndex.read(dirPath)?.sources.keys() ?? []);
   }
 
 
@@ -403,6 +387,27 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
     finally {
       BuildHistoryProvider.retention_question_open = false;
     }
+  }
+
+
+  /**
+   * Deletes one build after a modal confirmation (history tree and Timeline). `dir` is the history folder name;
+   * anything else (a path, a folder that isn't a build) is refused. True if deleted.
+   */
+  public async delete_build(dir: string): Promise<boolean> {
+    const root = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR);
+    const dir_path = path.basename(dir) === dir ? inside(root, dir) : undefined;
+    const date = BuildHistoryProvider.parse_dir(dir);
+    if (!this.workspaceRoot || !dir_path || !date || !DirTool.dir_exists(dir_path)) {
+      logger.warn(`Build history: '${dir}' is no build, not deleted`);
+      return false;
+    }
+
+    if (!(await BuildHistoryProvider.confirm_delete(vscode.l10n.t('Delete build {0} {1}?', local_date_label(date), date.toLocaleTimeString()))))
+      return false;
+    await fs.promises.rm(dir_path, { recursive: true, force: true });
+    this.refresh();
+    return true;
   }
 
 
@@ -587,12 +592,8 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
     });
 
     register_command(context, 'obi.build-history.delete-item', async (item: BuildHistoryItem) => {
-      if (item && item.file_path && DirTool.dir_exists(item.file_path)) {
-        if (!(await BuildHistoryProvider.confirm_delete(vscode.l10n.t('Delete build {0} {1}?', item.dateLabel ?? '', String(item.label)))))
-          return;
-        fs.rmSync(item.file_path, { recursive: true, force: true });
-        this.refresh();
-      }
+      if (item?.dirName)
+        await this.delete_build(item.dirName);
     });
 
     register_command(context, 'obi.build-history.delete-date', async (item: BuildHistoryItem) => {

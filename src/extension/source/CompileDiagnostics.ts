@@ -13,6 +13,28 @@ import { get_error_message } from '../../shared/Errors';
 interface CompileListSource {
   source: string;
   status?: string;
+  ignore?: unknown;
+  cmds?: unknown;
+}
+
+type CompileListLike = { compiles?: { sources?: CompileListSource[] }[] };
+
+/** The build whose messages are shown: opened sources of it get their messages (again) */
+interface ShownBuild {
+  /** Source → its commands ran in that build */
+  sources: Map<string, boolean>;
+  evfevent_root: string;
+}
+
+
+/** The commands of the source ran in this build: its old messages are outdated, also if there are no new ones */
+export function compiled_in_build(source: CompileListSource): boolean {
+  if (source.ignore)
+    return false;
+  if (source.status === 'success' || source.status === 'failed')
+    return true;
+  return Array.isArray(source.cmds) && source.cmds.some(cmd =>
+    typeof cmd === 'object' && cmd !== null && !(cmd as { ignore?: unknown }).ignore && typeof (cmd as { status?: unknown }).status === 'string' && (cmd as { status: string }).status !== 'new');
 }
 
 
@@ -22,16 +44,53 @@ export class CompileDiagnostics {
   private static collection: vscode.DiagnosticCollection | undefined;
   /** Files that got diagnostics from a source's last build, so the next build of that source replaces them */
   private static readonly by_source = new Map<string, vscode.Uri[]>();
+  /** undefined: nothing loaded since the start (the messages only live in memory, e.g. after a window reload) */
+  private static shown: ShownBuild | undefined;
 
 
   public static init(context: vscode.ExtensionContext): void {
-    CompileDiagnostics.collection = vscode.languages.createDiagnosticCollection('obi-compiler');
-    context.subscriptions.push(CompileDiagnostics.collection, {
-      dispose: () => {
+    // A collection created on demand before (get_collection) is kept: a second one would show its messages forever
+    const collection = CompileDiagnostics.get_collection();
+    context.subscriptions.push(
+      collection,
+      { dispose: () => {
         CompileDiagnostics.collection = undefined;
         CompileDiagnostics.by_source.clear();
+        CompileDiagnostics.shown = undefined;
+      } },
+      vscode.workspace.onDidOpenTextDocument(document => CompileDiagnostics.document_opened(document)),
+    );
+    // Editors restored with the window
+    for (const document of vscode.workspace.textDocuments)
+      CompileDiagnostics.document_opened(document);
+  }
+
+
+  /**
+   * A source was opened: if it's in the shown build (after start: the current build list), its messages are read again.
+   * The first time after the start, the whole current build list is loaded, so copybooks get their messages too.
+   */
+  public static document_opened(document: vscode.TextDocument): void {
+    if (document.uri.scheme !== 'file')
+      return;
+    try {
+      const source = DirTool.to_obi_source(document.uri.fsPath);
+      if (!source)
+        return;
+
+      const shown = CompileDiagnostics.shown;
+      if (!shown) {
+        const compile_list = DirTool.get_json(path.join(Workspace.get_workspace(), AppConfig.get_app_config().general['compile-list']), false);
+        CompileDiagnostics.load_for_compile_list(compile_list, CompileDiagnostics.evfevent_root());
+        return;
       }
-    });
+      if (shown.sources.has(source))
+        CompileDiagnostics.load_source(source, shown.evfevent_root, shown.sources.get(source));
+    }
+    catch (e: unknown) {
+      // no (valid) project: nothing to show
+      logger.debug(`Compile messages of ${document.uri.fsPath} not loaded: ${get_error_message(e)}`);
+    }
   }
 
 
@@ -59,21 +118,36 @@ export class CompileDiagnostics {
   }
 
 
-  /** Replaces the diagnostics of all sources of a compile list with the messages found in `evfevent_root` */
-  public static load_for_compile_list(compile_list: { compiles?: { sources?: CompileListSource[] }[] } | undefined, evfevent_root: string | undefined): void {
-    if (!compile_list || !evfevent_root)
+  /**
+   * Replaces the diagnostics of all sources of a compile list with the messages found in `evfevent_root`.
+   * This build is then the shown one: sources opened later get its messages.
+   */
+  public static load_for_compile_list(compile_list: CompileListLike | undefined, evfevent_root: string | undefined): void {
+    if (!evfevent_root || typeof compile_list !== 'object' || compile_list === null || !Array.isArray(compile_list.compiles))
       return;
-    for (const level of compile_list.compiles ?? []) {
-      for (const source of level.sources ?? []) {
-        if (typeof source?.source === 'string')
-          CompileDiagnostics.load_source(source.source, evfevent_root, source.status === 'success');
+
+    const sources = new Map<string, boolean>();
+    let with_messages = 0;
+    for (const level of compile_list.compiles) {
+      for (const source of Array.isArray(level?.sources) ? level.sources : []) {
+        if (typeof source?.source !== 'string')
+          continue;
+        const compiled = compiled_in_build(source);
+        sources.set(source.source, compiled);
+        if (CompileDiagnostics.load_source(source.source, evfevent_root, compiled))
+          with_messages++;
       }
     }
+    CompileDiagnostics.shown = { sources, evfevent_root };
+    logger.info(`Compile messages: ${sources.size} sources of the build list, ${with_messages} with messages (${evfevent_root})`);
   }
 
 
-  /** Messages of one source; without EVFEVENT file, a successful build removes its old messages */
-  public static load_source(source: string, evfevent_root: string, built_successfully: boolean = false): void {
+  /**
+   * Messages of one source. Without EVFEVENT file, a build that ran its commands removes its old messages
+   * (they don't belong to this build). True if an EVFEVENT file was read.
+   */
+  public static load_source(source: string, evfevent_root: string, built_successfully: boolean = false): boolean {
 
     const evfevent_file = path.join(evfevent_root, source);
     let content: string | undefined;
@@ -87,21 +161,33 @@ export class CompileDiagnostics {
     if (content === undefined) {
       if (built_successfully)
         CompileDiagnostics.set_for_source(source, new Map());
-      return;
+      return false;
     }
 
     try {
       CompileDiagnostics.set_for_source(source, CompileDiagnostics.to_diagnostics(source, parse_evfevent(content)));
+      return true;
     }
     catch (e: unknown) {
       logger.error(`Compile messages of ${source} could not be read (${evfevent_file}): ${get_error_message(e)}`);
+      return false;
     }
   }
 
 
+  /** Removes all messages; opening a source doesn't bring them back until the next build or build summary */
   public static clear(): void {
     CompileDiagnostics.collection?.clear();
     CompileDiagnostics.by_source.clear();
+    CompileDiagnostics.shown = { sources: new Map(), evfevent_root: '' };
+  }
+
+
+  /** Tests: as after the start of the extension (nothing loaded yet) */
+  public static reset(): void {
+    CompileDiagnostics.collection?.clear();
+    CompileDiagnostics.by_source.clear();
+    CompileDiagnostics.shown = undefined;
   }
 
 

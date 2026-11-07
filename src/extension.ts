@@ -21,6 +21,7 @@ import { OBISourceDependency } from './webview/controller/OBISourceDependency';
 import { LocalSourceList } from './extension/utilities/LocalSourceList';
 import { QuickSettings } from './webview/quick_settings/QuickSettings';
 import { BuildHistoryProvider } from './webview/build_history/BuildHistoryProvider';
+import { BuildTimeline } from './webview/timeline/BuildTimeline';
 import { sourceQuickSearch } from './source-quick-search';
 import { CompileDiagnostics } from './extension/source/CompileDiagnostics';
 import { StatusBar } from './extension/StatusBar';
@@ -227,6 +228,8 @@ function register_project_features(context: vscode.ExtensionContext): void {
 	const buildHistoryProvider = new BuildHistoryProvider(rootPath);
 	buildHistoryProvider.register(context);
 	BuildHistoryProvider.init_retention(context.workspaceState);
+	// Builds in the Timeline view (VS Code 1.145 or newer)
+	BuildTimeline.register(context);
 
 	register_command(context, 'obi.source-filter.maintain-source-infos', () => {
 		// Only available with workspaces

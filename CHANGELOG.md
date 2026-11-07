@@ -1,3 +1,15 @@
+## [1.6.1]
+
+### Features
+* **Builds in the Timeline view** (VS Code 1.145 or newer) ([docs](asserts/docs/building.md#timeline))
+
+### Bugfixes
+* **Problems view:** compile messages update after each build and when a source is opened, also after a restart ([docs](asserts/docs/building.md#compile-errors))
+
+### Changes
+* **Build history:** faster tree
+
+
 ## [1.5.5]
 
 ### Features
