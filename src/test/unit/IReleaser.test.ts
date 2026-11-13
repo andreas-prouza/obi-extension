@@ -1,7 +1,7 @@
 import assert from 'assert';
 import * as http from 'http';
 import { AddressInfo } from 'net';
-import { IReleaserError, base_url, configured_workflows, deployment_data, deployment_of, get_workflows, show_details_url, start_workflow, workflow_choices } from '../../shared/IReleaser';
+import { DeploymentState, IReleaserError, SseParser, base_url, configured_workflows, deployment_data, deployment_of, get_deployment, get_workflows, is_final, parse_deployment, show_details_url, start_workflow, state_changes, status_class, watch_state, workflow_choices } from '../../shared/IReleaser';
 
 
 interface Received { method?: string; url?: string; headers: http.IncomingHttpHeaders; body: string }
@@ -163,5 +163,174 @@ suite('i-Releaser client', () => {
     assert.deepStrictEqual(workflow_choices(available, ['UAT', 'Tset'], 'Prdo'), { choices: ['UAT'], unknown: ['Prdo', 'Tset'] });
     assert.deepStrictEqual(workflow_choices(available, ['Tset'], undefined), { choices: [], unknown: ['Tset'] });
     assert.deepStrictEqual(workflow_choices(available, undefined, 'Prdo'), { choices: ['Test', 'Prod', 'UAT'], unknown: ['Prdo'] });
+  });
+});
+
+
+
+/** get_meta_file_json answer of a deployment with three stages */
+function meta_file(status: string, stages: [number, string, string][]): Record<string, unknown> {
+  const as_dict = ([id, name, stage_status]: [number, string, string]) => ({ id: id, name: name, status: stage_status, actions: [] });
+  return {
+    general: {
+      id: 123, project: 'erp', deploy_version: 42, status: status, update_time: '2026-11-11 10:00:00',
+      workflow: { name: 'Deploy OBI Build', stages: [] },
+      processed_stages: stages.filter(stage => stage[2] === 'finished').map(as_dict),
+      open_stages: stages.filter(stage => stage[2] !== 'finished').map(as_dict),
+    },
+    objects: [], run_history: [], custom_data: { compiles: [] }
+  };
+}
+
+const state = (status: string, stages: [number, string, string][]): DeploymentState => parse_deployment(meta_file(status, stages));
+
+
+suite('i-Releaser deployment status', () => {
+
+  test('parse_deployment: stages of both lists in the order of their ids', () => {
+    assert.deepStrictEqual(state('in process', [[12, 'TEST', 'in process'], [11, 'START', 'finished'], [13, 'PROD', 'new']]), {
+      id: 123, status: 'in process', project: 'erp', deploy_version: 42, workflow: 'Deploy OBI Build', update_time: '2026-11-11 10:00:00',
+      stages: [{ id: 11, name: 'START', status: 'finished', steps: [] }, { id: 12, name: 'TEST', status: 'in process', steps: [] }, { id: 13, name: 'PROD', status: 'new', steps: [] }]
+    });
+    // Only what is needed; broken stages are left out
+    assert.deepStrictEqual(parse_deployment({ general: { id: '7', status: 'new', open_stages: [{ id: 1, status: 'ready' }, { name: 'x' }, 'y'], processed_stages: 'z' } }),
+      { id: '7', status: 'new', stages: [{ id: 1, name: '1', status: 'ready', steps: [] }] });
+    for (const data of [undefined, [], {}, { general: { status: 'new' } }, { general: { id: {}, status: 'new' } }, { general: { id: 1 } }, { status: 'error', message: 'x' }])
+      assert.throws(() => parse_deployment(data), IReleaserError, JSON.stringify(data));
+  });
+
+
+  test('state_changes, is_final, status_class', () => {
+    const before = state('in process', [[1, 'START', 'finished'], [2, 'TEST', 'in process'], [3, 'PROD', 'new']]);
+    assert.deepStrictEqual(state_changes(before, before), []);
+    assert.deepStrictEqual(state_changes(before, state('ready', [[1, 'START', 'finished'], [2, 'TEST', 'finished'], [3, 'PROD', 'ready']])),
+      [{ kind: 'stage-finished', stage: 'TEST' }]);
+    assert.deepStrictEqual(state_changes(before, state('failed', [[1, 'START', 'finished'], [2, 'TEST', 'failed'], [3, 'PROD', 'new']])),
+      [{ kind: 'stage-failed', stage: 'TEST' }]);
+    // A new stage that is already finished, and a canceled deployment
+    assert.deepStrictEqual(state_changes(before, state('canceled', [[1, 'START', 'finished'], [2, 'TEST', 'in process'], [3, 'PROD', 'new'], [4, 'QS', 'finished']])),
+      [{ kind: 'stage-finished', stage: 'QS' }, { kind: 'canceled' }]);
+
+    assert.strictEqual(is_final(before), false);
+    assert.strictEqual(is_final(state('failed', [])), false, 'a failed stage can be run again');
+    assert.strictEqual(is_final(state('finished', [])), true);
+    assert.strictEqual(is_final(state('canceled', [])), true);
+
+    assert.deepStrictEqual(['finished', 'failed', 'canceled', 'in process', 'in preperation', 'prepare', 'ready', 'new', 'other'].map(status_class),
+      ['success', 'failed', 'failed', 'in_process', 'in_process', 'in_process', 'new', 'new', 'new']);
+  });
+
+
+  test('SseParser: data of complete events, split over chunks', () => {
+    const parser = new SseParser();
+    assert.deepStrictEqual(parser.push('data: {"page": "a"'), []);
+    assert.deepStrictEqual(parser.push('}\n\n: keep-alive\n\ndata: x\r'), ['{"page": "a"}']);
+    assert.deepStrictEqual(parser.push('\n\r\n'), ['x']);
+    assert.deepStrictEqual(parser.push('event: e\ndata: 1\ndata:2\nid: 5\n\n\n\n'), ['1\n2']);
+    assert.throws(() => parser.push(`data: ${'x'.repeat(1024 * 1024)}`), IReleaserError);
+  });
+
+
+  test('get_deployment: POST of get_meta_file_json, token in the header', async () => {
+    const ir = await server(() => json(200, meta_file('ready', [[1, 'START', 'ready']])));
+    try {
+      const deployment = await get_deployment(ir.base, 'tok', 'a/1');
+      assert.strictEqual(deployment.status, 'ready');
+      assert.strictEqual(ir.received[0].method, 'POST');
+      assert.strictEqual(ir.received[0].url, '/ir/api/get_meta_file_json/a%2F1');
+      assert.strictEqual(ir.received[0].headers['authorization'], 'Bearer tok');
+    }
+    finally {
+      await ir.close();
+    }
+  });
+});
+
+
+
+/** Local i-Releaser for watch_state: `write` gets the response to write events to */
+async function sse_server(write: (res: http.ServerResponse, req: http.IncomingMessage) => void): Promise<{ base: string; requests: http.IncomingMessage[]; close: () => Promise<void> }> {
+  const requests: http.IncomingMessage[] = [];
+  const srv = http.createServer((req, res) => {
+    requests.push(req);
+    write(res, req);
+  });
+  await new Promise<void>(resolve => srv.listen(0, '127.0.0.1', resolve));
+  const port = (srv.address() as AddressInfo).port;
+  return {
+    base: `http://127.0.0.1:${port}`, requests: requests,
+    close: () => new Promise(resolve => { srv.closeAllConnections(); srv.close(() => resolve()); })
+  };
+}
+
+const event_stream = (res: http.ServerResponse) => res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+
+
+suite('i-Releaser watch_state', () => {
+
+  test('on_change for each event, until the server closes the stream', async () => {
+    const ir = await sse_server(res => {
+      event_stream(res);
+      res.write('data: {"page": "a"}\n\n: keep-alive\n\n');
+      setTimeout(() => res.end('data: {"page": "b"}\n\n'), 20);
+    });
+    try {
+      let changes = 0;
+      await watch_state(ir.base, 'tok', 5, async () => { changes++; return true; });
+      assert.strictEqual(changes, 2);
+      assert.strictEqual(ir.requests[0].method, 'GET');
+      assert.strictEqual(ir.requests[0].url, '/api/watch_state/5');
+      assert.strictEqual(ir.requests[0].headers['authorization'], 'Bearer tok');
+      assert.strictEqual(ir.requests[0].headers['accept'], 'text/event-stream');
+    }
+    finally {
+      await ir.close();
+    }
+  });
+
+
+  test('stops when on_change returns false; abort', async () => {
+    const ir = await sse_server(res => {
+      event_stream(res);
+      res.write('data: {"page": "a"}\n\n');
+      const timer = setInterval(() => res.write(': keep-alive\n\n'), 10);
+      res.on('close', () => clearInterval(timer));
+    });
+    try {
+      let changes = 0;
+      await watch_state(ir.base, 'tok', 5, async () => { changes++; return false; });
+      assert.strictEqual(changes, 1);
+
+      const controller = new AbortController();
+      const watching = watch_state(ir.base, 'tok', 5, async () => { controller.abort(); return true; }, controller.signal);
+      await assert.rejects(watching, (e: unknown) => !(e instanceof IReleaserError));
+    }
+    finally {
+      await ir.close();
+    }
+  });
+
+
+  test('errors: error event, no data, HTTP error', async () => {
+    const answers: ((res: http.ServerResponse) => void)[] = [
+      res => { event_stream(res); res.write('data: {"status": "error", "message": "Meta file for ID 5 not found"}\n\n'); },
+      res => { event_stream(res); },
+      res => { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ status: 'error', message: 'not permitted' })); },
+    ];
+    const expected = [/^Meta file for ID 5 not found$/, /^No data from .* within 0\.1 seconds$/, /^HTTP 403: not permitted$/];
+    for (let i = 0; i < answers.length; i++) {
+      const ir = await sse_server(answers[i]);
+      try {
+        await assert.rejects(watch_state(ir.base, 'TOKEN-123', 5, async () => true, undefined, 100), (e: unknown) => {
+          assert.ok(e instanceof IReleaserError, String(e));
+          assert.match(e.message, expected[i]);
+          assert.ok(!e.message.includes('TOKEN-123'));
+          return true;
+        });
+      }
+      finally {
+        await ir.close();
+      }
+    }
   });
 });

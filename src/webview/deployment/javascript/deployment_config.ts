@@ -40,6 +40,8 @@ function save_config() {
       'url': value('i-releaser|url'),
       'default-workflow': value('i-releaser|default-workflow'),
       'workflows': value('i-releaser|workflows').split('\n'),
+      'project': value('i-releaser|project'),
+      'run-stages': value('i-releaser|run-stages').split('\n'),
       'main-branch': value('i-releaser|main-branch'),
       'auth-token': value('i-releaser|auth-token')
     }

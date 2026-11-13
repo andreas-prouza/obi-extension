@@ -21,7 +21,9 @@ import { SystemCmdExecution } from '../../extension/utilities/SystemCmdExecution
 import { OperationLock } from '../../extension/utilities/OperationLock';
 import { render_template } from '../Templates';
 import { DeploymentConfig } from '../deployment/DeploymentConfig';
-import { CUSTOM_DATA_KEY, IReleaserError, deployment_data, deployment_of, get_workflows, show_details_url, start_workflow, workflow_choices } from '../../shared/IReleaser';
+import { CUSTOM_DATA_KEY, DeploymentRecord, IReleaserError, deployment_data, deployment_of, get_workflows, show_details_url, start_workflow, status_class, workflow_choices } from '../../shared/IReleaser';
+import { DeploymentWatcher } from '../deployment/DeploymentWatcher';
+import { history_dir_name } from '../build_history/HistoryTimestamp';
 import { UserCancelledError } from '../../shared/Errors';
 import { require_trust } from '../../extension/utilities/Trust';
 import { show_error } from '../../extension/utilities/Notify';
@@ -35,6 +37,8 @@ export class BuildSummary {
   private _disposables: vscode.Disposable[] = [];
   private static _extensionUri: vscode.Uri;
   private static _current_compile_output_folder: string | undefined;
+  /** i-Releaser deployment of the displayed build list, followed by DeploymentWatcher */
+  private static _shown_deployment: { base: string; id: string } | undefined;
 
 
   /**
@@ -51,6 +55,21 @@ export class BuildSummary {
     // the panel or when the panel is closed programmatically)
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
+    // New status of the displayed deployment
+    DeploymentWatcher.on_changed(changed => {
+      const shown = BuildSummary._shown_deployment;
+      if (shown && shown.base === changed.base && shown.id === changed.id)
+        BuildSummary.update();
+    }, null, this._disposables);
+  }
+
+
+  /** Lets DeploymentWatcher follow the deployment of the displayed build list (and no other for the summary) */
+  private static follow_deployment(compile_list: unknown): void {
+    const base = DeploymentConfig.i_releaser_url();
+    const deployment = base ? deployment_of(compile_list) : undefined;
+    BuildSummary._shown_deployment = base && deployment ? { base: base, id: String(deployment.id) } : undefined;
+    DeploymentWatcher.show(BuildSummary._shown_deployment);
   }
 
 
@@ -74,6 +93,7 @@ export class BuildSummary {
     }
 
     // An open panel is reused: it stays in its editor group, and the page keeps its scroll position and open sections
+    BuildSummary.follow_deployment(BuildSummary.get_compile_list());
     if (BuildSummary.currentPanel) {
       const existing = BuildSummary.currentPanel._panel;
       existing.webview.html = BuildSummary.generate_html(extensionUri, existing.webview);
@@ -89,7 +109,6 @@ export class BuildSummary {
     panel.webview.onDidReceiveMessage((raw: unknown) => BuildSummary.on_message(raw));
 
     BuildSummary.currentPanel = new BuildSummary(panel, extensionUri);
-  
   }
 
 
@@ -227,10 +246,8 @@ export class BuildSummary {
       const record = await BuildSummary.with_progress(vscode.l10n.t('Starting i-Releaser workflow {0}…', picked.label), lock_token,
         signal => start_workflow(base, auth_token, picked.label, deployment_data(compile_list), signal));
 
-      if (!is_plain_object(compile_list['custom_data']))
-        compile_list['custom_data'] = {};
-      compile_list['custom_data'][CUSTOM_DATA_KEY] = record;
-      OBITools.write_compile_list(compile_list_file, compile_list);
+      BuildSummary.store_deployment(compile_list_file, compile_list, record);
+      DeploymentWatcher.watch(base, record.id, 'started');
       await BuildSummary.update();
 
       const open = vscode.l10n.t('Open');
@@ -242,6 +259,38 @@ export class BuildSummary {
     }
     catch (e: unknown) {
       show_error(vscode.l10n.t('Starting the i-Releaser workflow failed'), e);
+    }
+  }
+
+
+
+  /**
+   * Stores the deployment in the displayed build list and in the other copy of the same build
+   * (live list ↔ its history folder), so the history and the Timeline know it too.
+   * Written as it is: the git info stays the one of the build, not the current commit.
+   */
+  private static store_deployment(compile_list_file: string, compile_list: Record<string, unknown>, record: DeploymentRecord): void {
+
+    const with_record = (list: Record<string, unknown>) => {
+      if (!is_plain_object(list['custom_data']))
+        list['custom_data'] = {};
+      (list['custom_data'] as Record<string, unknown>)[CUSTOM_DATA_KEY] = record;
+      return list;
+    };
+    DirTool.write_json(compile_list_file, with_record(compile_list));
+
+    const timestamp = compile_list['timestamp'];
+    if (typeof timestamp !== 'string' || timestamp === '')
+      return;
+    const ws = Workspace.get_workspace();
+    const live_file = path.join(ws, AppConfig.get_app_config().general['compile-list']);
+    const history_file = path.join(ws, Constants.BUILD_HISTORY_DIR, history_dir_name(timestamp), 'compile-list.json');
+    for (const file of [live_file, history_file]) {
+      if (path.resolve(file) === path.resolve(compile_list_file) || !DirTool.file_exists(file))
+        continue;
+      const copy = OBITools.get_compile_list(Workspace.get_workspace_uri(), path.relative(ws, file));
+      if (is_plain_object(copy) && copy['timestamp'] === timestamp)
+        DirTool.write_json(file, with_record(copy));
     }
   }
 
@@ -498,6 +547,27 @@ export class BuildSummary {
 
 
 
+  /** Status of a deployment for the page, as far as DeploymentWatcher knows it */
+  private static deployment_status(base: string, id: number | string) {
+    const info = DeploymentWatcher.info(base, id);
+    if (!info)
+      return { watched: false };
+    const state = info.state;
+    return {
+      watched: true,
+      error: info.error,
+      checked: info.checked?.toLocaleTimeString(),
+      state: state ? {
+        status: state.status,
+        css: status_class(state.status),
+        version: state.deploy_version !== undefined ? String(state.deploy_version) : undefined,
+        stages: state.stages.map(stage => ({ name: stage.name, status: stage.status, css: status_class(stage.status) }))
+      } : undefined
+    };
+  }
+
+
+
   private static generate_html(extensionUri: vscode.Uri, webview: vscode.Webview): string {
 
     const ws: vscode.Uri = Workspace.get_workspace_uri();
@@ -521,7 +591,11 @@ export class BuildSummary {
     const i_releaser_url = DeploymentConfig.i_releaser_url();
     const deployment = i_releaser_url ? deployment_of(compile_list) : undefined;
     const i_releaser = i_releaser_url ? {
-      deployment: deployment ? { id: String(deployment.id), link: show_details_url(i_releaser_url, deployment.id) } : undefined
+      deployment: deployment ? {
+        id: String(deployment.id),
+        link: show_details_url(i_releaser_url, deployment.id),
+        ...BuildSummary.deployment_status(i_releaser_url, deployment.id)
+      } : undefined
     } : undefined;
 
     let created_timestamp = 'Unsupported timestamp';
@@ -563,8 +637,8 @@ export class BuildSummary {
     if (!panel)
       return;
 
+    BuildSummary.follow_deployment(BuildSummary.get_compile_list());
     panel._panel.webview.html = BuildSummary.generate_html(BuildSummary._extensionUri, panel._panel.webview);
-    
   }
 
 
@@ -665,6 +739,8 @@ export class BuildSummary {
    */
   public dispose() {
     BuildSummary.currentPanel = undefined;
+    BuildSummary._shown_deployment = undefined;
+    DeploymentWatcher.show(undefined);
 
     // Dispose of the current webview panel
     this._panel.dispose();

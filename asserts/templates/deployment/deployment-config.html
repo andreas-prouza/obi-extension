@@ -28,6 +28,13 @@
       value='{{ workflows | join("\n") }}'>{{ global_stuff['get_text']('Workflows to choose from (one per line, empty: all of i-Releaser)') | safe }}</vscode-text-area>
     <br/>
     <br/>
+    <vscode-text-field id="i-releaser|project" placeholder="erp" value="{{ deploy_config['i-releaser']['project'] }}">{{ global_stuff['get_text']('Project in i-Releaser (empty: from the workflows)') | safe }}</vscode-text-field>
+    <br/>
+    <br/>
+    <vscode-text-area id="i-releaser|run-stages" rows="3" resize="vertical" placeholder="START&#10;TEST"
+      value='{{ run_stages | join("\n") }}'>{{ global_stuff['get_text']('Stages that may be run from VS Code (one per line, empty: all)') | safe }}</vscode-text-area>
+    <br/>
+    <br/>
     <vscode-text-field id="i-releaser|main-branch" placeholder="main" value="{{ deploy_config['i-releaser']['main-branch'] }}">{{ global_stuff['get_text']('Main branch') | safe }}</vscode-text-field>
     <br/>
     <br/>

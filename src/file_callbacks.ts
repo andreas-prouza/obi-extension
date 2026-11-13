@@ -7,6 +7,7 @@ import { BuildHistoryProvider } from "./webview/build_history/BuildHistoryProvid
 import { BuildIndex } from "./webview/build_history/BuildIndex";
 import { AppConfig } from "./extension/config/AppConfig";
 import { SourceListProvider } from "./webview/source_list/SourceListProvider";
+import { DeploymentsView } from "./webview/deployment/DeploymentsView";
 
 
 /** What happens when files of the project change (see HealthyWatchdog) */
@@ -27,4 +28,6 @@ export const FILE_CALLBACKS: FileCallback[] = [
     BuildHistoryProvider.get_instance().refresh();
     BuildIndex.changed();   // Timeline
   } },
+  // URL, project and run-stages of i-Releaser: the deployments view
+  { pattern: Constants.DEPLOYMENT_CONFIG_FILE, delay: 200, action: () => DeploymentsView.get_instance()?.config_changed() },
 ];

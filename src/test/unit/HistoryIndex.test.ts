@@ -72,6 +72,14 @@ suite('Build history index', () => {
     assert.strictEqual(build.sources.get('lib/f/a.pgm')?.cmds.length, 1);
   });
 
+  test('read_build: the i-Releaser deployment of the build', () => {
+    const dir = '2026-11-07T10.00.00.000Z';
+    assert.strictEqual(read_build(dir, compile_list([{ source: 'a', cmds: [ok()] }]))?.deployment, undefined);
+    assert.strictEqual(read_build(dir, { ...compile_list([{ source: 'a', cmds: [ok()] }]), custom_data: { 'i-releaser': { id: 123, workflow: 'wf' } } })?.deployment, '123');
+    // Stored by a custom build summary template
+    assert.strictEqual(read_build(dir, { ...compile_list([]), custom_data: { json: { meta_file: { general: { id: 'x7' } } } } })?.deployment, 'x7');
+  });
+
   test('builds of a source and below a folder, newest first', () => {
     const index = [
       entry('2026-11-05T10.00.00.000Z', ['lib/qrpglesrc/a.rpgle', 'success']),

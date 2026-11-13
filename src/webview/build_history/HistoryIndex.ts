@@ -2,6 +2,7 @@
 // No vscode imports: this module is unit-tested in plain Node.
 
 import { SourceStatus, is_failed, source_status } from '../../shared/BuildStatus';
+import { deployment_of } from '../../shared/IReleaser';
 import { parse_history_dir } from './HistoryTimestamp';
 
 
@@ -27,6 +28,8 @@ export interface BuildEntry {
   /** Sources that aren't ignored, and those of them that failed or weren't built (like the status bar) */
   total: number;
   failed: number;
+  /** Id of the i-Releaser deployment started for this build */
+  deployment?: string;
 }
 
 export interface FolderBuild {
@@ -68,7 +71,8 @@ export function read_build(dir: string, compile_list: unknown): BuildEntry | und
       }
     }
   }
-  return { dir, time, sources, total, failed };
+  const deployment = deployment_of(compile_list);
+  return deployment ? { dir, time, sources, total, failed, deployment: String(deployment.id) } : { dir, time, sources, total, failed };
 }
 
 

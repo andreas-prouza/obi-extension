@@ -46,7 +46,7 @@ function check_command_registration() {
 
 // Dependencies must not float: "latest" or "*" can resolve to a different (or compromised) version on every install
 // Import cycles make the load order of modules fragile. The number of modules in cycles may only go down.
-const MODULES_IN_CYCLES = 16;
+const MODULES_IN_CYCLES = 15;
 
 function check_import_cycles() {
   const graph = new Map();

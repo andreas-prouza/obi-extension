@@ -75,7 +75,7 @@ On each build, the project configuration and your active user configuration are 
 | `etc/.user-extended-source-processing-config*.toml` | Extended source processing, user/profile | ❌ local |
 | `etc/dependency.json` | [Dependencies](dependencies.md) | ✅ commit |
 | `etc/source-infos.json` | [Source descriptions](sources.md#source-descriptions) | ✅ commit |
-| `etc/deployment.toml` | URL and workflows of [i-Releaser](building.md#i-releaser-deployment) (the token is in VS Code's secret storage) | ✅ commit |
+| `etc/deployment.toml` | URL, workflows, project and `run-stages` of [i-Releaser](building.md#i-releaser-deployment) (the token is in VS Code's secret storage) | ✅ commit |
 | `etc/object-builds.json` | Hashes of the last successful builds (change detection) | ❌ local, usually (it reflects what *you* built) |
 | `etc/constants.py`, `etc/logger_config.py` | Settings for the OBI backend; do not modify | ✅ commit |
 | `etc/source-list-local.json` | Generated source list | ❌ local |

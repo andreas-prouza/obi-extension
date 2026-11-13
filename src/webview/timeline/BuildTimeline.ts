@@ -171,7 +171,7 @@ export class BuildTimeline implements ObiTimelineProvider, ObiWorkspaceTimelineP
   private folder_item(build: FolderBuild, folder: string): ObiTimelineItem {
     const item = this.new_item(BuildTimeline.build_label(build.failed, build.total), build.entry, item_id(build.entry.dir, folder), 'obi.build');
     item.iconPath = BuildTimeline.status_icon(build.failed > 0 ? 'failed' : 'success');
-    item.description = build.total === 1 ? vscode.l10n.t('1 source in this folder') : vscode.l10n.t('{0} sources in this folder', build.total);
+    item.description = BuildTimeline.with_deployment(build.total === 1 ? vscode.l10n.t('1 source in this folder') : vscode.l10n.t('{0} sources in this folder', build.total), build.entry);
     item.tooltip = BuildTimeline.sources_tooltip(item.label ?? '', build.entry, source => folder === '' || source.startsWith(`${folder}/`));
     return item;
   }
@@ -180,9 +180,15 @@ export class BuildTimeline implements ObiTimelineProvider, ObiWorkspaceTimelineP
   private build_item(entry: BuildEntry): ObiTimelineItem {
     const item = this.new_item(BuildTimeline.build_label(entry.failed, entry.total), entry, item_id(entry.dir), 'obi.build');
     item.iconPath = BuildTimeline.status_icon(entry.failed > 0 ? 'failed' : 'success');
-    item.description = entry.total === 1 ? vscode.l10n.t('1 source') : vscode.l10n.t('{0} sources', entry.total);
+    item.description = BuildTimeline.with_deployment(entry.total === 1 ? vscode.l10n.t('1 source') : vscode.l10n.t('{0} sources', entry.total), entry);
     item.tooltip = BuildTimeline.sources_tooltip(item.label ?? '', entry, () => true);
     return item;
+  }
+
+
+  /** "14 sources · i-Releaser 123" for a build with a deployment */
+  private static with_deployment(description: string, entry: BuildEntry): string {
+    return entry.deployment ? `${description} · ${vscode.l10n.t('i-Releaser {0}', entry.deployment)}` : description;
   }
 
 
@@ -231,6 +237,10 @@ export class BuildTimeline implements ObiTimelineProvider, ObiWorkspaceTimelineP
     tooltip.appendText(label);
     tooltip.appendMarkdown('** · ');
     tooltip.appendText(`${local_date_label(entry.time)} ${entry.time.toLocaleTimeString()}`);
+    if (entry.deployment) {
+      tooltip.appendMarkdown('\n\n$(rocket) ');
+      tooltip.appendText(vscode.l10n.t('i-Releaser deployment {0}', entry.deployment));
+    }
     return tooltip;
   }
 

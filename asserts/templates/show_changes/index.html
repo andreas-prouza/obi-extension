@@ -29,6 +29,23 @@
       &nbsp;&nbsp;&nbsp;
       {% if custom_build_list_template %}{% include custom_build_list_template ignore missing %}{% endif %}
     </div>
+    {% if i_releaser and i_releaser.deployment and i_releaser.deployment.watched %}
+    {% set dep = i_releaser.deployment %}
+    <div id="i_releaser_status" class="i-releaser-status">
+      <span class="codicon codicon-rocket"></span>
+      {{ global_stuff['get_text']('i-Releaser deployment') | safe }} {{ dep.id }}{% if dep.state and dep.state.version %} · {{ global_stuff['get_text']('version') | safe }} {{ dep.state.version }}{% endif %}:
+      {% if dep.state %}
+        <span class="{{ dep.state.css }}">&nbsp;{{ dep.state.status }}&nbsp;</span>
+        {% if dep.checked %}&nbsp;<small>({{ global_stuff['get_text']('updated') | safe }} {{ dep.checked }})</small>{% endif %}
+        {% if dep.state.stages | length %}
+        <div id="i_releaser_stages" class="i-releaser-stages">{% for stage in dep.state.stages %}{% if not loop.first %}&nbsp;→&nbsp;{% endif %}{{ stage.name }} <span class="{{ stage.css }}">&nbsp;{{ stage.status }}&nbsp;</span>{% endfor %}</div>
+        {% endif %}
+      {% elif not dep.error %}
+        <i>{{ global_stuff['get_text']('Loading the deployment status…') | safe }}</i>
+      {% endif %}
+      {% if dep.error %}<div class="i-releaser-error"><span class="codicon codicon-warning"></span> {{ dep.error }}</div>{% endif %}
+    </div>
+    {% endif %}
     <div><vscode-button style="height:35px; vertical-align: super;" id="add_source" appearance="primary"><span slot="start"><span class="codicon codicon-add"></span></span>{{ global_stuff['get_text']('Add source') | safe }}</vscode-button></div>
 
     {% else %}

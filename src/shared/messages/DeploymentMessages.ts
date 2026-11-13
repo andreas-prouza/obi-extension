@@ -1,9 +1,9 @@
-// Messages of the deployment pages (deployment_config.ts → DeploymentConfig.ts, i_releaser.ts → I_Releaser.ts)
+// Messages of the deployment config page (deployment_config.ts → DeploymentConfig.ts)
 import { Guard, MessageOf, is_plain_object, is_string, is_string_array } from './MessageGuard';
 
 
 export interface DeploymentConfigData {
-  'i-releaser': { url: string; 'default-workflow': string; workflows: string[]; 'main-branch': string; 'auth-token': string };
+  'i-releaser': { url: string; 'default-workflow': string; workflows: string[]; project: string; 'run-stages': string[]; 'main-branch': string; 'auth-token': string };
 }
 
 const is_deployment_config: Guard<DeploymentConfigData> = (v): v is DeploymentConfigData => {
@@ -11,6 +11,7 @@ const is_deployment_config: Guard<DeploymentConfigData> = (v): v is DeploymentCo
     return false;
   const ir = v['i-releaser'];
   return is_string(ir['url']) && is_string(ir['default-workflow']) && is_string_array(ir['workflows'])
+    && is_string(ir['project']) && is_string_array(ir['run-stages'])
     && is_string(ir['main-branch']) && is_string(ir['auth-token']);
 };
 
@@ -22,9 +23,3 @@ export const DEPLOYMENT_CONFIG_REQUESTS = {
 
 export type DeploymentConfigRequest = MessageOf<typeof DEPLOYMENT_CONFIG_REQUESTS>;
 
-
-export const I_RELEASER_REQUESTS = {
-  open_web_app: {},
-};
-
-export type IReleaserRequest = MessageOf<typeof I_RELEASER_REQUESTS>;

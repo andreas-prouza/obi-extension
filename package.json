@@ -231,6 +231,55 @@
         "when": "obi.contains_obi_project"
       },
       {
+        "command": "obi.deployment.refresh",
+        "title": "%obi.deployment.refresh%",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "obi.deployment.open-in-browser",
+        "title": "%obi.deployment.open-in-browser%",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "obi.deployment.open-build-summary",
+        "title": "%obi.deployment.open-build-summary%",
+        "icon": "$(output)"
+      },
+      {
+        "command": "obi.deployment.show-more",
+        "title": "%obi.deployment.show-more%"
+      },
+      {
+        "command": "obi.deployment.run-stage",
+        "title": "%obi.deployment.run-stage%",
+        "icon": "$(play)"
+      },
+      {
+        "command": "obi.deployment.continue-stage",
+        "title": "%obi.deployment.continue-stage%",
+        "icon": "$(debug-continue)"
+      },
+      {
+        "command": "obi.deployment.rerun-stage",
+        "title": "%obi.deployment.rerun-stage%",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "obi.deployment.cancel",
+        "title": "%obi.deployment.cancel%",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "obi.deployment.show-log",
+        "title": "%obi.deployment.show-log%",
+        "icon": "$(output)"
+      },
+      {
+        "command": "obi.deployment.show-failed-log",
+        "title": "%obi.deployment.show-failed-log%",
+        "icon": "$(output)"
+      },
+      {
         "command": "obi.build-history.update",
         "title": "%obi.build-history.update%"
       },
@@ -381,9 +430,19 @@
           "group": "navigation@70"
         },
         {
+          "command": "obi.deployment.refresh",
+          "when": "view == obi.deployment",
+          "group": "navigation@0"
+        },
+        {
           "command": "obi.deployment.maintain",
-          "when": "obi.contains_obi_project && obi.valid-config && view == obi.deployment",
+          "when": "view == obi.deployment",
           "group": "navigation@1"
+        },
+        {
+          "command": "obi.deployment.open-web-app",
+          "when": "view == obi.deployment",
+          "group": "navigation@2"
         },
         {
           "command": "obi.build-history.switch-to-source-view",
@@ -492,6 +551,66 @@
           "command": "obi.build-history.delete-date",
           "when": "view == obi.build-history && viewItem == buildHistoryDate",
           "group": "inline"
+        },
+        {
+          "command": "obi.deployment.run-stage",
+          "when": "view == obi.deployment && viewItem =~ /^obi\\.ir\\.stage\\.run/",
+          "group": "inline@0"
+        },
+        {
+          "command": "obi.deployment.continue-stage",
+          "when": "view == obi.deployment && viewItem =~ /^obi\\.ir\\.stage\\.retry/",
+          "group": "inline@0"
+        },
+        {
+          "command": "obi.deployment.run-stage",
+          "when": "view == obi.deployment && viewItem =~ /^obi\\.ir\\.stage\\.run/",
+          "group": "1_run@0"
+        },
+        {
+          "command": "obi.deployment.continue-stage",
+          "when": "view == obi.deployment && viewItem =~ /^obi\\.ir\\.stage\\.retry/",
+          "group": "1_run@1"
+        },
+        {
+          "command": "obi.deployment.rerun-stage",
+          "when": "view == obi.deployment && viewItem =~ /^obi\\.ir\\.stage\\.retry/",
+          "group": "1_run@2"
+        },
+        {
+          "command": "obi.deployment.show-failed-log",
+          "when": "view == obi.deployment && viewItem =~ /^obi\\.ir\\.stage.*\\.failedlog/",
+          "group": "2_log@0"
+        },
+        {
+          "command": "obi.deployment.show-log",
+          "when": "view == obi.deployment && viewItem == obi.ir.step.log",
+          "group": "inline@0"
+        },
+        {
+          "command": "obi.deployment.show-log",
+          "when": "view == obi.deployment && viewItem == obi.ir.step.log",
+          "group": "1_log@0"
+        },
+        {
+          "command": "obi.deployment.open-in-browser",
+          "when": "view == obi.deployment && viewItem =~ /^obi\\.ir\\.deployment/",
+          "group": "inline@1"
+        },
+        {
+          "command": "obi.deployment.open-in-browser",
+          "when": "view == obi.deployment && viewItem =~ /^obi\\.ir\\.deployment/",
+          "group": "1_open@0"
+        },
+        {
+          "command": "obi.deployment.open-build-summary",
+          "when": "view == obi.deployment && viewItem =~ /^obi\\.ir\\.deployment.*\\.build/",
+          "group": "1_open@1"
+        },
+        {
+          "command": "obi.deployment.cancel",
+          "when": "view == obi.deployment && viewItem =~ /^obi\\.ir\\.deployment\\.open/",
+          "group": "9_cancel@0"
         }
       ],
       "commandPalette": [
@@ -510,6 +629,46 @@
         {
           "command": "obi.deployment.open-web-app",
           "when": "obi.contains_obi_project"
+        },
+        {
+          "command": "obi.deployment.refresh",
+          "when": "obi.contains_obi_project && obi.i-releaser-configured"
+        },
+        {
+          "command": "obi.deployment.open-in-browser",
+          "when": "false"
+        },
+        {
+          "command": "obi.deployment.open-build-summary",
+          "when": "false"
+        },
+        {
+          "command": "obi.deployment.show-more",
+          "when": "false"
+        },
+        {
+          "command": "obi.deployment.run-stage",
+          "when": "false"
+        },
+        {
+          "command": "obi.deployment.continue-stage",
+          "when": "false"
+        },
+        {
+          "command": "obi.deployment.rerun-stage",
+          "when": "false"
+        },
+        {
+          "command": "obi.deployment.cancel",
+          "when": "false"
+        },
+        {
+          "command": "obi.deployment.show-log",
+          "when": "false"
+        },
+        {
+          "command": "obi.deployment.show-failed-log",
+          "when": "false"
         },
         {
           "command": "obi.timeline.show-compile-messages",
@@ -578,10 +737,11 @@
           "when": "false && obi.contains_obi_project && obi.valid-config"
         },
         {
-          "type": "webview",
+          "type": "tree",
           "id": "obi.deployment",
-          "name": "%deployment%",
-          "when": "1==2 && obi.contains_obi_project && obi.valid-config"
+          "name": "%view.obi.deployment%",
+          "when": "obi.contains_obi_project && obi.valid-config && obi.i-releaser-configured",
+          "visibility": "collapsed"
         },
         {
           "type": "webview",
@@ -780,7 +940,7 @@
     "test:unit": "npm run compile-tests && mocha --ui tdd \"out-test/test/unit/**/*.test.js\"",
     "test:coverage": "npm run pretest && node -e \"require('fs').rmSync('coverage',{recursive:true,force:true})\" && node ./out-test/test/runTest.js --coverage && c8 report",
     "lint": "eslint src/",
-    "lint:ci": "eslint src/ --max-warnings 251",
+    "lint:ci": "eslint src/ --max-warnings 249",
     "check:repo": "node scripts/check-repo.js",
     "postinstall": "node -e \"require('fs').rmSync('node_modules/ssh2/test',{recursive:true,force:true})\""
   },

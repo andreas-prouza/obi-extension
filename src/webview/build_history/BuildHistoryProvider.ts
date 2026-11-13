@@ -62,6 +62,9 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
   private static build_item(dir: string, dirPath: string, date: Date): BuildHistoryItem {
     const item = new BuildHistoryItem(date.toLocaleTimeString(), vscode.TreeItemCollapsibleState.Collapsed, dirPath, 'build', dir, local_date_label(date));
     item.build_time = date;
+    const deployment = BuildIndex.read(dirPath)?.deployment;
+    if (deployment)
+      item.description = vscode.l10n.t('i-Releaser {0}', deployment);
     return item;
   }
 

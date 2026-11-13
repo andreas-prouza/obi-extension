@@ -1,3 +1,19 @@
+## [1.7.1]
+
+### Features
+* **Build summary: live status of the i-Releaser deployment.** The deployment's status and its stages update while i-Releaser runs them. A notification appears when a stage finishes or fails ([docs](asserts/docs/building.md#i-releaser-deployment), [spec](docs/features/i-releaser-deployment-status.md))
+* **Build history and Timeline:** builds with an i-Releaser deployment show its id
+* **i-Releaser view** in the OBI sidebar (when `deployment.toml` has a URL): the deployments of the project with their stages and steps, live for expanded deployments; *Open in i-Releaser*, *Open build summary* ([docs](asserts/docs/building.md#i-releaser-view), [spec](docs/features/i-releaser-deployments-view.md))
+* **i-Releaser actions:** run a stage, continue a failed stage or run it again, cancel a deployment, show the log of a step. Each asks first. `run-stages` in `deployment.toml` limits which stages can be run from VS Code ([docs](asserts/docs/building.md#i-releaser-view), [spec](docs/features/i-releaser-deployment-actions.md))
+* **Deployment config:** new fields *Project in i-Releaser* and *Stages that may be run from VS Code*
+
+### Changes
+* The hidden i-Releaser webview view was replaced by the i-Releaser tree view
+
+### Bugfixes
+* **Start i-Releaser workflow:** the deployment is also stored in the build's copy in the build history. The build list keeps the git branch and commit of the build; before, they were replaced by the current ones
+
+
 ## [1.6.1]
 
 ### Features

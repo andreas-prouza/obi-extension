@@ -6,7 +6,6 @@ import * as path from 'path';
 import { Constants } from '../../shared/Constants';
 import { OBITools } from '../../extension/utilities/OBITools';
 import { Workspace } from '../../extension/utilities/Workspace';
-import { I_Releaser } from './I_Releaser';
 import { DEPLOYMENT_CONFIG_REQUESTS } from '../../shared/messages/DeploymentMessages';
 import { parse_message } from '../../shared/messages/MessageGuard';
 import { logger } from '../../extension/utilities/Logger';
@@ -21,6 +20,8 @@ export type Config = {
     url?: string,
     "default-workflow"?: string,
     workflows?: unknown,   // as written in the file: read with configured_workflows
+    project?: string,
+    "run-stages"?: unknown,   // stages that may be run from VS Code, read with configured_workflows
     "main-branch"?: string,
     "auth-token"?: string
   } 
@@ -129,10 +130,17 @@ export class DeploymentConfig {
 
 
 
+  private static readonly TOKEN_KEY_PREFIX = 'obi|deployment|http_auth_token|';
+
   // One token per i-Releaser (origin): a project with another URL in deployment.toml never gets it
   private static token_key(url: unknown): string | undefined {
     const base = base_url(url);
-    return base ? `obi|deployment|http_auth_token|${new URL(base).origin}` : undefined;
+    return base ? `${DeploymentConfig.TOKEN_KEY_PREFIX}${new URL(base).origin}` : undefined;
+  }
+
+  /** Key of the secret storage that holds an i-Releaser token */
+  public static is_token_key(key: string): boolean {
+    return key.startsWith(DeploymentConfig.TOKEN_KEY_PREFIX);
   }
 
   public static async get_auth_token(url: unknown): Promise<string | undefined> {
@@ -167,7 +175,8 @@ export class DeploymentConfig {
         // Never pass the secret itself into the page: only whether one is stored
         auth_token_stored: auth_token !== undefined && auth_token.length > 0,
         deploy_config: config,
-        workflows: configured_workflows(config['i-releaser'].workflows)
+        workflows: configured_workflows(config['i-releaser'].workflows),
+        run_stages: configured_workflows(config['i-releaser']['run-stages'])
       }
     );
 
@@ -246,13 +255,17 @@ export class DeploymentConfig {
     }
     delete data['i-releaser']['auth-token'];
     // One name per line on the page; no list means all workflows of i-Releaser
-    const workflows = configured_workflows(data['i-releaser'].workflows);
-    if (workflows.length > 0)
-      data['i-releaser'].workflows = workflows;
-    else
-      delete data['i-releaser'].workflows;
+    for (const key of ['workflows', 'run-stages'] as const) {
+      const names = configured_workflows(data['i-releaser'][key]);
+      if (names.length > 0)
+        data['i-releaser'][key] = names;
+      else
+        delete data['i-releaser'][key];
+    }
+    if (!data['i-releaser'].project?.trim())
+      delete data['i-releaser'].project;
+    // The deployments view follows the file (FILE_CALLBACKS)
     DirTool.update_toml(toml_file, data);   // creates deployment.toml if there is none yet
-    I_Releaser.refresh();
 
   }
 

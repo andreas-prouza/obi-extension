@@ -79,5 +79,16 @@
   "walkthrough.run-build.title": "Run the first build",
   "walkthrough.run-build.description": "Build the changed sources on the IBM i.\n[Run build](command:obi.run_build)",
   "walkthrough.read-more.title": "Read more",
-  "walkthrough.read-more.description": "The documentation covers sources, dependencies, configuration and SSH.\n[Open documentation](https://github.com/andreas-prouza/obi-extension/blob/main/asserts/docs/getting-started.md)"
+  "walkthrough.read-more.description": "The documentation covers sources, dependencies, configuration and SSH.\n[Open documentation](https://github.com/andreas-prouza/obi-extension/blob/main/asserts/docs/getting-started.md)",
+  "view.obi.deployment": "i-Releaser",
+  "obi.deployment.refresh": "OBI: refresh i-Releaser deployments",
+  "obi.deployment.open-in-browser": "Open in i-Releaser",
+  "obi.deployment.open-build-summary": "Open build summary",
+  "obi.deployment.show-more": "Show more",
+  "obi.deployment.run-stage": "Run stage",
+  "obi.deployment.continue-stage": "Continue stage",
+  "obi.deployment.rerun-stage": "Run stage again (all steps)",
+  "obi.deployment.cancel": "Cancel deployment",
+  "obi.deployment.show-log": "Show log",
+  "obi.deployment.show-failed-log": "Show log of the failed step"
 }

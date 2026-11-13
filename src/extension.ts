@@ -15,8 +15,9 @@ import { SourceInfos } from './webview/source_list/SourceInfos';
 import { Workspace } from './extension/utilities/Workspace';
 import { OBISourceConfiguration } from './webview/controller/OBISourceConfiguration';
 import { DirTool } from './extension/utilities/DirTool';
-import { I_Releaser } from './webview/deployment/I_Releaser';
 import { DeploymentConfig } from './webview/deployment/DeploymentConfig';
+import { DeploymentWatcher } from './webview/deployment/DeploymentWatcher';
+import { DeploymentsView } from './webview/deployment/DeploymentsView';
 import { OBISourceDependency } from './webview/controller/OBISourceDependency';
 import { LocalSourceList } from './extension/utilities/LocalSourceList';
 import { QuickSettings } from './webview/quick_settings/QuickSettings';
@@ -136,14 +137,16 @@ function register_project_features(context: vscode.ExtensionContext): void {
 	//--------------------------------------------------------
 	// i-Releaser
 	//--------------------------------------------------------
-	const i_releaser = new I_Releaser(context.extensionUri);
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(I_Releaser.viewType, i_releaser)
-	);
-
 	// URL and token of i-Releaser, for "Start i-Releaser workflow" in the build summary
 	register_command(context, 'obi.deployment.maintain', () => DeploymentConfig.render(context));
 	register_command(context, 'obi.deployment.open-web-app', () => DeploymentConfig.open_web_app());
+	// Status of the deployments shown in the build summary or started in this window
+	DeploymentWatcher.register(context, {
+		get_auth_token: url => DeploymentConfig.get_auth_token(url),
+		is_token_key: key => DeploymentConfig.is_token_key(key)
+	});
+	// Deployments of the project with their stages and steps; run a stage, cancel, show logs
+	DeploymentsView.register(context);
 
 
 	//--------------------------------------------------------

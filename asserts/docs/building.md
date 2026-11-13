@@ -96,14 +96,61 @@ With `*CURRENT` (or **Show single change** in the editor), only the active sourc
    default-workflow = "Deploy OBI Build"
    # Optional: only offer these workflows (and the default-workflow)
    workflows = ["Deploy OBI Build", "Deploy OBI Build Test"]
+   # Optional: the project in i-Releaser (default: the projects of these workflows)
+   project = "erp"
+   # Optional: stages that may be run from VS Code (default: all, as far as the token's user may)
+   run-stages = ["START", "TEST"]
    ```
 
    The token is stored in VS Code's secret storage, separately for each i-Releaser URL. If a project uses another URL, the token is not sent there.
 2. When all commands succeeded, click **Start i-Releaser workflow** and pick the workflow. The `default-workflow` comes first. Without `workflows`, the list shows all workflows the token may read. With `workflows`, it shows those in their order. On the config page, enter them one per line. A listed name that i-Releaser doesn't know is reported in a warning; check the spelling and the token's permissions.
 
-The build list goes to i-Releaser as the deployment's custom data, without joblogs, spool files and errors. i-Releaser accepts at most 64 KB. The deployment (id, workflow, project, version) is stored in the build list as `custom_data.i-releaser`, and **i-Releaser deployment** opens it in the browser.
+The build list goes to i-Releaser as the deployment's custom data, without joblogs, spool files and errors. i-Releaser accepts at most 64 KB. The deployment (id, workflow, project, version) is stored in the build list and in its copy in the build history as `custom_data.i-releaser`, and **i-Releaser deployment** opens it in the browser.
+
+**Status of the deployment:** while the build summary shows a build list with a deployment, the area below the buttons shows its status, and in the next line the status of each stage, for example:
+
+> 🚀 i-Releaser deployment 123 · version 42: `in process` (updated 10:41:07)<br>
+> START `finished` → TEST `in process` → PROD `new`
+
+* The line updates live while i-Releaser runs the stages, the same way the i-Releaser web app refreshes itself.
+* When a stage finishes or fails, a notification appears, with **Open** for the deployment in the browser. You get these notifications for deployments shown in the build summary and for deployments started in this window, even after the build summary was closed, until the deployment is finished or canceled.
+* If i-Releaser can't be reached, the line shows the error and the last known status, and OBI tries again.
+* The build history and the [Timeline](#timeline) show `i-Releaser 123` next to builds that were deployed.
 
 Requires a trusted workspace. The token is sent in the `Authorization` header; use an `https` URL, otherwise it travels unencrypted.
+
+### i-Releaser view
+
+When `deployment.toml` has an i-Releaser URL, the OBI sidebar has an **i-Releaser** view (collapsed at first). It shows the deployments of the project, newest first, 20 at a time (**Show more…** for the next ones):
+
+```
+42 · Deploy OBI Build         failed · build 2026-11-04 10:00:00
+├─ START                      finished
+│  └─ save objects            finished
+├─ TEST                       failed
+│  └─ run tests               failed · CALL PGM(TEST)
+└─ PROD                       new
+41 · Deploy OBI Build         finished
+```
+
+* **Project:** the `project` of `deployment.toml`. Without it, the projects of the configured workflows; without those, the projects of all workflows the token may read. With several projects, each one is a node.
+* `build …` marks deployments that were started for a build in your [build history](#build-history).
+* A deployment you expand follows its run live (at most 5 at a time). Everything else is read again with the **Refresh** button of the view, and when the view becomes visible after a minute or more.
+
+Actions (context menu, or the buttons on the right of an item):
+
+| Item | Action |
+|---|---|
+| Deployment | **Open in i-Releaser** (browser), **Open build summary** (if the build is in your history), **Cancel deployment** (while it isn't finished or canceled; a stage that is already running is not stopped) |
+| Stage `ready` | **Run stage** |
+| Stage `failed` | **Continue stage** (from the step that didn't finish), **Run stage again (all steps)**, **Show log of the failed step** |
+| Step | **Show log** (also by clicking it): the latest run of the step with its output and errors, in a read-only editor |
+
+* Every run and every cancellation asks first, in a dialog that names the stage, the deployment and the i-Releaser URL.
+* With `run-stages` in `deployment.toml`, only these stages can be run from VS Code (case doesn't matter). On the config page, enter them one per line. The tooltip of other stages says so; run them in i-Releaser.
+* i-Releaser checks the permissions of the token's user for every action. Its message is shown if one is missing.
+* If i-Releaser runs stages with its processing service and that service isn't running, OBI tells you that the stage waits in the queue.
+* After a start, you get the notifications of the deployment as described above.
 
 ### Custom content
 
