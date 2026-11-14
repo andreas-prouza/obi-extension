@@ -27,6 +27,7 @@ node_modules/tom-select/**
 node_modules/@popperjs/**
 node_modules/@vscode/codicons/**
 # Build and repository files
+asserts/video/**
 out/asserts/**
 out/obi-media/**
 CLAUDE.md

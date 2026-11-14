@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OBI intro video</title>
+  <link rel="stylesheet" href="../../node_modules/@vscode/codicons/dist/codicon.css">
+  <link rel="stylesheet" href="video.css">
+  <link rel="stylesheet" href="vscode.css">
+</head>
+<body>
+
+  <!-- The video: 1920x1080. Scenes are added by scenes/*.js, in the order of the script tags below. -->
+  <div id="viewport">
+    <div id="stage">
+      <div id="bg">
+        <div class="glow g1"></div>
+        <div class="glow g2"></div>
+        <div class="glow g3"></div>
+        <div class="grid"></div>
+        <div class="noise"></div>
+        <div class="vignette"></div>
+      </div>
+      <div id="scenes"></div>
+      <div id="chapters"></div>
+    </div>
+  </div>
+
+  <!-- Preview only (hidden while rendering): space = play/pause, arrow keys = one frame, shift + arrow = one second -->
+  <div id="transport">
+    <button id="play" type="button">Play</button>
+    <input id="scrub" type="range" min="0" max="1" step="0.001" value="0">
+    <span id="clock">0.00</span>
+  </div>
+
+  <script src="engine.js"></script>
+  <script src="ui.js"></script>
+  <script src="scenes/00-intro.js"></script>
+  <script src="scenes/01-concept.js"></script>
+  <script src="scenes/02-changes.js"></script>
+  <script src="scenes/03-build.js"></script>
+  <script src="scenes/04-everyday.js"></script>
+  <script src="scenes/05-release.js"></script>
+  <script src="scenes/06-start.js"></script>
+  <script src="scenes/07-outro.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

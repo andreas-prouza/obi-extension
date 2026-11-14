@@ -9,6 +9,10 @@
 It detects which sources changed, resolves everything that depends on them, generates the build commands in the correct order and runs them on your IBM i via SSH.
 Joblogs, spool files and compile errors come back into VS Code.
 
+Watch the intro (1:38):
+
+https://github.com/user-attachments/assets/7fadaf1e-b4e8-47a6-b405-3fa968cbf247
+
 - [Features](#features)
 - [How it works](#how-it-works)
 - [Requirements](#requirements)
