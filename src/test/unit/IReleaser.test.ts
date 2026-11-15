@@ -1,7 +1,7 @@
 import assert from 'assert';
 import * as http from 'http';
 import { AddressInfo } from 'net';
-import { DeploymentState, IReleaserError, SseParser, base_url, configured_workflows, deployment_data, deployment_of, get_deployment, get_workflows, is_final, parse_deployment, show_details_url, start_workflow, state_changes, status_class, watch_state, workflow_choices } from '../../shared/IReleaser';
+import { DeploymentState, IReleaserError, SseParser, base_url, configured_workflows, deployment_data, deployment_of, get_deployment, get_workflows, is_final, parse_deployment, show_details_url, start_workflow, state_changes, watch_state, workflow_choices } from '../../shared/IReleaser';
 
 
 interface Received { method?: string; url?: string; headers: http.IncomingHttpHeaders; body: string }
@@ -200,7 +200,7 @@ suite('i-Releaser deployment status', () => {
   });
 
 
-  test('state_changes, is_final, status_class', () => {
+  test('state_changes, is_final', () => {
     const before = state('in process', [[1, 'START', 'finished'], [2, 'TEST', 'in process'], [3, 'PROD', 'new']]);
     assert.deepStrictEqual(state_changes(before, before), []);
     assert.deepStrictEqual(state_changes(before, state('ready', [[1, 'START', 'finished'], [2, 'TEST', 'finished'], [3, 'PROD', 'ready']])),
@@ -215,9 +215,6 @@ suite('i-Releaser deployment status', () => {
     assert.strictEqual(is_final(state('failed', [])), false, 'a failed stage can be run again');
     assert.strictEqual(is_final(state('finished', [])), true);
     assert.strictEqual(is_final(state('canceled', [])), true);
-
-    assert.deepStrictEqual(['finished', 'failed', 'canceled', 'in process', 'in preperation', 'prepare', 'ready', 'new', 'other'].map(status_class),
-      ['success', 'failed', 'failed', 'in_process', 'in_process', 'in_process', 'new', 'new', 'new']);
   });
 
 

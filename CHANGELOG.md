@@ -1,3 +1,12 @@
+## [Unreleased]
+
+### Features
+* **Build summary: the i-Releaser deployment as a card.** A header with workflow, version, status and *Open in i-Releaser*; the stages as a stepper with a progress bar; for a failed stage the failed step with *Show log*, *Continue* and *Run stage again*, for a ready stage *Run stage*. The actions are the ones of the i-Releaser view: they ask first, and `run-stages` applies ([docs](asserts/docs/building.md#i-releaser-deployment), [spec](docs/features/i-releaser-status-card.md))
+
+### Changes
+* **Build summary:** the statuses of the build list (`new`, `success`, `failed`, …) are coloured labels in the colours of the theme instead of fixed background colours
+
+
 ## [1.7.1]
 
 ### Features

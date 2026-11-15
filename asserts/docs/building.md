@@ -107,14 +107,20 @@ With `*CURRENT` (or **Show single change** in the editor), only the active sourc
 
 The build list goes to i-Releaser as the deployment's custom data, without joblogs, spool files and errors. i-Releaser accepts at most 64 KB. The deployment (id, workflow, project, version) is stored in the build list and in its copy in the build history as `custom_data.i-releaser`, and **i-Releaser deployment** opens it in the browser.
 
-**Status of the deployment:** while the build summary shows a build list with a deployment, the area below the buttons shows its status, and in the next line the status of each stage, for example:
+**Status of the deployment:** while the build summary shows a build list with a deployment, a card below the buttons shows it:
 
-> 🚀 i-Releaser deployment 123 · version 42: `in process` (updated 10:41:07)<br>
-> START `finished` → TEST `in process` → PROD `new`
+* **Header:** deployment, workflow, version, its status, when it was read last, and **Open in i-Releaser** (browser).
+* **Stages:** a bar with the share of finished stages, and every stage with its status: ✓ finished, ✗ failed, a turning icon while it runs, ▷ ready to run, otherwise its number. On a narrow editor the stages continue in a second row.
+* **A stage that waits** gets a bar below the stages, with the same actions as in the [i-Releaser view](#i-releaser-view):
+  * failed: *Stage TEST failed in step run tests.* **Show log** (of the failed step), **Continue** (from the step that didn't finish), **Run stage again** (all steps);
+  * ready: *Stage PROD is ready to run.* **Run stage**.
 
-* The line updates live while i-Releaser runs the stages, the same way the i-Releaser web app refreshes itself.
+  Every run asks first. A stage that isn't in `run-stages` of `deployment.toml` has no run buttons; the bar says to run it in i-Releaser.
+* The card updates live while i-Releaser runs the stages, the same way the i-Releaser web app refreshes itself.
 * When a stage finishes or fails, a notification appears, with **Open** for the deployment in the browser. You get these notifications for deployments shown in the build summary and for deployments started in this window, even after the build summary was closed, until the deployment is finished or canceled.
-* If i-Releaser can't be reached, the line shows the error and the last known status, and OBI tries again.
+* If i-Releaser can't be reached, the card shows the error and the last known status, and OBI tries again.
+
+The status column of the build list uses the same coloured labels (`new`, `success`, `failed`), in the colours of your theme.
 * The build history and the [Timeline](#timeline) show `i-Releaser 123` next to builds that were deployed.
 
 Requires a trusted workspace. The token is sent in the `Authorization` header; use an `https` URL, otherwise it travels unencrypted.

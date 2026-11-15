@@ -11,7 +11,7 @@ Joblogs, spool files and compile errors come back into VS Code.
 
 Watch the intro (1:38):
 
-https://github.com/user-attachments/assets/7fadaf1e-b4e8-47a6-b405-3fa968cbf247
+<video src="https://github.com/user-attachments/assets/7fadaf1e-b4e8-47a6-b405-3fa968cbf247" controls width="100%"></video>
 
 - [Features](#features)
 - [How it works](#how-it-works)

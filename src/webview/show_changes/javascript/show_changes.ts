@@ -42,6 +42,17 @@ function main() {
   if (start_deployment_button)
     start_deployment_button.addEventListener('click', () => post({ command: 'start_deployment' }));
 
+  // Show log, continue or run a stage of the i-Releaser deployment: the page only names the stage
+  document.querySelectorAll<HTMLElement>('.ir-action').forEach(button => {
+    button.addEventListener('click', () => {
+      const action = button.dataset.action;
+      const stage_id = button.dataset.stageId;
+      if ((action === 'show_log' || action === 'continue' || action === 'run_all') && stage_id)
+        post({ command: 'deployment_action', action: action, stage_id: stage_id });
+    });
+  });
+  mark_stage_rows();
+
   const joblogButton = document.getElementsByClassName("joblog");
   for (let i = 0; i < joblogButton.length; i++) {
     joblogButton[i].addEventListener("click", function (e) {show_log('joblog', joblogButton[i]);});
@@ -102,6 +113,24 @@ function main() {
 
 }
 
+
+
+
+/** The stages of a deployment wrap into rows: the first stage of a row gets no line from the stage before */
+function mark_stage_rows() {
+  const list = document.getElementById('i_releaser_stages');
+  if (!list)
+    return;
+  const mark = () => {
+    let top: number | undefined;
+    list.querySelectorAll<HTMLElement>('.ir-stage').forEach(stage => {
+      stage.classList.toggle('ir-row-start', top !== undefined && stage.offsetTop > top);
+      top = stage.offsetTop;
+    });
+  };
+  mark();
+  new ResizeObserver(mark).observe(list);
+}
 
 
 

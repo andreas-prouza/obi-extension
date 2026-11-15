@@ -146,7 +146,8 @@ function register_project_features(context: vscode.ExtensionContext): void {
 		is_token_key: key => DeploymentConfig.is_token_key(key)
 	});
 	// Deployments of the project with their stages and steps; run a stage, cancel, show logs
-	DeploymentsView.register(context);
+	// The build summary runs stages and shows logs through the i-Releaser view
+	BuildSummary.set_stage_actions(DeploymentsView.register(context));
 
 
 	//--------------------------------------------------------

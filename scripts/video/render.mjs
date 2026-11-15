@@ -6,6 +6,7 @@
 //   node scripts/video/render.mjs                      -> asserts/video/obi-intro.mp4 (1920x1080, 30 fps)
 //   node scripts/video/render.mjs --scale 2            -> 3840x2160
 //   node scripts/video/render.mjs --stills 3,12.5,40 --out /tmp/stills   -> PNG files of single moments
+//   node scripts/video/render.mjs --thumbnail          -> asserts/video/obi-thumbnail.jpg (thumbnail.html, for YouTube)
 //   node scripts/video/render.mjs --small-copy 10      -> asserts/video/obi-intro-small.mp4 with less than 10 MB,
 //                                                         from the rendered video (GitHub takes 10 MB on a free plan)
 //
@@ -31,7 +32,7 @@ function parse_args(argv) {
   const options = {
     out: undefined, fps: 30, scale: 1, crf: 17,
     workers: Math.max(1, Math.min(4, Math.floor(os.cpus().length / 2))),
-    stills: undefined, from: 0, to: undefined, small_copy: undefined,
+    stills: undefined, from: 0, to: undefined, small_copy: undefined, thumbnail: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const name = argv[i];
@@ -50,9 +51,10 @@ function parse_args(argv) {
       case '--from': options.from = Number(value()); break;
       case '--to': options.to = Number(value()); break;
       case '--small-copy': options.small_copy = Number(value()); break;
+      case '--thumbnail': options.thumbnail = true; break;
       case '-h':
       case '--help':
-        console.log('Options: --out <file|dir> --fps <n> --scale <n> --crf <n> --workers <n> --from <s> --to <s> --stills <s,s,...> --small-copy <MB>');
+        console.log('Options: --out <file|dir> --fps <n> --scale <n> --crf <n> --workers <n> --from <s> --to <s> --stills <s,s,...> --small-copy <MB> --thumbnail');
         process.exit(0);
         break;
       default: throw new Error(`Unknown option ${name}`);
@@ -130,7 +132,7 @@ class Cdp {
 /** A headless Chrome with the video page loaded */
 class Page {
 
-  static async open(chrome_path, scale) {
+  static async open(chrome_path, scale, file = 'index.html') {
     const page = new Page();
     page.profile = await mkdtemp(path.join(os.tmpdir(), 'obi-video-chrome-'));
     page.process = spawn(chrome_path, [
@@ -176,7 +178,7 @@ class Page {
     await page.send('Runtime.enable');
     await page.send('Log.enable');
     await page.send('Emulation.setDeviceMetricsOverride', { width: WIDTH, height: HEIGHT, deviceScaleFactor: scale, mobile: false });
-    await page.send('Page.navigate', { url: `${pathToFileURL(path.join(HERE, 'index.html'))}?render` });
+    await page.send('Page.navigate', { url: `${pathToFileURL(path.join(HERE, file))}?render` });
 
     // The page sets window.__ready (a promise for the duration in seconds) once fonts and timeline are there
     page.duration = await page.evaluate(`new Promise((resolve, reject) => {
@@ -203,9 +205,9 @@ class Page {
   }
 
   /** The frame at `seconds` as a PNG */
-  async frame(seconds) {
+  async frame(seconds, format = { format: 'png', optimizeForSpeed: true }) {
     await this.evaluate(`window.__seek(${seconds})`);
-    const { data } = await this.send('Page.captureScreenshot', { format: 'png', optimizeForSpeed: true });
+    const { data } = await this.send('Page.captureScreenshot', format);
     return Buffer.from(data, 'base64');
   }
 
@@ -227,6 +229,21 @@ function run_ffmpeg(args, input = 'ignore') {
     child.once('exit', code => code === 0 ? resolve() : reject(new Error(`ffmpeg exited with ${code}`)));
   });
   return { child, done };
+}
+
+
+/** The thumbnail for YouTube: 1920x1080 as JPEG (YouTube takes at most 2 MB) */
+async function render_thumbnail(options, chrome_path) {
+  const out = path.resolve(options.out ?? path.join(ROOT, 'asserts', 'video', 'obi-thumbnail.jpg'));
+  await mkdir(path.dirname(out), { recursive: true });
+  const page = await Page.open(chrome_path, options.scale, 'thumbnail.html');
+  try {
+    await writeFile(out, await page.frame(0, { format: 'jpeg', quality: 92 }));
+  }
+  finally {
+    await page.close();
+  }
+  console.log(`${out} (${((await stat(out)).size / 1000 / 1000).toFixed(2)} MB)`);
 }
 
 
@@ -350,7 +367,9 @@ try {
     process.exit(0);
   }
   const chrome_path = find_chrome();
-  if (options.stills)
+  if (options.thumbnail)
+    await render_thumbnail(options, chrome_path);
+  else if (options.stills)
     await render_stills(options, chrome_path);
   else
     await render_video(options, chrome_path);

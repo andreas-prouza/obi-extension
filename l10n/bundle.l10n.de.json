@@ -432,5 +432,11 @@
   "The log could not be read: {0}": "Das Log konnte nicht gelesen werden: {0}",
   "i-Releaser has no log for run {0}.": "i-Releaser hat kein Log für Lauf {0}.",
   "stage {0}": "Stage {0}",
-  "Run": "Lauf"
+  "Run": "Lauf",
+  "Stage {0} failed in step {1}.": "Stage {0} ist im Schritt {1} fehlgeschlagen.",
+  "Stage {0} failed.": "Stage {0} ist fehlgeschlagen.",
+  "Stage {0} is ready to run.": "Stage {0} ist bereit zur Ausführung.",
+  "Open in i-Releaser": "In i-Releaser öffnen",
+  "Continue": "Fortsetzen",
+  "Run stage again": "Stage erneut ausführen"
 }

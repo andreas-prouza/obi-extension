@@ -9,6 +9,7 @@ node scripts/video/render.mjs                 # asserts/video/obi-intro.mp4, 192
 node scripts/video/render.mjs --scale 2       # 3840x2160
 node scripts/video/render.mjs --stills 12,40.5 --out /tmp/stills   # single frames as PNG
 node scripts/video/render.mjs --small-copy 10 # asserts/video/obi-intro-small.mp4, less than 10 MB, from the rendered video
+node scripts/video/render.mjs --thumbnail     # asserts/video/obi-thumbnail.jpg, 1920x1080, the thumbnail for YouTube
 ```
 
 * Needs Chrome or Chromium (`CHROME_PATH` overrides the search), `ffmpeg`, and `npm ci` (the icons are the codicons of `node_modules`). No further npm packages.
@@ -37,6 +38,7 @@ Open `scripts/video/index.html` in Chrome. Space plays and pauses, the arrow key
 | `scenes/*.js` | One file per scene, in the order of the `<script>` tags in `index.html`. Each sets its length (`dur`) and builds its elements and animations. |
 | `ui.js` | Shared parts: headline, cursor, callouts, the VS Code window with the OBI views and pages, and the sample project (`SOURCES`, `PROJECT`). |
 | `engine.js` | The timeline: `to` (animate), `text`, `cls`, `when`, `each`, and `seek(seconds)`. |
+| `thumbnail.html` | The thumbnail for YouTube: a still page with the same parts as the video. Preview it by opening it in Chrome. |
 | `main.js` | Puts the scenes one after the other; the preview controls. |
 | `video.css`, `vscode.css` | Stage and scenes; the VS Code window (theme Dark Modern). |
 | `render.mjs` | Headless Chrome takes one screenshot per frame, `ffmpeg` encodes them. |

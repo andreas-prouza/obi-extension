@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OBI video thumbnail</title>
+  <link rel="stylesheet" href="../../node_modules/@vscode/codicons/dist/codicon.css">
+  <link rel="stylesheet" href="video.css">
+  <link rel="stylesheet" href="vscode.css">
+  <style>
+    /* The thumbnail is seen small: few words, large type, strong contrast */
+    #stage .g1 { left: 900px; top: -700px; }
+    #stage .g2 { left: -560px; top: 120px; }
+
+    .thumb-text {
+      position: absolute;
+      left: 110px;
+      top: 0;
+      height: 1080px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      z-index: 2;
+    }
+
+    .thumb-brand {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .thumb-brand .logo {
+      height: 150px;
+      filter: drop-shadow(0 14px 36px rgba(25, 149, 173, .55));
+    }
+
+    .thumb-brand span {
+      font: 800 190px/1 var(--sans);
+      letter-spacing: -.03em;
+    }
+
+    .thumb-title {
+      margin-top: 34px;
+      font: 800 118px/1.02 var(--sans);
+      letter-spacing: -.04em;
+      text-shadow: 0 6px 30px rgba(0, 0, 0, .6);
+    }
+
+    .thumb-title em {
+      font-style: normal;
+      color: var(--cyan);
+    }
+
+    .thumb-pill {
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 44px;
+      padding: 16px 30px 18px 24px;
+      border-radius: 20px;
+      border: 3px solid var(--violet);
+      background: rgba(30, 20, 60, .85);
+      font: 700 50px/1 var(--sans);
+      letter-spacing: -.02em;
+    }
+
+    .thumb-pill .codicon {
+      font-size: 48px;
+      color: var(--violet);
+    }
+
+    .thumb-shot {
+      position: absolute;
+      left: 980px;
+      top: 120px;
+      transform: perspective(2600px) rotateY(-16deg) rotateX(3deg);
+      transform-origin: 0 50%;
+      z-index: 1;
+    }
+
+    .thumb-shot .vsc {
+      box-shadow: 0 40px 120px rgba(0, 0, 0, .8), 0 0 0 1px rgba(0, 0, 0, .6), 0 0 160px rgba(43, 212, 238, .22);
+    }
+
+    .thumb-badge {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 30px 20px 24px;
+      border-radius: 20px;
+      background: rgba(6, 12, 24, .95);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, .65);
+      font: 700 52px/1 var(--sans);
+      letter-spacing: -.02em;
+      white-space: nowrap;
+      z-index: 3;
+    }
+
+    .thumb-badge .codicon {
+      font-size: 54px;
+    }
+
+    .thumb-badge.green {
+      left: 1080px;
+      top: 650px;
+      border: 3px solid var(--green);
+    }
+
+    .thumb-badge.green .codicon {
+      color: var(--green);
+    }
+
+    .thumb-badge.stages {
+      left: 1160px;
+      top: 800px;
+      gap: 14px;
+      border: 3px solid var(--violet);
+      font-size: 44px;
+    }
+
+    .thumb-badge.stages .codicon {
+      font-size: 44px;
+      color: var(--green);
+    }
+
+    .thumb-badge.stages .arrow {
+      color: var(--faint);
+    }
+
+    .thumb-badge.stages .next {
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div id="viewport">
+    <div id="stage">
+      <div id="bg">
+        <div class="glow g1"></div>
+        <div class="glow g2"></div>
+        <div class="glow g3"></div>
+        <div class="grid"></div>
+        <div class="vignette"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="engine.js"></script>
+  <script src="ui.js"></script>
+  <script>
+    'use strict';
+    (function () {
+      const UI = window.UI;
+      const { html, icon, LOGO } = UI;
+      const stage = document.getElementById('stage');
+
+      const win = UI.vscode_window({
+        zoom: 1.5, width: 1500, height: 900, side: 300,
+        panes: UI.controller_pane() + UI.filters_pane({ collapsed: true }) + UI.history_pane() + UI.releaser_pane(),
+        tabs: [{ label: 'logger.sqlrpgle.srvpgm', icon: 'file-code' }, { label: 'Build summary', active: true }],
+        editor: UI.summary_page({ done: true, created: `${UI.PROJECT.day}T10:40:12.118Z` }),
+        status: UI.status_bar('ok'),
+      });
+      win.querySelector('.summary').classList.add('deployed');
+      for (const [key, status, css] of [['stage-start', 'finished', 'success'], ['stage-test', 'finished', 'success'], ['stage-prod', 'ready', 'new']]) {
+        const badge = win.querySelector(`[data-st=${key}]`);
+        badge.textContent = status;
+        badge.className = `st ${css}`;
+      }
+
+      // Without the side bar, scrolled to the results of the build
+      win.querySelector('.vsc-side').style.width = '0px';
+      stage.append(win);
+      const scroller = win.querySelector('.summary-scroll');
+      const offset = UI.rect(win.querySelector('.summary h3')).y - UI.rect(win.querySelector('.vsc-editor')).y - 10;
+      scroller.style.transform = `translateY(${-offset / 1.5}px)`;
+      win.classList.add('thumb-shot');
+
+      stage.append(html(`
+        <div class="thumb-text">
+          <div class="thumb-brand">${LOGO}<span>OBI</span></div>
+          <div class="thumb-title">Build IBM i<br>from <em>VS Code</em></div>
+          <div class="thumb-pill">${icon('rocket')}+ i-Releaser</div>
+        </div>`));
+      stage.append(html(`<div class="thumb-badge green">${icon('pass')}8 objects built</div>`));
+      stage.append(html(`
+        <div class="thumb-badge stages">
+          START ${icon('pass')}<span class="arrow">→</span>TEST ${icon('pass')}<span class="arrow">→</span><span class="next">PROD</span>
+        </div>`));
+
+      document.documentElement.classList.add('rendering');
+      window.__seek = () => undefined;
+      window.__ready = document.fonts.ready.then(() => Promise.all([...document.fonts].map(font => font.load().catch(() => undefined)))).then(() => 0);
+    })();
+  </script>
+</body>
+</html>
