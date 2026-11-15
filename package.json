@@ -956,7 +956,7 @@
     "test:unit": "npm run compile-tests && mocha --ui tdd \"out-test/test/unit/**/*.test.js\"",
     "test:coverage": "npm run pretest && node -e \"require('fs').rmSync('coverage',{recursive:true,force:true})\" && node ./out-test/test/runTest.js --coverage && c8 report",
     "lint": "eslint src/",
-    "lint:ci": "eslint src/ --max-warnings 237",
+    "lint:ci": "eslint src/ --max-warnings 231",
     "check:repo": "node scripts/check-repo.js",
     "postinstall": "node -e \"require('fs').rmSync('node_modules/ssh2/test',{recursive:true,force:true})\""
   },

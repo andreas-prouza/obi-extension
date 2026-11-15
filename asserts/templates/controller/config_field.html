@@ -1,30 +1,51 @@
 {#
-  A value of the config page: {% call field('general|source-dir') %}<vscode-text-field ...>{% endcall %}
+  A value of the config page, laid out like a setting of VS Code: label, help text, the control, and the
+  "required" message. Example:
+    {{ field('general|source-dir', global_stuff['get_text']('Source directory'), value=app_general['source-dir'], placeholder='src', required=is_project) }}
 
-  In the user tab with a button to override the project value or to use it again.
-  Inherited fields are disabled and show the value of the project tab (config.ts); on saving, their key is removed
-  from the user config. Overridden values stay in the user config.
+  In the user scope with a button to override the project value or to use it again. Inherited fields are disabled
+  and show the value of the project scope (config.ts); on saving, their key is removed from the user config.
 
-  key:  path of the value, i.e. the id of the field without 'user|' / 'project|'
-  kind: '' | 'check' (checkbox) | 'wide' (full width)
+  key:          path of the value, i.e. the id of the control without 'user|' / 'project|'
+  kind:         'text' | 'number' | 'textarea' | 'check'
+  cls:          further classes of the control (type_array, type_dict, type_file)
+  overridable:  false for values that only exist in one config (e.g. the SSH user)
 #}
-{% macro field(key, kind='') %}
-{%- if class_prefix == 'user' -%}
-  {%- set overridden = key in (user_overrides or []) -%}
+{% macro field(key, label, value='', kind='text', placeholder='', desc='', required=false, cls='', mono=false, rows=3, wide=false, checked=false, overridable=true) %}
+{%- set user = class_prefix == 'user' and overridable -%}
+{%- set overridden = key in (user_overrides or []) -%}
+{%- set id = class_prefix ~ '|' ~ key -%}
+{%- set control_cls = class_prefix ~ '_save_app' ~ (' ' ~ cls if cls else '') ~ (' mandatory' if required else '') -%}
+{%- set toggle -%}
   {%- set title_overridden = global_stuff['get_text']('Overrides the project configuration. Click to use the project value again') -%}
   {%- set title_inherited = global_stuff['get_text']('Value of the project configuration. Click to override it in the user configuration') -%}
-  <span class="cfg_field{% if kind %} {{ kind }}{% endif %} {{ 'overridden' if overridden else 'inherited' }}" data-override-key="{{ key }}">
-    <vscode-button appearance="icon" class="override_toggle"
-      aria-pressed="{{ 'true' if overridden else 'false' }}"
-      title="{{ title_overridden if overridden else title_inherited }}"
-      aria-label="{{ title_overridden if overridden else title_inherited }}"
-      data-title-overridden="{{ title_overridden }}"
-      data-title-inherited="{{ title_inherited }}">
-      <span class="codicon {{ 'codicon-discard' if overridden else 'codicon-edit' }}"></span>
-    </vscode-button>
-    {{ caller() }}
-  </span>
-{%- else -%}
-  <span class="cfg_field{% if kind %} {{ kind }}{% endif %}">{{ caller() }}</span>
-{%- endif -%}
+  <button type="button" class="icon-btn override_toggle"
+    aria-pressed="{{ 'true' if overridden else 'false' }}"
+    title="{{ title_overridden if overridden else title_inherited }}"
+    aria-label="{{ title_overridden if overridden else title_inherited }}"
+    data-title-overridden="{{ title_overridden }}"
+    data-title-inherited="{{ title_inherited }}"><span class="codicon {{ 'codicon-discard' if overridden else 'codicon-edit' }}"></span></button>
+{%- endset -%}
+<div class="setting cfg_field{% if kind == 'check' %} check{% endif %}{% if wide %} wide{% endif %}{% if user %} {{ 'overridden' if overridden else 'inherited' }}{% endif %}"{% if user %} data-override-key="{{ key }}"{% endif %}>
+  {%- if kind == 'check' %}
+  <div class="setting-check">
+    <label class="check-row"><input type="checkbox" class="obi-check {{ control_cls }} type_checkbox" id="{{ id }}"{% if checked %} checked{% endif %}><span>{{ label }}</span></label>
+    {% if user %}<span class="setting-tag src-inherited">{{ global_stuff['get_text']('from project') }}</span><span class="setting-tag src-overridden">{{ global_stuff['get_text']('overridden') }}</span>{{ toggle | safe }}{% endif %}
+  </div>
+  {%- else %}
+  <div class="setting-label">
+    <label for="{{ id }}">{{ label }}</label>
+    {% if required %}<span class="setting-tag">{{ global_stuff['get_text']('required') }}</span>{% endif %}
+    {% if user %}<span class="setting-tag src-inherited">{{ global_stuff['get_text']('from project') }}</span><span class="setting-tag src-overridden">{{ global_stuff['get_text']('overridden') }}</span>{{ toggle | safe }}{% endif %}
+  </div>
+  {%- endif %}
+  {% if desc %}<div class="setting-desc">{{ desc }}</div>{% endif %}
+  {%- if kind == 'textarea' %}
+  <textarea class="obi-input{% if mono %} mono{% endif %} {{ control_cls }}" id="{{ id }}" rows="{{ rows }}" placeholder="{{ placeholder }}">{{ value }}</textarea>
+  {%- elif kind != 'check' %}
+  <input class="obi-input{% if mono %} mono{% endif %} {{ control_cls }}" id="{{ id }}" {% if kind == 'number' %}type="number" regex_validator="^\d*$"{% else %}type="text"{% endif %} value="{{ value }}" placeholder="{{ placeholder }}">
+  {%- endif %}
+  {% if kind == 'number' %}<div class="setting-error" id="hint_{{ id }}" style="visibility: hidden"><span class="codicon codicon-warning"></span>{{ global_stuff['get_text']('Only numbers') }}</div>{% endif %}
+  {% if required %}<div class="setting-error setting-missing"><span class="codicon codicon-error"></span>{{ global_stuff['get_text']("Required: the build can't start without it.") }}</div>{% endif %}
+</div>
 {% endmacro %}

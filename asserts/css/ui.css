@@ -915,6 +915,7 @@ body.obi-view {
 
 /* Native select in the colours of a VS Code dropdown */
 .obi-select {
+  box-sizing: border-box;
   flex: 1;
   min-width: 0;
   height: 26px;
@@ -957,4 +958,556 @@ body.obi-view {
 
 .last-build a:hover {
   text-decoration: underline;
+}
+
+
+/* ---------------------------------------------------------------- form fields (configuration page, …) */
+
+.obi-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 26px;
+  padding: 3px 7px;
+  border: 1px solid var(--vscode-input-border, var(--vscode-dropdown-border, transparent));
+  border-radius: 2px;
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground, var(--vscode-foreground));
+  font: inherit;
+}
+
+textarea.obi-input {
+  display: block;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.obi-input.mono {
+  font-family: var(--obi-mono);
+  font-size: 12px;
+}
+
+.obi-input::placeholder {
+  color: var(--vscode-input-placeholderForeground, var(--obi-muted));
+}
+
+.obi-input:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+.obi-input:disabled {
+  opacity: .55;
+}
+
+.obi-input.missing_value {
+  border-color: var(--vscode-inputValidation-errorBorder, var(--obi-failed));
+}
+
+
+/* ---------------------------------------------------------------- configuration page */
+
+.cfg-page {
+  padding: 0;
+}
+
+.cfg-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--obi-border);
+  background: var(--vscode-editor-background);
+}
+
+.cfg-bar h1 {
+  margin: 0 4px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.cfg-bar .spacer, .cfg-sub .spacer, .cfg-card-head .spacer {
+  flex: 1;
+}
+
+.seg.cfg-scopes {
+  display: flex;
+}
+
+.cfg-scopes .seg-option {
+  height: 24px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.tab-dot {
+  display: none;
+  width: 7px;
+  height: 7px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--obi-failed);
+}
+
+.missing_value > .tab-dot {
+  display: inline-block;
+}
+
+.cfg-dirty {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--obi-muted);
+}
+
+.cfg-dirty[hidden], .cfg-page [data-scope][hidden] {
+  display: none;
+}
+
+.dirty-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--vscode-settings-modifiedItemIndicator, var(--vscode-focusBorder));
+}
+
+.cfg-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px 8px;
+  padding: 8px 24px 0;
+}
+
+.cfg-sub > .codicon {
+  margin-top: 1px;
+  color: var(--obi-running);
+}
+
+.cfg-sub .scope-desc {
+  flex: 1 1 400px;
+}
+
+.cfg-sub .codicon-edit, .cfg-sub .codicon-discard {
+  vertical-align: -3px;
+}
+
+.cfg-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 24px 0;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border-left: 3px solid var(--banner);
+  background: color-mix(in srgb, var(--banner) 10%, transparent);
+}
+
+.cfg-banner > .codicon {
+  margin-top: 1px;
+  color: var(--banner);
+}
+
+.cfg-banner.warning { --banner: var(--vscode-editorWarning-foreground, #cca700); }
+.cfg-banner.error { --banner: var(--obi-failed); }
+
+.cfg-banner[hidden], #error_text[show="false"] {
+  display: none;
+}
+
+.cfg-banner a {
+  color: var(--obi-link);
+}
+
+.scope-view[hidden], .tab-view[hidden] {
+  display: none;
+}
+
+.cfg-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+  padding: 16px 24px 32px;
+}
+
+.cfg-nav {
+  position: sticky;
+  top: 64px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 180px;
+}
+
+.cfg-nav .panel_tab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--obi-muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cfg-nav .panel_tab:hover {
+  background: var(--vscode-list-hoverBackground, rgba(128, 128, 128, .15));
+  color: var(--vscode-foreground);
+}
+
+.cfg-nav .panel_tab.active {
+  background: var(--vscode-list-activeSelectionBackground, #04395e);
+  color: var(--vscode-list-activeSelectionForeground, #fff);
+}
+
+.cfg-nav .panel_tab:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+.cfg-main {
+  flex: 1;
+  min-width: 0;
+  max-width: 1100px;
+}
+
+.cfg-main h2, .cfg-sources h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 26px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--obi-border);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.tab-view > h2:first-child, .tab-view > details:first-child, .cfg-sources > h2:first-child {
+  margin-top: 0;
+}
+
+.cfg-main h2 code {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--obi-muted);
+}
+
+.cfg-h-link {
+  color: var(--obi-muted);
+}
+
+.setting-grid {
+  display: grid;
+  align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px 24px;
+}
+
+.setting-grid + .setting-grid, .setting-checks + .setting-grid {
+  margin-top: 16px;
+}
+
+.setting {
+  min-width: 0;
+  padding-left: 10px;
+  border-left: 2px solid transparent;
+}
+
+.setting.wide {
+  grid-column: 1 / -1;
+}
+
+.setting.overridden {
+  border-left-color: var(--vscode-settings-modifiedItemIndicator, var(--vscode-focusBorder));
+}
+
+.setting-label, .setting-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.setting-label label {
+  font-weight: 600;
+}
+
+.setting-tag {
+  font-size: 11px;
+  color: var(--obi-muted);
+}
+
+.setting.inherited .src-overridden, .setting.overridden .src-inherited {
+  display: none;
+}
+
+.setting.overridden .src-overridden {
+  color: var(--vscode-settings-modifiedItemIndicator, var(--vscode-focusBorder));
+}
+
+.override_toggle {
+  margin-left: auto;
+}
+
+.setting-desc {
+  margin: 0 0 5px;
+  color: var(--obi-muted);
+  font-size: 12px;
+  white-space: pre-line;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.setting-error {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  color: var(--vscode-errorForeground, var(--obi-failed));
+  font-size: 12px;
+}
+
+.setting-error .codicon {
+  font-size: 14px;
+}
+
+.setting-missing {
+  display: none;
+}
+
+.setting:has(.missing_value) .setting-missing {
+  display: flex;
+}
+
+.setting-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+}
+
+.setting-checks.inline {
+  flex-direction: row;
+  gap: 24px;
+  margin: 0 0 12px;
+}
+
+.setting-checks .setting {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.check-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.cfg-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0 12px;
+  color: var(--obi-muted);
+}
+
+.cfg-details {
+  margin: 0 0 16px 12px;
+}
+
+.cfg-details > summary {
+  color: var(--obi-link);
+  cursor: pointer;
+}
+
+.cfg-table {
+  margin-top: 8px;
+  border-collapse: collapse;
+}
+
+.cfg-table th, .cfg-table td {
+  padding: 4px 16px 4px 0;
+  border-bottom: 1px solid var(--obi-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.cfg-add-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 420px;
+  margin-bottom: 12px;
+}
+
+.cfg-card {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--obi-border);
+  border-radius: 6px;
+  background: var(--obi-surface);
+}
+
+.cfg-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.cfg-card-head h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cfg-card-head .obi-select {
+  flex: none;
+  width: auto;
+  min-width: 140px;
+}
+
+.cfg-card > .add_step_to_esp {
+  margin-top: 8px;
+}
+
+/* Tables of keys and values (commands, steps, variables) */
+.kv-list {
+  border: 1px solid var(--obi-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: minmax(120px, 200px) minmax(0, 1fr) 80px;
+  align-items: start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--obi-border);
+}
+
+.kv:first-child {
+  border-top: 0;
+}
+
+.kv-head {
+  padding: 6px 10px;
+  background: var(--obi-surface);
+  color: var(--obi-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.kv-head .codicon {
+  font-size: 12px;
+  vertical-align: -2px;
+}
+
+.kv-add {
+  background: color-mix(in srgb, var(--vscode-foreground) 3%, transparent);
+}
+
+.kv > .icon-btn {
+  margin-top: 2px;
+}
+
+.kv-name {
+  padding-top: 4px;
+  overflow-wrap: anywhere;
+}
+
+.kv-value {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.esp-steps .kv {
+  grid-template-columns: 70px minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, .8fr) 30px;
+}
+
+.esp-steps .kv > .obi-check {
+  justify-self: center;
+  margin-top: 5px;
+}
+
+.esp-steps-label {
+  margin-top: 12px;
+}
+
+.add_new_esp_block {
+  margin-top: 4px;
+}
+
+.cfg-sources {
+  max-width: 900px;
+  padding: 16px 24px;
+}
+
+.source-pick {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.source-pick .ts-wrapper {
+  flex: 1;
+}
+
+/* tom-select (searchable source picker) in the colours of the theme */
+.cfg-page .ts-control, .cfg-page .ts-wrapper.single.input-active .ts-control {
+  border: 1px solid var(--vscode-dropdown-border, var(--obi-border));
+  border-radius: 2px;
+  background: var(--vscode-dropdown-background);
+  color: var(--vscode-dropdown-foreground, var(--vscode-foreground));
+  box-shadow: none;
+}
+
+.cfg-page .ts-control input {
+  color: inherit;
+}
+
+.cfg-page .ts-dropdown {
+  border: 1px solid var(--vscode-focusBorder);
+  background: var(--vscode-dropdown-background);
+  color: var(--vscode-dropdown-foreground, var(--vscode-foreground));
+}
+
+.cfg-page .ts-dropdown .active {
+  background: var(--vscode-list-activeSelectionBackground, #04395e);
+  color: var(--vscode-list-activeSelectionForeground, #fff);
+}
+
+/* Narrow editor: the list of sections above the fields */
+@media (max-width: 720px) {
+  .cfg-body {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .cfg-nav {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: auto;
+  }
+
+  .esp-steps .kv {
+    grid-template-columns: 1fr;
+  }
 }

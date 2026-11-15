@@ -63,7 +63,7 @@ The configuration has two areas:
 
 ![Minimum configuration](../img/ext/config-minimum.png)
 
-As long as mandatory values are missing, the configuration shows *"There are still missing values ..."*.
+As long as required values are missing, a banner at the top names them; click a name to go to the field.
 Fill in at least:
 
 | Where | Setting | Example |

@@ -35,6 +35,9 @@ suite('Config page does not expose secrets', () => {
   test('selected tab comes from workspaceState; invalid values fall back to defaults', async () => {
     const valid = await OBIConfiguration['generate_html'](fake_context(undefined, { 'obi.config.panel': 'user_cfg', 'obi.config.panel_tab': 'tab-3' }), vscode.Uri.file(Constants.EXTENSION_ROOT), fake_webview);
     assert.ok(valid.includes('data-panel="user_cfg" data-panel-tab="tab-3"'));
+    // Extended compile
+    const esp = await OBIConfiguration['generate_html'](fake_context(undefined, { 'obi.config.panel': 'project_cfg', 'obi.config.panel_tab': 'tab-2.1' }), vscode.Uri.file(Constants.EXTENSION_ROOT), fake_webview);
+    assert.ok(esp.includes('data-panel-tab="tab-2.1"'));
 
     const injected = await OBIConfiguration['generate_html'](fake_context(undefined, { 'obi.config.panel': '";alert(1);//' }), vscode.Uri.file(Constants.EXTENSION_ROOT), fake_webview);
     assert.ok(!injected.includes('alert(1)'));
@@ -54,6 +57,6 @@ suite('Webview pages set a Content-Security-Policy', () => {
     const nonce = csp[1].match(/'nonce-([^']+)'/)?.[1];
     assert.ok(nonce && html.includes(`<script type="module" nonce="${nonce}"`), 'module script carries the CSP nonce');
     assert.ok(!/<script(?![^>]*\ssrc=)[^>]*>/.test(html), 'no inline script');
-    assert.match(html, /<body data-panel="project_cfg" data-panel-tab="tab-1">/);
+    assert.match(html, /<body data-panel="project_cfg" data-panel-tab="tab-1" class="obi-page cfg-page">/);
   });
 });

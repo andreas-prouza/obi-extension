@@ -28,19 +28,23 @@ The configuration is stored in the project folder under `.obi`. Only personal pr
 
 ![Configuration](../img/ext/config-minimum.png)
 
-The configuration has three areas, each with several tabs:
+The switch at the top chooses which file you edit:
 
-| Area | File |
+| Scope | File |
 |---|---|
-| **Project configuration** | `.obi/etc/app-config.toml` |
-| **User configuration** | `.obi/etc/.user-app-config.toml` (or the file of the active [profile](#profiles)) |
-| **Source configuration** | `.obi/etc/source-config.toml` (see [Per-source build settings](#per-source-build-settings)) |
+| **Project** | `.obi/etc/app-config.toml` |
+| **User** | `.obi/etc/.user-app-config.toml` (or the file of the active [profile](#profiles); its name is shown in the switch) |
+| **Sources** | `.obi/etc/source-config.toml` (see [Per-source build settings](#per-source-build-settings)) |
 
-Tabs: **Configuration** (connection, paths, OBI backend), **Compile settings** (settings, variables, commands, steps), **Extended compile**, **System settings** (object types, encodings, threads) and **Constants** (file locations).
+The list on the left has the sections **Configuration** (connection, paths, OBI backend), **Compile settings** (settings, variables, commands, steps), **Extended compile**, **System settings** (object types, encodings, threads) and **Files** (file locations).
+
+* Each value has its label on top and, where it helps, an explanation below.
+* **Required** values are marked. While one is missing, a banner names it (click a name to go to the field), and its section and scope get a red dot.
+* *Unsaved changes* shows until you click **Save** (top right). The file icon next to it opens the TOML file of the scope.
 
 In a multi-root workspace, OBI works with the first folder that contains an OBI project (`.obi/etc/app-config.toml`). If there are several, it says so once; working with several projects at the same time is not supported yet.
 
-You can also edit the TOML files directly (links *Open project config file* / *Open user config file*). Changes are picked up without reloading the window; an invalid configuration shows the *Invalid configuration* view until it is fixed.
+You can also edit the TOML files directly (the file icon next to **Save**). Changes are picked up without reloading the window; an invalid configuration shows the *Invalid configuration* view until it is fixed.
 
 > ℹ️ Saving from the configuration pages rewrites the whole TOML file: comments are lost and keys can change their order. Keep explanations in a README or this documentation rather than in comments, or edit the files directly if you want to keep their comments.
 
@@ -52,13 +56,13 @@ You can also edit the TOML files directly (links *Open project config file* / *O
   It has the same structure, and every value set there **overrides** the project configuration.
   Empty values do not override.
 
-In the user tab, each value of the project configuration has a button:
+In the user scope, each value of the project configuration has a button:
 
-* Greyed-out fields use the **project value**. They are not saved in your user configuration, so later changes of the project configuration apply to you as well.
-* <kbd>✎</kbd> (edit) **overrides** the value: the field becomes editable and gets a marker on the left. The value is saved in your user configuration, also `false` for a checkbox.
+* Greyed-out fields, marked *from project*, use the **project value**. They are not saved in your user configuration, so later changes of the project configuration apply to you as well.
+* <kbd>✎</kbd> (edit) **overrides** the value: the field becomes editable, is marked *overridden* and gets a blue marker on the left, as changed settings in VS Code. The value is saved in your user configuration, also `false` for a checkbox.
 * <kbd>↺</kbd> (discard) uses the **project value again**: on *Save*, the value is removed from your user configuration. Clearing a field does the same.
 
-> ℹ️ Older versions saved every checkbox of the user tab, so `ssh-agent`, *Always transfer related copybooks* and *Activate extended source processing* may be set to `false` in your user configuration. They are shown as overridden; click ↺ and save if you want the project value.
+> ℹ️ Older versions saved every checkbox of the user configuration, so `ssh-agent`, *Always transfer related copybooks* and *Activate extended source processing* may be set to `false` in your user configuration. They are shown as overridden; click ↺ and save if you want the project value.
 
 On each build, the project configuration and your active user configuration are uploaded to IBM i, so the OBI backend uses the same settings.
 
@@ -143,7 +147,7 @@ Section `[general]`. The defaults created by *Initialize* work for most projects
 | `max-parallel-builds` | | `1` | Sources of one level the OBI backend builds at the same time on IBM i (OBI backend from November 2026). Levels are always built one after the other. Start low: sources of a level can still lock the same objects, e.g. service programs that add entries to the same binding directory. See [Parallel builds](https://github.com/andreas-prouza/obi/blob/main/docs/build-process.md#parallel-builds) |
 | `evfevent-output-dir` | ✅ | `.obi/tmp/evfevent` | Where compile commands write compiler events |
 | `cloud-ws-ssh-remote-host` | | | *Deprecated, ignored.* File links in remote workspaces (Remote-SSH, WSL, dev containers, codespaces) work without it |
-| `compiled-object-list`, `source-list`, `source-infos`, `dependency-list`, `deployment-object-list`, `build-output-dir`, `compile-list`, `compiled-object-list-md` | ✅ | see [files](#files-in-the-obi-folder) | File locations (tab *Constants*) |
+| `compiled-object-list`, `source-list`, `source-infos`, `dependency-list`, `deployment-object-list`, `build-output-dir`, `compile-list`, `compiled-object-list-md` | ✅ | see [files](#files-in-the-obi-folder) | File locations (section *Files*) |
 
 None of the base or OBI paths may be `/`.
 
@@ -279,7 +283,7 @@ Per profile: all user settings, the stored SSH password and the user's extended 
 For single sources you can override settings, define own commands and replace the steps:
 
 * **OBI: Individual build settings** on a source (Source filters tree, explorer or editor tab context menu)
-* or the **Source configuration** area of the configuration
+* or the **Sources** scope of the configuration
 
 Stored in `.obi/etc/source-config.toml`, keyed by the source path relative to `src`:
 
@@ -297,7 +301,7 @@ steps = [ "global.cmds.chg-src-ccsid", "source-cmds.my-cmd", "global.compile-cmd
 
 ## Extended source processing
 
-The tab **Extended compile** (`extended-source-processing-config.toml` and the user variant) defines rules that select build steps and properties for groups of sources (e.g. by source name pattern) instead of single sources.
+The section **Extended compile** (`extended-source-processing-config.toml` and the user variant) defines rules that select build steps and properties for groups of sources (e.g. by source name pattern) instead of single sources.
 For now, prefer [steps per source type](#commands-and-steps) and [per-source build settings](#per-source-build-settings).
 
 Each step of a rule has *either* a **Step** (e.g. `global.cmds.chg-src-ccsid`) *or* a **Command** (e.g. `cl -v "CALL $(TARGET_LIB)/AFTER"`); a command wins and runs once. *Add default steps* adds the steps of the source type after it, with the same properties: on by default for a step, off for a command. Details: [Extended source processing](https://github.com/andreas-prouza/obi/blob/main/docs/extended-source-processing.md) of the OBI backend.
