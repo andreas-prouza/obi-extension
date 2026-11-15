@@ -64,7 +64,8 @@ Related: [pin-dependency-versions.md](pin-dependency-versions.md) (`"latest"` ve
 * Migrate panel by panel; keep the element ids so the scripts stay unchanged as far as possible.
   **Progress (2026-11-15):** plain HTML elements with `asserts/css/ui.css` instead of toolkit components, without a new package:
   * done: build summary and OBI Build view ([ui-refresh-build-pages.md](ui-refresh-build-pages.md)), welcome views (VS Code's welcome content, [native-welcome-views.md](native-welcome-views.md)), configuration page ([ui-refresh-config-page.md](ui-refresh-config-page.md));
-  * open: individual build settings of a source (`config_source_details.html`), source filter config, deployment config, source dependencies, source infos, quick settings (hidden). The build summary script still imports the toolkit for custom templates.
+  * done as well: all other pages ([ui-refresh-other-pages.md](ui-refresh-other-pages.md)). No page template uses a toolkit component any more (unit test).
+  * open: the build summary script still imports the toolkit, because custom build summary templates may use its components. Removing `@vscode/webview-ui-toolkit` breaks such templates: decide with a release note.
 
 ## 5. Keep it clean
 

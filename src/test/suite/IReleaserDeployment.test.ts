@@ -286,7 +286,7 @@ suite('i-Releaser deployment from the build summary', () => {
     const toml_file = path.join(Workspace.get_workspace(), Constants.DEPLOYMENT_CONFIG_FILE);
     await deployment_toml('[i-releaser]\nurl = "http://athoed40:8011"\nworkflows = ["A", "B"]\n');
     const html = await DeploymentConfig['generate_html'](OBITools.ext_context!, vscode.Uri.file(Constants.EXTENSION_ROOT), fake_webview);
-    assert.match(html, /id="i-releaser\|workflows"[^>]*value='A\nB'/);
+    assert.match(html, /id="i-releaser\|workflows"[^>]*>A\nB<\/textarea>/);
 
     const save = (workflows: string[]) => DeploymentConfig['save_config']({
       'i-releaser': { url: 'http://athoed40:8011', 'default-workflow': 'A', workflows: workflows, 'main-branch': '', 'auth-token': '' }

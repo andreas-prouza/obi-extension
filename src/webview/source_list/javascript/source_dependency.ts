@@ -1,15 +1,11 @@
-import "../../tools/javascript/toolkit";
-import {
-  Button,
-  TextField
-} from "@vscode/webview-ui-toolkit";
-
 import { page_text, showAlert } from "../../tools/javascript/alertBox";
 import { init_source_select } from "../../tools/javascript/sourceSelect";
 import { typed_post } from "../../tools/javascript/post";
 import type { SourceDependencyRequest } from "../../../shared/messages/SourceConfigMessages";
 
 
+
+type TextField = HTMLSelectElement;
 
 const vscode = acquireVsCodeApi();
 const post = typed_post<SourceDependencyRequest>(vscode);
@@ -23,11 +19,8 @@ function main() {
   init_source_select('source_list_1');
   init_source_select('source_list_2');
 
-  let button = document.getElementById("add_dependency_1") as Button;
-  button?.addEventListener("click", add_dependency_1);
-  
-  button = document.getElementById("add_dependency_2") as Button;
-  button?.addEventListener("click", add_dependency_2);
+  document.getElementById("add_dependency_1")?.addEventListener("click", add_dependency_1);
+  document.getElementById("add_dependency_2")?.addEventListener("click", add_dependency_2);
   
   let delete_buttons = document.getElementsByClassName(`delete_dependency_1`);
   for (let i = 0; i < delete_buttons.length; i++) {

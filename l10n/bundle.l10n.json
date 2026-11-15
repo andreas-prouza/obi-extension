@@ -477,5 +477,13 @@
   "Sources": "Sources",
   "Unsaved changes": "Unsaved changes",
   "Individual build settings of single sources.": "Individual build settings of single sources.",
-  "Required values are missing:": "Required values are missing:"
+  "Required values are missing:": "Required values are missing:",
+  "Settings, commands and steps of this source override those of the configuration.": "Settings, commands and steps of this source override those of the configuration.",
+  "The URL and the settings are saved in .obi/etc/deployment.toml and committed with the project. The token is stored in VS Code, separately for each URL.": "The URL and the settings are saved in .obi/etc/deployment.toml and committed with the project. The token is stored in VS Code, separately for each URL.",
+  "Connection": "Connection",
+  "Workflows": "Workflows",
+  "Changes are saved right away.": "Changes are saved right away.",
+  "None": "None",
+  "A description is saved when you leave its field.": "A description is saved when you leave its field.",
+  "Edit the descriptions with OBI: Maintain source infos.": "Edit the descriptions with OBI: Maintain source infos."
 }

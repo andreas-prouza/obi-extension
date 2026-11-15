@@ -6,140 +6,76 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
-  <link rel="stylesheet" href="{{ config_css }}">
   <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/tom-select/tom-select.min.css">
   <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/codicons/codicon.css">
-
+  <link rel="stylesheet" href="{{ global_stuff['ui_style_uri'] }}">
 </head>
 
-<body>
+<body class="obi-page cfg-page">
 
+  <header class="cfg-bar">
+    <h1>{{ global_stuff['get_text']('Maintain source dependency:') | safe }}</h1>
+    <span class="cfg-source"><span class="codicon codicon-file-code"></span><code>{{ source }}</code></span>
+  </header>
 
+  {% include "tools/alertBox.html" %}
 
-  <h2>{{ global_stuff['get_text']('Maintain source dependency:') | safe }} <code>{{ source }}</code></h2>
-
-  
-  <div class="save-button-wrapper">
-    <vscode-button class="save-button" id="save_config">{{ global_stuff['get_text']('Save') | safe }}</vscode-button>
-    {% include "tools/alertBox.html" %}
+  <div class="cfg-sub">
+    <span class="codicon codicon-info"></span>
+    <span class="scope-desc">{{ global_stuff['get_text']('Changes are saved right away.') | safe }}</span>
   </div>
-  
 
+  <main class="cfg-single">
 
-  <hr />
-  <br/>
-
-  <h3><code>{{ source }}</code> {{ global_stuff['get_text']('depends on:') }}</h3>
-  <br/>
-  <br/>
-
-  <table id="source_dependency_list"
-    class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
-    data-locale="{{ global_stuff['locale'] }}"
-    data-toggle="table" 
-    data-filter-control="false"
-    data-show-search-clear-button="false" 
-    data-show-columns="true"
-    data-pagination="false" 
-    data-page-size="10"
-    data-buttons-align="left">
-    <thead>
-      <tr>
-        <th>{{ global_stuff['get_text']('Source') | safe }}</th>
-      </tr>
-    </thead>
-    <tbody>
+    <h2><code>{{ source }}</code> {{ global_stuff['get_text']('depends on:') }}</h2>
+    <div class="kv-list kv-deps" id="source_dependency_list">
       {% for row in dependency_list_1 %}
-      <tr>
-        <td><a href='command:vscode.open?{{ row["file"] }}'>{{ row["source"] }}</a></td>
-        <td>
-          <vscode-button class="delete_dependency_1" source='{{ row["source"] }}'' list_index="{{ loop.index0 }}" id="delete_dependency_1_{{ loop.index0 }}">
-            <span class="codicon codicon-trash"></span>
-          </vscode-button>
-        </td>
-      </tr>
+      <div class="kv">
+        <span class="object"><span class="codicon codicon-file-code"></span><a href='command:vscode.open?{{ row["file"] }}'>{{ row["source"] }}</a></span>
+        <button type="button" class="icon-btn delete_dependency_1" source="{{ row['source'] }}" list_index="{{ loop.index0 }}" id="delete_dependency_1_{{ loop.index0 }}" title="{{ global_stuff['get_text']('Delete') | safe }}" aria-label="{{ global_stuff['get_text']('Delete') | safe }}"><span class="codicon codicon-trash"></span></button>
+      </div>
+      {% else %}
+      <div class="kv kv-empty"><span class="obi-muted">{{ global_stuff['get_text']('None') | safe }}</span></div>
       {% endfor %}
-      <tr><td>&nbsp;</td></tr>
-      <tr><td>{{ global_stuff['get_text']('Add new') | safe }}</td></tr>
-      <tr>
-        <td>
-            <select id="source_list_1" placeholder="" autocomplete="off">
-              <option value="">Choose a source ...</option>
+      <div class="kv kv-add">
+        <div class="source-pick">
+          <select id="source_list_1" placeholder="" autocomplete="off" aria-label="{{ global_stuff['get_text']('Add new') | safe }}">
+            <option value="">Choose a source ...</option>
             {% for row in source_list %}
-              <option value="{{ row }}">{{ row }}</option>
+            <option value="{{ row }}">{{ row }}</option>
             {% endfor %}
-            </select>
-        </td>
-        <td>
-          <vscode-button id="add_dependency_1">
-            <span class="codicon codicon-add"></span>
-          </vscode-button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+          </select>
+        </div>
+        <button type="button" class="btn secondary small" id="add_dependency_1"><span class="codicon codicon-add"></span>{{ global_stuff['get_text']('Add') | safe }}</button>
+      </div>
+    </div>
 
-
-
-  <br />
-  <hr />
-  <br/>
-
-  <h3>{{ global_stuff['get_text']('Sources depending on:') }} <code>{{ source }}</code></h3>
-  <br/>
-  <br/>
-
-  <table id="sources_depending_on_it_list"
-    class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
-    data-locale="{{ global_stuff['locale'] }}"
-    data-toggle="table" 
-    data-filter-control="false"
-    data-show-search-clear-button="false" 
-    data-show-columns="true"
-    data-pagination="false" 
-    data-page-size="10"
-    data-buttons-align="left">
-    <thead>
-      <tr>
-        <th>{{ global_stuff['get_text']('Source') | safe }}</th>
-      </tr>
-    </thead>
-    <tbody>
+    <h2>{{ global_stuff['get_text']('Sources depending on:') }} <code>{{ source }}</code></h2>
+    <div class="kv-list kv-deps" id="sources_depending_on_it_list">
       {% for row in dependency_list_2 %}
-      <tr>
-        <td><a href='command:vscode.open?{{ row["file"] }}'>{{ row["source"] }}</a></td>
-        <td>
-          <vscode-button class="delete_dependency_2" source='{{ row["source"] }}' list_index="{{ loop.index0 }}" id="delete_dependency_2_{{ loop.index0 }}">
-            <span class="codicon codicon-trash"></span>
-          </vscode-button>
-        </td>
-      </tr>
+      <div class="kv">
+        <span class="object"><span class="codicon codicon-file-code"></span><a href='command:vscode.open?{{ row["file"] }}'>{{ row["source"] }}</a></span>
+        <button type="button" class="icon-btn delete_dependency_2" source="{{ row['source'] }}" list_index="{{ loop.index0 }}" id="delete_dependency_2_{{ loop.index0 }}" title="{{ global_stuff['get_text']('Delete') | safe }}" aria-label="{{ global_stuff['get_text']('Delete') | safe }}"><span class="codicon codicon-trash"></span></button>
+      </div>
+      {% else %}
+      <div class="kv kv-empty"><span class="obi-muted">{{ global_stuff['get_text']('None') | safe }}</span></div>
       {% endfor %}
-      <tr><td>&nbsp;</td></tr>
-      <tr><td>{{ global_stuff['get_text']('Add new') | safe }}</td></tr>
-      <tr>
-        <td>
-            <select id="source_list_2" placeholder="" autocomplete="off">
-              <option value="">Choose a source ...</option>
+      <div class="kv kv-add">
+        <div class="source-pick">
+          <select id="source_list_2" placeholder="" autocomplete="off" aria-label="{{ global_stuff['get_text']('Add new') | safe }}">
+            <option value="">Choose a source ...</option>
             {% for row in source_list %}
-              <option value="{{ row }}">{{ row }}</option>
+            <option value="{{ row }}">{{ row }}</option>
             {% endfor %}
-            </select>
-        </td>
-        <td>
-          <vscode-button id="add_dependency_2">
-            <span class="codicon codicon-add"></span>
-          </vscode-button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+          </select>
+        </div>
+        <button type="button" class="btn secondary small" id="add_dependency_2"><span class="codicon codicon-add"></span>{{ global_stuff['get_text']('Add') | safe }}</button>
+      </div>
+    </div>
+  </main>
 
-  <br />
-
-
-  <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
   <script src="{{ global_stuff['vendor_uri'] }}/tom-select/tom-select.complete.min.js"></script>
+  <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
 
 </body>
 

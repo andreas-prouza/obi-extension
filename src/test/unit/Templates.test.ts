@@ -30,6 +30,27 @@ suite('Templates', () => {
   });
 
 
+  test('no page uses the components of the deprecated webview toolkit (custom build summary templates still may)', () => {
+    for (const file of all_templates()) {
+      const html = fs.readFileSync(file, 'utf8');
+      assert.ok(!/<vscode-[a-z-]+/.test(html), path.relative(Constants.HTML_TEMPLATE_DIR, file));
+    }
+  });
+
+
+  test('text filters of the tables compare the visible text, not the cell HTML (link targets, attributes)', () => {
+    let columns = 0;
+    for (const file of all_templates()) {
+      const html = fs.readFileSync(file, 'utf8');
+      for (const th of html.match(/<th\b[^>]*data-filter-control="input"[^>]*>/g) ?? []) {
+        columns++;
+        assert.ok(th.includes('data-filter-custom-search="obi_cell_text_search"'), `${path.relative(Constants.HTML_TEMPLATE_DIR, file)}: ${th}`);
+      }
+    }
+    assert.ok(columns >= 4, 'the source filter table and source infos pages have text filters');
+  });
+
+
   test('source infos editor renders descriptions only as escaped attribute values', () => {
     const env = new nunjucks.Environment(new nunjucks.FileSystemLoader(Constants.HTML_TEMPLATE_DIR), { autoescape: true });
     const html: string = env.render('source_list/source-infos-config.html', {

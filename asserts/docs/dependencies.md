@@ -69,7 +69,7 @@ Open the dependency editor for a source:
 
   ![Context menu](../img/ext/context-1.png)
 
-The editor shows both directions. Add or remove entries, then click **Save**:
+The editor shows both directions. Add or remove entries; each change is saved right away:
 
 * **\<source\> depends on**: sources this source needs
 * **Sources depending on \<source\>**: sources that need this source

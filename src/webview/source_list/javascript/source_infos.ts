@@ -1,14 +1,11 @@
-import "../../tools/javascript/toolkit";
-import {
-  Button,
-  TextField
-} from "@vscode/webview-ui-toolkit";
-
 import * as source from '../../../shared/Source';
 import { page_text, showAlert } from "../../tools/javascript/alertBox";
 import { typed_post } from "../../tools/javascript/post";
 import type { SourceInfosRequest } from "../../../shared/messages/SourceListMessages";
+import { prepare_tables } from "../../tools/javascript/bootstrapTable";
 
+
+type TextField = HTMLInputElement;
 
 const vscode = acquireVsCodeApi();
 const post = typed_post<SourceInfosRequest>(vscode);
@@ -19,18 +16,13 @@ interface BootstrapTable {
 }
 declare const $: ((selector: string) => BootstrapTable) | undefined;
 
+prepare_tables();
+
 window.addEventListener("load", main);
 
 
 
 function main() {
-  // To get improved type annotations/IntelliSense the associated class for
-  // a given toolkit component can be imported and used to type cast a reference
-  // to the element (i.e. the `as Button` syntax)
-
-  const save_button = document.getElementById("save_config") as Button;
-  save_button?.addEventListener("click", save_config);
-
   // Delegated, because bootstrap-table re-renders rows (paging, sorting)
   document.addEventListener('focusout', (event: FocusEvent) => {
     const field = event.target;
@@ -65,8 +57,8 @@ function description_changed(field: TextField) {
     $('#source_list').bootstrapTable('updateCell', {
       index: row_index,
       field: 'description',
-      value: `<vscode-text-field class="source_description" size="80" placeholder="${escape_html(field.placeholder ?? '')}" ${attributes} `
-        + `data-original="${escape_html(field.value)}" value="${escape_html(field.value)}"></vscode-text-field>`,
+      value: `<input class="obi-input source_description" placeholder="${escape_html(field.placeholder ?? '')}" ${attributes} `
+        + `data-original="${escape_html(field.value)}" value="${escape_html(field.value)}">`,
       reinit: false
     });
   }

@@ -4,130 +4,84 @@
   {% include "tools/csp.html" %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/bootstrap/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table.min.css">
-    
     <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
-    <link rel="stylesheet" href="{{ config_css }}">
     <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/codicons/codicon.css">
-
+    <link rel="stylesheet" href="{{ global_stuff['ui_style_uri'] }}">
   </head>
-  <body>
+  <body class="obi-page cfg-page">
 
-    <h2>{{ global_stuff['get_text']('Source config') | safe }} <code><a href='command:vscode.open?{{ source_file }}'>{{ source }}</a></code></h2>
+    <header class="cfg-bar">
+      <h1>{{ global_stuff['get_text']('Source config') | safe }}</h1>
+      <a class="cfg-source" href='command:vscode.open?{{ source_file }}' title="{{ source }}"><span class="codicon codicon-file-code"></span><code>{{ source }}</code></a>
+      <span class="spacer"></span>
+      <span class="cfg-dirty" id="cfg_dirty" hidden><span class="dirty-dot"></span>{{ global_stuff['get_text']('Unsaved changes') | safe }}</span>
+      <a class="icon-btn" href='command:vscode.open?{{ source_config_file }}' title="{{ global_stuff['get_text']('Open source config file') | safe }}" aria-label="{{ global_stuff['get_text']('Open source config file') | safe }}"><span class="codicon codicon-go-to-file"></span></a>
+      <button type="button" class="btn" id="save_config"><span class="codicon codicon-save"></span>{{ global_stuff['get_text']('Save') | safe }}</button>
+    </header>
 
-    <div class="save-button-wrapper">
-      <vscode-button class="save-button" id="save_config">{{ global_stuff['get_text']('Save') | safe }}</vscode-button>
-      {% include "tools/alertBox.html" %}
+    {% include "tools/alertBox.html" %}
+
+    <div class="cfg-sub">
+      <span class="codicon codicon-info"></span>
+      <span class="scope-desc">{{ global_stuff['get_text']('Settings, commands and steps of this source override those of the configuration.') | safe }}</span>
+      <span class="spacer"></span>
+      <span class="obi-muted save-hint">{{ global_stuff['get_text']('Saving rewrites the TOML file: comments in it are not kept.') | safe }}</span>
     </div>
-    
-    📝 <a href='command:vscode.open?{{ source_config_file }}'>{{  global_stuff['get_text']('Open source config file') | safe }}</a>
-    <p class="save-hint">ℹ️ {{ global_stuff['get_text']('Saving rewrites the TOML file: comments in it are not kept.') | safe }}</p>
 
-  
-    <h3>{{ global_stuff['get_text']('Compile settings') | safe }}</h3>
-    {% set settings = source_config['settings'] %}
+    <main class="cfg-single">
 
-    <table>
-      <tr>
-        <th>{{ global_stuff['get_text']('Variable') | safe }}</th>
-        <th>{{ global_stuff['get_text']('Value') | safe }}</th>
-      </tr>
-      {% for key, value in settings %}
-      <tr>
-        <td>{{ key }}{% if value | typename == "Array" %} (<code>List</code>){% endif %}</td>
-        <td>
-          {% if value | typename == "Array" %}
-            <vscode-text-area class="save_source_setting" key="{{ key }}" data-type="list" id="{{ key }}|value"
-              value='{{ value | join("\n") }}' rows="{{ value | length }}" resize="both">
-            </vscode-text-area>
+      <h2>{{ global_stuff['get_text']('Compile settings') | safe }}</h2>
+      {% set settings = source_config['settings'] %}
+      <div class="kv-list kv-vars">
+        <div class="kv kv-head"><span>{{ global_stuff['get_text']('Variable') | safe }}</span><span>{{ global_stuff['get_text']('Value') | safe }}</span><span></span></div>
+        {% for key, value in settings %}
+        {% set is_list = value | typename == "Array" %}
+        <div class="kv">
+          <span class="kv-name"><code>{{ key }}</code>{% if is_list %} <span class="setting-tag">List</span>{% endif %}</span>
+          {% if is_list %}
+          <textarea class="obi-input mono save_source_setting" key="{{ key }}" data-type="list" id="setting|{{ key }}" rows="{{ [value | length, 2] | sort | last }}" aria-label="{{ key }}">{{ value | join("\n") }}</textarea>
           {% else %}
-            <vscode-text-field class="save_source_setting" key="{{ key }}" data-type="string" id="{{ key }}|value"
-              value="{{ value }}">
-            </vscode-text-field>
+          <input class="obi-input mono save_source_setting" key="{{ key }}" data-type="string" id="setting|{{ key }}" value="{{ value }}" aria-label="{{ key }}">
           {% endif %}
-        </td>
-        <td>
-          <vscode-button class="delete_source_setting" key="{{ key }}" id="delete_source_setting_{{ loop.index0 }}">
-            <span class="codicon codicon-trash"></span>
-          </vscode-button>
-        </td>
-      </tr>
-      {% endfor %}
-      <tr><td>&nbsp;</td></tr>
-      <tr>
-        <td>
-          <vscode-text-field id="new_source_setting_key" placeholder="TARGET_LIB"></vscode-text-field>
-        </td>
-        <td>
-          <!--vscode-text-field id="new_source_setting_value" placeholder="PROUZALIB"></vscode-text-field-->
-          <vscode-text-area id="new_source_setting_value" placeholder="PROUZALIB" rows="4" resize="both">
-          </vscode-text-area>
-        </td>
-        <td>
-          <select id="new_source_setting_type" class="form-select">
-            <option selected value="string">String</option>
-            <option value="list">List (separated by new line)</option>
-          </select>
-        </td>
-        <td>
-          <vscode-button id="add_source_setting" config="{{ class_prefix }}">
-            <span class="codicon codicon-add"></span>
-          </vscode-button>
-        </td>
-      </tr>
-    </table>
+          <button type="button" class="icon-btn delete_source_setting" key="{{ key }}" title="{{ global_stuff['get_text']('Delete') | safe }}" aria-label="{{ global_stuff['get_text']('Delete') | safe }}"><span class="codicon codicon-trash"></span></button>
+        </div>
+        {% endfor %}
+        <div class="kv kv-add">
+          <input class="obi-input mono" id="new_source_setting_key" placeholder="TARGET_LIB" aria-label="{{ global_stuff['get_text']('Variable') | safe }}">
+          <div class="kv-value">
+            <textarea class="obi-input mono" id="new_source_setting_value" placeholder="PROUZALIB" rows="1" aria-label="{{ global_stuff['get_text']('Value') | safe }}"></textarea>
+            <select id="new_source_setting_type" class="obi-select" aria-label="Type">
+              <option selected value="string">String</option>
+              <option value="list">List (one value per line)</option>
+            </select>
+          </div>
+          <button type="button" class="btn secondary small" id="add_source_setting"><span class="codicon codicon-add"></span>{{ global_stuff['get_text']('Add') | safe }}</button>
+        </div>
+      </div>
 
-    <hr />
-  
-    <h3>{{ global_stuff['get_text']('Compile commands') | safe }} (<code>source-cmds</code>)</h3>
-    {% set compile_cmds = source_config['source-cmds'] %}
+      <h2>{{ global_stuff['get_text']('Compile commands') | safe }} <code>source-cmds</code></h2>
+      <div class="kv-list">
+        <div class="kv kv-head"><span>{{ global_stuff['get_text']('Command id') | safe }}</span><span>{{ global_stuff['get_text']('Command') | safe }}</span><span></span></div>
+        {% for key, value in source_config['source-cmds'] %}
+        <div class="kv">
+          <span class="kv-name"><code>{{ key }}</code></span>
+          <textarea class="obi-input mono save_source_cmd" key="{{ key }}" data-type="string" id="cmd|{{ key }}" rows="3" aria-label="{{ key }}">{{ value }}</textarea>
+          <button type="button" class="icon-btn delete_source_cmd" key="{{ key }}" title="{{ global_stuff['get_text']('Delete') | safe }}" aria-label="{{ global_stuff['get_text']('Delete') | safe }}"><span class="codicon codicon-trash"></span></button>
+        </div>
+        {% endfor %}
+        <div class="kv kv-add">
+          <input class="obi-input mono" id="new_source_cmd_key" placeholder="command id" aria-label="{{ global_stuff['get_text']('Command id') | safe }}">
+          <textarea class="obi-input mono" id="new_source_cmd_value" rows="2" placeholder="command" aria-label="{{ global_stuff['get_text']('Command') | safe }}"></textarea>
+          <button type="button" class="btn secondary small" id="add_source_cmd"><span class="codicon codicon-add"></span>{{ global_stuff['get_text']('Add') | safe }}</button>
+        </div>
+      </div>
 
-    <table>
-      <tr>
-        <th>{{ global_stuff['get_text']('Command id') | safe }}</th>
-        <th>{{ global_stuff['get_text']('Command') | safe }}</th>
-      </tr>
-      {% for key, value in compile_cmds %}
-      <tr>
-        <td>{{ key }}</td>
-        <td>
-          <vscode-text-area class="save_source_cmd" key="{{ key }}" data-type="string" cols="80" rows="4" resize="both"  id="{{ key }}|value"
-            value="{{ value }}">
-          </vscode-text-area>
-        </td>
-        <td>
-          <vscode-button class="delete_source_cmd" key="{{ key }}" id="delete_source_cmd_{{ loop.index0 }}">
-            <span class="codicon codicon-trash"></span>
-          </vscode-button>
-        </td>
-      </tr>
-      {% endfor %}
-      <tr>
-        <td>
-          <vscode-text-field id="new_source_cmd_key" placeholder="command id"></vscode-text-field>
-        </td>
-        <td>
-          <vscode-text-area id="new_source_cmd_value" cols="80" rows="2" placeholder="command"></vscode-text-area>
-        </td>
-        <td>
-          <vscode-button id="add_source_cmd" config="{{ class_prefix }}">
-            <span class="codicon codicon-add"></span>
-          </vscode-button>
-        </td>
-      </tr>
-    </table>
-
-    <hr />
-
-    <h3>{{ global_stuff['get_text']('Compile steps') | safe }}</h3>
-    {% set compile_steps = source_config['steps'] %}
-
-    <h6><b>{{ global_stuff['get_text']('Command IDs (separated by new line)') | safe }}</b></h6>
-    <vscode-text-area cols="100" rows="4" resize="both" id="steps" placeholder="source-cmds.commandid&#10;global.cmds.check-error"
-      value="{{ (compile_steps or []) | join('\n') }}">
-    </vscode-text-area>
+      <h2>{{ global_stuff['get_text']('Compile steps') | safe }}</h2>
+      <div class="setting">
+        <div class="setting-label"><label for="steps">{{ global_stuff['get_text']('Command IDs (separated by new line)') | safe }}</label></div>
+        <textarea class="obi-input mono" id="steps" rows="5" placeholder="source-cmds.commandid&#10;global.cmds.check-error">{{ (source_config['steps'] or []) | join('\n') }}</textarea>
+      </div>
+    </main>
 
     <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
 

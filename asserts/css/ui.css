@@ -1437,6 +1437,25 @@ textarea.obi-input {
   gap: 4px;
 }
 
+.kv-deps .kv {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.kv-deps .object a {
+  overflow-wrap: anywhere;
+}
+
+.kv-filter .kv {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) 60px 90px 80px;
+  align-items: center;
+}
+
+.kv-filter .kv > .obi-check, .kv-center {
+  justify-self: center;
+  text-align: center;
+}
+
 .esp-steps .kv {
   grid-template-columns: 70px minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, .8fr) 30px;
 }
@@ -1467,6 +1486,55 @@ textarea.obi-input {
 
 .source-pick .ts-wrapper {
   flex: 1;
+}
+
+/* A form page with one column (source build settings, deployment config) */
+.cfg-single {
+  max-width: 1100px;
+  padding: 16px 24px 32px;
+}
+
+.cfg-single > h2:first-child {
+  margin-top: 0;
+}
+
+.cfg-single h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 26px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--obi-border);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.cfg-single h2 code {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--obi-muted);
+}
+
+.cfg-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--obi-link);
+  text-decoration: none;
+}
+
+.cfg-source code {
+  overflow: hidden;
+  color: inherit;
+  background: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cfg-bar h1 .codicon {
+  font-size: 18px;
+  vertical-align: -2px;
 }
 
 /* tom-select (searchable source picker) in the colours of the theme */
@@ -1510,4 +1578,127 @@ textarea.obi-input {
   .esp-steps .kv {
     grid-template-columns: 1fr;
   }
+}
+
+
+/* ---------------------------------------------------------------- bootstrap-table pages (source filter view, source infos)
+   Bootstrap's own variables take the colours of the VS Code theme */
+
+.obi-bt {
+  --bs-body-bg: var(--vscode-editor-background);
+  --bs-body-color: var(--vscode-foreground);
+  --bs-border-color: var(--obi-border);
+  --bs-secondary-bg: var(--vscode-input-background);
+  --bs-tertiary-bg: var(--obi-surface);
+  --bs-secondary-color: var(--obi-muted);
+  --bs-link-color: var(--obi-link);
+  --bs-link-hover-color: var(--obi-link);
+  --bs-link-color-rgb: 77, 170, 252;
+  --bs-emphasis-color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  color: var(--vscode-foreground);
+}
+
+.bt-main {
+  padding: 12px 24px 32px;
+}
+
+.obi-bt .table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--vscode-foreground);
+  --bs-table-border-color: var(--obi-border);
+  --bs-table-hover-bg: var(--vscode-list-hoverBackground, rgba(128, 128, 128, .1));
+  --bs-table-hover-color: var(--vscode-foreground);
+  --bs-table-striped-bg: transparent;
+  font-size: 13px;
+}
+
+.obi-bt .table > thead th {
+  color: var(--obi-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.obi-bt .bootstrap-table .fixed-table-container .table thead th .th-inner {
+  padding: 6px 8px;
+}
+
+.obi-bt .table > :not(caption) > * > * {
+  padding: 5px 8px;
+}
+
+.obi-bt .form-control, .obi-bt .form-select {
+  border-color: var(--vscode-input-border, var(--obi-border));
+  border-radius: 2px;
+  background-color: var(--vscode-input-background);
+  color: var(--vscode-input-foreground, var(--vscode-foreground));
+  font-size: 13px;
+}
+
+.obi-bt .form-control::placeholder {
+  color: var(--vscode-input-placeholderForeground, var(--obi-muted));
+}
+
+.obi-bt .form-control:focus, .obi-bt .form-select:focus {
+  border-color: var(--vscode-focusBorder);
+  box-shadow: none;
+}
+
+.obi-bt .btn-secondary, .obi-bt .bootstrap-table .fixed-table-toolbar .btn {
+  height: 26px;
+  padding: 0 8px;
+  border-color: transparent;
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
+.obi-bt .btn-secondary:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.obi-bt .dropdown-menu {
+  --bs-dropdown-bg: var(--vscode-dropdown-background);
+  --bs-dropdown-color: var(--vscode-dropdown-foreground, var(--vscode-foreground));
+  --bs-dropdown-border-color: var(--vscode-dropdown-border, var(--obi-border));
+  --bs-dropdown-link-color: var(--vscode-foreground);
+  --bs-dropdown-link-hover-bg: var(--vscode-list-hoverBackground, rgba(128, 128, 128, .15));
+  --bs-dropdown-link-hover-color: var(--vscode-foreground);
+  --bs-dropdown-link-active-bg: var(--vscode-list-activeSelectionBackground, #04395e);
+  font-size: 13px;
+}
+
+.obi-bt .pagination {
+  --bs-pagination-bg: transparent;
+  --bs-pagination-color: var(--obi-link);
+  --bs-pagination-border-color: var(--obi-border);
+  --bs-pagination-hover-bg: var(--vscode-list-hoverBackground, rgba(128, 128, 128, .15));
+  --bs-pagination-hover-color: var(--obi-link);
+  --bs-pagination-active-bg: var(--vscode-button-background);
+  --bs-pagination-active-border-color: var(--vscode-button-background);
+  --bs-pagination-active-color: var(--vscode-button-foreground);
+  --bs-pagination-disabled-bg: transparent;
+  --bs-pagination-disabled-color: var(--obi-muted);
+  --bs-pagination-padding-y: 2px;
+  --bs-pagination-padding-x: 8px;
+  --bs-pagination-font-size: 13px;
+}
+
+.obi-bt .fixed-table-pagination {
+  color: var(--obi-muted);
+  font-size: 12px;
+}
+
+.obi-bt .table a {
+  color: var(--obi-link);
+  text-decoration: none;
+}
+
+.obi-bt .table a:hover {
+  text-decoration: underline;
+}
+
+.obi-bt .source_description {
+  min-width: 360px;
 }

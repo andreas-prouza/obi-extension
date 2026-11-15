@@ -1,13 +1,10 @@
-import "../../tools/javascript/toolkit";
-import {
-  Button,
-  TextField
-} from "@vscode/webview-ui-toolkit";
-
 import { page_text, showAlert } from "../../tools/javascript/alertBox";
 import { typed_post } from "../../tools/javascript/post";
 import type { SourceConfigRequest } from "../../../shared/messages/SourceConfigMessages";
 
+
+/** Text field or text area of the page */
+type TextField = HTMLInputElement | HTMLTextAreaElement;
 
 const vscode = acquireVsCodeApi();
 const post = typed_post<SourceConfigRequest>(vscode);
@@ -18,11 +15,8 @@ window.addEventListener("load", main);
 
 function main() {
 
-  let button = document.getElementById("save_config") as Button;
-  button?.addEventListener("click", save_config);
-  
-  button = document.getElementById("add_source_setting") as Button;
-  button?.addEventListener("click", add_source_setting);
+  document.getElementById("save_config")?.addEventListener("click", save_config);
+  document.getElementById("add_source_setting")?.addEventListener("click", add_source_setting);
   
   let app_elements = document.getElementsByClassName(`delete_source_setting`);
   for (let i = 0; i < app_elements.length; i++) {
@@ -30,8 +24,14 @@ function main() {
     app_elements[i].addEventListener('click', () => {delete_source_setting(key);});
   }
 
-  button = document.getElementById("add_source_cmd") as Button;
-  button?.addEventListener("click", add_source_cmd);  
+  document.getElementById("add_source_cmd")?.addEventListener("click", add_source_cmd);
+
+  // "Unsaved changes" as soon as a value changes
+  document.querySelector('main')?.addEventListener('input', () => {
+    const dirty = document.getElementById('cfg_dirty');
+    if (dirty)
+      dirty.hidden = false;
+  });
 
   app_elements = document.getElementsByClassName(`delete_source_cmd`);
   for (let i = 0; i < app_elements.length; i++) {

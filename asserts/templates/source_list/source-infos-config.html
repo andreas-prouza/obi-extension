@@ -13,26 +13,26 @@
   <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table.min.css">
   
   <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
-  <link rel="stylesheet" href="{{ config_css }}">
   <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/codicons/codicon.css">
+  <link rel="stylesheet" href="{{ global_stuff['ui_style_uri'] }}">
 </head>
 
-<body>
+<body class="obi-page cfg-page obi-bt">
 
+  <header class="cfg-bar">
+    <h1>{{ global_stuff['get_text']('Source infos') | safe }}</h1>
+    <span class="spacer"></span>
+    <a class="icon-btn" href='command:vscode.open?{{ source_info_file }}' title="{{ global_stuff['get_text']('open JSON file') | safe }}" aria-label="{{ global_stuff['get_text']('open JSON file') | safe }}"><span class="codicon codicon-json"></span></a>
+  </header>
 
-  <br/>
+  {% include "tools/alertBox.html" %}
 
-  <h2>{{ global_stuff['get_text']('Source infos') | safe }}</h2>
-  <a href='command:vscode.open?{{ source_info_file }}'>{{ global_stuff['get_text']('open JSON file') | safe }}</a>
-  
-  <div class="save-button-wrapper">
-    <vscode-button class="save-button" style="display: none;" id="save_config">{{ global_stuff['get_text']('Save') | safe }}</vscode-button>
-    {% include "tools/alertBox.html" %}
+  <div class="cfg-sub">
+    <span class="codicon codicon-info"></span>
+    <span class="scope-desc">{{ global_stuff['get_text']('A description is saved when you leave its field.') | safe }}</span>
   </div>
-  
-  <hr />
-  <br/>
 
+  <main class="bt-main">
   <table id="source_list"
   class="table w-auto" data-bs-theme="{{ global_stuff['theme_mode'] }}"
   data-locale="{{ global_stuff['locale'] }}"
@@ -51,8 +51,8 @@
       <tr>
         <th data-field="lib" data-sortable="true" data-filter-control="select" data-filter-control-container="#lib">{{ global_stuff['get_text']('Lib') | safe }}</th>
         <th data-field="file" data-sortable="true" data-filter-control="select" data-filter-control-container="#file">{{ global_stuff['get_text']('File') | safe }}</th>
-        <th data-field="member" data-sortable="true" data-filter-control="input" data-filter-control-container="#member">{{ global_stuff['get_text']('Member') | safe }}</th>
-        <th data-field="description" data-sortable="true" data-filter-control="input" data-filter-control-container="#description">{{ global_stuff['get_text']('Description') | safe }}</th>
+        <th data-field="member" data-sortable="true" data-filter-control="input" data-filter-custom-search="obi_cell_text_search" data-filter-control-container="#member">{{ global_stuff['get_text']('Member') | safe }}</th>
+        <th data-field="description" data-sortable="true" data-filter-control="input" data-filter-custom-search="obi_cell_text_search" data-filter-control-container="#description">{{ global_stuff['get_text']('Description') | safe }}</th>
       </tr>
     </thead>
     <tbody>
@@ -63,16 +63,17 @@
         <td style="white-space: nowrap;">{{ row['source-member'] }}</td>
         <td style="white-space: nowrap;">
           {# No inline JavaScript: values are only used as escaped attributes, the behaviour is in source_infos.ts #}
-          <vscode-text-field class="source_description" size="80"
+          <input class="obi-input source_description"
             placeholder="{{ global_stuff['get_text']('description') | safe }}"
             data-lib="{{ row['source-lib'] }}" data-file="{{ row['source-file'] }}" data-member="{{ row['source-member'] }}"
             data-original="{{ row['description'] }}"
-            value="{{ row['description'] }}"></vscode-text-field>
+            value="{{ row['description'] }}">
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+  </main>
 
 
   <br />

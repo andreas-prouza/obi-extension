@@ -5,48 +5,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
-    <link rel="stylesheet" href="{{ config_css }}">
     <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/codicons/codicon.css">
+    <link rel="stylesheet" href="{{ global_stuff['ui_style_uri'] }}">
   </head>
-  <body>
+  <body class="obi-page cfg-page">
 
-    
-    <div class="save-button-wrapper">
-      <vscode-button class="save-button" id="save_config">{{  global_stuff['get_text']('Save') | safe }}</vscode-button>
-      {% include "tools/alertBox.html" %}
+    <header class="cfg-bar">
+      <h1><span class="codicon codicon-rocket"></span> i-Releaser</h1>
+      <span class="spacer"></span>
+      <span class="cfg-dirty" id="cfg_dirty" hidden><span class="dirty-dot"></span>{{ global_stuff['get_text']('Unsaved changes') | safe }}</span>
+      <button type="button" class="btn" id="save_config"><span class="codicon codicon-save"></span>{{ global_stuff['get_text']('Save') | safe }}</button>
+    </header>
+
+    {% include "tools/alertBox.html" %}
+
+    <div class="cfg-sub">
+      <span class="codicon codicon-info"></span>
+      <span class="scope-desc">{{ global_stuff['get_text']('The URL and the settings are saved in .obi/etc/deployment.toml and committed with the project. The token is stored in VS Code, separately for each URL.') | safe }}</span>
     </div>
-    
-    <h2>i-Releaser</h2>
 
-    <vscode-text-field id="i-releaser|url" placeholder="https://your-domain" value="{{ deploy_config['i-releaser']['url'] }}">{{ global_stuff['get_text']('URL') | safe }}</vscode-text-field>
-    <br/>
-    <br/>
-    <vscode-text-field id="i-releaser|default-workflow" placeholder="UAT-workflow" value="{{ deploy_config['i-releaser']['default-workflow'] }}">{{ global_stuff['get_text']('Default workflow') | safe }}</vscode-text-field>
-    <br/>
-    <br/>
-    <vscode-text-area id="i-releaser|workflows" rows="4" resize="vertical" placeholder="Deploy OBI Build&#10;Deploy OBI Build Test"
-      value='{{ workflows | join("\n") }}'>{{ global_stuff['get_text']('Workflows to choose from (one per line, empty: all of i-Releaser)') | safe }}</vscode-text-area>
-    <br/>
-    <br/>
-    <vscode-text-field id="i-releaser|project" placeholder="erp" value="{{ deploy_config['i-releaser']['project'] }}">{{ global_stuff['get_text']('Project in i-Releaser (empty: from the workflows)') | safe }}</vscode-text-field>
-    <br/>
-    <br/>
-    <vscode-text-area id="i-releaser|run-stages" rows="3" resize="vertical" placeholder="START&#10;TEST"
-      value='{{ run_stages | join("\n") }}'>{{ global_stuff['get_text']('Stages that may be run from VS Code (one per line, empty: all)') | safe }}</vscode-text-area>
-    <br/>
-    <br/>
-    <vscode-text-field id="i-releaser|main-branch" placeholder="main" value="{{ deploy_config['i-releaser']['main-branch'] }}">{{ global_stuff['get_text']('Main branch') | safe }}</vscode-text-field>
-    <br/>
-    <br/>
-    <vscode-text-field id="i-releaser|auth-token" type="password" value=""
-      {% if auth_token_stored %}placeholder="{{ global_stuff['get_text']('Token stored - type to replace') }}"{% endif %}>🔑 {{ global_stuff['get_text']('HTTP Auth-Token') | safe }}</vscode-text-field>
-    {% if auth_token_stored %}
-    <vscode-button id="delete_auth_token" appearance="icon" title="{{ global_stuff['get_text']('Remove stored token') }}">
-      <span class="codicon codicon-trash"></span>
-    </vscode-button>
-    {% endif %}
+    <main class="cfg-single">
+      <h2>{{ global_stuff['get_text']('Connection') | safe }}</h2>
+      <div class="setting-grid">
+      <div class="setting">
+        <div class="setting-label"><label for="i-releaser|url">{{ global_stuff['get_text']('URL') | safe }}</label></div>
+        <input class="obi-input mono" id="i-releaser|url" type="text" value="{{ deploy_config['i-releaser']['url'] }}" placeholder="https://your-domain">
+      </div>
+      <div class="setting">
+        <div class="setting-label"><label for="i-releaser|auth-token">{{ global_stuff['get_text']('HTTP Auth-Token') | safe }}</label></div>
+        <div class="setting-row">
+          <input class="obi-input" id="i-releaser|auth-token" type="password" value=""
+            {% if auth_token_stored %}placeholder="{{ global_stuff['get_text']('Token stored - type to replace') }}"{% endif %}>
+          {% if auth_token_stored %}
+          <button type="button" class="icon-btn" id="delete_auth_token" title="{{ global_stuff['get_text']('Remove stored token') }}" aria-label="{{ global_stuff['get_text']('Remove stored token') }}"><span class="codicon codicon-trash"></span></button>
+          {% endif %}
+        </div>
+      </div>
+      </div>
+
+      <h2>{{ global_stuff['get_text']('Workflows') | safe }}</h2>
+      <div class="setting-grid">
+      <div class="setting">
+        <div class="setting-label"><label for="i-releaser|default-workflow">{{ global_stuff['get_text']('Default workflow') | safe }}</label></div>
+        <input class="obi-input" id="i-releaser|default-workflow" type="text" value="{{ deploy_config['i-releaser']['default-workflow'] }}" placeholder="UAT-workflow">
+      </div>
+      <div class="setting">
+        <div class="setting-label"><label for="i-releaser|project">{{ global_stuff['get_text']('Project in i-Releaser (empty: from the workflows)') | safe }}</label></div>
+        <input class="obi-input" id="i-releaser|project" type="text" value="{{ deploy_config['i-releaser']['project'] }}" placeholder="erp">
+      </div>
+      <div class="setting">
+        <div class="setting-label"><label for="i-releaser|workflows">{{ global_stuff['get_text']('Workflows to choose from (one per line, empty: all of i-Releaser)') | safe }}</label></div>
+        <textarea class="obi-input" id="i-releaser|workflows" rows="4" placeholder="Deploy OBI Build&#10;Deploy OBI Build Test">{{ workflows | join('\n') }}</textarea>
+      </div>
+      <div class="setting">
+        <div class="setting-label"><label for="i-releaser|run-stages">{{ global_stuff['get_text']('Stages that may be run from VS Code (one per line, empty: all)') | safe }}</label></div>
+        <textarea class="obi-input" id="i-releaser|run-stages" rows="4" placeholder="START&#10;TEST">{{ run_stages | join('\n') }}</textarea>
+      </div>
+      <div class="setting">
+        <div class="setting-label"><label for="i-releaser|main-branch">{{ global_stuff['get_text']('Main branch') | safe }}</label></div>
+        <input class="obi-input" id="i-releaser|main-branch" type="text" value="{{ deploy_config['i-releaser']['main-branch'] }}" placeholder="main">
+      </div>
+      </div>
+    </main>
 
     <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
-    
+
   </body>
 </html>
