@@ -1,8 +1,8 @@
 import assert from 'assert';
 import * as http from 'http';
 import { AddressInfo } from 'net';
-import { IReleaserError, StageState, get_workflow_definitions, parse_deployment } from '../../shared/IReleaser';
-import { cancel_deployment, deployment_projects, failed_step, get_action_log, is_final_status, list_deployments, may_run_stage, run_stage, stage_options } from '../../shared/IReleaserDeployments';
+import { DeploymentState, IReleaserError, StageState, get_workflow_definitions, parse_deployment } from '../../shared/IReleaser';
+import { cancel_deployment, deployment_overview, deployment_projects, failed_step, get_action_log, is_final_status, list_deployments, may_run_stage, run_stage, stage_options, status_kind } from '../../shared/IReleaserDeployments';
 
 
 interface Received { method?: string; url?: string; headers: http.IncomingHttpHeaders }
@@ -148,5 +148,48 @@ suite('i-Releaser deployments view', () => {
     await with_server(200, [], async base => {
       await assert.rejects(get_action_log(base, 'tok', 11), IReleaserError);
     });
+  });
+
+  test('status_kind: how a status of i-Releaser is shown', () => {
+    assert.deepStrictEqual(
+      ['finished', 'failed', 'canceled', 'ready', 'in process', 'in preperation', 'prepare', 'new', 'something else'].map(status_kind),
+      ['finished', 'failed', 'canceled', 'ready', 'running', 'running', 'running', 'new', 'new']);
+  });
+
+
+  test('deployment_overview: progress, and the stage that waits: failed before ready', () => {
+    const step = (id: number, label: string, status: string, last_run?: number) => ({ id, label, cmd: '', status, last_run });
+    const state = (status: string, stages: StageState[]): DeploymentState => ({ id: 80, status, stages });
+    const failed: StageState = { id: 2, name: 'Create object list', status: 'failed', steps: [step(21, 'read list', 'finished', 5), step(22, 'list objects', 'failed', 6)] };
+
+    const overview = deployment_overview(state('failed', [stage('START', 'finished'), failed, stage('DEPLOY', 'new')]), undefined);
+    assert.strictEqual(overview.done, 1);
+    assert.strictEqual(overview.total, 3);
+    assert.strictEqual(overview.attention?.stage, failed);
+    assert.strictEqual(overview.attention?.kind, 'failed');
+    assert.strictEqual(overview.attention?.step?.label, 'list objects');
+    assert.strictEqual(overview.attention?.has_log, true);
+    assert.deepStrictEqual(overview.attention?.options, ['continue', 'run_all']);
+    assert.strictEqual(overview.attention?.not_in_run_stages, false);
+
+    // run-stages of deployment.toml: not from VS Code, with the hint
+    const limited = deployment_overview(state('failed', [failed]), ['START']);
+    assert.deepStrictEqual(limited.attention?.options, []);
+    assert.strictEqual(limited.attention?.not_in_run_stages, true);
+
+    // A failed step without a run has no log
+    const no_run: StageState = { ...failed, steps: [step(22, 'list objects', 'failed')] };
+    assert.strictEqual(deployment_overview(state('failed', [no_run]), undefined).attention?.has_log, false);
+
+    const ready = deployment_overview(state('in process', [stage('START', 'finished'), stage('PROD', 'ready')]), undefined);
+    assert.strictEqual(ready.attention?.kind, 'ready');
+    assert.deepStrictEqual(ready.attention?.options, ['continue']);
+
+    // Nothing waits: running, or a ready stage of a canceled deployment
+    assert.strictEqual(deployment_overview(state('in process', [stage('START', 'in process'), stage('PROD', 'new')]), undefined).attention, undefined);
+    assert.strictEqual(deployment_overview(state('canceled', [stage('PROD', 'ready')]), undefined).attention, undefined);
+    // A failed stage of a canceled deployment is shown, without actions
+    assert.deepStrictEqual(deployment_overview(state('canceled', [failed]), undefined).attention?.options, []);
+    assert.strictEqual(deployment_overview(state('canceled', [failed]), undefined).attention?.not_in_run_stages, false);
   });
 });

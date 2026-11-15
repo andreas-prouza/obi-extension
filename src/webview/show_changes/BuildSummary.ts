@@ -21,7 +21,9 @@ import { SystemCmdExecution } from '../../extension/utilities/SystemCmdExecution
 import { OperationLock } from '../../extension/utilities/OperationLock';
 import { render_template } from '../Templates';
 import { DeploymentConfig } from '../deployment/DeploymentConfig';
-import { CUSTOM_DATA_KEY, DeploymentRecord, IReleaserError, deployment_data, deployment_of, get_workflows, show_details_url, start_workflow, status_class, workflow_choices } from '../../shared/IReleaser';
+import { CUSTOM_DATA_KEY, DeploymentRecord, IReleaserError, deployment_data, deployment_of, get_workflows, show_details_url, start_workflow, workflow_choices } from '../../shared/IReleaser';
+import { StageActions, StatusKind, deployment_overview, status_kind } from '../../shared/IReleaserDeployments';
+import { annotate_build_list } from '../../shared/BuildListView';
 import { DeploymentWatcher } from '../deployment/DeploymentWatcher';
 import { history_dir_name } from '../build_history/HistoryTimestamp';
 import { UserCancelledError } from '../../shared/Errors';
@@ -39,6 +41,13 @@ export class BuildSummary {
   private static _current_compile_output_folder: string | undefined;
   /** i-Releaser deployment of the displayed build list, followed by DeploymentWatcher */
   private static _shown_deployment: { base: string; id: string } | undefined;
+  /** Log and run of a stage: the i-Releaser view (extension.ts) */
+  private static stage_actions: StageActions | undefined;
+
+
+  public static set_stage_actions(actions: StageActions | undefined): void {
+    BuildSummary.stage_actions = actions;
+  }
 
 
   /**
@@ -165,7 +174,37 @@ export class BuildSummary {
       case "start_deployment":
         BuildSummary.start_deployment();
         return;
+
+      case "deployment_action":
+        BuildSummary.deployment_action(message.action, message.stage_id);
+        return;
     }
+  }
+
+
+
+  /**
+   * Shows the log of the failed step, or runs a stage, of the deployment the summary shows. The page only names the stage:
+   * deployment, state and what may be run come from DeploymentWatcher and deployment.toml, as in the i-Releaser view.
+   */
+  public static async deployment_action(action: 'show_log' | 'continue' | 'run_all', stage_id: string): Promise<void> {
+    const shown = BuildSummary._shown_deployment;
+    const state = shown ? DeploymentWatcher.info(shown.base, shown.id)?.state : undefined;
+    const stage = state?.stages.find(item => String(item.id) === stage_id);
+    if (!shown || !state || !stage) {
+      logger.warn(`Build summary: ${action} for stage ${stage_id}, which the shown deployment doesn't have`);
+      return;
+    }
+    // The view sends to the URL of deployment.toml: only for a deployment of that URL
+    const view = BuildSummary.stage_actions;
+    if (!view || shown.base !== DeploymentConfig.i_releaser_url()) {
+      logger.warn(`Build summary: no i-Releaser view for ${shown.base}`);
+      return;
+    }
+    if (action === 'show_log')
+      await view.show_summary_log(state.id, stage);
+    else
+      await view.run_summary_stage({ id: state.id, workflow: state.workflow, version: state.deploy_version, status: state.status }, stage, action);
   }
 
 
@@ -553,18 +592,67 @@ export class BuildSummary {
     if (!info)
       return { watched: false };
     const state = info.state;
+    if (!state)
+      return { watched: true, error: info.error, checked: info.checked?.toLocaleTimeString() };
+
+    const overview = deployment_overview(state, DeploymentConfig.get_deployment_config()['i-releaser']['run-stages']);
+    const attention = overview.attention;
+    const kind = status_kind(state.status);
+    let attention_text: string | undefined;
+    if (attention?.kind === 'failed')
+      attention_text = attention.step
+        ? vscode.l10n.t('Stage {0} failed in step {1}.', attention.stage.name, attention.step.label)
+        : vscode.l10n.t('Stage {0} failed.', attention.stage.name);
+    else if (attention)
+      attention_text = vscode.l10n.t('Stage {0} is ready to run.', attention.stage.name);
+
     return {
       watched: true,
       error: info.error,
       checked: info.checked?.toLocaleTimeString(),
-      state: state ? {
+      state: {
         status: state.status,
-        css: status_class(state.status),
+        kind: kind,
+        icon: BuildSummary.STATUS_ICON[kind],
         version: state.deploy_version !== undefined ? String(state.deploy_version) : undefined,
-        stages: state.stages.map(stage => ({ name: stage.name, status: stage.status, css: status_class(stage.status) }))
-      } : undefined
+        workflow: state.workflow,
+        done: overview.done,
+        total: overview.total,
+        percent: overview.total > 0 ? Math.round(overview.done / overview.total * 100) : 0,
+        stages: state.stages.map((stage, index) => {
+          const stage_kind = status_kind(stage.status);
+          return { id: String(stage.id), name: stage.name, status: stage.status, kind: stage_kind, step_icon: BuildSummary.STEP_ICON[stage_kind], number: index + 1 };
+        }),
+        attention: attention && attention_text ? {
+          stage_id: String(attention.stage.id),
+          kind: attention.kind,
+          text: attention_text,
+          show_log: attention.has_log,
+          continue: attention.options.includes('continue'),
+          run_all: attention.options.includes('run_all'),
+          hint: attention.not_in_run_stages ? vscode.l10n.t('Not in run-stages of {0}: run it in i-Releaser.', Constants.DEPLOYMENT_CONFIG_FILE) : undefined,
+        } : undefined
+      }
     };
   }
+
+
+  /** Codicon (and colour) of the status of a build command */
+  private static readonly CMD_ICON: Record<string, string> = {
+    'success': 'pass obi-passed', 'failed': 'error obi-failed', 'error': 'error obi-failed',
+    'in process': 'sync codicon-modifier-spin obi-running', 'new': 'circle-large-outline obi-muted',
+  };
+
+
+  /** Codicon of a status in its pill */
+  private static readonly STATUS_ICON: Record<StatusKind, string> = {
+    finished: 'pass', failed: 'error', running: 'sync codicon-modifier-spin', ready: 'play-circle', canceled: 'circle-slash', new: 'circle-large-outline',
+  };
+
+  /** Codicon in the circle of a stage; none: its number */
+  private static readonly STEP_ICON: Record<StatusKind, string | undefined> = {
+    finished: 'check', failed: 'close', running: 'sync codicon-modifier-spin', ready: 'play', canceled: 'circle-slash', new: undefined,
+  };
 
 
 
@@ -602,6 +690,8 @@ export class BuildSummary {
     if (compile_list && compile_list['timestamp']) {
       created_timestamp = new Date(compile_list['timestamp']).toLocaleString();
     }
+    // Status of every source and the counts per level, for the header and the build list
+    const build_counts = annotate_build_list(compile_list);
 
     const html = render_template('show_changes/index.html', 
       {
@@ -611,6 +701,8 @@ export class BuildSummary {
       object_list: BuildSummary.get_object_list(ws),
       compile_list: compile_list,
       created_timestamp: created_timestamp,
+      build_counts: build_counts,
+      cmd_icons: BuildSummary.CMD_ICON,
       compile_file_uri: DirTool.get_encoded_file_URI(path.join(BuildSummary._current_compile_output_folder ?? Constants.BUILD_OUTPUT_DIR, 'compile-list.json')),
       compile_file: path.resolve(ws.fsPath, BuildSummary._current_compile_output_folder ?? Constants.BUILD_OUTPUT_DIR, 'compile-list.json').replace(/\\/g, '/'),
       log_file_uri: DirTool.get_encoded_file_URI(Constants.OBI_LOG_FILE),

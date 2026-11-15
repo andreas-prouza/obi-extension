@@ -11,7 +11,7 @@ Joblogs, spool files and compile errors come back into VS Code.
 
 Watch the intro (1:38):
 
-https://github.com/user-attachments/assets/7fadaf1e-b4e8-47a6-b405-3fa968cbf247
+<video src="https://github.com/user-attachments/assets/3dc4caee-79b3-4ae8-9c81-c5a6837156cf" controls width="100%"></video>
 
 - [Features](#features)
 - [How it works](#how-it-works)
@@ -24,10 +24,10 @@ https://github.com/user-attachments/assets/7fadaf1e-b4e8-47a6-b405-3fa968cbf247
 # Features
 
 * **Build profiles**  
-  Build only the current source (`*CURRENT`) or all changes (`*ALL`).
+  Build only the current source or all changes.
   Switch between user profiles (e.g. different target libraries or users) with one click.
 
-  ![OBI build view](asserts/img/ext/controller-1.png)
+  <img src="asserts/img/ext/controller-1.png" alt="OBI build view" width="300">
 
 * **Change detection**  
   OBI stores a hash of every successfully built source and only builds what changed since then.

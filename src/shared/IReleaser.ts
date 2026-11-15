@@ -352,20 +352,6 @@ export function state_changes(before: DeploymentState, after: DeploymentState): 
 }
 
 
-/** CSS class of the build summary for a status of i-Releaser */
-export function status_class(status: string): 'success' | 'failed' | 'in_process' | 'new' {
-  switch (status) {
-    case 'finished': return 'success';
-    case 'failed':
-    case 'canceled': return 'failed';
-    case 'in process':
-    case 'in preperation':
-    case 'prepare': return 'in_process';
-    default: return 'new';
-  }
-}
-
-
 
 const MAX_EVENT_SIZE = 1024 * 1024;
 

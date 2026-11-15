@@ -1,3 +1,26 @@
+## [Unreleased]
+
+### Features
+* **Build summary: the i-Releaser deployment as a card.** A header with workflow, version, status and *Open in i-Releaser*; the stages as a stepper with a progress bar; for a failed stage the failed step with *Show log*, *Continue* and *Run stage again*, for a ready stage *Run stage*. The actions are the ones of the i-Releaser view: they ask first, and `run-stages` applies ([docs](asserts/docs/building.md#i-releaser-deployment), [spec](docs/features/i-releaser-status-card.md))
+
+### Changes
+* **Build summary: new layout.** A header with the result (failed, built, to build), the build's host, IFS path and git commit, and the actions; the new, changed and dependent sources as tiles; the build list with a result per level, the commands of a source below it, a failed command marked and shown in full with a copy button. The statuses are coloured labels in the colours of the theme ([docs](asserts/docs/building.md#build-summary), [spec](docs/features/ui-refresh-build-pages.md))
+* **OBI Build view: new layout.** *Current source* / *All changes* as a switch (with the name of the current source), *Run build* and *Show changes* with labels, while something runs its name, the elapsed time and *Cancel*, and the result of the last build with *Open* ([docs](asserts/docs/building.md#the-obi-build-view), [spec](docs/features/ui-refresh-build-pages.md))
+* Both pages use plain HTML elements in the colours of the theme instead of the deprecated `@vscode/webview-ui-toolkit` components, and VS Code's font size
+* **Configuration page: new layout.** A switch for the scope (project, user with its profile, sources), *Save* and *Unsaved changes* always at the top, the sections in a list on the left instead of a second row of tabs. Each value with its label on top and its explanation below (before a tooltip), required values marked; a banner names missing values and jumps to them. In the user scope, values from the project are marked *from project*, overridden ones *overridden* with a blue marker. The command, step and variable tables are aligned rows ([docs](asserts/docs/configuration.md#opening-the-configuration), [spec](docs/features/ui-refresh-config-page.md))
+* **The other pages in the same style:** individual build settings of a source, deployment config, source filter config, source dependencies, source infos and the source filter table: a fixed top bar with *Save* and *Unsaved changes* where the page has one, aligned rows for settings, commands and filters. The tables (bootstrap-table) use the colours of the theme. No page uses the components of the deprecated webview toolkit any more; the build summary still loads it for custom templates ([spec](docs/features/ui-refresh-other-pages.md))
+* **Welcome and "invalid configuration" views:** VS Code's own welcome content instead of webviews. Without a folder: *Open Folder*, *Open Recent*; in a folder without a project: *Initialize OBI Project*; both link the walkthrough and the getting started guide. The "invalid configuration" view says why OBI can't use the configuration and opens it ([spec](docs/features/native-welcome-views.md))
+
+### Bugfixes
+* **Source filter config:** *Empty folder* of a new filter was ignored (the field had another id than the script read)
+* **Source filter table and source infos:** the buttons of the table (columns, clear filters) were empty; they use the icons of VS Code now
+* **Source filter table and source infos:** a text filter also searched the hidden parts of a cell, e.g. the file path behind a source's link: "test" showed every source of a project in a folder named like that. The filters compare the visible text now
+* **Source dependencies:** the *Save* button did nothing (changes are saved right away); it is removed
+* **Configuration page:** in the user scope, *Add* of the global commands, compile commands, compile steps and languages didn't work (each of these buttons and its fields existed twice on the page)
+* **Configuration page:** the section *Extended compile* is remembered like the others
+* **OBI Build view: the Content-Security-Policy applies again.** A missing quote in the page turned its CSP into an attribute text, so the view had none ([spec](docs/bugfix/controller-view-csp.md))
+
+
 ## [1.7.1]
 
 ### Features

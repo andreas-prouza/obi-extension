@@ -38,14 +38,19 @@ window.SCENES.push({
 
     // ----- 03 source filters
     const members = ['logger', 'testlog', 'testlog2'];
+    // The table of a filter (asserts/templates/source_list/index.html: bootstrap-table in the colours of the theme)
     const filter_table = `
       <div class="filter-page">
-        <h1>Source filter: <code>Logger</code></h1><hr>
-        <table class="filter-table">
-          <tr>${['source-lib', 'source-file', 'source-member', 'description'].map(name => `<th>${name}<span class="sort">▲▼</span><i></i></th>`).join('')}</tr>
-          ${members.map(key => `<tr><td>${LIB}</td><td>${source(key).file}</td><td><a>${source(key).name}</a></td><td>${source(key).text}</td></tr>`).join('')}
-        </table>
-        <div class="filter-foot">Showing 1 to 3 of 3 rows</div>
+        <div class="fp-bar"><h1>Source filter:</h1>${icon('filter')}<span class="fp-name">Logger</span></div>
+        <div class="fp-body">
+          <div class="fp-tools"><span>${icon('list-selection')}${icon('triangle-down')}</span><span>${icon('clear-all')}</span></div>
+          <table class="filter-table">
+            <tr>${['source-lib', 'source-file', 'source-member', 'description'].map(name => `<th>${name}<span class="sort"><i></i><i></i></span></th>`).join('')}</tr>
+            <tr class="fp-filters"><td><i>${icon('chevron-down')}</i></td><td><i>${icon('chevron-down')}</i></td><td><i></i></td><td><i></i></td></tr>
+            ${members.map(key => `<tr><td>${LIB}</td><td>${source(key).file}</td><td><a>${source(key).name}</a></td><td>${source(key).text}</td></tr>`).join('')}
+          </table>
+          <div class="filter-foot">Showing 1 to 3 of 3 rows</div>
+        </div>
       </div>`;
     const filter_tree = part(1.7, 330, 'Source filters', pane({
       id: 'filters', name: 'Source filters', actions: ['search', 'add', 'open-preview', 'settings-gear', 'refresh'], body: [

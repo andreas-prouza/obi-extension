@@ -28,17 +28,11 @@
   color: black
 }
 
-.i-releaser-status {
-  margin: 8px 0;
-}
-
-.i-releaser-stages {
-  margin: 4px 0 0 22px;
-}
-
 .i-releaser-error {
+  margin-top: 8px;
   color: var(--vscode-errorForeground);
 }
+
 
 .config_error {
   margin: 20px;

@@ -10,6 +10,8 @@ export const BUILD_SUMMARY_REQUESTS = {
   edit_cmd: { level: is_string, source: is_source_name, cmd_index: is_number },
   // i-Releaser workflow for the displayed build list: URL, token and workflow are chosen in the extension
   start_deployment: {},
+  // Action on a stage of the deployment the summary shows; which deployment, and whether the action is allowed, decides the extension
+  deployment_action: { action: one_of('show_log', 'continue', 'run_all'), stage_id: matches(/^[A-Za-z0-9_-]{1,64}$/) },
   // Sent by custom build summary templates (window.vscode.postMessage)
   save_custom_data: { type: matches(/^[a-z][a-z0-9_-]{0,63}$/), data: json_value(1_000_000) },
 };

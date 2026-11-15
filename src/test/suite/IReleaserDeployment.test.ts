@@ -58,8 +58,11 @@ async function i_releaser(): Promise<{ url: string; received: Received[]; close:
 }
 
 
+/** A stage of the local i-Releaser: id, name, status, and optionally its steps (actions) */
+type TestStage = [number, string, string, unknown[]?];
+
 /** Local i-Releaser with deployment 123: `stages` is its state, `push()` sends an event to the open watch_state streams */
-async function i_releaser_status(stages: [number, string, string][]) {
+async function i_releaser_status(stages: TestStage[]) {
   const received: Received[] = [];
   const streams = new Set<http.ServerResponse>();
   const ir = {
@@ -76,7 +79,7 @@ async function i_releaser_status(stages: [number, string, string][]) {
       res.on('close', () => streams.delete(res));
       return;
     }
-    const as_dict = ([id, name, status]: [number, string, string]) => ({ id: id, name: name, status: status });
+    const as_dict = ([id, name, status, actions]: TestStage) => ({ id: id, name: name, status: status, ...(actions ? { actions: actions } : {}) });
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ general: {
       id: 123, status: ir.status, deploy_version: 7, workflow: { name: 'wf' },
@@ -86,6 +89,17 @@ async function i_releaser_status(stages: [number, string, string][]) {
   await new Promise<void>(resolve => srv.listen(0, '127.0.0.1', resolve));
   ir.url = `http://127.0.0.1:${(srv.address() as AddressInfo).port}`;
   return ir;
+}
+
+/** The stages of the card: class, icon (or number), name and status of each */
+function stages_of(html: string): string[] {
+  return [...html.matchAll(/<li class="([^"]+)" data-stage-id="\d+">\s*<span class="ir-dot">(?:<span class="codicon codicon-([^"]+)"><\/span>|(\d+))<\/span>\s*<span class="ir-name">([^<]*)<\/span>\s*<span class="ir-state">([^<]*)<\/span>/g)]
+    .map(m => [m[1], m[2] ?? m[3], m[4], m[5]].join('|'));
+}
+
+/** The buttons of the bar below the stages: action and stage of each */
+function actions_of(html: string): string[] {
+  return [...html.matchAll(/class="ir-action btn[^"]*" data-action="(\w+)" data-stage-id="(\d+)"/g)].map(m => `${m[1]} ${m[2]}`);
 }
 
 async function until(condition: () => boolean, what: string): Promise<void> {
@@ -272,7 +286,7 @@ suite('i-Releaser deployment from the build summary', () => {
     const toml_file = path.join(Workspace.get_workspace(), Constants.DEPLOYMENT_CONFIG_FILE);
     await deployment_toml('[i-releaser]\nurl = "http://athoed40:8011"\nworkflows = ["A", "B"]\n');
     const html = await DeploymentConfig['generate_html'](OBITools.ext_context!, vscode.Uri.file(Constants.EXTENSION_ROOT), fake_webview);
-    assert.match(html, /id="i-releaser\|workflows"[^>]*value='A\nB'/);
+    assert.match(html, /id="i-releaser\|workflows"[^>]*>A\nB<\/textarea>/);
 
     const save = (workflows: string[]) => DeploymentConfig['save_config']({
       'i-releaser': { url: 'http://athoed40:8011', 'default-workflow': 'A', workflows: workflows, 'main-branch': '', 'auth-token': '' }
@@ -336,9 +350,12 @@ suite('i-Releaser deployment from the build summary', () => {
       await until(() => DeploymentWatcher.info(ir.url, 123)?.state?.stages[1].status === 'in process', 'first read');
 
       const html = render();
-      assert.match(html, /version 7:\s*<span class="in_process">&nbsp;in process&nbsp;<\/span>/);
-      // The stages in their own line
-      assert.match(html, /<div id="i_releaser_stages" class="i-releaser-stages">START <span class="success">&nbsp;finished&nbsp;<\/span>&nbsp;→&nbsp;TEST <span class="in_process">&nbsp;in process&nbsp;<\/span>&nbsp;→&nbsp;PROD <span class="new">/);
+      assert.match(html, /version 7<\/span>\s*<span class="status-pill ir-running"><span class="codicon codicon-sync codicon-modifier-spin"><\/span>in process<\/span>/);
+      // The stages as a stepper: icon or number, name, status; the line after a finished stage is green
+      assert.deepStrictEqual(stages_of(html), [
+        'ir-stage ir-finished|check|START|finished', 'ir-stage ir-running ir-after-finished|sync codicon-modifier-spin|TEST|in process', 'ir-stage ir-new|3|PROD|new']);
+      assert.match(html, /class="ir-progress" title="1 \/ 3"><div class="ir-progress-bar" style="width: 33%">/);
+      assert.ok(!html.includes('i_releaser_attention'), 'nothing waits while a stage runs');
       // Only messages of this deployment count: other parts of the extension may report in the meantime
       const reported = () => [...error.getCalls(), ...info.getCalls()].map(call => String(call.args[0])).filter(text => text.includes('i-Releaser deployment 123'));
       assert.deepStrictEqual(reported(), [], 'nothing is reported on the first read');
@@ -349,7 +366,7 @@ suite('i-Releaser deployment from the build summary', () => {
       await until(() => reported().length > 0, 'failed stage reported');
       assert.deepStrictEqual(reported(), ['i-Releaser deployment 123: stage TEST failed.']);
       assert.ok(error.getCalls().some(call => call.args[0] === 'i-Releaser deployment 123: stage TEST failed.'), 'as an error');
-      assert.match(render(), /TEST <span class="failed">&nbsp;failed&nbsp;<\/span>/);
+      assert.deepStrictEqual(stages_of(render())[1], 'ir-stage ir-failed ir-after-finished|close|TEST|failed');
 
       assert.ok(ir.received.every(r => r.authorization === 'Bearer TOKEN-1' && !r.url?.includes('TOKEN')));
       assert.deepStrictEqual([...new Set(ir.received.map(r => `${r.method} ${r.url}`))].sort(), ['GET /api/watch_state/123', 'POST /api/get_meta_file_json/123']);
@@ -360,6 +377,77 @@ suite('i-Releaser deployment from the build summary', () => {
       assert.ok(!render().includes('i_releaser_status'));
     }
     finally {
+      await ir.close();
+    }
+  });
+
+
+  test('status: a failed stage shows its step and the buttons; run-stages and a ready stage', async () => {
+    const steps = [{ id: 31, sequence: 1, cmd: 'CALL PGM(LIST)', status: 'failed', processing_step: 'list objects', run_history: [{ id: 99 }] }];
+    const ir = await i_releaser_status([[11, 'START', 'finished'], [12, 'Create object list', 'failed', steps], [13, 'DEPLOY', 'new']]);
+    ir.status = 'failed';
+    try {
+      await deployment_toml(`[i-releaser]\nurl = "${ir.url}"\n`);
+      await DeploymentConfig.store_auth_token(ir.url, 'TOKEN-1');
+      sinon.stub(BuildSummary, 'get_compile_list').callsFake(() => completed_list({ 'i-releaser': { id: 123, workflow: 'wf' } }));
+      DeploymentWatcher.show({ base: ir.url, id: 123 });
+      await until(() => DeploymentWatcher.info(ir.url, 123)?.state !== undefined, 'first read');
+
+      let html = render();
+      assert.match(html, /id="i_releaser_attention" class="ir-attention ir-failed">[\s\S]*Stage Create object list failed in step list objects\./);
+      assert.deepStrictEqual(actions_of(html), ['show_log 12', 'continue 12', 'run_all 12']);
+
+      // Not in run-stages: only the log, and the hint
+      await deployment_toml(`[i-releaser]\nurl = "${ir.url}"\nrun-stages = ["START"]\n`);
+      html = render();
+      assert.deepStrictEqual(actions_of(html), ['show_log 12']);
+      assert.match(html, /Not in run-stages of \.obi\/etc\/deployment\.toml: run it in i-Releaser\./);
+
+      // The next stage is ready: it can be run
+      await deployment_toml(`[i-releaser]\nurl = "${ir.url}"\n`);
+      ir.stages = [[11, 'START', 'finished'], [12, 'Create object list', 'finished'], [13, 'DEPLOY', 'ready']];
+      ir.status = 'in process';
+      ir.push();
+      await until(() => DeploymentWatcher.info(ir.url, 123)?.state?.stages[2].status === 'ready', 'ready stage');
+      html = render();
+      assert.match(html, /class="ir-attention ir-ready">[\s\S]*Stage DEPLOY is ready to run\./);
+      assert.deepStrictEqual(actions_of(html), ['continue 13']);
+    }
+    finally {
+      await ir.close();
+    }
+  });
+
+
+  test('the page names a stage of the shown deployment; the extension decides the rest', async () => {
+    const ir = await i_releaser_status([[11, 'START', 'finished'], [12, 'TEST', 'failed']]);
+    ir.status = 'failed';
+    const actions = { show_summary_log: sinon.stub().resolves(), run_summary_stage: sinon.stub().resolves() };
+    BuildSummary.set_stage_actions(actions);
+    try {
+      await deployment_toml(`[i-releaser]\nurl = "${ir.url}"\n`);
+      await DeploymentConfig.store_auth_token(ir.url, 'TOKEN-1');
+      sinon.stub(BuildSummary, 'get_compile_list').callsFake(() => completed_list({ 'i-releaser': { id: 123, workflow: 'wf' } }));
+      BuildSummary['follow_deployment'](completed_list({ 'i-releaser': { id: 123, workflow: 'wf' } }));
+      await until(() => DeploymentWatcher.info(ir.url, 123)?.state !== undefined, 'first read');
+
+      await BuildSummary.deployment_action('run_all', '12');
+      assert.ok(actions.run_summary_stage.calledOnce);
+      const [deployment, stage, option] = actions.run_summary_stage.firstCall.args;
+      assert.deepStrictEqual([deployment.id, deployment.status, stage.name, option], [123, 'failed', 'TEST', 'run_all']);
+
+      await BuildSummary.deployment_action('show_log', '12');
+      assert.deepStrictEqual(actions.show_summary_log.firstCall.args.map((arg: { name?: string }) => arg?.name ?? arg), [123, 'TEST']);
+
+      // A stage the deployment doesn't have, and messages with invalid fields, do nothing
+      await BuildSummary.deployment_action('continue', '99');
+      BuildSummary.on_message({ command: 'deployment_action', action: 'cancel', stage_id: '12' });
+      BuildSummary.on_message({ command: 'deployment_action', action: 'continue', stage_id: '../12' });
+      await new Promise(resolve => setTimeout(resolve, 50));
+      assert.strictEqual(actions.run_summary_stage.callCount, 1);
+    }
+    finally {
+      BuildSummary.set_stage_actions(undefined);
       await ir.close();
     }
   });

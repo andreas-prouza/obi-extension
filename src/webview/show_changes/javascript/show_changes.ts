@@ -1,7 +1,5 @@
+// The page itself uses plain HTML elements; custom build summary templates may still use the toolkit components
 import "../../tools/javascript/toolkit";
-import {
-  Button
-} from "@vscode/webview-ui-toolkit";
 
 import { showAlert } from "../../tools/javascript/alertBox";
 import { typed_post } from "../../tools/javascript/post";
@@ -30,17 +28,28 @@ function main() {
     return;
   loaded = true;
   
-  const run_button = document.getElementById('run_build') as Button;
+  const run_button = document.getElementById('run_build');
   if (run_button)
     run_button.addEventListener('click', run_build);  
   
-  const add_source_button = document.getElementById('add_source') as Button;
+  const add_source_button = document.getElementById('add_source');
   if (add_source_button)
     add_source_button.addEventListener('click', add_source);
 
   const start_deployment_button = document.getElementById('start_deployment');
   if (start_deployment_button)
     start_deployment_button.addEventListener('click', () => post({ command: 'start_deployment' }));
+
+  // Show log, continue or run a stage of the i-Releaser deployment: the page only names the stage
+  document.querySelectorAll<HTMLElement>('.ir-action').forEach(button => {
+    button.addEventListener('click', () => {
+      const action = button.dataset.action;
+      const stage_id = button.dataset.stageId;
+      if ((action === 'show_log' || action === 'continue' || action === 'run_all') && stage_id)
+        post({ command: 'deployment_action', action: action, stage_id: stage_id });
+    });
+  });
+  mark_stage_rows();
 
   const joblogButton = document.getElementsByClassName("joblog");
   for (let i = 0; i < joblogButton.length; i++) {
@@ -72,18 +81,14 @@ function main() {
   const ui = keep_ui_state(vscode);
   const collapsed = new Set<string>(ui.get<string[]>('collapsed_levels') ?? []);
 
-  const headers = document.querySelectorAll<HTMLElement>('.collapsible-header');
-
-  headers.forEach(header => {
+  document.querySelectorAll<HTMLElement>('.collapsible-header').forEach(header => {
     // The target class name from the data attribute (e.g., "level-1")
     const targetClass = header.getAttribute('data-target') ?? '';
     const show_level = (visible: boolean) => {
-      document.querySelectorAll<HTMLElement>('.' + targetClass).forEach(row => {
-        row.style.display = visible ? 'table-row' : 'none';
-      });
+      document.querySelectorAll<HTMLElement>('.' + CSS.escape(targetClass)).forEach(row => row.classList.toggle('level-hidden', !visible));
       const icon = header.querySelector('.toggle-icon');
-      if (icon)
-        icon.textContent = visible ? '▼' : '▶';
+      icon?.classList.toggle('codicon-chevron-down', visible);
+      icon?.classList.toggle('codicon-chevron-right', !visible);
     };
 
     if (collapsed.has(targetClass))
@@ -100,8 +105,60 @@ function main() {
     });
   });
 
+  // The commands of a source, below its row: open for failed sources until the user toggles them
+  const opened = { ...(ui.get<Record<string, boolean>>('commands_open') ?? {}) };
+  document.querySelectorAll<HTMLButtonElement>('.cmds-toggle').forEach(toggle => {
+    const row = document.getElementById(toggle.dataset.cmds ?? '');
+    const key = toggle.dataset.cmdsKey ?? '';
+    if (!row)
+      return;
+    const show = (open: boolean) => {
+      row.hidden = !open;
+      toggle.setAttribute('aria-expanded', String(open));
+      const icon = toggle.querySelector('.codicon');
+      icon?.classList.toggle('codicon-chevron-down', open);
+      icon?.classList.toggle('codicon-chevron-right', !open);
+    };
+    show(key in opened ? opened[key] : toggle.dataset.defaultOpen === 'true');
+    toggle.addEventListener('click', () => {
+      const open = row.hidden === true;
+      show(open);
+      opened[key] = open;
+      ui.set('commands_open', opened);
+    });
+  });
+
+  // Copy a build command
+  document.querySelectorAll<HTMLButtonElement>('.cmd-copy').forEach(button => {
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      const icon = button.querySelector('.codicon');
+      navigator.clipboard.writeText(button.dataset.cmd ?? '').then(() => {
+        icon?.classList.replace('codicon-copy', 'codicon-check');
+        setTimeout(() => icon?.classList.replace('codicon-check', 'codicon-copy'), 1500);
+      }, () => undefined);
+    });
+  });
 }
 
+
+
+
+/** The stages of a deployment wrap into rows: the first stage of a row gets no line from the stage before */
+function mark_stage_rows() {
+  const list = document.getElementById('i_releaser_stages');
+  if (!list)
+    return;
+  const mark = () => {
+    let top: number | undefined;
+    list.querySelectorAll<HTMLElement>('.ir-stage').forEach(stage => {
+      stage.classList.toggle('ir-row-start', top !== undefined && stage.offsetTop > top);
+      top = stage.offsetTop;
+    });
+  };
+  mark();
+  new ResizeObserver(mark).observe(list);
+}
 
 
 

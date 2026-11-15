@@ -14,14 +14,17 @@
 
 ## The OBI Build view
 
-![OBI Build view](../img/ext/controller-1.png)
+<img src="../img/ext/controller-1.png" alt="OBI Build view" width="300">
 
 | Element | Meaning |
 |---|---|
-| `*CURRENT` / `*ALL` | Build only the source in the active editor, or all changes in the project |
-| ▷ | **Run build** |
-| ☰ | **Show changes** |
-| *Using profile* | Active user profile; 🗑 deletes it, ➕ copies it into a new profile (see [Profiles](configuration.md#profiles)) |
+| **Current source** / **All changes** | Build only the source in the active editor (`*CURRENT`, its name is shown below), or all changes in the project (`*ALL`) |
+| **Run build** | Show changes, then build |
+| **Show changes** | Create the build list and open the build summary |
+| *Using profile* | Active user profile; ➕ copies it into a new profile, 🗑 deletes it (see [Profiles](configuration.md#profiles)) |
+| *Last build* | Time and result of the current build list; **Open** opens its build summary |
+
+While an operation runs (also one started elsewhere), the buttons are replaced by its name, the elapsed time and **Cancel**.
 
 Toolbar buttons (left to right):
 
@@ -53,7 +56,7 @@ The status bar shows the active profile and the result of the last build (a chec
 
 The result is written to `.obi/build-output/compile-list.json`.
 
-With `*CURRENT` (or **Show single change** in the editor), only the active source and its dependent objects are considered. The active source is always included, even if it has not changed.
+With **Current source** (`*CURRENT`, or **Show single change** in the editor), only the active source and its dependent objects are considered. The active source is always included, even if it has not changed.
 
 > If a *local OBI path* is configured and contains a Python virtual environment, the local OBI backend generates the build list instead of the extension. This is optional.
 
@@ -63,21 +66,23 @@ With `*CURRENT` (or **Show single change** in the editor), only the active sourc
 ![Build summary](../img/ext/build-summary.png)
 
 **Header**
-* Creation time, **open JSON file** (the compile list) and **open OBI log** (`.obi/log/main.log`)
+* The result as labels: how many sources failed, were built, are still to build
+* Creation time, user and host, IFS path, and the git branch and commit of the build
 * **Run build**: shown as long as not all commands succeeded
 * **Add source**: add further sources (multi-select, searchable by name and description). Their dependent objects are added too.
   An added source that is already in the list gets new build commands. Dependent objects that were already built successfully are reset so they are built again (their commands and output are kept). With `ALWAYS_TRANSFER_RELATED_COPYBOOKS`, the copybooks they use are added on level 0. The levels of the whole list are calculated again, so a source can move to a higher level. This is the same with and without a local OBI.
-* **Start i-Releaser workflow**: shown when all commands succeeded and an [i-Releaser](#i-releaser-deployment) is configured. After the start, **i-Releaser deployment** links to the deployment.
+* **Start i-Releaser workflow**: shown when all commands succeeded and an [i-Releaser](#i-releaser-deployment) is configured. After the start, the [deployment card](#i-releaser-deployment) shows it.
+* `{}` opens the compile list (JSON), the log icon the OBI log (`.obi/log/main.log`)
 
-**New sources / Changed sources / Dependent objects**: overview with links to the sources.
+**New sources / Changed sources / Dependent objects**: the number of each, with the first sources as links; **+ … more** shows the others.
 
-**Details**: remote user, host and IFS path, followed by all levels. For each source:
+**Build list**: all levels, each with its number of objects and the result (✓ built, ✗ failed, ○ open); click a level to fold it. For each source:
 * **Checkbox**: exclude the source from the build
-* **Source name**: opens the source and loads its [compile errors](#compile-errors)
+* **Source name** (library and source file in grey): opens the source and loads its [compile errors](#compile-errors)
 * **Status**: `new`, `success`, `failed`, ...
-* **Commands** (expandable), each with
+* **Commands**: click to show them below the source; the commands of a failed source are shown at first. Each command with
   * a checkbox to exclude this single command
-  * timestamp, status and the full command
+  * its status icon, time (or *not run*) and the command; click it for the full command, one part per line, with a copy button. A failed command is marked red and shown in full
   * ✏️ **Edit**: change the command for this build. The original command is kept in the compile list (`change-history`). A successful command is reset to `new` and dependent objects are reset as well.
   * **Joblog**, **Spool** and **Error**: open the output of the command in a read-only editor
 
@@ -107,14 +112,20 @@ With `*CURRENT` (or **Show single change** in the editor), only the active sourc
 
 The build list goes to i-Releaser as the deployment's custom data, without joblogs, spool files and errors. i-Releaser accepts at most 64 KB. The deployment (id, workflow, project, version) is stored in the build list and in its copy in the build history as `custom_data.i-releaser`, and **i-Releaser deployment** opens it in the browser.
 
-**Status of the deployment:** while the build summary shows a build list with a deployment, the area below the buttons shows its status, and in the next line the status of each stage, for example:
+**Status of the deployment:** while the build summary shows a build list with a deployment, a card below the buttons shows it:
 
-> 🚀 i-Releaser deployment 123 · version 42: `in process` (updated 10:41:07)<br>
-> START `finished` → TEST `in process` → PROD `new`
+* **Header:** deployment, workflow, version, its status, when it was read last, and **Open in i-Releaser** (browser).
+* **Stages:** a bar with the share of finished stages, and every stage with its status: ✓ finished, ✗ failed, a turning icon while it runs, ▷ ready to run, otherwise its number. On a narrow editor the stages continue in a second row.
+* **A stage that waits** gets a bar below the stages, with the same actions as in the [i-Releaser view](#i-releaser-view):
+  * failed: *Stage TEST failed in step run tests.* **Show log** (of the failed step), **Continue** (from the step that didn't finish), **Run stage again** (all steps);
+  * ready: *Stage PROD is ready to run.* **Run stage**.
 
-* The line updates live while i-Releaser runs the stages, the same way the i-Releaser web app refreshes itself.
+  Every run asks first. A stage that isn't in `run-stages` of `deployment.toml` has no run buttons; the bar says to run it in i-Releaser.
+* The card updates live while i-Releaser runs the stages, the same way the i-Releaser web app refreshes itself.
 * When a stage finishes or fails, a notification appears, with **Open** for the deployment in the browser. You get these notifications for deployments shown in the build summary and for deployments started in this window, even after the build summary was closed, until the deployment is finished or canceled.
-* If i-Releaser can't be reached, the line shows the error and the last known status, and OBI tries again.
+* If i-Releaser can't be reached, the card shows the error and the last known status, and OBI tries again.
+
+The status column of the build list uses the same coloured labels (`new`, `success`, `failed`), in the colours of your theme.
 * The build history and the [Timeline](#timeline) show `i-Releaser 123` next to builds that were deployed.
 
 Requires a trusted workspace. The token is sent in the `Authorization` header; use an `https` URL, otherwise it travels unencrypted.

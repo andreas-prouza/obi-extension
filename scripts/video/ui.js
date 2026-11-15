@@ -298,6 +298,8 @@
   /** Icons that turn in VS Code (sync~spin, the progress ring) */
   function spin(tl, scope) {
     tl.to(scope.querySelectorAll('.spin'), { rotate: ['0deg', '360deg'] }, 0, 1.4, { ease: 'linear', loop: true });
+    // The progress bar of the OBI Build view (a CSS animation in the extension)
+    tl.to(scope.querySelectorAll('.run-bar i'), { transform: ['translateX(-100%)', 'translateX(290%)'] }, 0, 1.4, { ease: 'inOut', loop: true });
   }
 
 
@@ -325,29 +327,50 @@
       </div>`;
   }
 
-  /** The OBI Build view: what to build, the two buttons, the profile */
-  function controller_pane({ run_all = true, profile = 'Default User Config' } = {}) {
+  /**
+   * The OBI Build view (asserts/templates/controller/index.html): what to build, Run build / Show changes, while
+   * something runs its name, time and Cancel (class `is-running` on .view-body, see run_clock), the profile, the last build.
+   * last: { kind: 'failed' | 'success', text }
+   */
+  function controller_pane({ run_all = true, profile = 'Default User Config', current = 'logger.sqlrpgle.srvpgm', last = null } = {}) {
+    const option = (value, glyph, label) =>
+      `<span class="seg-option" data-value="${value}" aria-checked="${(value === 'all') === run_all}">${icon(glyph)}${label}</span>`;
     return pane({
       id: 'controller', name: 'OBI Build', actions: ['extensions', 'symbol-class', 'rocket', 'globe', 'settings-gear'],
       body: `
-        <div class="ctl">
-          <div class="ctl-radios">
-            <span class="radio ${run_all ? '' : 'on'}"></span><span>*CURRENT</span>
-            <span class="radio ${run_all ? 'on' : ''}"></span><span>*ALL</span>
+        <div class="view-body">
+          <div class="seg" data-value="${run_all ? 'all' : 'single'}">${option('single', 'file', 'Current source')}${option('all', 'files', 'All changes')}</div>
+          <div class="current-source">${icon('file-code')}<span>${esc(current)}</span></div>
+          <div class="view-actions">
+            <span class="btn full" data-btn="run">${icon('run-all')}Run build</span>
+            <span class="btn secondary full" data-btn="list">${icon('checklist')}Show changes</span>
           </div>
-          <div class="ctl-buttons">
-            <span class="vbtn wide" data-btn="run">${icon('run-all')}</span>
-            <span class="vbtn wide" data-btn="list">${icon('checklist')}</span>
-            <span class="ctl-ring">${icon('loading', 'spin')}</span>
+          <div class="run-box">
+            <div class="run-line">${icon('sync', 'spin')}<span class="run-label">Show changes</span><span class="spacer"></span><span class="obi-muted run-time">0:00</span></div>
+            <div class="run-bar"><i></i></div>
+            <span class="btn secondary full">${icon('debug-stop')}Cancel</span>
           </div>
-          <div class="ctl-label">Use profile</div>
-          <div class="ctl-profile">
-            <span class="dropdown" data-btn="profile"><span class="dropdown-value">${esc(profile)}</span>${icon('chevron-down')}</span>
-            <span class="vbtn square">${icon('trash')}</span>
-            <span class="vbtn square">${icon('add')}</span>
+          <div class="view-caption">Use profile</div>
+          <div class="profile-row">
+            <span class="obi-select dropdown" data-btn="profile"><span class="dropdown-value">${esc(profile)}</span>${icon('chevron-down')}</span>
+            <span class="icon-btn">${icon('add')}</span>
+            <span class="icon-btn">${icon('trash')}</span>
+          </div>
+          <div class="last-build" ${last ? '' : 'hidden'}>
+            ${icon(last?.kind === 'failed' ? 'error' : 'pass', last?.kind === 'failed' ? 'obi-failed' : 'obi-passed')}
+            <span class="last-text">${esc(last?.text ?? '')}</span><span class="spacer"></span><a>Open</a>
           </div>
         </div>`,
     });
+  }
+
+  /** Something runs in the OBI Build view from `from` to `to`: its name, the elapsed time, the progress bar */
+  function run_clock(tl, view, from, to, label) {
+    tl.cls(view, 'is-running', from, to);
+    tl.text(view.querySelector('.run-label'), label, from);
+    const time = view.querySelector('.run-time');
+    for (let second = 0; from + second < to; second++)
+      tl.text(time, `0:${String(second).padStart(2, '0')}`, from + second);
   }
 
   /** The Source filters view. `members`: keys of the sources shown under the first filter. */
@@ -406,83 +429,177 @@
     '<span class="k">end-proc</span>;',
   ];
 
-  const status_badge = (status, key = '') => `<span class="st ${status.replace(' ', '_')}" ${key ? `data-st="${key}"` : ''}>${status}</span>`;
+  /** A status pill of the build summary; `key` names it for the scenes (data-st) */
+  const status_pill = (status, key = '') => `<span class="status-pill ${status.replace(' ', '_')}" ${key ? `data-st="${key}"` : ''}>${status}</span>`;
+
+  /** The result of each source after the build the video shows (testsqlerr fails, unless `done`) */
+  const result_of = (item, done) => (!done && item.key === 'testsqlerr' ? 'failed' : 'success');
+
+  /** Counts as icon + number, like the header and the level rows of the build summary */
+  function counts_html({ failed = 0, success = 0, open = 0 }, pills = false) {
+    const part = (count, cls, glyph, label) => {
+      if (!count)
+        return '';
+      return pills
+        ? `<span class="status-pill ${cls}">${icon(glyph)}${count} ${label}</span>`
+        : `<span class="obi-${cls === 'new' ? 'muted' : cls === 'success' ? 'passed' : 'failed'}">${icon(glyph)}${count}</span>`;
+    };
+    return part(failed, 'failed', 'error', 'failed') + part(success, 'success', 'pass', 'built') + part(open, 'new', 'circle-large-outline', 'to build');
+  }
 
   /**
-   * The build summary page (asserts/templates/show_changes/index.html).
-   * done: all commands succeeded (the page then offers the i-Releaser workflow instead of "Run build").
+   * The build summary (asserts/templates/show_changes/index.html).
+   * Before the build all sources are "new"; class `built` on .summary shows the counts after it (the scene changes the pills).
+   * done: all succeeded; the page then offers the i-Releaser workflow instead of "Run build" and has the deployment card
+   * (shown with class `deployed`, see ir_card).
    */
-  function summary_page({ done = false, created = `${PROJECT.day}T09:40:12.433Z` } = {}) {
-    const status = done ? 'success' : 'new';
-    const link = item => `<li><a>${LIB}/${item.file}/${item.name}</a></li>`;
-    const changed = SOURCES.filter(item => item.key === 'logger');
-    const dependent = built().filter(item => item.key !== 'logger');
+  function summary_page({ done = false, created = '11/13/2026, 9:40:12 AM' } = {}) {
+    const items = built();
+    const after = list => ({
+      failed: list.filter(item => result_of(item, done) === 'failed').length,
+      success: list.filter(item => result_of(item, done) === 'success').length,
+    });
+    const tile_item = item => `<li>${icon('file-code')}<a><span class="path-lib">${LIB}/${item.file}/</span>${item.name}</a></li>`;
+    const changed = items.filter(item => item.key === 'logger');
+    const dependent = items.filter(item => item.key !== 'logger');
+    const tile = (id, glyph, label, list) => `
+      <div class="tile" data-tile="${id}">
+        <div class="tile-head">${icon(glyph)}${label}</div>
+        <div class="tile-count">${list.length}</div>
+        <ul class="tile-list">${list.slice(0, 3).map(tile_item).join('')}</ul>
+        ${list.length > 3 ? `<div class="tile-more">+ ${list.length - 3} more</div>` : ''}
+      </div>`;
+    const plural = (count, word) => `${count} ${word}${count === 1 ? '' : 's'}`;
 
-    const levels = [1, 2, 3].map(level => `
-      <tr class="lvl" data-level="${level}"><th colspan="4"><span class="tri">▼</span>&nbsp;${level}. level</th></tr>
-      ${SOURCES.filter(item => item.level === level).map(item => `
-        <tr class="src" data-src="${item.key}">
-          <td><span class="check on">${icon('check')}</span></td>
-          <td><a>${LIB} / ${item.file} / ${item.name}</a></td>
-          <td>${status_badge(status, item.key)}</td>
-          <td class="cmds">
-            <div class="cmds-summary"><span class="tri">▶</span> ${item.cmds} commands</div>
-            ${item.key === 'testsqlerr' ? failed_commands() : ''}
-          </td>
-        </tr>`).join('')}`).join('');
+    const levels = [1, 2, 3].map(level => {
+      const sources = items.filter(item => item.level === level);
+      return `
+        <tr class="level-row" data-level="${level}"><td colspan="4">
+          <div class="level-head">${icon('chevron-down', 'toggle-icon')}<span class="lvl-name">${level}. level</span>
+            <span class="obi-muted">· ${plural(sources.length, 'object')}</span><span class="spacer"></span>
+            <span class="level-sum before">${counts_html(done ? after(sources) : { open: sources.length })}</span>
+            <span class="level-sum after">${counts_html(after(sources))}</span>
+          </div>
+        </td></tr>
+        ${sources.map(item => `
+          <tr class="src-row" data-src="${item.key}">
+            <td class="col-check"><input type="checkbox" class="obi-check" checked></td>
+            <td><span class="object">${icon('file-code')}<a><span class="path-lib">${LIB} / ${item.file} / </span><b>${item.name}</b></a></span></td>
+            <td class="col-status">${status_pill(done ? 'success' : 'new', item.key)}</td>
+            <td class="col-cmds"><span class="cmds-toggle">${item.cmds} commands${icon('chevron-right')}</span></td>
+          </tr>
+          ${item.key === 'testsqlerr' && !done ? failed_commands() : ''}`).join('')}`;
+    }).join('');
 
     return `
-      <div class="summary">
+      <div class="summary${done ? ' built' : ''}">
         <div class="summary-scroll">
-          <div class="sum-top">
-            <span>Created at <b><u>${created}</u></b></span>
-            <a>open JSON file</a>
-            <a>open OBI log</a>
-            ${done
-              ? `<span class="vbtn text" data-btn="start-workflow">${icon('rocket')}Start i-Releaser workflow</span><a class="sum-deployment">i-Releaser deployment ${PROJECT.deployment}</a>`
-              : '<span class="vbtn text" data-btn="run-build">Run build</span>'}
+          <div class="page-header">
+            <h1>Build summary</h1>
+            <span class="pills before">${counts_html(done ? after(items) : { open: items.length }, true)}</span>
+            <span class="pills after">${counts_html(after(items), true)}</span>
+            <span class="spacer"></span>
+            <div class="page-actions">
+              ${done
+                ? `<span class="btn" data-btn="start-workflow">${icon('rocket')}Start i-Releaser workflow</span>`
+                : `<span class="btn" data-btn="run-build">${icon('run-all')}Run build</span>`}
+              <span class="btn secondary">${icon('add')}Add source</span>
+              <span class="icon-btn">${icon('json')}</span>
+              <span class="icon-btn">${icon('output')}</span>
+            </div>
           </div>
-          ${done ? `
-          <div class="ir-status">
-            <div>${icon('rocket')} i-Releaser deployment ${PROJECT.deployment} · version ${PROJECT.deployment}: ${status_badge('in process', 'deployment')} <small>(updated <span class="ir-updated">10:41:07</span>)</small></div>
-            <div class="ir-stages">START ${status_badge('in process', 'stage-start')} &nbsp;→&nbsp; TEST ${status_badge('new', 'stage-test')} &nbsp;→&nbsp; PROD ${status_badge('new', 'stage-prod')}</div>
-          </div>` : ''}
-          <div><span class="vbtn text">${icon('add')}Add source</span></div>
-          <hr>
-          <div class="sum-grid">
-            <div><h6><span class="tri">▼</span> 0 New sources</h6></div>
-            <div data-box="changed"><h6><span class="tri">▼</span> ${changed.length} Changed sources</h6><ul>${changed.map(link).join('')}</ul></div>
-            <div data-box="dependent"><h6><span class="tri">▼</span> ${dependent.length} Dependent objects</h6><ul>${dependent.map(link).join('')}</ul></div>
+          <div class="page-meta">
+            <span>${icon('history')}${created}</span>
+            <span>${icon('remote')}${PROJECT.user}@${PROJECT.host}</span>
+            <span>${icon('folder')}${PROJECT.remote_dir}</span>
+            <span>${icon('git-branch')}main · ${done ? '7c41e0b' : '3f9c2a1'}</span>
           </div>
-          <hr>
-          <h3>Details</h3>
-          <div class="sum-remote">Remote host: <code>${PROJECT.user}@${PROJECT.host}</code> <span class="gap"></span> IBM i IFS path: <code>${PROJECT.remote_dir}</code></div>
-          <div class="sum-divider"></div>
-          <table class="sum-table">
-            <thead><tr><th>level</th><th>object</th><th>status</th><th>commands</th></tr></thead>
+          ${done ? ir_card() : ''}
+          <div class="tiles">
+            ${tile('new', 'diff-added', 'New sources', [])}
+            ${tile('changed', 'diff-modified', 'Changed sources', changed)}
+            ${tile('dependent', 'references', 'Dependent objects', dependent)}
+          </div>
+          <div class="section-head"><h2>Build list</h2><span class="obi-muted">${plural(items.length, 'object')} · 3 levels</span></div>
+          <table class="build-list">
+            <thead><tr><th class="col-check"></th><th>object</th><th class="col-status">status</th><th class="col-cmds">commands</th></tr></thead>
             <tbody>${levels}</tbody>
           </table>
         </div>
       </div>`;
   }
 
-  /** The commands of the source that fails in the video, shown once the build ran */
+  /** The commands of the source that fails in the video; the scene opens them (class `open`) once the build ran */
   function failed_commands() {
-    const cmd = (time, status, text, buttons) => `
-      <tr>
-        <td><span class="check on">${icon('check')}</span></td>
-        <td>${time}</td>
-        <td>${status_badge(status)}</td>
-        <td><span class="tri">▶</span> <code>${text}</code></td>
-        <td class="cmd-buttons"><span class="vbtn square secondary">${icon('edit')}</span>${buttons.map(name => `<span class="vbtn text small" data-btn="${name.toLowerCase()}">${name}</span>`).join('')}</td>
-      </tr>`;
+    const ICON = { success: 'pass obi-passed', failed: 'error obi-failed', new: 'circle-large-outline obi-muted' };
+    const BUTTON = { Joblog: 'list-flat', Spool: 'file-text', Error: 'error' };
+    const cmd = (time, status, text, buttons, code = '') => `
+      <div class="cmd${status === 'failed' ? ' is-failed' : ''}">
+        <input type="checkbox" class="obi-check" checked>
+        <details class="cmd-details" ${code ? 'open' : ''}>
+          <summary><i class="codicon codicon-${ICON[status]}"></i><span class="cmd-time">${time}</span><code class="cmd-text">${text}</code></summary>
+          ${code ? `<div class="cmd-code"><span class="icon-btn cmd-copy">${icon('copy')}</span>${code}</div>` : ''}
+        </details>
+        <div class="cmd-actions"><span class="icon-btn">${icon('edit')}</span>${buttons.map(name => `<span class="btn secondary small" data-btn="${name.toLowerCase()}">${icon(BUTTON[name])}${name}</span>`).join('')}</div>
+      </div>`;
     return `
-      <table class="cmd-table">
-        <tr><th></th><th>timestamp</th><th>status</th><th>command</th><th></th></tr>
-        ${cmd('09:41:26.358', 'success', "CHGATR OBJ('src/prouzalib/qrpgle...", ['Joblog'])}
-        ${cmd('09:41:27.698', 'failed', 'liblist -a prouzat1 ; CRTSQLRPGI ...', ['Joblog', 'Spool', 'Error'])}
-        ${cmd('', 'new', 'liblist -a prouzat1 ; CRTPGM PGM(...', [])}
-      </table>`;
+      <tr class="cmds-row is-failed" data-cmds="testsqlerr"><td colspan="4">
+        ${cmd('09:41:26.358', 'success', "CHGATR OBJ('src/prouzalib/qrpglesrc/testsqlerr.sqlrpgle.pgm') ATR(*CCSID) VALUE(1208)", ['Joblog'])}
+        ${cmd('09:41:27.698', 'failed', 'liblist -a prouzat1 ; CRTSQLRPGI OBJ(PROUZAT1/TESTSQLERR) SRCSTMF(...)', ['Joblog', 'Spool', 'Error'],
+          "liblist -a prouzat1\nCRTSQLRPGI OBJ(PROUZAT1/TESTSQLERR) SRCSTMF('src/prouzalib/qrpglesrc/testsqlerr.sqlrpgle.pgm') OBJTYPE(*PGM)")}
+        ${cmd('not run', 'new', 'liblist -a prouzat1 ; CRTPGM PGM(PROUZAT1/TESTSQLERR)', [])}
+      </td></tr>`;
+  }
+
+
+  // ---------------------------------------------------------------- i-Releaser deployment card of the build summary
+
+  const IR_STAGES = ['START', 'TEST', 'PROD'];
+  /** The kinds of a stage (StatusKind of src/shared/IReleaserDeployments.ts) and the icon in its dot */
+  const IR_DOT = { running: icon('sync', 'spin'), finished: icon('check'), ready: icon('play'), failed: icon('close') };
+
+  /** Hidden until the summary has class `deployed`; the attention line needs class `attention` on the card */
+  function ir_card() {
+    return `
+      <div class="ir-card">
+        <div class="ir-head">
+          ${icon('rocket')}<span class="ir-title">i-Releaser deployment ${PROJECT.deployment}</span>
+          <span class="ir-meta">${PROJECT.workflow} · version ${PROJECT.deployment}</span>
+          <span class="status-pill ir-running">${icon('sync', 'spin')}in process</span>
+          <span class="ir-spacer"></span>
+          <span class="ir-meta">updated <span class="ir-updated">10:41:07</span></span>
+          <a class="ir-open">${icon('link-external')}Open in i-Releaser</a>
+        </div>
+        <div class="ir-progress"><div class="ir-progress-bar" style="width:0%"></div></div>
+        <ol class="ir-stages">
+          ${IR_STAGES.map((name, index) => `
+            <li class="ir-stage ir-${index === 0 ? 'running' : 'new'}" data-stage="${name.toLowerCase()}">
+              <span class="ir-dot"><b class="dot-no">${index + 1}</b>${Object.entries(IR_DOT).map(([kind, glyph]) => `<span class="dot-${kind}">${glyph}</span>`).join('')}</span>
+              <span class="ir-name">${name}</span><span class="ir-state">${index === 0 ? 'in process' : 'new'}</span>
+            </li>`).join('')}
+        </ol>
+        <div class="ir-attention ir-ready">
+          ${icon('play-circle')}<span class="ir-attention-text">Stage PROD is ready to run.</span><span class="ir-spacer"></span>
+          <span class="ir-action btn" data-btn="run-stage">${icon('play')}Run stage</span>
+        </div>
+      </div>`;
+  }
+
+  /** Sets kind and status of a stage of the card over time. steps: [[seconds, kind, status], ...] ascending */
+  function ir_stage(tl, card, name, steps) {
+    const stage = card.querySelector(`[data-stage=${name}]`);
+    const next = stage.nextElementSibling;
+    const label = stage.querySelector('.ir-state');
+    steps.forEach(([at, kind, status], index) => {
+      const from = index === 0 ? -Infinity : at;
+      const until = index + 1 < steps.length ? steps[index + 1][0] : Infinity;
+      tl.cls(stage, `ir-${kind}`, from, until);
+      if (next && kind === 'finished')
+        tl.cls(next, 'ir-after-finished', from, until);
+      tl.text(label, status, from === -Infinity ? -1e9 : at);
+    });
+    // The class of the page (ir-running / ir-new) stays out of the way of the timeline
+    stage.className = 'ir-stage';
   }
 
   /** The Problems view below the editor */
@@ -530,8 +647,8 @@
   window.UI = {
     html, esc, icon, rect, fx, head, show_head, hide_head, Cursor, callout, show_callout, hide_callout, background, chapters,
     LOGO, LIB, SOURCES, PROJECT, source, built,
-    vscode_window, status_bar, states, spin, pane, row, controller_pane, filters_pane, history_pane, releaser_pane,
-    code_editor, LOGGER_SOURCE, status_badge, summary_page, problems_panel, quick_pick, toast,
+    vscode_window, status_bar, states, spin, pane, row, controller_pane, run_clock, filters_pane, history_pane, releaser_pane,
+    code_editor, LOGGER_SOURCE, status_pill, summary_page, ir_stage, problems_panel, quick_pick, toast,
   };
 
 })();

@@ -1,16 +1,12 @@
-import "../../tools/javascript/toolkit";
-import {
-  Button,
-  TextField,
-  Checkbox
-} from "@vscode/webview-ui-toolkit";
-
 import { page_text, showAlert } from "../../tools/javascript/alertBox";
 import { init_source_select } from "../../tools/javascript/sourceSelect";
 import { typed_post } from "../../tools/javascript/post";
 import type { ConfigurationRequest } from "../../../shared/messages/ConfigurationMessages";
-import { json } from "stream/consumers";
 import { keep_ui_state } from "../../tools/javascript/ui_state";
+
+/** Text field or text area of the page */
+type TextField = HTMLInputElement | HTMLTextAreaElement;
+type Checkbox = HTMLInputElement;
 
 const deepmerge = require('deepmerge');
 
@@ -41,6 +37,7 @@ function main() {
   // Rendered by the extension (validated there)
   panel = document.body.dataset.panel;
   panel_tab = document.body.dataset.panelTab;
+  init_tabs();
 
   init_source_select('config_source_list');
 
@@ -48,11 +45,9 @@ function main() {
 
   check_inputs();
 
-  const save_button = document.getElementById("save_config") as Button;
-  save_button?.addEventListener("click", save_configs);
+  document.getElementById("save_config")?.addEventListener("click", save_configs);
 
-  const delete_password_button = document.getElementById("delete_ssh_password") as Button;
-  delete_password_button?.addEventListener("click", () => {
+  document.getElementById("delete_ssh_password")?.addEventListener("click", () => {
     post({
       command: "delete_ssh_password",
       panel: panel,
@@ -60,112 +55,86 @@ function main() {
     });
   });
 
-  const project_cfg_button = document.getElementById("project_cfg");
-  project_cfg_button?.addEventListener("click", () => {panel = 'project_cfg'});
-  const user_cfg_button = document.getElementById("user_cfg");
-  user_cfg_button?.addEventListener("click", () => {panel = 'user_cfg'});
-  const source_cfg_button = document.getElementById("source_cfg");
-  source_cfg_button?.addEventListener("click", () => {panel = 'source_cfg'});
-
-  const panel_tab_buttons = document.getElementsByClassName('panel_tab');
-  for (let i = 0; i < panel_tab_buttons.length; i++) {
-    panel_tab_buttons[i].addEventListener("click", () => {panel_tab=panel_tab_buttons[i].id.replace('project_', '').replace('user_', '')});
-  }
-
-  let button = document.getElementById("add_global_cmd") as Button;
-  button?.addEventListener("click", () => {
-    add_global_cmd(button);
-    reload();
-  });
-
-  let buttons = document.getElementsByClassName('delete_global_cmd');
-  for (let i = 0; i < buttons.length; i++) {
-    const el = buttons[i];
-    el.addEventListener("click", () => {
-      delete_global_cmd(el.getAttribute('project_user') ?? '', el.getAttribute('key')?.split('|')[2] ?? ''); 
+  // Add and delete in the tables; the buttons of each scope (config attribute) work on its own fields
+  for (const button of document.querySelectorAll<HTMLElement>('.add_global_cmd'))
+    button.addEventListener("click", () => {
+      add_global_cmd(button);
       reload();
     });
-  }
 
-
-  button = document.getElementById("add_compile_cmd") as Button;
-  button?.addEventListener("click", () => {
-    add_compile_cmd(button);
-    reload();
-  });
-
-
-  buttons = document.getElementsByClassName('delete_compile_cmd');
-  for (let i = 0; i < buttons.length; i++) {
-    const el = buttons[i];
+  for (const el of document.querySelectorAll<HTMLElement>('.delete_global_cmd'))
     el.addEventListener("click", () => {
-      delete_compile_cmd(el.getAttribute('project_user') ?? '', el.getAttribute('key')?.split('|')[2] ?? ''); 
+      delete_global_cmd(el.getAttribute('project_user') ?? '', el.getAttribute('key')?.split('|')[2] ?? '');
       reload();
     });
-  }
 
-
-  button = document.getElementById("add_global_step") as Button;
-  button?.addEventListener("click", () => {
-    add_global_step(button);
-    reload();
-  });
-
-  buttons = document.getElementsByClassName('delete_global_step');
-  for (let i = 0; i < buttons.length; i++) {
-    const el = buttons[i];
-    el.addEventListener("click", () => {
-      delete_global_step(el.getAttribute('project_user') ?? '', el.getAttribute('key')?.split('|')[2] ?? ''); 
+  for (const button of document.querySelectorAll<HTMLElement>('.add_compile_cmd'))
+    button.addEventListener("click", () => {
+      add_compile_cmd(button);
       reload();
     });
-  }
+
+  for (const el of document.querySelectorAll<HTMLElement>('.delete_compile_cmd'))
+    el.addEventListener("click", () => {
+      delete_compile_cmd(el.getAttribute('project_user') ?? '', el.getAttribute('key')?.split('|')[2] ?? '');
+      reload();
+    });
+
+  for (const button of document.querySelectorAll<HTMLElement>('.add_global_step'))
+    button.addEventListener("click", () => {
+      add_global_step(button);
+      reload();
+    });
+
+  for (const el of document.querySelectorAll<HTMLElement>('.delete_global_step'))
+    el.addEventListener("click", () => {
+      delete_global_step(el.getAttribute('project_user') ?? '', el.getAttribute('key')?.split('|')[2] ?? '');
+      reload();
+    });
 
 
   // Add new attributes for language settings
-  const new_language_button = document.getElementById('add_language_settings');
-  new_language_button?.addEventListener('click', () => {
-    const lang: string = (document.getElementById('add_language_settings_name') as HTMLInputElement)?.value;
-    const config: string = new_language_button.getAttribute('config') ?? '';
-    add_language_settings(config, lang);
-    reload();
-  });
+  for (const button of document.querySelectorAll<HTMLElement>('.add_language_settings'))
+    button.addEventListener('click', () => {
+      const config: string = button.getAttribute('config') ?? '';
+      const lang: string = (document.getElementById(`add_language_settings_name_${config}`) as HTMLInputElement | null)?.value ?? '';
+      add_language_settings(config, lang);
+      reload();
+    });
 
-  const new_property_buttons = document.getElementsByName(`language-settings-add-property`);
-  new_property_buttons.forEach((e) => {
+  document.getElementsByName(`language-settings-add-property`).forEach((e) => {
     e.addEventListener('click', () => {
       const attr: string = e.getAttribute('id_of_property') ?? '';
-      const value: string = (document.getElementById(attr) as HTMLInputElement)?.value;
+      const value: string = (document.getElementById(attr) as HTMLSelectElement | null)?.value ?? '';
       const config: string = e.getAttribute('config') ?? '';
-      const attr_arr = attr.split('|');
-      add_language_attribute(config, attr_arr[0], value);
+      add_language_attribute(config, e.dataset.language ?? '', value);
       reload();
     });
   });
 
 
-  const app_elements = document.getElementsByTagName(`vscode-text-field`);
-  
-  for (let i = 0; i < app_elements.length; i++) {
+  for (const field of document.querySelectorAll<TextField>('.cfg-page .obi-input')) {
 
-    if (app_elements[i].getAttribute('regex_validator'))
-      app_elements[i]?.addEventListener('change', () => {
-        vaidate(app_elements[i] as HTMLInputElement);
-      });
+    if (field.getAttribute('regex_validator'))
+      field.addEventListener('change', () => vaidate(field as HTMLInputElement));
 
-    if (!app_elements[i]?.classList.contains('mandatory'))
+    if (!field.classList.contains('mandatory'))
       continue;
 
-    app_elements[i]?.addEventListener('change', () => {
-      check_input(app_elements[i]);
-      check_missing_hint();
-
-      const panel = app_elements[i].getAttribute('panel');
-      if (!panel)
-        return;
-      check_panel_missing(panel);
-    } );
-
+    for (const event of ['input', 'change'])
+      field.addEventListener(event, () => {
+        check_input(field);
+        update_missing();
+      });
   }
+
+  // "Unsaved changes" as soon as a value of the project or user config changes
+  for (const scope of ['project_cfg-view', 'user_cfg-view'])
+    document.getElementById(scope)?.addEventListener('input', () => {
+      const dirty = document.getElementById('cfg_dirty');
+      if (dirty)
+        dirty.hidden = false;
+    });
 
   // Add new ESP block
   const new_esp_button = document.getElementsByClassName('add_new_esp_block');
@@ -219,34 +188,25 @@ function main() {
 
   //-----------------------
 
-  const edit_source_config_button = document.getElementById('edit_source_config') as Button;
-  edit_source_config_button.addEventListener("click", edit_source_config);
-
-  const delete_source_config_button = document.getElementById('delete_source_config') as Button;
-  delete_source_config_button.addEventListener("click", delete_source_config);
+  document.getElementById('edit_source_config')?.addEventListener("click", edit_source_config);
+  document.getElementById('delete_source_config')?.addEventListener("click", delete_source_config);
 
 
   //----------------------------
   // Add handler for global variable
   //----------------------------
   
-  buttons = document.getElementsByClassName("add_global_variable");
-  for (let i = 0; i < buttons.length; i++) {
-    const el = (buttons[i] as HTMLElement);
+  for (const el of document.querySelectorAll<HTMLElement>('.add_global_variable'))
     el.addEventListener("click", () => {
-    add_global_variable(el);
-    reload();
-    });
-  }
-  
-  buttons = document.getElementsByClassName('delete_global_variable');
-  for (let i = 0; i < buttons.length; i++) {
-    const el = buttons[i];
-    el.addEventListener("click", () => {
-      delete_global_variable(el.getAttribute('project_user') ?? '', el.getAttribute('key')?.split('|')[2] ?? ''); 
+      add_global_variable(el);
       reload();
     });
-  }
+
+  for (const el of document.querySelectorAll<HTMLElement>('.delete_global_variable'))
+    el.addEventListener("click", () => {
+      delete_global_variable(el.getAttribute('project_user') ?? '', el.getAttribute('key')?.split('|')[2] ?? '');
+      reload();
+    });
 
   
   //----------------------------
@@ -263,6 +223,89 @@ function main() {
 
 
 
+
+
+//----------------------------
+// Scopes (project, user, sources) and sections (left list); panel and panel_tab go back to the extension with each message
+//----------------------------
+
+function init_tabs(): void {
+  for (const tab of document.querySelectorAll<HTMLElement>('.scope-tab'))
+    tab.addEventListener('click', () => show_tabs(tab.id, panel_tab));
+  for (const tab of document.querySelectorAll<HTMLElement>('.panel_tab'))
+    tab.addEventListener('click', () => show_tabs(panel, tab.dataset.tab));
+  show_tabs(panel, panel_tab);
+}
+
+
+function show_tabs(new_panel: string | undefined, new_tab: string | undefined): void {
+  const scopes = [...document.querySelectorAll<HTMLElement>('.scope-tab')];
+  const scope = scopes.find(tab => tab.id === new_panel) ?? scopes[0];
+  if (!scope)
+    return;
+  panel = scope.id;
+  const prefix = panel.replace('_cfg', '');
+  const sections = [...document.querySelectorAll<HTMLElement>(`#${panel}-view .panel_tab`)];
+  const section = sections.find(tab => tab.dataset.tab === new_tab) ?? sections[0];
+  if (section)
+    panel_tab = section.dataset.tab;
+
+  for (const tab of scopes) {
+    const active = tab === scope;
+    tab.setAttribute('aria-checked', String(active));
+    tab.setAttribute('aria-selected', String(active));
+    const view = document.getElementById(tab.dataset.view ?? '');
+    if (view)
+      view.hidden = !active;
+  }
+  for (const tab of sections) {
+    const active = tab === section;
+    tab.setAttribute('aria-selected', String(active));
+    tab.classList.toggle('active', active);
+    const view = document.getElementById(`${prefix}_view-${tab.dataset.tab}`);
+    if (view)
+      view.hidden = !active;
+  }
+  // File link and description of the scope
+  for (const el of document.querySelectorAll<HTMLElement>('[data-scope]'))
+    el.hidden = el.dataset.scope !== panel;
+}
+
+
+/** Section of a field: its tab view (data-panel, e.g. "project_tab-1") */
+function panel_of(element: Element): string | undefined {
+  return element.closest<HTMLElement>('.tab-view')?.dataset.panel;
+}
+
+
+/** Dots on the scopes and sections with missing values, and the banner with a link to each of them */
+function update_missing(): void {
+  const missing = [...document.querySelectorAll<TextField>('.obi-input.mandatory.missing_value')];
+  const panels = new Set(missing.map(panel_of));
+
+  for (const tab of document.querySelectorAll<HTMLElement>('.panel_tab'))
+    tab.classList.toggle('missing_value', panels.has(tab.id));
+  for (const tab of document.querySelectorAll<HTMLElement>('.scope-tab'))
+    tab.classList.toggle('missing_value', [...panels].some(item => item?.startsWith(tab.id.replace('_cfg', '_'))));
+
+  const banner = document.getElementById('still_missing');
+  const list = document.getElementById('still_missing_list');
+  if (!banner || !list)
+    return;
+  banner.hidden = missing.length === 0;
+  list.replaceChildren(...missing.flatMap((field, index) => {
+    const link = document.createElement('a');
+    link.href = '#';
+    link.textContent = field.closest('.setting')?.querySelector('label')?.textContent?.trim() || field.id;
+    link.addEventListener('click', event => {
+      event.preventDefault();
+      const [scope_tab] = (panel_of(field) ?? '').split('_tab');
+      show_tabs(`${field.id.split('|')[0]}_cfg`, (panel_of(field) ?? '').replace(`${scope_tab}_`, ''));
+      field.focus();
+    });
+    return index === 0 ? [link] : [document.createTextNode(', '), link];
+  }));
+}
 
 
 //----------------------------
@@ -536,8 +579,8 @@ function add_global_cmd(e: HTMLElement) {
 
   save_config(config);
 
-  const key = document.getElementById("new_global_cmd_key") as TextField;
-  const value = document.getElementById("new_global_cmd_value") as TextField;
+  const key = document.getElementById(`new_global_cmd_key_${config}`) as TextField;
+  const value = document.getElementById(`new_global_cmd_value_${config}`) as TextField;
 
   post({
     command: "add_global_cmd",
@@ -559,8 +602,8 @@ function add_compile_cmd(e: HTMLElement) {
 
   save_config(config);
 
-  const key = document.getElementById("new_compile_cmd_key") as TextField;
-  const value = document.getElementById("new_compile_cmd_value") as TextField;
+  const key = document.getElementById(`new_compile_cmd_key_${config}`) as TextField;
+  const value = document.getElementById(`new_compile_cmd_value_${config}`) as TextField;
 
   post({
     command: "add_compile_cmd",
@@ -580,8 +623,8 @@ function add_global_step(e: HTMLElement) {
 
   save_config(config);
 
-  const key = document.getElementById("new_global_step_key") as TextField;
-  const value = document.getElementById("new_global_step_value") as TextField;
+  const key = document.getElementById(`new_global_step_key_${config}`) as TextField;
+  const value = document.getElementById(`new_global_step_value_${config}`) as TextField;
 
   post({
     command: "add_global_step",
@@ -669,17 +712,6 @@ function save_configs() {
 
 
 
-function check_missing_hint() {
-  const missing_elements = document.getElementsByClassName('missing_value');
-  let missing_el: HTMLDivElement = document.getElementById('still_missing') as HTMLDivElement;
-
-  if (missing_elements.length > 1)
-    missing_el.style.display = "";
-  else
-    missing_el.style.display = "none";
-}
-
-
 function check_error_text() {
   let error_el: HTMLDivElement = document.getElementById('error_text') as HTMLDivElement;
 
@@ -687,46 +719,6 @@ function check_error_text() {
     error_el.style.display = "";
   else
     error_el.style.display = "none";
-}
-
-
-
-function check_panel_missing(panel: string) {
-
-  const panel_el = document.getElementById(panel);
-  const tab = `${panel?.split('_')[0]}`;
-  const tab_el = document.getElementById(`${tab}_cfg`);
-
-  const missing_elements = document.getElementsByClassName('missing_value');
-  let found_panel: boolean = false;
-  let found_tab: boolean = false;
-
-  for (let i = 0; i < missing_elements.length; i++) {
-    const el = missing_elements[i];
-    
-    if (el.getAttribute('panel') == panel)
-      found_panel = true;
-
-    if (el.getAttribute('panel')?.split('_')[0] == tab)
-      found_tab = true
-  }
-
-
-  if (found_panel) {
-    panel_el?.classList.add('missing_value');
-  }
-  else {
-    panel_el?.classList.remove('missing_value');
-  }
-  
-  if (found_tab) {
-    tab_el?.classList.add('missing_value');
-  }
-  else {
-    tab_el?.classList.remove('missing_value');
-  }
-
-  return;
 }
 
 
@@ -787,20 +779,9 @@ function check_input(element: Element) {
 
 
 function check_inputs() {
-
-  const elements = document.getElementsByClassName('mandatory');
-
-  for (let i = 0; i < elements.length; i++) {
-    check_input(elements[i]);
-    const panel = elements[i].getAttribute('panel');
-    if (!panel)
-      return;
-    check_panel_missing(panel);
-  }
-
-  check_missing_hint();
-  return document.getElementsByClassName(`missing_value`).length == 0;
-
+  for (const element of document.querySelectorAll('.obi-input.mandatory'))
+    check_input(element);
+  update_missing();
 }
 
 
@@ -808,16 +789,6 @@ function check_inputs() {
 
 function set_element_missing_value(element: Element) {
   element.classList.add('missing_value');
-  const panel = element.getAttribute('panel');
-  const panel_el = document.getElementById(panel ?? '');
-  const tab_el = document.getElementById(`${panel?.split('_')[0]}_cfg`);
-
-  if (!panel)
-    return;
-  if (!panel_el?.classList.contains('missing_value'))
-    panel_el?.classList.add('missing_value');
-  if (tab_el)
-    tab_el.classList.add('missing_value');
 }
 
 

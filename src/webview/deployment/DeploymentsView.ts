@@ -3,7 +3,7 @@ import * as path from 'path';
 import { Constants } from '../../shared/Constants';
 import { get_error_message } from '../../shared/Errors';
 import { DeploymentState, StageState, StepState, get_deployment, get_workflow_definitions, show_details_url, shorten } from '../../shared/IReleaser';
-import { ActionLog, DeploymentSummary, StageOption, cancel_deployment, deployment_projects, failed_step, get_action_log, is_final_status, list_deployments, run_stage, stage_options } from '../../shared/IReleaserDeployments';
+import { ActionLog, DeploymentRef, DeploymentSummary, StageActions, StageOption, cancel_deployment, deployment_projects, failed_step, get_action_log, is_final_status, list_deployments, run_stage, stage_options } from '../../shared/IReleaserDeployments';
 import { logger } from '../../extension/utilities/Logger';
 import { register_command } from '../../extension/utilities/Registration';
 import { require_trust } from '../../extension/utilities/Trust';
@@ -61,7 +61,7 @@ function status_icon(status: string): vscode.ThemeIcon {
  * The deployments of the project in i-Releaser, with their stages and steps (tree view obi.deployment),
  * and the actions on them: run a stage, cancel a deployment, show the log of a step.
  */
-export class DeploymentsView implements vscode.TreeDataProvider<Node>, vscode.TextDocumentContentProvider {
+export class DeploymentsView implements vscode.TreeDataProvider<Node>, vscode.TextDocumentContentProvider, StageActions {
 
   private static instance: DeploymentsView | undefined;
 
@@ -502,50 +502,68 @@ export class DeploymentsView implements vscode.TreeDataProvider<Node>, vscode.Te
   }
 
 
-  private deployment_name(node: DeploymentNode): string {
-    const summary = node.summary;
-    const details = [summary.workflow, summary.version !== undefined ? vscode.l10n.t('version {0}', String(summary.version)) : undefined].filter(Boolean).join(', ');
-    return details ? `${summary.id} (${details})` : String(summary.id);
+  private deployment_name(deployment: DeploymentRef): string {
+    const details = [deployment.workflow, deployment.version !== undefined ? vscode.l10n.t('version {0}', String(deployment.version)) : undefined].filter(Boolean).join(', ');
+    return details ? `${deployment.id} (${details})` : String(deployment.id);
+  }
+
+
+  private ref_of(node: DeploymentNode): DeploymentRef {
+    return { id: node.summary.id, workflow: node.summary.workflow, version: node.summary.version, status: this.status_of(node) };
   }
 
 
   public async run_stage(value: unknown, option: StageOption): Promise<void> {
     const node = this.node_of(value, 'stage');
-    if (!node)
-      return;
+    if (node)
+      await this.start_stage(this.ref_of(node.deployment), node.stage, option, { viewId: VIEW_ID });
+  }
+
+
+  /** Runs a stage of the deployment the build summary shows */
+  public async run_summary_stage(deployment: DeploymentRef, stage: StageState, option: StageOption): Promise<void> {
+    await this.start_stage(deployment, stage, option, vscode.ProgressLocation.Notification);
+  }
+
+
+  private async start_stage(deployment: DeploymentRef, stage: StageState, option: StageOption, location: vscode.ProgressLocation | { viewId: string }): Promise<void> {
     const run_stages = DeploymentConfig.get_deployment_config()['i-releaser']['run-stages'];
-    const options = stage_options(this.status_of(node.deployment), node.stage, run_stages);
+    const options = stage_options(deployment.status, stage, run_stages);
     if (!options.includes(option)) {
-      logger.warn(`i-Releaser view: stage ${node.stage.name} (${node.stage.status}) can't be run with ${option} from VS Code`);
-      vscode.window.showWarningMessage(vscode.l10n.t('Stage {0} can\'t be run from VS Code now.', node.stage.name));
+      logger.warn(`i-Releaser: stage ${stage.name} (${stage.status}) of deployment ${deployment.id} can't be run with ${option} from VS Code`);
+      vscode.window.showWarningMessage(vscode.l10n.t('Stage {0} can\'t be run from VS Code now.', stage.name));
       return;
     }
 
-    const title = vscode.l10n.t('Run stage {0}', node.stage.name);
-    await this.action(node.key, title, async connection => {
+    const title = vscode.l10n.t('Run stage {0}', stage.name);
+    // The same key as the stage in the tree: a stage runs only once at a time, from wherever it was started
+    await this.action(`d|${deployment.id}|s|${stage.id}`, title, async connection => {
+      const name = this.deployment_name(deployment);
       const question = option === 'run_all'
-        ? vscode.l10n.t('Run all steps of stage {0} of deployment {1} again?', node.stage.name, this.deployment_name(node.deployment))
-        : node.stage.status === 'failed'
-          ? vscode.l10n.t('Continue stage {0} of deployment {1}?', node.stage.name, this.deployment_name(node.deployment))
-          : vscode.l10n.t('Run stage {0} of deployment {1}?', node.stage.name, this.deployment_name(node.deployment));
+        ? vscode.l10n.t('Run all steps of stage {0} of deployment {1} again?', stage.name, name)
+        : stage.status === 'failed'
+          ? vscode.l10n.t('Continue stage {0} of deployment {1}?', stage.name, name)
+          : vscode.l10n.t('Run stage {0} of deployment {1}?', stage.name, name);
       const confirm = vscode.l10n.t('Run stage');
       const choice = await vscode.window.showWarningMessage(question, { modal: true, detail: `i-Releaser: ${connection.base}` }, confirm);
       if (choice !== confirm)
         return;
 
-      const id = node.deployment.summary.id;
-      logger.info(`i-Releaser: run stage ${node.stage.id} (${node.stage.name}) of deployment ${id} with ${option}`);
-      const answer = await vscode.window.withProgress({ location: { viewId: VIEW_ID }, title: title },
-        () => this.with_timeout(signal => run_stage(connection.base, connection.token, id, node.stage.id, option, signal)));
+      const id = deployment.id;
+      logger.info(`i-Releaser: run stage ${stage.id} (${stage.name}) of deployment ${id} with ${option}`);
+      const answer = await vscode.window.withProgress({ location: location, title: title },
+        () => this.with_timeout(signal => run_stage(connection.base, connection.token, id, stage.id, option, signal)));
 
       if (answer.service_running === false)
-        vscode.window.showWarningMessage(vscode.l10n.t('Stage {0} waits in the queue: the processing service of i-Releaser isn\'t running.', node.stage.name));
+        vscode.window.showWarningMessage(vscode.l10n.t('Stage {0} waits in the queue: the processing service of i-Releaser isn\'t running.', stage.name));
       else
-        vscode.window.showInformationMessage(vscode.l10n.t('Stage {0} of deployment {1} started.', node.stage.name, String(id)));
+        vscode.window.showInformationMessage(vscode.l10n.t('Stage {0} of deployment {1} started.', stage.name, String(id)));
 
       this.details.delete(String(id));
       DeploymentWatcher.watch(connection.base, id, 'started');
-      this.changed.fire(node.deployment);
+      const node = this.nodes.get(`d|${id}`);
+      if (node)
+        this.changed.fire(node);
     });
   }
 
@@ -561,7 +579,7 @@ export class DeploymentsView implements vscode.TreeDataProvider<Node>, vscode.Te
     const title = vscode.l10n.t('Cancel deployment {0}', String(node.summary.id));
     await this.action(node.key, title, async connection => {
       const confirm = vscode.l10n.t('Cancel deployment');
-      const choice = await vscode.window.showWarningMessage(vscode.l10n.t('Cancel deployment {0}?', this.deployment_name(node)),
+      const choice = await vscode.window.showWarningMessage(vscode.l10n.t('Cancel deployment {0}?', this.deployment_name(this.ref_of(node))),
         { modal: true, detail: `${vscode.l10n.t('A stage that is already running is not stopped.')}\ni-Releaser: ${connection.base}` }, confirm);
       if (choice !== confirm)
         return;
@@ -582,7 +600,7 @@ export class DeploymentsView implements vscode.TreeDataProvider<Node>, vscode.Te
   public async show_log(value: unknown): Promise<void> {
     const node = this.node_of(value, 'step');
     if (node)
-      await this.open_log(node.deployment, node.stage, node.step);
+      await this.open_log(node.deployment.summary.id, node.stage, node.step);
   }
 
 
@@ -590,11 +608,22 @@ export class DeploymentsView implements vscode.TreeDataProvider<Node>, vscode.Te
     const node = this.node_of(value, 'stage');
     const step = node ? failed_step(node.stage) : undefined;
     if (node && step)
-      await this.open_log(node.deployment, node.stage, step);
+      await this.open_log(node.deployment.summary.id, node.stage, step);
   }
 
 
-  private async open_log(deployment: DeploymentNode, stage: StageState, step: StepState): Promise<void> {
+  /** Log of the failed step of a stage of the deployment the build summary shows */
+  public async show_summary_log(deployment_id: number | string, stage: StageState): Promise<void> {
+    const step = failed_step(stage);
+    if (!step) {
+      logger.warn(`i-Releaser: stage ${stage.name} of deployment ${deployment_id} has no failed step with a log`);
+      return;
+    }
+    await this.open_log(deployment_id, stage, step);
+  }
+
+
+  private async open_log(deployment_id: number | string, stage: StageState, step: StepState): Promise<void> {
     if (step.last_run === undefined || !/^\d+$/.test(String(step.last_run))) {
       logger.warn(`i-Releaser view: step ${step.id} has no run`);
       return;
@@ -602,8 +631,8 @@ export class DeploymentsView implements vscode.TreeDataProvider<Node>, vscode.Te
     if (!require_trust(vscode.l10n.t('Show log')))
       return;
     const run = String(step.last_run);
-    this.log_contexts.set(run, { deployment: String(deployment.summary.id), stage: stage.name, step });
-    const name = `${deployment.summary.id} ${stage.name} ${step.label}`.replace(/[\\/:*?"<>|\r\n]+/g, '_');
+    this.log_contexts.set(run, { deployment: String(deployment_id), stage: stage.name, step });
+    const name = `${deployment_id} ${stage.name} ${step.label}`.replace(/[\\/:*?"<>|\r\n]+/g, '_');
     const uri = vscode.Uri.from({ scheme: LOG_SCHEME, path: `/run/${run}/${shorten(name, 80)}.log` });
     const doc = await vscode.workspace.openTextDocument(uri);
     await vscode.window.showTextDocument(doc, { preview: true });

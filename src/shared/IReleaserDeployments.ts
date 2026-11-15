@@ -1,7 +1,7 @@
 // Deployments view and its actions: requests and rules for the web API of i-Releaser 3.1.0 (docs/webapi.md of i-Releaser).
 // No vscode imports: this module is unit-tested in plain Node.
 
-import { IReleaserError, StageState, StepState, WorkflowDefinition, configured_workflows, is_id, is_object, request } from './IReleaser';
+import { DeploymentState, IReleaserError, StageState, StepState, WorkflowDefinition, configured_workflows, is_id, is_object, request } from './IReleaser';
 
 
 /** A deployment of list_deployments */
@@ -16,6 +16,15 @@ export interface DeploymentSummary {
 }
 
 export type StageOption = 'continue' | 'run_all';
+
+/** A deployment an action is for: from the deployments view, or the one the build summary shows */
+export interface DeploymentRef { id: number | string; workflow?: string; version?: number | string; status: string }
+
+/** What the build summary can do with the stages of its deployment (DeploymentsView, handed over in extension.ts) */
+export interface StageActions {
+  show_summary_log(deployment_id: number | string, stage: StageState): Promise<void>;
+  run_summary_stage(deployment: DeploymentRef, stage: StageState, option: StageOption): Promise<void>;
+}
 
 /** Answer of run_stage: in mode "service" the stage waits for the processing service */
 export interface RunStageAnswer {
@@ -110,6 +119,65 @@ export function stage_options(deployment_status: string, stage: StageState, run_
 /** The step whose log explains why a failed stage failed */
 export function failed_step(stage: StageState): StepState | undefined {
   return stage.steps.find(step => step.status === 'failed' && step.last_run !== undefined);
+}
+
+
+/** How a status of i-Releaser is shown: icon and colour */
+export type StatusKind = 'finished' | 'failed' | 'running' | 'ready' | 'canceled' | 'new';
+
+export function status_kind(status: string): StatusKind {
+  switch (status) {
+    case 'finished': return 'finished';
+    case 'failed': return 'failed';
+    case 'canceled': return 'canceled';
+    case 'ready': return 'ready';
+    case 'in process':
+    case 'in preperation':
+    case 'prepare': return 'running';
+    default: return 'new';
+  }
+}
+
+
+/** The stage that waits for someone: the failed one, else the one ready to run */
+export interface StageAttention {
+  stage: StageState;
+  kind: 'failed' | 'ready';
+  /** The step that failed, if i-Releaser names one */
+  step?: StepState;
+  /** The failed step has a log (get_action_log) */
+  has_log: boolean;
+  /** How the stage can be run from VS Code now */
+  options: StageOption[];
+  /** It could be run, but `run-stages` of deployment.toml doesn't list it */
+  not_in_run_stages: boolean;
+}
+
+/** What the build summary shows of a deployment besides its stages */
+export interface DeploymentOverview {
+  /** Finished stages */
+  done: number;
+  total: number;
+  attention?: StageAttention;
+}
+
+
+export function deployment_overview(state: DeploymentState, run_stages: unknown): DeploymentOverview {
+  const overview: DeploymentOverview = { done: state.stages.filter(stage => stage.status === 'finished').length, total: state.stages.length };
+  const stage = state.stages.find(item => item.status === 'failed') ?? state.stages.find(item => item.status === 'ready');
+  // A ready stage of a finished or canceled deployment won't run any more
+  if (!stage || (stage.status === 'ready' && is_final_status(state.status)))
+    return overview;
+  const options = stage_options(state.status, stage, run_stages);
+  overview.attention = {
+    stage: stage,
+    kind: stage.status === 'failed' ? 'failed' : 'ready',
+    step: stage.steps.find(step => step.status === 'failed'),
+    has_log: failed_step(stage) !== undefined,
+    options: options,
+    not_in_run_stages: options.length === 0 && stage_options(state.status, stage, undefined).length > 0,
+  };
+  return overview;
 }
 
 

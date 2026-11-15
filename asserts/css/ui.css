@@ -1,0 +1,1704 @@
+/* Building blocks of the OBI pages, in the colours of the VS Code theme (variables --vscode-*, with fallbacks).
+   Used by the build summary and the OBI Build view; the other pages move here one by one. */
+
+:root {
+  --obi-border: var(--vscode-widget-border, var(--vscode-panel-border, rgba(128, 128, 128, .35)));
+  --obi-surface: var(--vscode-editorWidget-background, transparent);
+  --obi-muted: var(--vscode-descriptionForeground, #9d9d9d);
+  --obi-passed: var(--vscode-testing-iconPassed, #73c991);
+  --obi-failed: var(--vscode-testing-iconFailed, #f14c4c);
+  --obi-running: var(--vscode-charts-blue, #3794ff);
+  --obi-link: var(--vscode-textLink-foreground, #4daafc);
+  --obi-mono: var(--vscode-editor-font-family, ui-monospace, monospace);
+}
+
+/* The size of VS Code's own UI (bootstrap would make it 16px) */
+body.obi-page {
+  font-size: var(--vscode-font-size, 13px);
+}
+
+.obi-muted {
+  color: var(--obi-muted);
+}
+
+.obi-passed { color: var(--obi-passed); }
+.obi-failed { color: var(--obi-failed); }
+.obi-running { color: var(--obi-running); }
+
+
+/* ---------------------------------------------------------------- buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 11px;
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 2px;
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  font: inherit;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--vscode-button-hoverBackground);
+  color: var(--vscode-button-foreground);
+}
+
+.btn:focus-visible, .icon-btn:focus-visible, .obi-check:focus-visible, .cmds-toggle:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 2px;
+}
+
+.btn.secondary {
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
+.btn.secondary:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
+.btn.small {
+  height: 22px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.btn.full {
+  width: 100%;
+  height: 28px;
+}
+
+.btn .codicon {
+  font-size: 14px;
+}
+
+.btn:disabled {
+  opacity: .5;
+  cursor: default;
+}
+
+/* Icon only, without background (like the actions of a VS Code view) */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--vscode-icon-foreground, var(--vscode-foreground));
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.icon-btn:hover {
+  background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, .2));
+  color: var(--vscode-icon-foreground, var(--vscode-foreground));
+}
+
+.icon-btn:disabled {
+  opacity: .4;
+  cursor: default;
+}
+
+
+/* ---------------------------------------------------------------- checkbox (like the checkboxes of VS Code) */
+
+.obi-check {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1px solid var(--vscode-checkbox-border, var(--obi-border));
+  border-radius: 3px;
+  background: var(--vscode-checkbox-background, transparent);
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.obi-check::after {
+  content: '';
+  width: 9px;
+  height: 5px;
+  margin-top: -2px;
+  border-left: 2px solid var(--vscode-checkbox-foreground, var(--vscode-foreground));
+  border-bottom: 2px solid var(--vscode-checkbox-foreground, var(--vscode-foreground));
+  transform: rotate(-45deg);
+  opacity: 0;
+}
+
+.obi-check:checked::after {
+  opacity: 1;
+}
+
+
+/* Status pill: the colour of the status from the theme, for builds (new, success, …) and i-Releaser (ir-…) */
+.status-pill {
+  --pill: var(--vscode-descriptionForeground, #9d9d9d);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--pill) 45%, transparent);
+  background: color-mix(in srgb, var(--pill) 16%, transparent);
+  color: var(--pill);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.status-pill .codicon {
+  font-size: 14px;
+}
+
+.status-pill.success, .status-pill.ir-finished { --pill: var(--vscode-testing-iconPassed, #73c991); }
+.status-pill.failed, .status-pill.error, .status-pill.ir-failed { --pill: var(--vscode-testing-iconFailed, #f14c4c); }
+.status-pill.in_process, .status-pill.ir-running { --pill: var(--vscode-charts-blue, #3794ff); }
+.status-pill.ir-ready { --pill: var(--vscode-textLink-foreground, #4daafc); }
+
+
+/* i-Releaser deployment of the build summary: card with the stages as a stepper */
+.ir-card {
+  --ir-border: var(--vscode-widget-border, var(--vscode-panel-border, rgba(128, 128, 128, .35)));
+  --ir-done: var(--vscode-testing-iconPassed, #73c991);
+  --ir-failed: var(--vscode-testing-iconFailed, #f14c4c);
+  --ir-running: var(--vscode-charts-blue, #3794ff);
+  --ir-ready: var(--vscode-textLink-foreground, #4daafc);
+  --ir-muted: var(--vscode-descriptionForeground, #9d9d9d);
+  margin: 10px 0;
+  border: 1px solid var(--ir-border);
+  border-radius: 6px;
+  background: var(--vscode-editorWidget-background, transparent);
+  overflow: hidden;
+}
+
+.ir-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 8px 12px;
+}
+
+.ir-title {
+  font-weight: 600;
+}
+
+.ir-meta {
+  color: var(--ir-muted);
+}
+
+.ir-spacer {
+  flex: 1;
+}
+
+.ir-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 2px;
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  text-decoration: none;
+}
+
+.ir-open:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
+.ir-progress {
+  height: 3px;
+  background: var(--ir-border);
+}
+
+.ir-progress-bar {
+  height: 100%;
+  background: var(--ir-done);
+}
+
+.ir-stages {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 16px 8px 12px;
+  list-style: none;
+}
+
+.ir-stage {
+  --ir-c: var(--ir-muted);
+  position: relative;
+  flex: 1 0 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 6px 6px;
+  text-align: center;
+}
+
+/* Line from the stage before; green when that one is finished. Not at the start of a row (show_changes.ts) */
+.ir-stage::before {
+  content: '';
+  position: absolute;
+  top: 13px;
+  left: -50%;
+  right: 50%;
+  height: 2px;
+  background: var(--ir-border);
+}
+
+.ir-stage:first-child::before, .ir-stage.ir-row-start::before {
+  display: none;
+}
+
+.ir-stage.ir-after-finished::before {
+  background: var(--ir-done);
+}
+
+.ir-finished { --ir-c: var(--ir-done); }
+.ir-failed { --ir-c: var(--ir-failed); }
+.ir-running { --ir-c: var(--ir-running); }
+.ir-ready { --ir-c: var(--ir-ready); }
+
+.ir-dot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--ir-c);
+  background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+  color: var(--ir-c);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ir-new .ir-dot, .ir-canceled .ir-dot {
+  border-color: var(--ir-border);
+}
+
+.ir-finished .ir-dot {
+  background: var(--ir-done);
+  color: var(--vscode-editor-background);
+}
+
+.ir-failed .ir-dot {
+  background: var(--ir-failed);
+  color: #fff;
+}
+
+.ir-dot .codicon {
+  font-size: 16px;
+}
+
+.ir-name {
+  margin-top: 7px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.ir-new .ir-name, .ir-canceled .ir-name {
+  color: var(--ir-muted);
+  font-weight: normal;
+}
+
+.ir-state {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ir-c);
+}
+
+.ir-attention {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin: 0 12px 12px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  border-left: 3px solid var(--ir-c);
+  background: color-mix(in srgb, var(--ir-c) 10%, transparent);
+}
+
+.ir-attention > .codicon {
+  color: var(--ir-c);
+}
+
+.ir-attention-text {
+  font-weight: 600;
+}
+
+.ir-attention-text .ir-meta {
+  font-weight: normal;
+}
+
+.ir-loading {
+  padding: 4px 12px 10px;
+  color: var(--ir-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ir-card .codicon-modifier-spin {
+    animation: none;
+  }
+}
+
+
+/* ---------------------------------------------------------------- page header */
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 14px;
+}
+
+.page-header h1 {
+  margin: 0 4px 0 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.page-header .spacer {
+  flex: 1;
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.page-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-top: 4px;
+  color: var(--obi-muted);
+}
+
+.page-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.page-meta .codicon {
+  font-size: 14px;
+}
+
+.page-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0;
+  color: var(--obi-muted);
+}
+
+
+/* ---------------------------------------------------------------- build summary: tiles */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 16px 0 22px;
+}
+
+.tile {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--obi-border);
+  border-radius: 6px;
+  background: var(--obi-surface);
+}
+
+.tile-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--obi-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.tile-head .codicon-diff-added { color: var(--obi-passed); }
+.tile-head .codicon-diff-modified { color: var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d); }
+.tile-head .codicon-references { color: var(--obi-running); }
+
+.tile-count {
+  margin: 4px 0 6px;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.tile-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.tile-list li a {
+  overflow: hidden;
+  color: var(--obi-link);
+  text-decoration: none;
+  text-overflow: ellipsis;
+}
+
+.tile-list li a:hover {
+  text-decoration: underline;
+}
+
+.tile-list .codicon {
+  flex: none;
+  font-size: 14px;
+  color: var(--obi-muted);
+}
+
+.tile details > summary {
+  margin-top: 2px;
+  color: var(--obi-muted);
+  font-size: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.tile details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.tile details[open] > summary {
+  display: none;
+}
+
+.path-lib {
+  color: var(--obi-muted);
+}
+
+
+/* ---------------------------------------------------------------- build summary: build list */
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 8px;
+}
+
+.section-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.build-list {
+  width: 100%;
+  border: 1px solid var(--obi-border);
+  border-radius: 6px;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+}
+
+.build-list th {
+  padding: 6px 12px;
+  background: var(--obi-surface);
+  color: var(--obi-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.build-list td {
+  padding: 5px 12px;
+  border-top: 1px solid var(--obi-border);
+  vertical-align: middle;
+}
+
+.build-list .col-check {
+  width: 1px;
+  padding-right: 0;
+}
+
+.build-list .col-status {
+  width: 1px;
+  white-space: nowrap;
+}
+
+.build-list .col-cmds {
+  width: 1px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.level-hidden {
+  display: none !important;
+}
+
+.level-row td {
+  background: color-mix(in srgb, var(--vscode-foreground) 4%, transparent);
+  cursor: pointer;
+  user-select: none;
+}
+
+.level-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.level-head .spacer {
+  flex: 1;
+}
+
+.level-sum {
+  display: inline-flex;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.level-sum > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.level-sum .codicon {
+  font-size: 14px;
+}
+
+.object {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.object > .codicon {
+  flex: none;
+  color: var(--obi-muted);
+}
+
+.object a {
+  color: var(--obi-link);
+  text-decoration: none;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.object a:hover {
+  text-decoration: underline;
+}
+
+.object a .path-lib {
+  color: var(--obi-muted);
+}
+
+.object a b {
+  font-weight: 600;
+}
+
+.src-row.is-failed td {
+  background: color-mix(in srgb, var(--obi-failed) 6%, transparent);
+}
+
+.cmds-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--obi-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.cmds-toggle:hover {
+  background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, .2));
+  color: var(--vscode-foreground);
+}
+
+.cmds-row > td {
+  padding: 6px 12px 10px 46px;
+  border-top: 0;
+  background: color-mix(in srgb, var(--vscode-foreground) 2%, transparent);
+}
+
+.cmds-row.is-failed > td {
+  background: color-mix(in srgb, var(--obi-failed) 3%, transparent);
+}
+
+.cmd {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 4px 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.cmd > .obi-check {
+  margin-top: 3px;
+}
+
+.cmd.is-failed {
+  background: color-mix(in srgb, var(--obi-failed) 9%, transparent);
+  box-shadow: inset 3px 0 0 var(--obi-failed);
+}
+
+.cmd-details > summary {
+  display: grid;
+  grid-template-columns: 16px 92px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 22px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.cmd-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.cmd-time {
+  color: var(--obi-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cmd-text {
+  overflow: hidden;
+  padding: 0;
+  background: none;
+  font-family: var(--obi-mono);
+  font-size: 12px;
+  color: var(--vscode-textPreformat-foreground, var(--vscode-foreground));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cmd-code {
+  position: relative;
+  margin: 6px 0 4px 24px;
+  padding: 8px 40px 8px 12px;
+  border: 1px solid var(--obi-border);
+  border-radius: 4px;
+  background: var(--vscode-textCodeBlock-background, var(--obi-surface));
+  font-family: var(--obi-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cmd-code .cmd-copy {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+
+.cmd-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.cmd-actions .codicon-error {
+  color: var(--obi-failed);
+}
+
+
+/* ---------------------------------------------------------------- OBI Build view (side bar) */
+
+body.obi-view {
+  padding: 0 14px;
+}
+
+.view-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0 14px;
+}
+
+/* Two-way switch, like a segmented button */
+.seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 2px;
+  border: 1px solid var(--vscode-dropdown-border, var(--obi-border));
+  border-radius: 4px;
+  background: var(--vscode-input-background, transparent);
+}
+
+.seg-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  height: 24px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--obi-muted);
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.seg-option .codicon {
+  font-size: 14px;
+}
+
+.seg-option[aria-checked="true"] {
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  font-weight: 600;
+}
+
+.seg-option:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+.current-source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: -2px;
+  overflow: hidden;
+  color: var(--obi-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.current-source .codicon {
+  flex: none;
+  font-size: 14px;
+}
+
+.current-source span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.seg[data-value="all"] + .current-source {
+  display: none;
+}
+
+.view-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.is-running .view-actions {
+  display: none;
+}
+
+.is-running .seg, .is-running .profile-row {
+  opacity: .45;
+  pointer-events: none;
+}
+
+.run-box {
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--obi-border);
+  border-radius: 4px;
+  background: var(--obi-surface);
+}
+
+.run-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.run-line .spacer {
+  flex: 1;
+}
+
+.run-time {
+  font-weight: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.run-bar {
+  position: relative;
+  height: 2px;
+  overflow: hidden;
+  background: var(--obi-border);
+}
+
+.run-bar i {
+  position: absolute;
+  left: 0;
+  width: 35%;
+  height: 100%;
+  background: var(--vscode-progressBar-background, var(--obi-running));
+  animation: obi-progress 1.4s ease-in-out infinite;
+}
+
+@keyframes obi-progress {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(290%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .run-bar i, .run-box .codicon-modifier-spin {
+    animation: none;
+  }
+}
+
+.view-caption {
+  margin-top: 6px;
+  color: var(--obi-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Native select in the colours of a VS Code dropdown */
+.obi-select {
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--vscode-dropdown-border, var(--obi-border));
+  border-radius: 2px;
+  background: var(--vscode-dropdown-background);
+  color: var(--vscode-dropdown-foreground, var(--vscode-foreground));
+  font: inherit;
+}
+
+.obi-select:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+.last-build {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--obi-border);
+  font-size: 12px;
+}
+
+.last-build[hidden] {
+  display: none;
+}
+
+.last-build .spacer {
+  flex: 1;
+}
+
+.last-build a {
+  color: var(--obi-link);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.last-build a:hover {
+  text-decoration: underline;
+}
+
+
+/* ---------------------------------------------------------------- form fields (configuration page, …) */
+
+.obi-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 26px;
+  padding: 3px 7px;
+  border: 1px solid var(--vscode-input-border, var(--vscode-dropdown-border, transparent));
+  border-radius: 2px;
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground, var(--vscode-foreground));
+  font: inherit;
+}
+
+textarea.obi-input {
+  display: block;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.obi-input.mono {
+  font-family: var(--obi-mono);
+  font-size: 12px;
+}
+
+.obi-input::placeholder {
+  color: var(--vscode-input-placeholderForeground, var(--obi-muted));
+}
+
+.obi-input:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+.obi-input:disabled {
+  opacity: .55;
+}
+
+.obi-input.missing_value {
+  border-color: var(--vscode-inputValidation-errorBorder, var(--obi-failed));
+}
+
+
+/* ---------------------------------------------------------------- configuration page */
+
+.cfg-page {
+  padding: 0;
+}
+
+.cfg-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--obi-border);
+  background: var(--vscode-editor-background);
+}
+
+.cfg-bar h1 {
+  margin: 0 4px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.cfg-bar .spacer, .cfg-sub .spacer, .cfg-card-head .spacer {
+  flex: 1;
+}
+
+.seg.cfg-scopes {
+  display: flex;
+}
+
+.cfg-scopes .seg-option {
+  height: 24px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.tab-dot {
+  display: none;
+  width: 7px;
+  height: 7px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--obi-failed);
+}
+
+.missing_value > .tab-dot {
+  display: inline-block;
+}
+
+.cfg-dirty {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--obi-muted);
+}
+
+.cfg-dirty[hidden], .cfg-page [data-scope][hidden] {
+  display: none;
+}
+
+.dirty-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--vscode-settings-modifiedItemIndicator, var(--vscode-focusBorder));
+}
+
+.cfg-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px 8px;
+  padding: 8px 24px 0;
+}
+
+.cfg-sub > .codicon {
+  margin-top: 1px;
+  color: var(--obi-running);
+}
+
+.cfg-sub .scope-desc {
+  flex: 1 1 400px;
+}
+
+.cfg-sub .codicon-edit, .cfg-sub .codicon-discard {
+  vertical-align: -3px;
+}
+
+.cfg-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 24px 0;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border-left: 3px solid var(--banner);
+  background: color-mix(in srgb, var(--banner) 10%, transparent);
+}
+
+.cfg-banner > .codicon {
+  margin-top: 1px;
+  color: var(--banner);
+}
+
+.cfg-banner.warning { --banner: var(--vscode-editorWarning-foreground, #cca700); }
+.cfg-banner.error { --banner: var(--obi-failed); }
+
+.cfg-banner[hidden], #error_text[show="false"] {
+  display: none;
+}
+
+.cfg-banner a {
+  color: var(--obi-link);
+}
+
+.scope-view[hidden], .tab-view[hidden] {
+  display: none;
+}
+
+.cfg-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+  padding: 16px 24px 32px;
+}
+
+.cfg-nav {
+  position: sticky;
+  top: 64px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 180px;
+}
+
+.cfg-nav .panel_tab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--obi-muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cfg-nav .panel_tab:hover {
+  background: var(--vscode-list-hoverBackground, rgba(128, 128, 128, .15));
+  color: var(--vscode-foreground);
+}
+
+.cfg-nav .panel_tab.active {
+  background: var(--vscode-list-activeSelectionBackground, #04395e);
+  color: var(--vscode-list-activeSelectionForeground, #fff);
+}
+
+.cfg-nav .panel_tab:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+.cfg-main {
+  flex: 1;
+  min-width: 0;
+  max-width: 1100px;
+}
+
+.cfg-main h2, .cfg-sources h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 26px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--obi-border);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.tab-view > h2:first-child, .tab-view > details:first-child, .cfg-sources > h2:first-child {
+  margin-top: 0;
+}
+
+.cfg-main h2 code {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--obi-muted);
+}
+
+.cfg-h-link {
+  color: var(--obi-muted);
+}
+
+.setting-grid {
+  display: grid;
+  align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px 24px;
+}
+
+.setting-grid + .setting-grid, .setting-checks + .setting-grid {
+  margin-top: 16px;
+}
+
+.setting {
+  min-width: 0;
+  padding-left: 10px;
+  border-left: 2px solid transparent;
+}
+
+.setting.wide {
+  grid-column: 1 / -1;
+}
+
+.setting.overridden {
+  border-left-color: var(--vscode-settings-modifiedItemIndicator, var(--vscode-focusBorder));
+}
+
+.setting-label, .setting-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.setting-label label {
+  font-weight: 600;
+}
+
+.setting-tag {
+  font-size: 11px;
+  color: var(--obi-muted);
+}
+
+.setting.inherited .src-overridden, .setting.overridden .src-inherited {
+  display: none;
+}
+
+.setting.overridden .src-overridden {
+  color: var(--vscode-settings-modifiedItemIndicator, var(--vscode-focusBorder));
+}
+
+.override_toggle {
+  margin-left: auto;
+}
+
+.setting-desc {
+  margin: 0 0 5px;
+  color: var(--obi-muted);
+  font-size: 12px;
+  white-space: pre-line;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.setting-error {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  color: var(--vscode-errorForeground, var(--obi-failed));
+  font-size: 12px;
+}
+
+.setting-error .codicon {
+  font-size: 14px;
+}
+
+.setting-missing {
+  display: none;
+}
+
+.setting:has(.missing_value) .setting-missing {
+  display: flex;
+}
+
+.setting-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+}
+
+.setting-checks.inline {
+  flex-direction: row;
+  gap: 24px;
+  margin: 0 0 12px;
+}
+
+.setting-checks .setting {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.check-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.cfg-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0 12px;
+  color: var(--obi-muted);
+}
+
+.cfg-details {
+  margin: 0 0 16px 12px;
+}
+
+.cfg-details > summary {
+  color: var(--obi-link);
+  cursor: pointer;
+}
+
+.cfg-table {
+  margin-top: 8px;
+  border-collapse: collapse;
+}
+
+.cfg-table th, .cfg-table td {
+  padding: 4px 16px 4px 0;
+  border-bottom: 1px solid var(--obi-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.cfg-add-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 420px;
+  margin-bottom: 12px;
+}
+
+.cfg-card {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--obi-border);
+  border-radius: 6px;
+  background: var(--obi-surface);
+}
+
+.cfg-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.cfg-card-head h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cfg-card-head .obi-select {
+  flex: none;
+  width: auto;
+  min-width: 140px;
+}
+
+.cfg-card > .add_step_to_esp {
+  margin-top: 8px;
+}
+
+/* Tables of keys and values (commands, steps, variables) */
+.kv-list {
+  border: 1px solid var(--obi-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: minmax(120px, 200px) minmax(0, 1fr) 80px;
+  align-items: start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--obi-border);
+}
+
+.kv:first-child {
+  border-top: 0;
+}
+
+.kv-head {
+  padding: 6px 10px;
+  background: var(--obi-surface);
+  color: var(--obi-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.kv-head .codicon {
+  font-size: 12px;
+  vertical-align: -2px;
+}
+
+.kv-add {
+  background: color-mix(in srgb, var(--vscode-foreground) 3%, transparent);
+}
+
+.kv > .icon-btn {
+  margin-top: 2px;
+}
+
+.kv-name {
+  padding-top: 4px;
+  overflow-wrap: anywhere;
+}
+
+.kv-value {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kv-deps .kv {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.kv-deps .object a {
+  overflow-wrap: anywhere;
+}
+
+.kv-filter .kv {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) 60px 90px 80px;
+  align-items: center;
+}
+
+.kv-filter .kv > .obi-check, .kv-center {
+  justify-self: center;
+  text-align: center;
+}
+
+.esp-steps .kv {
+  grid-template-columns: 70px minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, .8fr) 30px;
+}
+
+.esp-steps .kv > .obi-check {
+  justify-self: center;
+  margin-top: 5px;
+}
+
+.esp-steps-label {
+  margin-top: 12px;
+}
+
+.add_new_esp_block {
+  margin-top: 4px;
+}
+
+.cfg-sources {
+  max-width: 900px;
+  padding: 16px 24px;
+}
+
+.source-pick {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.source-pick .ts-wrapper {
+  flex: 1;
+}
+
+/* A form page with one column (source build settings, deployment config) */
+.cfg-single {
+  max-width: 1100px;
+  padding: 16px 24px 32px;
+}
+
+.cfg-single > h2:first-child {
+  margin-top: 0;
+}
+
+.cfg-single h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 26px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--obi-border);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.cfg-single h2 code {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--obi-muted);
+}
+
+.cfg-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--obi-link);
+  text-decoration: none;
+}
+
+.cfg-source code {
+  overflow: hidden;
+  color: inherit;
+  background: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cfg-bar h1 .codicon {
+  font-size: 18px;
+  vertical-align: -2px;
+}
+
+/* tom-select (searchable source picker) in the colours of the theme */
+.cfg-page .ts-control, .cfg-page .ts-wrapper.single.input-active .ts-control {
+  border: 1px solid var(--vscode-dropdown-border, var(--obi-border));
+  border-radius: 2px;
+  background: var(--vscode-dropdown-background);
+  color: var(--vscode-dropdown-foreground, var(--vscode-foreground));
+  box-shadow: none;
+}
+
+.cfg-page .ts-control input {
+  color: inherit;
+}
+
+.cfg-page .ts-dropdown {
+  border: 1px solid var(--vscode-focusBorder);
+  background: var(--vscode-dropdown-background);
+  color: var(--vscode-dropdown-foreground, var(--vscode-foreground));
+}
+
+.cfg-page .ts-dropdown .active {
+  background: var(--vscode-list-activeSelectionBackground, #04395e);
+  color: var(--vscode-list-activeSelectionForeground, #fff);
+}
+
+/* Narrow editor: the list of sections above the fields */
+@media (max-width: 720px) {
+  .cfg-body {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .cfg-nav {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: auto;
+  }
+
+  .esp-steps .kv {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ---------------------------------------------------------------- bootstrap-table pages (source filter view, source infos)
+   Bootstrap's own variables take the colours of the VS Code theme */
+
+.obi-bt {
+  --bs-body-bg: var(--vscode-editor-background);
+  --bs-body-color: var(--vscode-foreground);
+  --bs-border-color: var(--obi-border);
+  --bs-secondary-bg: var(--vscode-input-background);
+  --bs-tertiary-bg: var(--obi-surface);
+  --bs-secondary-color: var(--obi-muted);
+  --bs-link-color: var(--obi-link);
+  --bs-link-hover-color: var(--obi-link);
+  --bs-link-color-rgb: 77, 170, 252;
+  --bs-emphasis-color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  color: var(--vscode-foreground);
+}
+
+.bt-main {
+  padding: 12px 24px 32px;
+}
+
+.obi-bt .table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--vscode-foreground);
+  --bs-table-border-color: var(--obi-border);
+  --bs-table-hover-bg: var(--vscode-list-hoverBackground, rgba(128, 128, 128, .1));
+  --bs-table-hover-color: var(--vscode-foreground);
+  --bs-table-striped-bg: transparent;
+  font-size: 13px;
+}
+
+.obi-bt .table > thead th {
+  color: var(--obi-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.obi-bt .bootstrap-table .fixed-table-container .table thead th .th-inner {
+  padding: 6px 8px;
+}
+
+.obi-bt .table > :not(caption) > * > * {
+  padding: 5px 8px;
+}
+
+.obi-bt .form-control, .obi-bt .form-select {
+  border-color: var(--vscode-input-border, var(--obi-border));
+  border-radius: 2px;
+  background-color: var(--vscode-input-background);
+  color: var(--vscode-input-foreground, var(--vscode-foreground));
+  font-size: 13px;
+}
+
+.obi-bt .form-control::placeholder {
+  color: var(--vscode-input-placeholderForeground, var(--obi-muted));
+}
+
+.obi-bt .form-control:focus, .obi-bt .form-select:focus {
+  border-color: var(--vscode-focusBorder);
+  box-shadow: none;
+}
+
+.obi-bt .btn-secondary, .obi-bt .bootstrap-table .fixed-table-toolbar .btn {
+  height: 26px;
+  padding: 0 8px;
+  border-color: transparent;
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
+.obi-bt .btn-secondary:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.obi-bt .dropdown-menu {
+  --bs-dropdown-bg: var(--vscode-dropdown-background);
+  --bs-dropdown-color: var(--vscode-dropdown-foreground, var(--vscode-foreground));
+  --bs-dropdown-border-color: var(--vscode-dropdown-border, var(--obi-border));
+  --bs-dropdown-link-color: var(--vscode-foreground);
+  --bs-dropdown-link-hover-bg: var(--vscode-list-hoverBackground, rgba(128, 128, 128, .15));
+  --bs-dropdown-link-hover-color: var(--vscode-foreground);
+  --bs-dropdown-link-active-bg: var(--vscode-list-activeSelectionBackground, #04395e);
+  font-size: 13px;
+}
+
+.obi-bt .pagination {
+  --bs-pagination-bg: transparent;
+  --bs-pagination-color: var(--obi-link);
+  --bs-pagination-border-color: var(--obi-border);
+  --bs-pagination-hover-bg: var(--vscode-list-hoverBackground, rgba(128, 128, 128, .15));
+  --bs-pagination-hover-color: var(--obi-link);
+  --bs-pagination-active-bg: var(--vscode-button-background);
+  --bs-pagination-active-border-color: var(--vscode-button-background);
+  --bs-pagination-active-color: var(--vscode-button-foreground);
+  --bs-pagination-disabled-bg: transparent;
+  --bs-pagination-disabled-color: var(--obi-muted);
+  --bs-pagination-padding-y: 2px;
+  --bs-pagination-padding-x: 8px;
+  --bs-pagination-font-size: 13px;
+}
+
+.obi-bt .fixed-table-pagination {
+  color: var(--obi-muted);
+  font-size: 12px;
+}
+
+.obi-bt .table a {
+  color: var(--obi-link);
+  text-decoration: none;
+}
+
+.obi-bt .table a:hover {
+  text-decoration: underline;
+}
+
+.obi-bt .source_description {
+  min-width: 360px;
+}

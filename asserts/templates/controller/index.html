@@ -1,78 +1,61 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="{{ global_stuff['theme_mode'] }}>
+<html lang="en" data-bs-theme="{{ global_stuff['theme_mode'] }}">
 
 <head>
   {% include "tools/csp.html" %}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
-  <link rel="stylesheet" href="{{ config_css }}">
-  <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/tom-select/tom-select.min.css">
   <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/codicons/codicon.css">
+  <link rel="stylesheet" href="{{ global_stuff['ui_style_uri'] }}">
 </head>
 
-<body>
+<body class="obi-page obi-view{% if running %} is-running{% endif %}">
 
+  <div class="view-body">
 
-  <div>
-    <vscode-radio-group id="opt_run_type">
-      <vscode-radio id="run_type_single" value="single" checked>
-        {{ global_stuff['get_text']('*CURRENT') | safe }}
-      </vscode-radio>
-      <vscode-radio id="run_type_all" value="all">
-        {{ global_stuff['get_text']('*ALL') | safe }}
-      </vscode-radio>
-    </vscode-radio-group>
-  </div>
+    <!-- What to build: the source of the active editor, or all changes -->
+    <div class="seg" id="opt_run_type" role="radiogroup" data-value="single">
+      <button type="button" class="seg-option" role="radio" data-value="single" aria-checked="true" title="{{ global_stuff['get_text']('*CURRENT') | safe }}"><span class="codicon codicon-file"></span>{{ global_stuff['get_text']('Current source') | safe }}</button>
+      <button type="button" class="seg-option" role="radio" data-value="all" aria-checked="false" title="{{ global_stuff['get_text']('*ALL') | safe }}"><span class="codicon codicon-files"></span>{{ global_stuff['get_text']('All changes') | safe }}</button>
+    </div>
+    <div class="current-source" id="current_source"><span class="codicon codicon-file-code"></span><span id="current_source_name">{{ global_stuff['get_text']('No source open') | safe }}</span></div>
 
-    <div>
-        <vscode-button id="run_build" style="height:35px; width:60px" title="{{ global_stuff['get_text']('Run build') | safe }}">
-          <span class="codicon codicon-run-all"></span>
-        </vscode-button>
+    <div class="view-actions" id="view_actions">
+      <button type="button" class="btn full" id="run_build"><span class="codicon codicon-run-all"></span>{{ global_stuff['get_text']('Run build') | safe }}</button>
+      <button type="button" class="btn secondary full" id="show_changes"><span class="codicon codicon-checklist"></span>{{ global_stuff['get_text']('Show changes') | safe }}</button>
+    </div>
 
-        <vscode-button id="show_changes" style="height:35px; width:60px" title="{{ global_stuff['get_text']('Show build list') | safe }}">
-          <span class="codicon codicon-checklist">
-          </span>
-        </vscode-button>
+    <div id="running_ring" style="display: {% if running %}flex{% else %}none{% endif %}" title="{{ running or '' }}" class="run-box">
+      <div class="run-line">
+        <span class="codicon codicon-sync codicon-modifier-spin"></span>
+        <span id="running_label">{{ running or '' }}</span>
+        <span class="spacer"></span>
+        <span class="obi-muted run-time" id="running_time"></span>
+      </div>
+      <div class="run-bar"><i></i></div>
+      <button type="button" class="btn secondary full" id="cancel_running"><span class="codicon codicon-debug-stop"></span>{{ global_stuff['get_text']('Cancel') | safe }}</button>
+    </div>
 
-        <div id="running_ring" style="display: {% if running %}flex{% else %}none{% endif %}" title="{{ running or '' }}">
-          <vscode-progress-ring id="running_ring_"></vscode-progress-ring>
-          <vscode-button id="cancel_running">
-            <span class="codicon codicon-stop-circle"></span>
-          </vscode-button>
-        </div>
-  </div>
-
-  <br />
- <div>
-    <div style="padding-bottom: 5px;">
-      {{ global_stuff['get_text']('Use profile') | safe }}</div>
-    <div>
-      <vscode-dropdown id="drp_use_profile" style="width: max-content; min-width: 160px;">
+    <div class="view-caption">{{ global_stuff['get_text']('Use profile') | safe }}</div>
+    <div class="profile-row">
+      <select id="drp_use_profile" class="obi-select" aria-label="{{ global_stuff['get_text']('Use profile') | safe }}">
         {% for profile in config_profiles %}
-        <vscode-option value="{{ profile.alias }}" {% if profile.alias == global_stuff['current_profile'] %}selected{% endif %}>{{ profile.description }}</vscode-option>
+        <option value="{{ profile.alias }}" {% if profile.alias == global_stuff['current_profile'] %}selected{% endif %}>{{ profile.description }}</option>
         {% endfor %}
-      </vscode-dropdown>
-      <vscode-button id="btn_delete_current_profile" title="{{ global_stuff['get_text']('Delete selected profile') | safe }}">
-        <span class="codicon codicon-trash"></span>
-      </vscode-button>
-      <vscode-button id="btn_copy_profile" title="{{ global_stuff['get_text']('Copy selected profile') | safe }}">
-        <span class="codicon codicon-add"></span>
-      </vscode-button>
+      </select>
+      <button type="button" class="icon-btn" id="btn_copy_profile" title="{{ global_stuff['get_text']('Copy selected profile') | safe }}" aria-label="{{ global_stuff['get_text']('Copy selected profile') | safe }}"><span class="codicon codicon-add"></span></button>
+      <button type="button" class="icon-btn" id="btn_delete_current_profile" title="{{ global_stuff['get_text']('Delete selected profile') | safe }}" aria-label="{{ global_stuff['get_text']('Delete selected profile') | safe }}"><span class="codicon codicon-trash"></span></button>
+    </div>
+
+    <!-- Last build: filled by update_build_summary_timestamp -->
+    <div class="last-build" id="last_build" hidden>
+      <span class="codicon" id="last_build_icon"></span>
+      <span id="last_build_text"></span>
+      <span class="spacer"></span>
+      <a id="open_build_summary" role="button" tabindex="0">{{ global_stuff['get_text']('Open') | safe }}</a>
     </div>
   </div>
-  <br />
-
-  <!--div>
-    <a id="open_build_summary" href='command:obi.open_build_summary'
-      style="display: {% if builds_exist == 0 %}none{% else %}block{% endif %};">
-      <span class="codicon codicon-file"></span>{{
-      global_stuff['get_text']('Open build summary') | safe }}
-    </a>
-    <label id="build_summary_timestamp" style="display: {% if builds_exist == 0 %}none{% else %}block{% endif %};">
-      {{ build_summary_timestamp }}
-    </label>
-  </div-->
 
   <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
 

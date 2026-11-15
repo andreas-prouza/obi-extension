@@ -9,6 +9,7 @@ node scripts/video/render.mjs                 # asserts/video/obi-intro.mp4, 192
 node scripts/video/render.mjs --scale 2       # 3840x2160
 node scripts/video/render.mjs --stills 12,40.5 --out /tmp/stills   # single frames as PNG
 node scripts/video/render.mjs --small-copy 10 # asserts/video/obi-intro-small.mp4, less than 10 MB, from the rendered video
+node scripts/video/render.mjs --thumbnail     # asserts/video/obi-thumbnail.jpg, 1920x1080, the thumbnail for YouTube
 ```
 
 * Needs Chrome or Chromium (`CHROME_PATH` overrides the search), `ffmpeg`, and `npm ci` (the icons are the codicons of `node_modules`). No further npm packages.
@@ -37,15 +38,16 @@ Open `scripts/video/index.html` in Chrome. Space plays and pauses, the arrow key
 | `scenes/*.js` | One file per scene, in the order of the `<script>` tags in `index.html`. Each sets its length (`dur`) and builds its elements and animations. |
 | `ui.js` | Shared parts: headline, cursor, callouts, the VS Code window with the OBI views and pages, and the sample project (`SOURCES`, `PROJECT`). |
 | `engine.js` | The timeline: `to` (animate), `text`, `cls`, `when`, `each`, and `seek(seconds)`. |
+| `thumbnail.html` | The thumbnail for YouTube: a still page with the same parts as the video. Preview it by opening it in Chrome. |
 | `main.js` | Puts the scenes one after the other; the preview controls. |
-| `video.css`, `vscode.css` | Stage and scenes; the VS Code window (theme Dark Modern). |
+| `video.css`, `vscode.css` | Stage and scenes; the VS Code window (theme Dark Modern) and its theme variables for `asserts/css/ui.css`. |
 | `render.mjs` | Headless Chrome takes one screenshot per frame, `ffmpeg` encodes them. |
 | `fonts/` | Inter and JetBrains Mono (SIL Open Font License, see the license files). |
 
 ## Change something
 
 * **Texts and timing** of a scene: its file in `scenes/`. Times are seconds from the start of the scene (`t0`).
-* **The UI changed** (a new button, another label): `ui.js` (`controller_pane`, `summary_page`, …) and `vscode.css`. The templates in `asserts/templates` are the reference.
+* **The UI changed** (a new button, another label): `ui.js` (`controller_pane`, `summary_page`, `ir_card`, …) and `vscode.css`. The templates in `asserts/templates` are the reference. The OBI views and pages use the classes of the extension's stylesheet (`asserts/css/ui.css`, loaded by `index.html` and `thumbnail.html`), with the colours of the theme Dark Modern from `:root` in `vscode.css`; a change of `ui.css` shows in the next render.
 * **Other sample data** (sources, host, deployment): `SOURCES` and `PROJECT` in `ui.js`.
 * **New scene:** add `scenes/NN-name.js` with `window.SCENES.push({ id, dur, chapter, build(tl, scene, t0) { … } })` and its `<script>` tag in `index.html`.
 

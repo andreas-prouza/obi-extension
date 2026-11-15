@@ -33,27 +33,27 @@ window.SCENES.push({
     const editor = q('.vsc-editor');
     const scroller = q('.summary-scroll');
     const side = q('.vsc-side');
-    const failed_cmds = q('[data-src=testsqlerr] .cmds');
+    const failed_cmds = q('[data-cmds=testsqlerr]');
     const panel = q('.vsc-panel');
     const obi_status = q('.status-obi');
-    const ctl = q('.ctl');
+    const view = q('.view-body');
     UI.spin(tl, win);
 
     // ----- positions, read in the layout each callout is shown in
     const editor_top = rect(editor).y;
     const changed_line = rect(win.querySelectorAll('.code-line')[12].querySelector('.code-text'));
-    const changed_box = rect(q('[data-box=changed] a'));
-    const dependent_box = rect(q('[data-box=dependent] h6'));
-    const scroll_details = (rect(q('.summary h3')).y - editor_top - 12) / ZOOM;
+    const changed_box = rect(q('[data-tile=changed] .tile-list a'));
+    const dependent_box = rect(q('[data-tile=dependent] .tile-count'));
+    const scroll_details = (rect(q('.section-head')).y - editor_top - 12) / ZOOM;
 
     scroller.style.transform = `translateY(${-scroll_details}px)`;
-    const levels = rect(q('[data-src=testmod] .cmds-summary'));
+    const levels = rect(q('tr.level-row[data-level="2"] .level-head .obi-muted'));
     scroller.style.transform = '';
 
     // After the build: side bar closed, the failed commands open, scrolled to level 2
     side.style.width = '0px';
     failed_cmds.classList.add('open');
-    const scroll_failed = (rect(q('tr.lvl[data-level="2"]')).y - editor_top - 8) / ZOOM;
+    const scroll_failed = (rect(q('tr.level-row[data-level="3"]')).y - editor_top - 8) / ZOOM;
     scroller.style.transform = `translateY(${-scroll_failed}px)`;
     const buttons = rect(failed_cmds.querySelector('[data-btn=spool]'));
     // With the Problems view open, the failed source has to stay visible above it
@@ -68,9 +68,9 @@ window.SCENES.push({
     const notes = {
       changed: callout(scene, { x: changed_line.r + 14, y: changed_line.cy, text: 'You changed this source', side: 'right', color: 'amber' }),
       one: callout(scene, { x: changed_box.cx, y: changed_box.b + 6, text: '1 changed source', side: 'down', color: 'amber', length: 40 }),
-      seven: callout(scene, { x: dependent_box.cx, y: dependent_box.y - 6, text: '+ 7 objects that depend on it', side: 'up', length: 34 }),
+      seven: callout(scene, { x: dependent_box.x + 30, y: dependent_box.cy, text: '+ 7 objects that depend on it', side: 'right', length: 40 }),
       order: callout(scene, { x: levels.r + 16, y: levels.cy, text: 'In build order, level by level', side: 'right', length: 70 }),
-      logs: callout(scene, { x: buttons.cx, y: buttons.y + 3, text: 'Joblog, spool file and errors of every command', side: 'up', length: 44, shift: -150 }),
+      logs: callout(scene, { x: buttons.cx, y: buttons.b - 3, text: 'Joblog, spool file and errors of every command', side: 'down', length: 118, shift: -165 }),
       problems: callout(scene, { x: problem.r + 14, y: problem.cy, text: 'Compile errors land in the Problems view', side: 'right', color: 'red', length: 60 }),
     };
 
@@ -91,7 +91,7 @@ window.SCENES.push({
     cursor.click(tl, at_list + 0.05);
     press(q('[data-btn=list]'), at_list + 0.1);
     const opened = at_list + 1.0;
-    tl.cls(ctl, 'running', at_list + 0.15, opened);
+    UI.run_clock(tl, view, at_list + 0.15, opened, 'Show changes');
 
     // The build summary opens next to the source
     tl.cls(q('[data-tab=source]'), 'active', -1, opened);
@@ -131,7 +131,7 @@ window.SCENES.push({
     const results = at_run + 1.9;
     const RESULT = { testsqlerr: 'failed' };
     UI.built().forEach((item, index) => {
-      const badge = q(`[data-st=${item.key}]`);
+      const badge = q(`.summary [data-st=${item.key}]`);
       const status = RESULT[item.key] ?? 'success';
       const at = results + index * 0.12;
       tl.text(badge, status, at);
@@ -139,7 +139,11 @@ window.SCENES.push({
       fx.flash(tl, badge, at, status === 'failed' ? 'rgba(248,113,113,.7)' : 'rgba(74,222,128,.55)');
     });
     const finished = results + 8 * 0.12 + 0.1;
-    tl.cls(ctl, 'running', at_run + 0.15, finished);
+    UI.run_clock(tl, view, at_run + 0.15, finished, 'Run build');
+    // The counts in the header and the level rows
+    tl.cls(q('.summary'), 'built', finished);
+    fx.flash(tl, q('.pills.after'), finished + 0.05, 'rgba(248,113,113,.45)');
+    tl.cls(q('[data-src=testsqlerr]'), 'is-failed', results + 6 * 0.12);
     UI.states(tl, obi_status, [[0, 'idle'], [at_list + 0.15, 'changes'], [opened, 'idle'], [at_run + 0.15, 'build'], [finished, 'failed']]);
 
     tl.text(q('.status-errors'), '2', finished);
@@ -148,7 +152,7 @@ window.SCENES.push({
     tl.cls(failed_cmds, 'open', finished + 0.1);
     tl.to(side, { width: [`${SIDE}px`, '0px'] }, finished + 0.2, 0.7, { ease: 'inOut' });
     tl.to(scroller, { transform: [`translateY(${-scroll_details}px)`, `translateY(${-scroll_failed}px)`] }, finished + 0.2, 0.7, { ease: 'inOut' });
-    fx.flash(tl, q('[data-src=testsqlerr] .cmd-table'), finished + 0.9, 'rgba(248,113,113,.5)');
+    fx.flash(tl, q('[data-cmds=testsqlerr] .cmd.is-failed'), finished + 0.9, 'rgba(248,113,113,.5)');
 
     show_callout(tl, notes.logs, finished + 1.2);
     hide_callout(tl, notes.logs, finished + 3.3);

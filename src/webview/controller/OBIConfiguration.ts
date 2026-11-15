@@ -345,7 +345,8 @@ export class OBIConfiguration {
     const panel_tab = context.workspaceState.get<string>('obi.config.panel_tab');
     return {
       panel: panel && /^[a-z_]+$/.test(panel) ? panel : 'project_cfg',
-      panel_tab: panel_tab && /^tab-\d+$/.test(panel_tab) ? panel_tab : 'tab-1'
+      // tab-2.1: Extended compile
+      panel_tab: panel_tab && /^tab-\d+(\.\d+)?$/.test(panel_tab) ? panel_tab : 'tab-1'
     };
   }
 

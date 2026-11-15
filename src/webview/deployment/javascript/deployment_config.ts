@@ -1,8 +1,3 @@
-import "../../tools/javascript/toolkit";
-import {
-  Button
-} from "@vscode/webview-ui-toolkit";
-
 import { page_text, showAlert } from "../../tools/javascript/alertBox";
 import { typed_post } from "../../tools/javascript/post";
 import type { DeploymentConfigRequest } from "../../../shared/messages/DeploymentMessages";
@@ -15,15 +10,15 @@ window.addEventListener("load", main);
 
 
 function main() {
-  // To get improved type annotations/IntelliSense the associated class for
-  // a given toolkit component can be imported and used to type cast a reference
-  // to the element (i.e. the `as Button` syntax)
+  document.getElementById("save_config")?.addEventListener("click", save_config);
+  document.getElementById("delete_auth_token")?.addEventListener("click", () => post({ command: "delete_auth_token" }));
 
-  const btn_save_config = document.getElementById("save_config") as Button;
-  btn_save_config?.addEventListener("click", save_config);
-
-  const btn_delete_token = document.getElementById("delete_auth_token") as Button;
-  btn_delete_token?.addEventListener("click", () => post({ command: "delete_auth_token" }));
+  // "Unsaved changes" as soon as a value changes
+  document.querySelector('main')?.addEventListener('input', () => {
+    const dirty = document.getElementById('cfg_dirty');
+    if (dirty)
+      dirty.hidden = false;
+  });
 
   window.addEventListener('message', receive_message);
 

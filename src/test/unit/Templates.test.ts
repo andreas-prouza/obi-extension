@@ -30,6 +30,27 @@ suite('Templates', () => {
   });
 
 
+  test('no page uses the components of the deprecated webview toolkit (custom build summary templates still may)', () => {
+    for (const file of all_templates()) {
+      const html = fs.readFileSync(file, 'utf8');
+      assert.ok(!/<vscode-[a-z-]+/.test(html), path.relative(Constants.HTML_TEMPLATE_DIR, file));
+    }
+  });
+
+
+  test('text filters of the tables compare the visible text, not the cell HTML (link targets, attributes)', () => {
+    let columns = 0;
+    for (const file of all_templates()) {
+      const html = fs.readFileSync(file, 'utf8');
+      for (const th of html.match(/<th\b[^>]*data-filter-control="input"[^>]*>/g) ?? []) {
+        columns++;
+        assert.ok(th.includes('data-filter-custom-search="obi_cell_text_search"'), `${path.relative(Constants.HTML_TEMPLATE_DIR, file)}: ${th}`);
+      }
+    }
+    assert.ok(columns >= 4, 'the source filter table and source infos pages have text filters');
+  });
+
+
   test('source infos editor renders descriptions only as escaped attribute values', () => {
     const env = new nunjucks.Environment(new nunjucks.FileSystemLoader(Constants.HTML_TEMPLATE_DIR), { autoescape: true });
     const html: string = env.render('source_list/source-infos-config.html', {
@@ -61,7 +82,7 @@ suite('Templates', () => {
     /** id → class of the fields that are saved (<prefix>_save_app) */
     const saved_fields = (html: string, class_prefix: string): Map<string, string> => {
       const fields = new Map<string, string>();
-      for (const [tag] of html.matchAll(/<vscode-(?:text-field|text-area|checkbox)\b[^>]*>/g)) {
+      for (const [tag] of html.matchAll(/<(?:input|textarea)\b[^>]*>/g)) {
         const css = tag.match(/\sclass="([^"]*)"/)?.[1] ?? '';
         const id = tag.match(/\sid="([^"]*)"/)?.[1] ?? '';
         if (css.split(/\s+/).includes(`${class_prefix}_save_app`))
@@ -70,7 +91,7 @@ suite('Templates', () => {
       return fields;
     };
 
-    const wrapper = (html: string, key: string): string => html.match(new RegExp(`<span class="cfg_field[^"]*" data-override-key="${key.replace(/\|/g, '\\|')}">[\\s\\S]*?</vscode-button>`))?.[0] ?? '';
+    const wrapper = (html: string, key: string): string => html.match(new RegExp(`<div class="setting cfg_field[^"]*" data-override-key="${key.replace(/\|/g, '\\|')}">[\\s\\S]*?</button>`))?.[0] ?? '';
 
 
     test('every value of the project tab has the override button in the user tab', () => {
@@ -87,15 +108,15 @@ suite('Templates', () => {
     test('the button shows whether the user config sets the value', () => {
       const html = render('user', { connection: { 'ssh-agent': false } }, ['connection', 'connection|ssh-agent']);
 
-      assert.match(wrapper(html, 'connection|ssh-agent'), /class="cfg_field check overridden"[\s\S]*aria-pressed="true"[\s\S]*codicon-discard/);
-      assert.match(wrapper(html, 'connection|remote-host'), /class="cfg_field inherited"[\s\S]*aria-pressed="false"[\s\S]*codicon-edit/);
+      assert.match(wrapper(html, 'connection|ssh-agent'), /class="setting cfg_field check overridden"[\s\S]*aria-pressed="true"[\s\S]*codicon-discard/);
+      assert.match(wrapper(html, 'connection|remote-host'), /class="setting cfg_field inherited"[\s\S]*aria-pressed="false"[\s\S]*codicon-edit/);
       assert.ok(!render('project', {}).includes('override_toggle'), 'no buttons in the project tab');
     });
 
 
     test('extended source processing is on unless switched off, as in the OBI backend', () => {
       const use_esp = (general: object) => saved_fields(render('project', { global: { settings: { general } } }), 'project').get('global|settings|general|USE_ESP');
-      const checked = (general: object) => /\schecked\b/.test(render('project', { global: { settings: { general } } }).match(/<vscode-checkbox\b[^>]*USE_ESP">/)?.[0] ?? '');
+      const checked = (general: object) => /\schecked\b/.test(render('project', { global: { settings: { general } } }).match(/<input type="checkbox"[^>]*USE_ESP"[^>]*>/)?.[0] ?? '');
 
       assert.ok(use_esp({}) !== undefined);
       assert.strictEqual(checked({}), true);
@@ -105,11 +126,34 @@ suite('Templates', () => {
 
 
     test('SSH compression is on unless switched off', () => {
-      const checked = (connection: object) => /\schecked\b/.test(render('project', { connection }).match(/<vscode-checkbox\b[^>]*ssh-compression">/)?.[0] ?? '');
+      const checked = (connection: object) => /\schecked\b/.test(render('project', { connection }).match(/<input type="checkbox"[^>]*ssh-compression"[^>]*>/)?.[0] ?? '');
 
       assert.strictEqual(checked({}), true);
       assert.strictEqual(checked({ 'ssh-compression': true }), true);
       assert.strictEqual(checked({ 'ssh-compression': false }), false);
+    });
+
+
+    test('no components of the old toolkit; required fields are marked and say why', () => {
+      const html = render('project', {});
+      assert.ok(!/<vscode-/.test(html));
+      assert.match(html, /<label for="project\|connection\|remote-host">Remote host<\/label>\s*<span class="setting-tag">required<\/span>/);
+      assert.match(html, /id="project\|connection\|remote-host"[^>]*>\s*<div class="setting-error setting-missing">/);
+      // In the user scope only the SSH user is required
+      const user_required = [...render('user', {}).matchAll(/id="(user\|[^"]+)"[^>]*>\s*<div class="setting-error setting-missing">/g)].map(match => match[1]);
+      assert.deepStrictEqual(user_required, ['user|connection|ssh-user']);
+    });
+
+
+    test('the add buttons and their fields belong to one scope (each id once per page)', () => {
+      const ids = (html: string) => [...html.matchAll(/\sid="([^"]+)"/g)].map(match => match[1]);
+      const project = ids(render('project', {}));
+      const user = ids(render('user', {}));
+      const both = project.filter(id => user.includes(id));
+      assert.deepStrictEqual(both, [], 'ids in both scopes');
+      for (const [name, prefix] of [['new_global_cmd_key', 'project'], ['new_compile_cmd_value', 'user'], ['new_global_step_key', 'user'], ['add_language_settings_name', 'project']])
+        assert.ok((prefix === 'project' ? project : user).includes(`${name}_${prefix}`), `${name}_${prefix}`);
+      assert.match(render('user', {}), /class="btn secondary small add_global_cmd" config="user"/);
     });
   });
 });

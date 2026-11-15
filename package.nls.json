@@ -90,5 +90,8 @@
   "obi.deployment.rerun-stage": "Run stage again (all steps)",
   "obi.deployment.cancel": "Cancel deployment",
   "obi.deployment.show-log": "Show log",
-  "obi.deployment.show-failed-log": "Show log of the failed step"
+  "obi.deployment.show-failed-log": "Show log of the failed step",
+  "viewsWelcome.no-folder": "OBI builds IBM i objects from sources you keep in a folder on your PC and in git.\n[Open Folder](command:vscode.openFolder)\n[Open Recent](command:workbench.action.openRecent)\nNew to OBI? Follow the [walkthrough](command:workbench.action.openWalkthrough?%5B%22andreas-prouza.obi%23obi.getting-started%22%5D) or read [Getting started](https://github.com/andreas-prouza/obi-extension/blob/main/asserts/docs/getting-started.md).",
+  "viewsWelcome.no-project": "This folder has no OBI project yet.\n[Initialize OBI Project](command:obi.initialize-folder)\nInitialize adds the .obi folder with a default configuration and a sample source. Existing files are kept.\nNew to OBI? Follow the [walkthrough](command:workbench.action.openWalkthrough?%5B%22andreas-prouza.obi%23obi.getting-started%22%5D) or read [Getting started](https://github.com/andreas-prouza/obi-extension/blob/main/asserts/docs/getting-started.md).\nAdded the project another way, e.g. with git? [Reload the window](command:workbench.action.reloadWindow).",
+  "viewsWelcome.config-invalid": "OBI can't use the configuration of this project: a configuration file can't be read, or a path in it isn't allowed, e.g. the root folder, or the home folder of the SSH user as project folder in the IFS. The error message says which.\n[Open Configuration](command:obi.controller.config)\nOBI checks again when a configuration file is saved. If that doesn't happen, [reload the window](command:workbench.action.reloadWindow)."
 }

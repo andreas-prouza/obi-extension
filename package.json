@@ -744,19 +744,35 @@
           "visibility": "collapsed"
         },
         {
-          "type": "webview",
+          "type": "tree",
           "id": "obi-welcome",
           "name": "%Welcome%",
           "when": "!obi.contains_obi_project"
         },
         {
-          "type": "webview",
+          "type": "tree",
           "id": "obi-config-invalid",
           "name": "%Invalid config%",
           "when": "obi.contains_obi_project && !obi.valid-config"
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "obi-welcome",
+        "contents": "%viewsWelcome.no-folder%",
+        "when": "workspaceFolderCount == 0"
+      },
+      {
+        "view": "obi-welcome",
+        "contents": "%viewsWelcome.no-project%",
+        "when": "workspaceFolderCount > 0"
+      },
+      {
+        "view": "obi-config-invalid",
+        "contents": "%viewsWelcome.config-invalid%"
+      }
+    ],
     "configuration": {
       "title": "OBI",
       "properties": {
@@ -940,7 +956,7 @@
     "test:unit": "npm run compile-tests && mocha --ui tdd \"out-test/test/unit/**/*.test.js\"",
     "test:coverage": "npm run pretest && node -e \"require('fs').rmSync('coverage',{recursive:true,force:true})\" && node ./out-test/test/runTest.js --coverage && c8 report",
     "lint": "eslint src/",
-    "lint:ci": "eslint src/ --max-warnings 249",
+    "lint:ci": "eslint src/ --max-warnings 231",
     "check:repo": "node scripts/check-repo.js",
     "postinstall": "node -e \"require('fs').rmSync('node_modules/ssh2/test',{recursive:true,force:true})\""
   },

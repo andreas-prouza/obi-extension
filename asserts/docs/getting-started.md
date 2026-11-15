@@ -43,9 +43,9 @@ OBI needs a **trusted** workspace (it runs the build commands and programs confi
 3. Switch to the **Object Builder for i** view in the activity bar.
    You will see the welcome screen:
 
-   ![Welcome screen](../img/ext/welcome3.png)
+   <img src="../img/ext/welcome3.png" alt="Welcome screen" width="300">
 
-4. Click **Initialize**.  
+4. Click **Initialize OBI Project**.  
    This creates the `.obi` folder with the default configuration, a source filter *All sources* and a sample source `src/prouzalib/qrpglesrc/hello.rpgle.pgm`.
    Existing files are never overwritten.
 
@@ -63,7 +63,7 @@ The configuration has two areas:
 
 ![Minimum configuration](../img/ext/config-minimum.png)
 
-As long as mandatory values are missing, the configuration shows *"There are still missing values ..."*.
+As long as required values are missing, a banner at the top names them; click a name to go to the field.
 Fill in at least:
 
 | Where | Setting | Example |
@@ -117,7 +117,7 @@ See [Sources](sources.md) for working with sources in the extension.
 ## 5. First build
 
 1. Open the **OBI Build** view.
-2. Select `*ALL` and click **Show changes**. The build summary lists all new and changed sources.
+2. Select **All changes** and click **Show changes**. The build summary lists all new and changed sources.
 3. Click **Run build** and confirm.
 
 On the first build, OBI detects that the project is missing on IBM i and offers **Transfer all** (also available in the Command Palette as **OBI: Transfer all to remote**):

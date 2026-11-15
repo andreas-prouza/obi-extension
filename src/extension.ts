@@ -4,12 +4,11 @@ import { BuildSummary } from './webview/show_changes/BuildSummary';
 import { OBIController } from './webview/controller/OBIController';
 import { SourceListItem, SourceListProvider } from './webview/source_list/SourceListProvider';
 import { OBICommands } from './extension/obi/OBICommands';
-import { Welcome } from './webview/controller/Welcome';
 import { OBITools } from './extension/utilities/OBITools';
 import { OBIConfiguration } from './webview/controller/OBIConfiguration';
 import { SSH_Tasks } from './extension/utilities/SSH_Tasks';
 import { AppConfig } from './extension/config/AppConfig';
-import { ConfigInvalid } from './webview/controller/ConfigInvalid';
+import { CONFIG_INVALID_VIEW, WELCOME_VIEW, register_welcome_view } from './webview/controller/WelcomeViews';
 import { logger } from './extension/utilities/Logger';
 import { SourceInfos } from './webview/source_list/SourceInfos';
 import { Workspace } from './extension/utilities/Workspace';
@@ -69,10 +68,8 @@ export function activate(context: vscode.ExtensionContext) {
 	// Also without a project: this creates it
 	register_command(context, 'obi.initialize-folder', () => OBITools.initialize_folder());
 
-	const obi_welcome_provider = new Welcome(context.extensionUri);
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(Welcome.viewType, obi_welcome_provider)
-	);
+	// Without a project: VS Code's welcome content (open a folder, initialize)
+	register_welcome_view(context, WELCOME_VIEW);
 
 	// Sets obi.contains_obi_project / obi.valid-config, and registers and starts the rest when a project is found
 	// and its configuration is valid; config changes and Initialize update it without reloading the window
@@ -98,10 +95,8 @@ function register_project_features(context: vscode.ExtensionContext): void {
 	}
 	set_secret_values(() => secret_values(AppConfig.get_app_config().global?.variables));
 
-	const obi_config_invalid_provider = new ConfigInvalid(context.extensionUri);
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(ConfigInvalid.viewType, obi_config_invalid_provider)
-	);
+	// Configuration incomplete: welcome content with a link to the configuration
+	register_welcome_view(context, CONFIG_INVALID_VIEW);
 
 	register_command(context, 'obi.controller.config', () => {
 		OBIConfiguration.render(context, context.extensionUri)
@@ -146,7 +141,8 @@ function register_project_features(context: vscode.ExtensionContext): void {
 		is_token_key: key => DeploymentConfig.is_token_key(key)
 	});
 	// Deployments of the project with their stages and steps; run a stage, cancel, show logs
-	DeploymentsView.register(context);
+	// The build summary runs stages and shows logs through the i-Releaser view
+	BuildSummary.set_stage_actions(DeploymentsView.register(context));
 
 
 	//--------------------------------------------------------
@@ -219,7 +215,8 @@ function register_project_features(context: vscode.ExtensionContext): void {
 		// Keep the page (e.g. the busy indicator) while the view is hidden
 		vscode.window.registerWebviewViewProvider(OBIController.viewType, obi_controller_provider, {
 			webviewOptions: { retainContextWhenHidden: true }
-		})
+		}),
+		obi_controller_provider.register_editor_listener()
 	);
 
 	const quick_settings = new QuickSettings(context.extensionUri);

@@ -1,33 +1,14 @@
-  <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
-  <link rel="stylesheet" href="{{ config_css }}">
-  <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/tom-select/tom-select.min.css">
-
-  <br/>
-  
-<div style="height: 100vh;">
-
-  
-  <div>
-    {{ global_stuff['get_text']('Choose a source to configure') | safe }} ({{ config_source_list | length }} {{ global_stuff['get_text']('sources with individual settings') | safe }})
-    
+<div class="cfg-sources">
+  <h2>{{ global_stuff['get_text']('Source configuration') | safe }}</h2>
+  <p class="setting-desc">{{ global_stuff['get_text']('Choose a source to configure') | safe }} ({{ config_source_list | length }} {{ global_stuff['get_text']('sources with individual settings') | safe }})</p>
+  <div class="source-pick">
     <select id="config_source_list" placeholder="" autocomplete="off">
       <option value="">Choose a source ...</option>
       {% for source in source_list %}
         <option value="{{ source }}">{{ source }}</option>
       {% endfor %}
     </select>
-
-    <vscode-button class="edit_source_config" id="edit_source_config">
-      <span class="codicon codicon-edit"></span>
-    </vscode-button>
-    <vscode-button class="delete_source_config" id="delete_source_config">
-      <span class="codicon codicon-trash"></span>
-    </vscode-button>
+    <button type="button" class="btn" id="edit_source_config"><span class="codicon codicon-edit"></span>{{ global_stuff['get_text']('Edit') | safe }}</button>
+    <button type="button" class="btn secondary" id="delete_source_config"><span class="codicon codicon-trash"></span>{{ global_stuff['get_text']('Delete') | safe }}</button>
   </div>
-  
-  <br/>
-  <br/>
-
 </div>
-
-  <script src="{{ global_stuff['vendor_uri'] }}/tom-select/tom-select.complete.min.js"></script>

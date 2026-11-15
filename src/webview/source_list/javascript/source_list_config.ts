@@ -1,14 +1,10 @@
-import "../../tools/javascript/toolkit";
-import {
-  Button,
-  Checkbox
-} from "@vscode/webview-ui-toolkit";
-
 import * as source from '../../../shared/Source';
 import { page_text, showAlert } from "../../tools/javascript/alertBox";
 import { typed_post } from "../../tools/javascript/post";
 import type { SourceFilterRequest } from "../../../shared/messages/SourceListMessages";
 
+
+type Checkbox = HTMLInputElement;
 
 const vscode = acquireVsCodeApi();
 const post = typed_post<SourceFilterRequest>(vscode);
@@ -18,16 +14,15 @@ window.addEventListener("load", main);
 
 
 function main() {
-  // To get improved type annotations/IntelliSense the associated class for
-  // a given toolkit component can be imported and used to type cast a reference
-  // to the element (i.e. the `as Button` syntax)
+  document.getElementById("save_config")?.addEventListener("click", save_config);
+  document.getElementById("add_filter")?.addEventListener("click", add_filter);
 
-
-  const save_button = document.getElementById("save_config") as Button;
-  save_button?.addEventListener("click", save_config);
-
-  const add_filter_button = document.getElementById("add_filter") as Button;
-  add_filter_button?.addEventListener("click", add_filter);
+  // "Unsaved changes" as soon as a value changes
+  document.querySelector('main')?.addEventListener('input', () => {
+    const dirty = document.getElementById('cfg_dirty');
+    if (dirty)
+      dirty.hidden = false;
+  });
 
 
   const delete_buttons = document.getElementsByClassName('delete_filter');

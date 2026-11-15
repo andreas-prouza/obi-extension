@@ -1,5 +1,47 @@
 /* A VS Code window (theme "Dark Modern") and the OBI views and pages inside it, drawn in HTML.
-   Sizes are the ones VS Code uses; the window is enlarged with `zoom` (see vscode_window in ui.js). */
+   Sizes are the ones VS Code uses; the window is enlarged with `zoom` (see vscode_window in ui.js).
+   The OBI views and pages use the stylesheet of the extension (asserts/css/ui.css, loaded after this file) with the
+   theme variables a webview gets from VS Code. */
+
+:root {
+  --vscode-font-size: 13px;
+  --vscode-foreground: #cccccc;
+  --vscode-editor-background: #1f1f1f;
+  --vscode-editor-font-family: var(--mono);
+  --vscode-editorWidget-background: #202020;
+  --vscode-widget-border: #313131;
+  --vscode-panel-border: #2b2b2b;
+  --vscode-descriptionForeground: #9d9d9d;
+  --vscode-testing-iconPassed: #73c991;
+  --vscode-testing-iconFailed: #f14c4c;
+  --vscode-charts-blue: #3794ff;
+  --vscode-textLink-foreground: #4daafc;
+  --vscode-textPreformat-foreground: #d0d0d0;
+  --vscode-textCodeBlock-background: #2b2b2b;
+  --vscode-button-background: #0078d4;
+  --vscode-button-foreground: #ffffff;
+  --vscode-button-hoverBackground: #026ec1;
+  --vscode-button-secondaryBackground: #313131;
+  --vscode-button-secondaryForeground: #cccccc;
+  --vscode-button-secondaryHoverBackground: #3c3c3c;
+  --vscode-progressBar-background: #0078d4;
+  --vscode-errorForeground: #f85149;
+  --vscode-focusBorder: #0078d4;
+  --vscode-dropdown-background: #313131;
+  --vscode-dropdown-border: #3c3c3c;
+  --vscode-dropdown-foreground: #cccccc;
+  --vscode-input-background: #313131;
+  --vscode-input-foreground: #cccccc;
+  --vscode-input-border: #3c3c3c;
+  --vscode-input-placeholderForeground: #989898;
+  --vscode-checkbox-background: #313131;
+  --vscode-checkbox-border: #3c3c3c;
+  --vscode-checkbox-foreground: #cccccc;
+  --vscode-gitDecoration-modifiedResourceForeground: #e2c08d;
+  --vscode-settings-modifiedItemIndicator: #0078d4;
+  --vscode-toolbar-hoverBackground: rgba(90, 93, 94, .31);
+  --vscode-icon-foreground: #cccccc;
+}
 
 .vsc {
   --fg: #cccccc;
@@ -37,12 +79,13 @@
   flex: 1;
 }
 
-.vsc a {
-  color: #6ea8fe;
-  text-decoration: underline;
+/* :where keeps these below the rules of ui.css */
+.vsc :where(a) {
+  color: var(--vscode-textLink-foreground);
+  text-decoration: none;
 }
 
-.vsc code {
+.vsc :where(code) {
   font: 400 .875em var(--mono);
   color: #e685b5;
 }
@@ -281,81 +324,38 @@
   background: #2a2d2e;
 }
 
-/* The OBI Build view */
-.ctl {
-  padding: 6px 20px 10px;
+/* The OBI Build view (ui.css draws it; the view has the padding of its webview) */
+.pane-body .view-body {
+  padding: 8px 14px 14px;
 }
 
-.ctl-radios {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 28px;
-}
-
-.ctl-radios span:nth-child(2) {
-  margin-right: 12px;
-}
-
-.radio {
-  position: relative;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1px solid var(--input-border);
-  background: var(--input);
-}
-
-.radio.on::after {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  border-radius: 50%;
-  background: var(--fg);
-}
-
-.ctl-buttons {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 4px;
-}
-
-.ctl-ring {
+.vsc .run-box {
   display: none;
-  margin-left: 8px;
-  color: var(--accent);
 }
 
-.ctl-ring .codicon {
-  font-size: 22px;
-}
-
-.ctl.running .ctl-ring {
-  display: block;
-}
-
-.ctl-label {
-  margin: 18px 0 5px;
-}
-
-.ctl-profile {
+.vsc .is-running .run-box {
   display: flex;
-  align-items: center;
-  gap: 3px;
 }
 
+.vsc .run-bar i {
+  animation: none;
+}
+
+.vsc .btn.pressed {
+  background: var(--vscode-button-hoverBackground);
+}
+
+.vsc .btn.secondary.pressed {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* The profile: a select of the view, drawn so its list can open */
 .dropdown {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 168px;
-  height: 26px;
   padding: 0 6px 0 8px;
-  border-radius: 2px;
-  border: 1px solid var(--input-border);
-  background: var(--input);
 }
 
 /* Buttons of the webview toolkit */
@@ -466,186 +466,73 @@
 .code .c { color: #6a9955; }
 
 
-/* ---------------------------------------------------------------- build summary (a page with bootstrap, dark) */
+/* ---------------------------------------------------------------- build summary (ui.css draws it) */
 
 .summary {
-  background: #212529;
-  color: #dee2e6;
-  font-size: 14px;
-  line-height: 1.5;
+  background: var(--vscode-editor-background);
   overflow: hidden;
 }
 
 .summary-scroll {
-  padding: 18px 20px 40px;
+  padding: 0 20px 40px;
 }
 
-.summary hr {
-  margin: 14px 0;
-  border: 0;
-  border-top: 1px solid rgba(222, 226, 230, .25);
+.summary .page-header {
+  margin-top: 16px;
 }
 
-.summary .tri {
-  display: inline-block;
-  width: 12px;
-  font-size: 10px;
-}
-
-.sum-top {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 26px;
-  margin-bottom: 4px;
-  white-space: nowrap;
-}
-
-.sum-deployment {
-  display: none;
-}
-
-.ir-status {
-  display: none;
-  margin: 8px 0;
-}
-
-.ir-status .codicon {
-  vertical-align: -3px;
-}
-
-.ir-status small {
-  font-size: .875em;
-}
-
-.ir-stages {
-  margin: 4px 0 0 22px;
-}
-
-.summary.deployed .ir-status { display: block; }
-.summary.deployed .sum-deployment { display: inline; }
-
-.sum-grid {
-  display: grid;
-  grid-template-columns: .7fr 1fr 1.3fr;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.sum-grid > div {
-  padding: 0 10px;
-}
-
-.sum-grid h6 {
-  margin: 0 0 6px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.sum-grid ul {
-  margin: 0;
-  padding: 0;
-  list-style-position: inside;
-}
-
-.summary h3 {
-  margin: 14px 0 12px;
-  font-size: 1.17em;
-  font-weight: 700;
-}
-
-.sum-remote .gap {
-  display: inline-block;
-  width: 20px;
-}
-
-.sum-divider {
-  margin: 14px 0 6px;
-  border-top: 1px solid #454545;
-}
-
-.sum-table {
-  border-collapse: collapse;
-}
-
-.sum-table th {
-  padding: 0 5px 0 0;
-  text-align: left;
-  font-weight: 700;
-}
-
-.sum-table td {
-  padding: 2px 12px 2px 0;
-  vertical-align: top;
-  white-space: nowrap;
-}
-
-.sum-table tr.src > td:first-child {
-  padding-left: 2px;
-  padding-right: 8px;
-}
-
-.check {
+.summary .pills {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  vertical-align: middle;
-  border-radius: 3px;
-  border: 1px solid var(--input-border);
-  background: var(--input);
+  gap: 8px;
 }
 
-.check .codicon {
-  font-size: 13px;
-  color: var(--fg);
-}
-
-/* Status colours of asserts/css/style.css */
-.st {
-  padding: 0 2px;
-  color: #000;
-}
-
-.st.new { background: #adcbe3; }
-.st.success { background: #c2ff90; }
-.st.failed { background: #f96161; }
-.st.in_process { background: #0099ff; }
-.st.info { background: #2e858b; color: #fff; }
-
-.cmd-table {
+/* Counts before the build and after it */
+.summary:not(.built) .after, .summary.built .before {
   display: none;
-  margin: 4px 0 6px;
-  border-collapse: collapse;
-  font-size: 13px;
 }
 
-.cmds.open .cmd-table { display: table; }
-.cmds.open .cmds-summary .tri { rotate: 90deg; }
-
-.cmd-table th {
-  padding-right: 10px;
+.summary .tile-more {
+  margin-top: 2px;
+  color: var(--obi-muted);
+  font-size: 12px;
 }
 
-.cmd-table td {
-  padding: 3px 10px 3px 0;
-  vertical-align: middle;
-  white-space: nowrap;
+.summary .cmds-row {
+  display: none;
 }
 
-.cmd-table td:nth-child(4) {
-  max-width: 290px;
-  overflow: hidden;
+.summary .cmds-row.open {
+  display: table-row;
 }
 
-.cmd-table code {
-  font-size: 11.5px;
+.summary .src-row:has(+ .cmds-row.open) .cmds-toggle .codicon {
+  rotate: 90deg;
 }
 
-.cmd-buttons {
-  display: flex;
-  gap: 5px;
+.summary .cmd-details > summary > .codicon {
+  font-size: 16px;
+}
+
+/* The deployment card appears when the workflow is started; the line of a stage waiting for someone later */
+.summary:not(.deployed) .ir-card, .ir-card:not(.attention) .ir-attention {
+  display: none;
+}
+
+.ir-dot > * {
+  display: none;
+}
+
+.ir-new .ir-dot .dot-no, .ir-canceled .ir-dot .dot-no,
+.ir-running .dot-running, .ir-finished .dot-finished, .ir-ready .dot-ready, .ir-failed .dot-failed {
+  display: inline-flex;
+}
+
+.ir-dot .codicon {
+  font-size: 16px;
+}
+
+.ir-card .ir-head > .codicon-rocket {
+  color: var(--vscode-charts-blue);
 }
 
 
@@ -867,6 +754,7 @@
 }
 
 .part-title {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -889,8 +777,8 @@
 .dropdown-list {
   position: absolute;
   left: -1px;
-  top: 26px;
-  width: 168px;
+  right: -1px;
+  top: 25px;
   padding: 2px 0;
   border: 1px solid var(--accent);
   background: #1f1f1f;
@@ -926,59 +814,117 @@
   box-shadow: none;
 }
 
-/* Source filter page (a table of bootstrap-table) */
+/* Source filter page (bootstrap-table with the theme of ui.css, .obi-bt) */
 .filter-page {
-  padding: 4px 22px 18px;
-  background: #212529;
-  color: #dee2e6;
+  background: var(--vscode-editor-background);
   font-size: 13px;
 }
 
-.filter-page h1 {
-  margin: 12px 0 10px;
-  font-size: 24px;
-  font-weight: 700;
+.fp-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--vscode-widget-border);
 }
 
-.filter-page hr {
-  margin: 0 0 14px;
-  border: 0;
-  border-top: 1px solid rgba(222, 226, 230, .25);
+.fp-bar h1 {
+  margin: 0 6px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.fp-bar .codicon, .fp-name {
+  color: var(--vscode-textLink-foreground);
+}
+
+.fp-name {
+  font: 12px var(--mono);
+}
+
+.fp-body {
+  padding: 12px 18px 16px;
+}
+
+.fp-tools {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.fp-tools span {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 3px;
+  background: var(--vscode-button-secondaryBackground);
+}
+
+.fp-tools .codicon {
+  font-size: 14px;
 }
 
 .filter-table {
   border-collapse: collapse;
   white-space: nowrap;
+  border: 1px solid var(--vscode-widget-border);
 }
 
 .filter-table th, .filter-table td {
-  padding: 6px 14px 6px 8px;
-  border-bottom: 1px solid #495057;
+  padding: 6px 10px;
+  border: 1px solid var(--vscode-widget-border);
   text-align: left;
 }
 
 .filter-table th {
-  vertical-align: top;
+  color: var(--vscode-descriptionForeground);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
 }
 
 .filter-table th .sort {
-  margin-left: 6px;
-  font-size: 9px;
-  color: #6c757d;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 10px;
+  vertical-align: middle;
 }
 
-.filter-table th i {
-  display: block;
-  height: 24px;
-  margin-top: 5px;
-  border-radius: 4px;
-  border: 1px solid #495057;
-  background: #212529;
+.filter-table th .sort i {
+  border: 4px solid transparent;
+  border-bottom: 5px solid var(--vscode-descriptionForeground);
+  border-top: 0;
+}
+
+.filter-table th .sort i + i {
+  border-top: 5px solid var(--vscode-descriptionForeground);
+  border-bottom: 0;
+}
+
+.fp-filters td {
+  padding: 0;
+}
+
+.fp-filters i {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 28px;
+  padding: 0 10px;
+  background: var(--vscode-input-background);
+}
+
+.fp-filters .codicon {
+  font-size: 14px;
 }
 
 .filter-foot {
   margin-top: 10px;
-  color: #adb5bd;
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
 }
 
 .timeline-time {
@@ -1019,51 +965,61 @@
 }
 
 
-/* Welcome view and configuration page, as far as the video shows them */
+/* Welcome view (VS Code's own welcome content) and configuration page, as far as the video shows them */
 .welcome {
-  padding: 10px 20px 16px;
-  line-height: 1.5;
+  padding: 4px 20px 14px;
+  line-height: 1.4;
 }
 
-.welcome .vbtn {
-  margin: 8px 0 14px;
+.welcome p {
+  margin: 10px 0;
+}
+
+.welcome-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 26px;
+  border-radius: 2px;
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+.welcome-btn.pressed {
+  background: var(--vscode-button-hoverBackground);
 }
 
 .config-page {
-  padding: 14px 20px 16px;
+  padding: 6px 14px 8px;
 }
 
-.config-page h4 {
-  margin: 12px 0 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-}
-
-.field {
-  margin-bottom: 9px;
-}
-
-.field label {
-  display: block;
-  margin-bottom: 3px;
-  font-size: 12px;
-  color: var(--fg);
-}
-
-.field div {
+.config-head {
   display: flex;
   align-items: center;
-  height: 26px;
-  padding: 0 8px;
-  border-radius: 2px;
-  border: 1px solid var(--input-border);
-  background: var(--input);
+  margin-bottom: 2px;
   font-size: 13px;
+}
+
+.config-page .field {
+  margin-bottom: 4px;
+}
+
+.config-page .setting-label {
+  min-height: 19px;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.config-page .obi-input {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  min-height: 0;
+  font-size: 12px;
   white-space: pre;
 }
 
-.field.focus div {
-  border-color: var(--accent);
+.field.focus .obi-input {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
 }

@@ -86,7 +86,7 @@ Descriptions are stored in `.obi/etc/source-infos.json` and shown in the tree, t
 
 * **Change source description**: on a member in the tree, or via the context menu of the explorer or editor tab
 * **Show source infos** (view title): read-only table of all descriptions
-* **Maintain source infos** (view title): edit all descriptions in a table
+* **Maintain source infos** (view title): edit all descriptions in a table; a description is saved when you leave its field
 
 ![Maintain source descriptions](../img/ext/source-filter-3.png)
 

@@ -5,123 +5,70 @@
   {% include "tools/csp.html" %}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/bootstrap/bootstrap.min.css">
-  <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table.min.css">
-
   <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
-  <link rel="stylesheet" href="{{ config_css }}">
   <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/codicons/codicon.css">
+  <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/tom-select/tom-select.min.css">
+  <link rel="stylesheet" href="{{ global_stuff['ui_style_uri'] }}">
 </head>
 
 
-<body data-panel="{{ panel or 'project_cfg' }}" data-panel-tab="{{ panel_tab or 'tab-1' }}">
-  
-  <div id="still_missing"><br/><b>⚠️ {{ global_stuff['get_text']('There are still missing values ...') | safe }}</b><br/><br/></div>
-  <div id="error_text" class="error config_error" show="{%if error_text | length > 0 %}true{% else %}false{% endif %}"><b>⚠️ {{ error_text | safe }}</b></div>
-
-  <div class="save-button-wrapper">
-    <vscode-button class="save-button" id="save_config">{{  global_stuff['get_text']('Save') | safe }}</vscode-button>
-    {% include "tools/alertBox.html" %}
-  </div>
-  <p class="save-hint">ℹ️ {{ global_stuff['get_text']('Saving rewrites the TOML file: comments in it are not kept.') | safe }}</p>
+<body data-panel="{{ panel or 'project_cfg' }}" data-panel-tab="{{ panel_tab or 'tab-1' }}" class="obi-page cfg-page">
 
   {% set current_profile = global_stuff['current_profile'] | replace('.toml', '') | replace('.user-app-config-', '') | replace('.user-app-config', '') %}
-  {% set current_profile = ' (' + current_profile + ')' if current_profile | length > 0 else '' %}
 
-  <vscode-panels activeid="{{ panel or 'project_cfg' }}" aria-label="Default">
+  <header class="cfg-bar">
+    <h1>{{ global_stuff['get_text']('OBI configuration') | safe }}</h1>
+    <div class="seg cfg-scopes" role="tablist">
+      <button type="button" role="tab" class="seg-option scope-tab" id="project_cfg" data-view="project_cfg-view">{{ global_stuff['get_text']('Project') | safe }}<span class="tab-dot"></span></button>
+      <button type="button" role="tab" class="seg-option scope-tab" id="user_cfg" data-view="user_cfg-view">{{ global_stuff['get_text']('User') | safe }}{% if current_profile %} · {{ current_profile }}{% endif %}<span class="tab-dot"></span></button>
+      <button type="button" role="tab" class="seg-option scope-tab" id="source_cfg" data-view="source_cfg-view">{{ global_stuff['get_text']('Sources') | safe }}</button>
+    </div>
+    <span class="spacer"></span>
+    <span class="cfg-dirty" id="cfg_dirty" hidden><span class="dirty-dot"></span>{{ global_stuff['get_text']('Unsaved changes') | safe }}</span>
+    <a class="icon-btn cfg-file" data-scope="project_cfg" href='command:vscode.open?{{ project_config_file }}' title="{{ global_stuff['get_text']('Open project config file') | safe }}" aria-label="{{ global_stuff['get_text']('Open project config file') | safe }}"><span class="codicon codicon-go-to-file"></span></a>
+    <a class="icon-btn cfg-file" data-scope="user_cfg" href='command:vscode.open?{{ user_config_file }}' title="{{ global_stuff['get_text']('Open user config file') | safe }}" aria-label="{{ global_stuff['get_text']('Open user config file') | safe }}"><span class="codicon codicon-go-to-file"></span></a>
+    <a class="icon-btn cfg-file" data-scope="source_cfg" href='command:vscode.open?{{ source_config_file }}' title="{{ global_stuff['get_text']('Open source config file') | safe }}" aria-label="{{ global_stuff['get_text']('Open source config file') | safe }}"><span class="codicon codicon-go-to-file"></span></a>
+    <button type="button" class="btn" id="save_config"><span class="codicon codicon-save"></span>{{ global_stuff['get_text']('Save') | safe }}</button>
+  </header>
 
-    <vscode-panel-tab id="project_cfg"><h2>{{  global_stuff['get_text']('Project configuration') | safe }}</h2></vscode-panel-tab>
-    <vscode-panel-tab id="user_cfg"><h2>{{  global_stuff['get_text']('User configuration') + current_profile | safe }} </h2></vscode-panel-tab>
-    <vscode-panel-tab id="source_cfg"><h2>{{  global_stuff['get_text']('Source configuration') | safe }}</h2></vscode-panel-tab>
+  {% include "tools/alertBox.html" %}
 
-    
-    <vscode-panel-view id="project_cfg-view">
-      
-      <section class="section-config">
-        <br/>
-      
-        💡 {{  global_stuff['get_text']('This config will contains definitions for the whole project team (remote host, remote obi path, ...)') | safe }}
-        <br/>
-        <br/>
-      
-        📝 <a href='command:vscode.open?{{ project_config_file }}'>{{  global_stuff['get_text']('Open project config file') | safe }}</a>
-        <br/>
-        <br/>
+  <div class="cfg-sub">
+    <span class="codicon codicon-info"></span>
+    <span class="scope-desc" data-scope="project_cfg">{{ global_stuff['get_text']('This config will contains definitions for the whole project team (remote host, remote obi path, ...)') | safe }}</span>
+    <span class="scope-desc" data-scope="user_cfg">{{ global_stuff['get_text']('This config will override the project config and should contain user specific definitions (target lib mapping, local obi path, ...)') | safe }}
+      {{ global_stuff['get_text']('Greyed-out fields use the value of the project configuration. {0} sets your own value, {1} uses the project value again.')
+        | replace('{0}', '<span class="codicon codicon-edit"></span>')
+        | replace('{1}', '<span class="codicon codicon-discard"></span>') | safe }}</span>
+    <span class="scope-desc" data-scope="source_cfg">{{ global_stuff['get_text']('Individual build settings of single sources.') | safe }}</span>
+    <span class="spacer"></span>
+    <span class="obi-muted save-hint">{{ global_stuff['get_text']('Saving rewrites the TOML file: comments in it are not kept.') | safe }}</span>
+  </div>
 
-        {% set class_prefix = 'project' %}
+  <div id="error_text" class="cfg-banner error" show="{%if error_text | length > 0 %}true{% else %}false{% endif %}"><span class="codicon codicon-error"></span><span>{{ error_text | safe }}</span></div>
+  <div id="still_missing" class="cfg-banner warning" hidden><span class="codicon codicon-warning"></span><span><b>{{ global_stuff['get_text']('Required values are missing:') | safe }}</b> <span id="still_missing_list"></span></span></div>
 
-        {% set app_config = project_config %}
-        {% set extended_source_processing_list = extended_source_processing_list_project %}
+  <section class="scope-view" id="project_cfg-view">
+    {% set class_prefix = 'project' %}
+    {% set app_config = project_config %}
+    {% set extended_source_processing_list = extended_source_processing_list_project %}
+    {% include "controller/config_details.html" %}
+  </section>
 
-        {% include "controller/config_details.html" %}
-      
-      </section>
-    </vscode-panel-view>
+  <section class="scope-view" id="user_cfg-view" hidden>
+    {% set class_prefix = 'user' %}
+    {% set app_config = user_config %}
+    {% set extended_source_processing_list = extended_source_processing_list_user %}
+    {% include "controller/config_details.html" %}
+  </section>
 
+  <section class="scope-view" id="source_cfg-view" hidden>
+    {% set class_prefix = 'source' %}
+    {% set app_config = user_config %}
+    {% include "controller/config_source_list.html" %}
+  </section>
 
-    <vscode-panel-view id="user_cfg-view">
-
-      <section class="section-config">
-        <br/>
-      
-        💡 {{  global_stuff['get_text']('This config will override the project config and should contain user specific definitions (target lib mapping, local obi path, ...)') | safe }}
-        <br/>
-        <br/>
-        {{ global_stuff['get_text']('Greyed-out fields use the value of the project configuration. {0} sets your own value, {1} uses the project value again.')
-          | replace('{0}', '<span class="codicon codicon-edit"></span>')
-          | replace('{1}', '<span class="codicon codicon-discard"></span>') | safe }}
-        <br/>
-        <br/>
-      
-        📝 <a href='command:vscode.open?{{ user_config_file }}'>{{  global_stuff['get_text']('Open user config file') | safe }}</a>
-        <br/>
-        <br/>
-
-        {% set class_prefix = 'user' %}
-
-        {% set app_config = user_config %}
-        {% set extended_source_processing_list = extended_source_processing_list_user %}
-        {% include "controller/config_details.html" %}
-
-      </section>
-    </vscode-panel-view>
-
-
-    <vscode-panel-view id="source_cfg-view">
-
-      <section class="section-config">
-        
-        📝 <a href='command:vscode.open?{{ source_config_file }}'>{{  global_stuff['get_text']('Open source config file') | safe }}</a>
-        <br/>
-        <br/>
-
-        {% set class_prefix = 'source' %}
-
-        {% set app_config = user_config %}
-
-        {% include "controller/config_source_list.html" %}
-
-      </section>
-    </vscode-panel-view>
-
-
-  </vscode-panels>
-
-
-
-  <br />
-
-  
-  <script src="{{ global_stuff['vendor_uri'] }}/jquery/jquery.min.js"></script>
-  <script src="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table.min.js"></script>
-  <script src="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table-de-DE.min.js"></script>
-  <script src="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table-en-US.min.js"></script>
-  <script src="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table-resizable.min.js"></script>
-  <script src="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table-filter-control.min.js"></script>
-
-  <script src="{{ global_stuff['vendor_uri'] }}/bootstrap/bootstrap.bundle.min.js"></script>
-
+  <script src="{{ global_stuff['vendor_uri'] }}/tom-select/tom-select.complete.min.js"></script>
   <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
 
 </body>
