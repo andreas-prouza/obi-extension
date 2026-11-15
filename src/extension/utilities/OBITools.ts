@@ -390,6 +390,7 @@ export class OBITools {
 
     let result: any = {};
     const styleUri = getUri(webview, extensionUri, ["asserts/css", "style.css"]);
+    const ui_style_uri = getUri(webview, extensionUri, ["asserts/css", "ui.css"]);
 
     const asserts_uri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'asserts'));
     // Front-end libraries, copied from node_modules by scripts/copy-vendor.js
@@ -404,6 +405,7 @@ export class OBITools {
       asserts_uri: asserts_uri,
       vendor_uri: vendor_uri,
       styleUri: styleUri,
+      ui_style_uri: ui_style_uri,
       nonce: nonce,
       csp_source: webview.cspSource,
       current_date: new Date().toLocaleString(),

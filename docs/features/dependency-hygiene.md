@@ -62,6 +62,7 @@ Related: [pin-dependency-versions.md](pin-dependency-versions.md) (`"latest"` ve
   **Result (2026-10-23):** `@vscode-elements/elements` meets the criteria and has all components in use (button, text field, checkbox, dropdown/option, tabs/panels, divider, text area; `vscode-data-grid` is only registered in `main.ts`). The migration touches all templates and webview scripts. It is a task of its own, done panel by panel, with a check of every page in the UI.
 * If no candidate meets the criteria: **ask** before continuing. The fallback is plain HTML elements styled with the VS Code theme CSS variables (`--vscode-button-background`, …).
 * Migrate panel by panel; keep the element ids so the scripts stay unchanged as far as possible.
+  **Progress (2026-11-15):** the build summary and the OBI Build view use plain HTML elements with `asserts/css/ui.css` and need no toolkit component any more ([ui-refresh-build-pages.md](ui-refresh-build-pages.md)). The build summary script still imports the toolkit for custom templates.
 
 ## 5. Keep it clean
 

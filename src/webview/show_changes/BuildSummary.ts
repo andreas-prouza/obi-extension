@@ -23,6 +23,7 @@ import { render_template } from '../Templates';
 import { DeploymentConfig } from '../deployment/DeploymentConfig';
 import { CUSTOM_DATA_KEY, DeploymentRecord, IReleaserError, deployment_data, deployment_of, get_workflows, show_details_url, start_workflow, workflow_choices } from '../../shared/IReleaser';
 import { StageActions, StatusKind, deployment_overview, status_kind } from '../../shared/IReleaserDeployments';
+import { annotate_build_list } from '../../shared/BuildListView';
 import { DeploymentWatcher } from '../deployment/DeploymentWatcher';
 import { history_dir_name } from '../build_history/HistoryTimestamp';
 import { UserCancelledError } from '../../shared/Errors';
@@ -636,6 +637,13 @@ export class BuildSummary {
   }
 
 
+  /** Codicon (and colour) of the status of a build command */
+  private static readonly CMD_ICON: Record<string, string> = {
+    'success': 'pass obi-passed', 'failed': 'error obi-failed', 'error': 'error obi-failed',
+    'in process': 'sync codicon-modifier-spin obi-running', 'new': 'circle-large-outline obi-muted',
+  };
+
+
   /** Codicon of a status in its pill */
   private static readonly STATUS_ICON: Record<StatusKind, string> = {
     finished: 'pass', failed: 'error', running: 'sync codicon-modifier-spin', ready: 'play-circle', canceled: 'circle-slash', new: 'circle-large-outline',
@@ -682,6 +690,8 @@ export class BuildSummary {
     if (compile_list && compile_list['timestamp']) {
       created_timestamp = new Date(compile_list['timestamp']).toLocaleString();
     }
+    // Status of every source and the counts per level, for the header and the build list
+    const build_counts = annotate_build_list(compile_list);
 
     const html = render_template('show_changes/index.html', 
       {
@@ -691,6 +701,8 @@ export class BuildSummary {
       object_list: BuildSummary.get_object_list(ws),
       compile_list: compile_list,
       created_timestamp: created_timestamp,
+      build_counts: build_counts,
+      cmd_icons: BuildSummary.CMD_ICON,
       compile_file_uri: DirTool.get_encoded_file_URI(path.join(BuildSummary._current_compile_output_folder ?? Constants.BUILD_OUTPUT_DIR, 'compile-list.json')),
       compile_file: path.resolve(ws.fsPath, BuildSummary._current_compile_output_folder ?? Constants.BUILD_OUTPUT_DIR, 'compile-list.json').replace(/\\/g, '/'),
       log_file_uri: DirTool.get_encoded_file_URI(Constants.OBI_LOG_FILE),

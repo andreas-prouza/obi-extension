@@ -13,6 +13,8 @@ export const CONTROLLER_REQUESTS = {
   change_profile: { profile: is_string },
   copy_profile: {},
   delete_current_profile: {},
+  // The build summary of the last build list
+  open_build_summary: {},
 };
 
 export type ControllerRequest = MessageOf<typeof CONTROLLER_REQUESTS>;

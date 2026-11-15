@@ -10,25 +10,40 @@
     <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/bootstrap-table/bootstrap-table.min.css">
     
     <link rel="stylesheet" href="{{ global_stuff['styleUri'] }}">
-    <link rel="stylesheet" href="{{ config_css }}">
     <link rel="stylesheet" href="{{ global_stuff['vendor_uri'] }}/codicons/codicon.css">
+    <link rel="stylesheet" href="{{ global_stuff['ui_style_uri'] }}">
 
     <script type="module" nonce="{{ global_stuff['nonce'] }}" src="{{ main_java_script }}"></script>
 
   </head>
-  <body>
-    <br/>
-    {% if compile_list %}
-    <div>
-      {{ global_stuff['get_text']('Created at') | safe }} <b><u>{{ compile_list['timestamp'] }}</u></b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <a href='command:vscode.open?{{ compile_file_uri }}'>{{ global_stuff['get_text']('open JSON file') | safe }}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <a href='command:vscode.open?{{ log_file_uri }}'>{{ global_stuff['get_text']('open OBI log') | safe }}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      {% if not is_compile_list_completed %}&nbsp;&nbsp;&nbsp;<vscode-button style="height:35px; vertical-align: super;" id="run_build" appearance="primary">{{ global_stuff['get_text']('Run build') | safe }}</vscode-button>{% endif %}
-      {% if i_releaser and is_compile_list_completed %}&nbsp;&nbsp;&nbsp;<vscode-button style="height:35px; vertical-align: super;" id="start_deployment" appearance="primary"><span slot="start"><span class="codicon codicon-rocket"></span></span>{{ global_stuff['get_text']('Start i-Releaser workflow') | safe }}</vscode-button>{% endif %}
-      {% if i_releaser and i_releaser.deployment and not i_releaser.deployment.watched %}&nbsp;&nbsp;&nbsp;<a id="i_releaser_deployment" href="{{ i_releaser.deployment.link }}">{{ global_stuff['get_text']('i-Releaser deployment') | safe }} {{ i_releaser.deployment.id }}</a>{% endif %}
-      &nbsp;&nbsp;&nbsp;
-      {% if custom_build_list_template %}{% include custom_build_list_template ignore missing %}{% endif %}
+  <body class="obi-page">
+    <div class="page-header">
+      <h1>{{ global_stuff['get_text']('Build summary') | safe }}</h1>
+      {% if compile_list %}
+        {% if build_counts.failed %}<span class="status-pill failed"><span class="codicon codicon-error"></span>{{ build_counts.failed }} {{ global_stuff['get_text']('failed') | safe }}</span>{% endif %}
+        {% if build_counts.success %}<span class="status-pill success"><span class="codicon codicon-pass"></span>{{ build_counts.success }} {{ global_stuff['get_text']('built') | safe }}</span>{% endif %}
+        {% if build_counts.open %}<span class="status-pill new"><span class="codicon codicon-circle-large-outline"></span>{{ build_counts.open }} {{ global_stuff['get_text']('to build') | safe }}</span>{% endif %}
+      {% endif %}
+      <span class="spacer"></span>
+      {% if compile_list %}
+      <div class="page-actions">
+        {% if not is_compile_list_completed %}<button type="button" class="btn" id="run_build"><span class="codicon codicon-run-all"></span>{{ global_stuff['get_text']('Run build') | safe }}</button>{% endif %}
+        {% if i_releaser and is_compile_list_completed %}<button type="button" class="btn" id="start_deployment"><span class="codicon codicon-rocket"></span>{{ global_stuff['get_text']('Start i-Releaser workflow') | safe }}</button>{% endif %}
+        {% if i_releaser and i_releaser.deployment and not i_releaser.deployment.watched %}<a class="btn secondary" id="i_releaser_deployment" href="{{ i_releaser.deployment.link }}"><span class="codicon codicon-link-external"></span>{{ global_stuff['get_text']('i-Releaser deployment') | safe }} {{ i_releaser.deployment.id }}</a>{% endif %}
+        <button type="button" class="btn secondary" id="add_source"><span class="codicon codicon-add"></span>{{ global_stuff['get_text']('Add source') | safe }}</button>
+        <a class="icon-btn" href='command:vscode.open?{{ compile_file_uri }}' title="{{ global_stuff['get_text']('open JSON file') | safe }}" aria-label="{{ global_stuff['get_text']('open JSON file') | safe }}"><span class="codicon codicon-json"></span></a>
+        <a class="icon-btn" href='command:vscode.open?{{ log_file_uri }}' title="{{ global_stuff['get_text']('open OBI log') | safe }}" aria-label="{{ global_stuff['get_text']('open OBI log') | safe }}"><span class="codicon codicon-output"></span></a>
+      </div>
+      {% endif %}
     </div>
+    {% if compile_list %}
+    <div class="page-meta">
+      <span title="{{ global_stuff['get_text']('Created at') | safe }}"><span class="codicon codicon-history"></span>{{ created_timestamp }}</span>
+      <span title="{{ global_stuff['get_text']('Remote host') | safe }}"><span class="codicon codicon-remote"></span>{{ compile_app_config['connection']['ssh-user'] }}@{{ compile_app_config['connection']['remote-host'] }}</span>
+      <span title="{{ global_stuff['get_text']('IBM i IFS path') | safe }}"><span class="codicon codicon-folder"></span>{{ compile_app_config['general']['remote-base-dir'] }}</span>
+      {% if compile_list['git'] and (compile_list['git']['branch'] or compile_list['git']['commit']) %}<span title="git"><span class="codicon codicon-git-branch"></span>{{ compile_list['git']['branch'] or '' }}{% if compile_list['git']['branch'] and compile_list['git']['commit'] %} · {% endif %}{{ (compile_list['git']['commit'] or '') | truncate(7, true, '') }}</span>{% endif %}
+    </div>
+    {% if custom_build_list_template %}<div class="custom-content">{% include custom_build_list_template ignore missing %}</div>{% endif %}
     {% if i_releaser and i_releaser.deployment and i_releaser.deployment.watched %}
     {% set dep = i_releaser.deployment %}
     <div id="i_releaser_status" class="ir-card">
@@ -62,10 +77,10 @@
           <span class="codicon codicon-{{ 'error' if att.kind == 'failed' else 'play-circle' }}"></span>
           <span class="ir-attention-text">{{ att.text }}{% if att.hint %}<br><span class="ir-meta">{{ att.hint }}</span>{% endif %}</span>
           <span class="ir-spacer"></span>
-          {% if att.show_log %}<vscode-button class="ir-action" appearance="secondary" data-action="show_log" data-stage-id="{{ att.stage_id }}"><span slot="start" class="codicon codicon-output"></span>{{ global_stuff['get_text']('Show log') | safe }}</vscode-button>{% endif %}
-          {% if att.kind == 'failed' and att.continue %}<vscode-button class="ir-action" appearance="secondary" data-action="continue" data-stage-id="{{ att.stage_id }}"><span slot="start" class="codicon codicon-debug-continue"></span>{{ global_stuff['get_text']('Continue') | safe }}</vscode-button>{% endif %}
-          {% if att.run_all %}<vscode-button class="ir-action" appearance="primary" data-action="run_all" data-stage-id="{{ att.stage_id }}"><span slot="start" class="codicon codicon-debug-restart"></span>{{ global_stuff['get_text']('Run stage again') | safe }}</vscode-button>{% endif %}
-          {% if att.kind == 'ready' and att.continue %}<vscode-button class="ir-action" appearance="primary" data-action="continue" data-stage-id="{{ att.stage_id }}"><span slot="start" class="codicon codicon-play"></span>{{ global_stuff['get_text']('Run stage') | safe }}</vscode-button>{% endif %}
+          {% if att.show_log %}<button type="button" class="ir-action btn secondary" data-action="show_log" data-stage-id="{{ att.stage_id }}"><span class="codicon codicon-output"></span>{{ global_stuff['get_text']('Show log') | safe }}</button>{% endif %}
+          {% if att.kind == 'failed' and att.continue %}<button type="button" class="ir-action btn secondary" data-action="continue" data-stage-id="{{ att.stage_id }}"><span class="codicon codicon-debug-continue"></span>{{ global_stuff['get_text']('Continue') | safe }}</button>{% endif %}
+          {% if att.run_all %}<button type="button" class="ir-action btn" data-action="run_all" data-stage-id="{{ att.stage_id }}"><span class="codicon codicon-debug-restart"></span>{{ global_stuff['get_text']('Run stage again') | safe }}</button>{% endif %}
+          {% if att.kind == 'ready' and att.continue %}<button type="button" class="ir-action btn" data-action="continue" data-stage-id="{{ att.stage_id }}"><span class="codicon codicon-play"></span>{{ global_stuff['get_text']('Run stage') | safe }}</button>{% endif %}
         </div>
         {% endif %}
       {% elif not dep.error %}
@@ -74,140 +89,115 @@
       {% if dep.error %}<div class="i-releaser-error"><span class="codicon codicon-warning"></span> {{ dep.error }}</div>{% endif %}
     </div>
     {% endif %}
-    <div><vscode-button style="height:35px; vertical-align: super;" id="add_source" appearance="primary"><span slot="start"><span class="codicon codicon-add"></span></span>{{ global_stuff['get_text']('Add source') | safe }}</vscode-button></div>
-
     {% else %}
-    <p id="no_compile_list">{{ global_stuff['get_text']("No build summary yet. Run 'Show changes' to create one.") }}</p>
+    <p id="no_compile_list" class="page-empty"><span class="codicon codicon-info"></span>{{ global_stuff['get_text']("No build summary yet. Run 'Show changes' to create one.") }}</p>
     {% endif %}
     <div class="save-button-wrapper">
       {% include "tools/alertBox.html" %}
     </div>
-    <hr />
-    
-    <div class="grid-container">
-      <div class="box box-1">
-        <details data-state-id="objects|new" open>
-          <summary><h6>{{ object_list['new_sources'] | length}} {{ global_stuff['get_text']('New sources') | safe }}</h6></summary>
-        <ul>
-          {% for source in object_list['new_sources'] %}
-          <li><a href='command:vscode.open?{{ source["file"] }}'>{{ source["source"] }}</a></li>
-          {% endfor %}
-        </ul>
+
+    {% macro tile_item(item) %}<li><span class="codicon codicon-file-code"></span><a href='command:vscode.open?{{ item["file"] }}' title="{{ item['source'] }}">{% set parts = item['source'].split('/') %}{% if parts | length > 1 %}<span class="path-lib">{{ parts.slice(0, -1).join('/') }}/</span>{% endif %}{{ parts | last }}</a></li>{% endmacro %}
+    {% if object_list %}
+    {% set tiles = [
+      ['new', 'diff-added', 'New sources', object_list['new_sources']],
+      ['changed', 'diff-modified', 'Changed sources', object_list['changed_sources']],
+      ['dependent', 'references', 'Dependent objects', object_list['dependend_sources']]
+    ] %}
+    <div class="tiles">
+      {% for tile in tiles %}
+      <div class="tile" data-tile="{{ tile[0] }}">
+        <div class="tile-head"><span class="codicon codicon-{{ tile[1] }}"></span>{{ global_stuff['get_text'](tile[2]) | safe }}</div>
+        <div class="tile-count">{{ tile[3] | length }}</div>
+        <ul class="tile-list">{% for item in tile[3].slice(0, 3) %}{{ tile_item(item) }}{% endfor %}</ul>
+        {% if tile[3] | length > 3 %}
+        <details data-state-id="objects|{{ tile[0] }}">
+          <summary>+ {{ (tile[3] | length) - 3 }} {{ global_stuff['get_text']('more') | safe }}</summary>
+          <ul class="tile-list">{% for item in tile[3].slice(3) %}{{ tile_item(item) }}{% endfor %}</ul>
         </details>
+        {% endif %}
       </div>
-      <div class="box box-2">
-        <details data-state-id="objects|changed" open>
-          <summary><h6>{{ object_list['changed_sources'] | length}} {{ global_stuff['get_text']('Changed sources') | safe }}</h6></summary>
-        <ul>
-          {% for source in object_list['changed_sources'] %}
-          <li><a href='command:vscode.open?{{ source["file"] }}'>{{ source["source"] }}</a></li>
-          {% endfor %}
-        </ul>
-        </details>
-      </div>
-      <div class="box box-3">
-        <details data-state-id="objects|dependent" open>
-          <summary><h6>{{ object_list['dependend_sources'] | length}} {{ global_stuff['get_text']('Dependent objects') | safe }}</h6></summary>
-        <ul>
-          {% for source in object_list['dependend_sources'] %}
-            <li><a href='command:vscode.open?{{ source["file"] }}'>{{ source["source"] }}</a></li>
-          {% endfor %}
-        </ul>
-        </details>
-      </div>
+      {% endfor %}
     </div>
+    {% endif %}
 
     {% if compile_list %}
+    <div class="section-head">
+      <h2>{{ global_stuff['get_text']('Build list') | safe }}</h2>
+      <span class="obi-muted">{{ build_counts.total }} {{ global_stuff['get_text']('object' if build_counts.total == 1 else 'objects') | safe }} · {{ build_counts.levels }} {{ global_stuff['get_text']('level' if build_counts.levels == 1 else 'levels') | safe }}</span>
+    </div>
 
-    <hr />
-
-    <h3>{{ global_stuff['get_text']('Details') | safe }}</h3>
-
-    <div>{{ global_stuff['get_text']('Remote host') | safe }}: <code>{{ compile_app_config['connection']['ssh-user'] }}@{{ compile_app_config['connection']['remote-host'] }}</code> &nbsp;&nbsp;&nbsp;&nbsp; {{ global_stuff['get_text']('IBM i IFS path') | safe }}: <code>{{ compile_app_config['general']['remote-base-dir'] }}</code></div>
-    <br/>
-
-
-    <vscode-divider role="presentation"></vscode-divider>
-
-    <table class="show_changes" id="details">
+    <table class="build-list" id="details">
     <thead>
       <tr>
-        <th>{{ global_stuff['get_text']('level') | safe }}</th>
+        <th class="col-check"></th>
         <th>{{ global_stuff['get_text']('object') | safe }}</th>
-        <th>{{ global_stuff['get_text']('status') | safe }}</th>
-        <th>{{ global_stuff['get_text']('commands') | safe }}</th>
+        <th class="col-status">{{ global_stuff['get_text']('status') | safe }}</th>
+        <th class="col-cmds">{{ global_stuff['get_text']('commands') | safe }}</th>
       </tr>
     </thead>
     <tbody>
       {% for level_item in compile_list['compiles'] %}
-        <tr class="collapsible-header" data-target="level-{{ level_item['level'] }}" style="cursor: pointer;">
-          <th colspan="2">
-            <span class="toggle-icon">▼</span>&nbsp;{{ level_item['level'] }}. {{ global_stuff['get_text']('level') | safe }}</th>
+        {% set level = level_item['level'] %}
+        {% set counts = level_item['view_counts'] %}
+        <tr class="level-row collapsible-header" data-target="level-{{ level }}">
+          <td colspan="4">
+            <div class="level-head">
+              <span class="codicon codicon-chevron-down toggle-icon"></span>{{ level }}. {{ global_stuff['get_text']('level') | safe }}
+              <span class="obi-muted">· {{ counts.total }} {{ global_stuff['get_text']('object' if counts.total == 1 else 'objects') | safe }}</span>
+              <span class="spacer"></span>
+              <span class="level-sum">
+                {% if counts.success %}<span class="obi-passed" title="success"><span class="codicon codicon-pass"></span>{{ counts.success }}</span>{% endif %}
+                {% if counts.failed %}<span class="obi-failed" title="failed"><span class="codicon codicon-error"></span>{{ counts.failed }}</span>{% endif %}
+                {% if counts.open %}<span class="obi-muted" title="new"><span class="codicon codicon-circle-large-outline"></span>{{ counts.open }}</span>{% endif %}
+              </span>
+            </div>
+          </td>
         </tr>
       {% for source_item in level_item['sources'] %}
-        {% set source_splitted=source_item['source'].split('/') %}
-        {% set lib = source_splitted[0] %}
-        {% set file = source_splitted[1] %}
-        {% set member = source_splitted[2] %}
-        <tr class="collapsible-content level-{{ level_item['level'] }}">
-          <td><vscode-checkbox class="type_checkbox build_source" source="{{ source_item['source'] }}" {% if 'ignore' not in source_item or source_item['ignore'] == false %}checked{% endif %}></vscode-checkbox></td>
-          <!--td><a href='command:vscode.open?{{ source_item["file"] }}'>{{ lib }} / {{ file }} / {{ member }}</a></td-->
-          <td><a class="open_file" data-file="{{ source_item["source"] }}">{{ lib }} / {{ file }} / {{ member }}</a></td>
+        {% set parts = source_item['source'].split('/') %}
+        {% set status = source_item['view_status'] %}
+        {% set failed = status == 'failed' or status == 'error' %}
+        {% set cmds_id = 'cmds-' ~ loop.index0 ~ '-' ~ level %}
+        <tr class="src-row collapsible-content level-{{ level }}{% if failed %} is-failed{% endif %}">
+          <td class="col-check"><input type="checkbox" class="obi-check build_source" source="{{ source_item['source'] }}" aria-label="{{ source_item['source'] }}" {% if 'ignore' not in source_item or source_item['ignore'] == false %}checked{% endif %}></td>
           <td>
-            {% set last_cmd = source_item['cmds'][0] %}
-            {% for cmd_entry in source_item['cmds'] %}
-              {% if cmd_entry.status != 'new' %}
-                {% set last_cmd = cmd_entry %}
-              {% endif %}
-            {% endfor %}
-            <span class="status-pill {{ last_cmd.status | replace(' ', '_') }}">{{ last_cmd.status }}</span>
+            <span class="object"><span class="codicon codicon-file-code"></span><a class="open_file" data-file="{{ source_item['source'] }}"><span class="path-lib">{{ parts.slice(0, -1).join(' / ') }} / </span><b>{{ parts | last }}</b></a></span>
           </td>
-          <td>
-            <details data-state-id="cmds|{{ level_item['level'] }}|{{ source_item['source'] }}" {%if last_cmd.status == 'failed' %}open{% endif %}><summary>{{ source_item['cmds'] | length }} {{ global_stuff['get_text']('commands') | safe }}</summary>
-              <table>
-                <tr>
-                  <th>&nbsp;</th>
-                  <th>{{ global_stuff['get_text']('timestamp') | safe }}</th>
-                  <th>{{ global_stuff['get_text']('status') | safe }}</th>
-                  <th>{{ global_stuff['get_text']('command') | safe }}</th>
-                </tr>
-              {% for cmd_entry in source_item['cmds'] %}
-                {% set cmds = cmd_entry.cmd.split(';') %}
-                <tr>
-                  <td><vscode-checkbox class="type_checkbox build_source_cmd" source="{{ source_item['source'] }}" cmd="{{ cmd_entry['cmd'] }}" {% if 'ignore' not in cmd_entry or cmd_entry['ignore'] == false %}checked{% endif %}></vscode-checkbox></td>
-                  <td>{{ (cmd_entry.updated or "").slice(11, 23) }}</td>
-                  <td><span class="status-pill {{ cmd_entry.status | replace(' ', '_') }}">{{ cmd_entry.status }}</span></td>
-                  <td><details data-state-id="cmd|{{ level_item['level'] }}|{{ source_item['source'] }}|{{ loop.index0 }}" {% if cmd_entry.status == 'failed' %}open{% endif %}><summary><code>{{ cmd_entry.cmd | replace('2> /dev/null', '') | replace('cl -v', '') | replace('"\'', '') | replace('\'"', '') | replace('"', '') | truncate(100) }}</code></summary><div style="border: 1px solid">{% for cmd in cmds %}<pre style="white-space: pre-wrap;">{{ cmd | trim }}</pre>{% endfor %}</div></details></td>
-                  <td>
-                    <vscode-button class="edit_cmd" source="{{ source_item['source'] }}" level="{{ level_item['level'] }}" cmd_index="{{ loop.index0 }}" appearance="secondary"><span class="codicon codicon-edit"></span></vscode-button>
-                  </td>
-                  {% if 'joblog' in cmd_entry and cmd_entry['joblog']|length %}
-                    <td>
-                      <vscode-button class="joblog" source="{{ source_item['source'] }}" level="{{ level_item['level'] }}" cmd_index="{{ loop.index0 }}" appearance="primary">Joblog</vscode-button>
-                    </td>
-                  {% endif %}
-                  {% if 'stdout' in cmd_entry and cmd_entry['stdout']|length %}
-                    <td>
-                      <vscode-button class="stdout" source="{{ source_item['source'] }}" level="{{ level_item['level'] }}" cmd_index="{{ loop.index0 }}" appearance="primary">Spool</vscode-button>
-                    </td>
-                  {% endif %}
-                  {% if 'stderr' in cmd_entry and cmd_entry['stderr']|length %}
-                    <td>
-                      <vscode-button  class="stderr" source="{{ source_item['source'] }}" level="{{ level_item['level'] }}" cmd_index="{{ loop.index0 }}" appearance="primary">Error</vscode-button>
-                    </td>
-                  {% endif %}
-                </tr>
-              {% endfor %}
-              </table>
-            </details>
+          <td class="col-status"><span class="status-pill {{ status | replace(' ', '_') }}">{{ status }}</span></td>
+          <td class="col-cmds">
+            <button type="button" class="cmds-toggle" data-cmds="{{ cmds_id }}" data-cmds-key="{{ level }}|{{ source_item['source'] }}" data-default-open="{{ 'true' if failed else 'false' }}" aria-expanded="false">{{ source_item['cmds'] | length }} {{ global_stuff['get_text']('command' if source_item['cmds'] | length == 1 else 'commands') | safe }}<span class="codicon codicon-chevron-right"></span></button>
           </td>
         </tr>
-        {% endfor %}
+        <tr class="cmds-row collapsible-content level-{{ level }}{% if failed %} is-failed{% endif %}" id="{{ cmds_id }}" hidden>
+          <td colspan="4">
+          {% for cmd_entry in source_item['cmds'] %}
+            {% set cmd_status = cmd_entry.status or 'new' %}
+            {% set cmd_failed = cmd_status == 'failed' or cmd_status == 'error' %}
+            <div class="cmd{% if cmd_failed %} is-failed{% endif %}">
+              <input type="checkbox" class="obi-check build_source_cmd" source="{{ source_item['source'] }}" cmd="{{ cmd_entry['cmd'] }}" aria-label="{{ global_stuff['get_text']('command') | safe }} {{ loop.index }}" {% if 'ignore' not in cmd_entry or cmd_entry['ignore'] == false %}checked{% endif %}>
+              <details class="cmd-details" data-state-id="cmd|{{ level }}|{{ source_item['source'] }}|{{ loop.index0 }}" {% if cmd_failed %}open{% endif %}>
+                <summary>
+                  <span class="codicon codicon-{{ cmd_icons[cmd_status] or cmd_icons['new'] }}" title="{{ cmd_status }}"></span>
+                  <span class="cmd-time">{{ (cmd_entry.updated or '').slice(11, 23) or global_stuff['get_text']('not run') }}</span>
+                  <code class="cmd-text">{{ cmd_entry.cmd | replace('2> /dev/null', '') | replace('cl -v', '') | replace('"\'', '') | replace('\'"', '') | replace('"', '') | trim }}</code>
+                </summary>
+                <div class="cmd-code"><button type="button" class="icon-btn cmd-copy" data-cmd="{{ cmd_entry['cmd'] }}" title="{{ global_stuff['get_text']('Copy') | safe }}" aria-label="{{ global_stuff['get_text']('Copy') | safe }}"><span class="codicon codicon-copy"></span></button>{% for part in cmd_entry.cmd.split(';') %}{{ part | trim }}{% if not loop.last %}
+{% endif %}{% endfor %}</div>
+              </details>
+              <div class="cmd-actions">
+                <button type="button" class="icon-btn edit_cmd" source="{{ source_item['source'] }}" level="{{ level }}" cmd_index="{{ loop.index0 }}" title="{{ global_stuff['get_text']('Edit command') | safe }}" aria-label="{{ global_stuff['get_text']('Edit command') | safe }}"><span class="codicon codicon-edit"></span></button>
+                {% if 'joblog' in cmd_entry and cmd_entry['joblog'] | length %}<button type="button" class="btn secondary small joblog" source="{{ source_item['source'] }}" level="{{ level }}" cmd_index="{{ loop.index0 }}"><span class="codicon codicon-list-flat"></span>Joblog</button>{% endif %}
+                {% if 'stdout' in cmd_entry and cmd_entry['stdout'] | length %}<button type="button" class="btn secondary small stdout" source="{{ source_item['source'] }}" level="{{ level }}" cmd_index="{{ loop.index0 }}"><span class="codicon codicon-file-text"></span>Spool</button>{% endif %}
+                {% if 'stderr' in cmd_entry and cmd_entry['stderr'] | length %}<button type="button" class="btn secondary small stderr" source="{{ source_item['source'] }}" level="{{ level }}" cmd_index="{{ loop.index0 }}"><span class="codicon codicon-error"></span>Error</button>{% endif %}
+              </div>
+            </div>
+          {% endfor %}
+          </td>
         </tr>
+      {% endfor %}
       {% endfor %}
     </tbody>
     </table>
-
     {% endif %}
     
     <br/><br/>

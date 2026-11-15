@@ -4,7 +4,10 @@
 * **Build summary: the i-Releaser deployment as a card.** A header with workflow, version, status and *Open in i-Releaser*; the stages as a stepper with a progress bar; for a failed stage the failed step with *Show log*, *Continue* and *Run stage again*, for a ready stage *Run stage*. The actions are the ones of the i-Releaser view: they ask first, and `run-stages` applies ([docs](asserts/docs/building.md#i-releaser-deployment), [spec](docs/features/i-releaser-status-card.md))
 
 ### Changes
-* **Build summary:** the statuses of the build list (`new`, `success`, `failed`, …) are coloured labels in the colours of the theme instead of fixed background colours
+* **Build summary: new layout.** A header with the result (failed, built, to build), the build's host, IFS path and git commit, and the actions; the new, changed and dependent sources as tiles; the build list with a result per level, the commands of a source below it, a failed command marked and shown in full with a copy button. The statuses are coloured labels in the colours of the theme ([docs](asserts/docs/building.md#build-summary), [spec](docs/features/ui-refresh-build-pages.md))
+* **OBI Build view: new layout.** *Current source* / *All changes* as a switch (with the name of the current source), *Run build* and *Show changes* with labels, while something runs its name, the elapsed time and *Cancel*, and the result of the last build with *Open* ([docs](asserts/docs/building.md#the-obi-build-view), [spec](docs/features/ui-refresh-build-pages.md))
+* Both pages use plain HTML elements in the colours of the theme instead of the deprecated `@vscode/webview-ui-toolkit` components, and VS Code's font size
+* **Welcome and "invalid configuration" views:** VS Code's own welcome content instead of webviews. Without a folder: *Open Folder*, *Open Recent*; in a folder without a project: *Initialize OBI Project*; both link the walkthrough and the getting started guide. The "invalid configuration" view says why OBI can't use the configuration and opens it ([spec](docs/features/native-welcome-views.md))
 
 ### Bugfixes
 * **OBI Build view: the Content-Security-Policy applies again.** A missing quote in the page turned its CSP into an attribute text, so the view had none ([spec](docs/bugfix/controller-view-csp.md))

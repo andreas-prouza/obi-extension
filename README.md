@@ -24,10 +24,10 @@ Watch the intro (1:38):
 # Features
 
 * **Build profiles**  
-  Build only the current source (`*CURRENT`) or all changes (`*ALL`).
+  Build only the current source or all changes.
   Switch between user profiles (e.g. different target libraries or users) with one click.
 
-  ![OBI build view](asserts/img/ext/controller-1.png)
+  <img src="asserts/img/ext/controller-1.png" alt="OBI build view" width="300">
 
 * **Change detection**  
   OBI stores a hash of every successfully built source and only builds what changed since then.

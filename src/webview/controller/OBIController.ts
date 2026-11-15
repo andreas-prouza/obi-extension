@@ -16,6 +16,7 @@ import { parse_message } from '../../shared/messages/MessageGuard';
 import { OBICommands } from '../../extension/obi/OBICommands';
 import { BackendUpdate } from '../../extension/obi/BackendUpdate';
 import { render_template } from '../Templates';
+import { annotate_build_list } from '../../shared/BuildListView';
 
 
 
@@ -39,6 +40,28 @@ export class OBIController implements vscode.WebviewViewProvider {
 
     // Busy indicator for operations started anywhere (this view, editor title, build summary, …)
     OperationLock.on_did_change(() => OBIController.post_running_state());
+  }
+
+
+  /** Follows the active editor: the view shows which source "Current source" builds */
+  public register_editor_listener(): vscode.Disposable {
+    return vscode.window.onDidChangeActiveTextEditor(() => OBIController.post_current_source());
+  }
+
+
+  public static post_current_source(): void {
+    const view = OBIController.view_object?._view;
+    if (!view)
+      return;
+    const file = vscode.window.activeTextEditor?.document.uri;
+    let source: string | undefined;
+    try {
+      source = file?.scheme === 'file' ? DirTool.to_obi_source(file.fsPath) : undefined;
+    }
+    catch {
+      source = undefined;
+    }
+    view.webview.postMessage({ command: 'current_source', source: source, name: source ? path.basename(source) : undefined, none: vscode.l10n.t('No source open') });
   }
 
 
@@ -123,9 +146,29 @@ export class OBIController implements vscode.WebviewViewProvider {
       {
         command: 'update_build_summary_timestamp',
         build_summary_timestamp: compile_list ? compile_list['timestamp'] : undefined,
-        build_counts: compile_list ? compile_list['compiles'].length : undefined
+        build_counts: compile_list ? compile_list['compiles'].length : undefined,
+        last_build: OBIController.last_build(compile_list)
       });
 
+  }
+
+
+  /** The line below the profile: when the last build list was made, and how its build went */
+  private static last_build(compile_list: unknown): { kind: 'failed' | 'success' | 'open'; text: string } | undefined {
+    const timestamp = typeof compile_list === 'object' && compile_list !== null ? (compile_list as { timestamp?: unknown }).timestamp : undefined;
+    const counts = annotate_build_list(compile_list);
+    if (counts.total === 0 || typeof timestamp !== 'string')
+      return undefined;
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime()))
+      return undefined;
+    const today = date.toDateString() === new Date().toDateString();
+    const time = today ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : date.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+    if (counts.failed > 0)
+      return { kind: 'failed', text: vscode.l10n.t('Last build {0} · {1} of {2} failed', time, counts.failed, counts.total) };
+    if (counts.open === 0)
+      return { kind: 'success', text: vscode.l10n.t('Last build {0} · all {1} built', time, counts.total) };
+    return { kind: 'open', text: vscode.l10n.t('Build list {0} · {1} to build', time, counts.open) };
   }
 
 
@@ -207,6 +250,7 @@ export class OBIController implements vscode.WebviewViewProvider {
 
     OBIController.update_build_summary_timestamp();
     OBIController.update_current_profile();
+    OBIController.post_current_source();
   }
 
 
@@ -252,6 +296,10 @@ export class OBIController implements vscode.WebviewViewProvider {
 
         case 'copy_profile':
           vscode.commands.executeCommand('obi.copy-profile-config');
+          break;
+
+        case 'open_build_summary':
+          vscode.commands.executeCommand('obi.open_build_summary');
           break;
 
         case 'delete_current_profile': {

@@ -99,7 +99,7 @@ function stages_of(html: string): string[] {
 
 /** The buttons of the bar below the stages: action and stage of each */
 function actions_of(html: string): string[] {
-  return [...html.matchAll(/class="ir-action" appearance="\w+" data-action="(\w+)" data-stage-id="(\d+)"/g)].map(m => `${m[1]} ${m[2]}`);
+  return [...html.matchAll(/class="ir-action btn[^"]*" data-action="(\w+)" data-stage-id="(\d+)"/g)].map(m => `${m[1]} ${m[2]}`);
 }
 
 async function until(condition: () => boolean, what: string): Promise<void> {

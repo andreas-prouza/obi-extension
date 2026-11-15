@@ -438,5 +438,22 @@
   "Stage {0} is ready to run.": "Stage {0} is ready to run.",
   "Open in i-Releaser": "Open in i-Releaser",
   "Continue": "Continue",
-  "Run stage again": "Run stage again"
+  "Run stage again": "Run stage again",
+  "failed": "failed",
+  "built": "built",
+  "to build": "to build",
+  "more": "more",
+  "Build list": "Build list",
+  "objects": "objects",
+  "levels": "levels",
+  "not run": "not run",
+  "Copy": "Copy",
+  "Edit command": "Edit command",
+  "Current source": "Current source",
+  "All changes": "All changes",
+  "No source open": "No source open",
+  "Cancel": "Cancel",
+  "Last build {0} · {1} of {2} failed": "Last build {0} · {1} of {2} failed",
+  "Last build {0} · all {1} built": "Last build {0} · all {1} built",
+  "Build list {0} · {1} to build": "Build list {0} · {1} to build"
 }

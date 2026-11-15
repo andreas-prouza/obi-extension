@@ -1,7 +1,5 @@
+// The page itself uses plain HTML elements; custom build summary templates may still use the toolkit components
 import "../../tools/javascript/toolkit";
-import {
-  Button
-} from "@vscode/webview-ui-toolkit";
 
 import { showAlert } from "../../tools/javascript/alertBox";
 import { typed_post } from "../../tools/javascript/post";
@@ -30,11 +28,11 @@ function main() {
     return;
   loaded = true;
   
-  const run_button = document.getElementById('run_build') as Button;
+  const run_button = document.getElementById('run_build');
   if (run_button)
     run_button.addEventListener('click', run_build);  
   
-  const add_source_button = document.getElementById('add_source') as Button;
+  const add_source_button = document.getElementById('add_source');
   if (add_source_button)
     add_source_button.addEventListener('click', add_source);
 
@@ -83,18 +81,14 @@ function main() {
   const ui = keep_ui_state(vscode);
   const collapsed = new Set<string>(ui.get<string[]>('collapsed_levels') ?? []);
 
-  const headers = document.querySelectorAll<HTMLElement>('.collapsible-header');
-
-  headers.forEach(header => {
+  document.querySelectorAll<HTMLElement>('.collapsible-header').forEach(header => {
     // The target class name from the data attribute (e.g., "level-1")
     const targetClass = header.getAttribute('data-target') ?? '';
     const show_level = (visible: boolean) => {
-      document.querySelectorAll<HTMLElement>('.' + targetClass).forEach(row => {
-        row.style.display = visible ? 'table-row' : 'none';
-      });
+      document.querySelectorAll<HTMLElement>('.' + CSS.escape(targetClass)).forEach(row => row.classList.toggle('level-hidden', !visible));
       const icon = header.querySelector('.toggle-icon');
-      if (icon)
-        icon.textContent = visible ? '▼' : '▶';
+      icon?.classList.toggle('codicon-chevron-down', visible);
+      icon?.classList.toggle('codicon-chevron-right', !visible);
     };
 
     if (collapsed.has(targetClass))
@@ -111,6 +105,40 @@ function main() {
     });
   });
 
+  // The commands of a source, below its row: open for failed sources until the user toggles them
+  const opened = { ...(ui.get<Record<string, boolean>>('commands_open') ?? {}) };
+  document.querySelectorAll<HTMLButtonElement>('.cmds-toggle').forEach(toggle => {
+    const row = document.getElementById(toggle.dataset.cmds ?? '');
+    const key = toggle.dataset.cmdsKey ?? '';
+    if (!row)
+      return;
+    const show = (open: boolean) => {
+      row.hidden = !open;
+      toggle.setAttribute('aria-expanded', String(open));
+      const icon = toggle.querySelector('.codicon');
+      icon?.classList.toggle('codicon-chevron-down', open);
+      icon?.classList.toggle('codicon-chevron-right', !open);
+    };
+    show(key in opened ? opened[key] : toggle.dataset.defaultOpen === 'true');
+    toggle.addEventListener('click', () => {
+      const open = row.hidden === true;
+      show(open);
+      opened[key] = open;
+      ui.set('commands_open', opened);
+    });
+  });
+
+  // Copy a build command
+  document.querySelectorAll<HTMLButtonElement>('.cmd-copy').forEach(button => {
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      const icon = button.querySelector('.codicon');
+      navigator.clipboard.writeText(button.dataset.cmd ?? '').then(() => {
+        icon?.classList.replace('codicon-copy', 'codicon-check');
+        setTimeout(() => icon?.classList.replace('codicon-check', 'codicon-copy'), 1500);
+      }, () => undefined);
+    });
+  });
 }
 
 
