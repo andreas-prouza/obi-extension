@@ -147,6 +147,12 @@ function check_templates() {
     if (/<head[\s>]/.test(html) && !html.includes('{% include "tools/csp.html" %}') && !/http-equiv="Content-Security-Policy"/.test(html))
       findings.push(`${rel}: page template without {% include "tools/csp.html" %}`);
 
+    // An unclosed attribute before the CSP turns the <meta> tag into attribute text: the page then has no CSP
+    const csp_at = html.indexOf('{% include "tools/csp.html" %}');
+    const before_csp = csp_at >= 0 ? html.slice(0, csp_at).replace(/\{\{[\s\S]*?\}\}|\{%[\s\S]*?%\}/g, '') : '';
+    if ((before_csp.match(/"/g) ?? []).length % 2 !== 0)
+      findings.push(`${rel}: unclosed attribute quote before {% include "tools/csp.html" %} (the CSP would not apply)`);
+
     // Tags can span several lines: search the whole file
     const line_of = index => html.slice(0, index).split('\n').length;
     const rules = [

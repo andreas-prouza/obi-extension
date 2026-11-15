@@ -6,6 +6,9 @@
 ### Changes
 * **Build summary:** the statuses of the build list (`new`, `success`, `failed`, …) are coloured labels in the colours of the theme instead of fixed background colours
 
+### Bugfixes
+* **OBI Build view: the Content-Security-Policy applies again.** A missing quote in the page turned its CSP into an attribute text, so the view had none ([spec](docs/bugfix/controller-view-csp.md))
+
 
 ## [1.7.1]
 
