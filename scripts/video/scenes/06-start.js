@@ -20,25 +20,32 @@ window.SCENES.push({
     const terminal = `
       <div class="terminal"><div class="line"><span class="prompt">$ </span><span data-type="git clone https://github.com/"></span></div><div class="line"><span data-type="    andreas-prouza/obi"></span></div><div class="line dim" data-after="0">Cloning into 'obi'...</div><div class="line"><span class="prompt">$ </span><span data-type="cd obi &amp;&amp; ./setup.sh"></span><i class="caret"></i></div><div class="line ok" data-after="1">✓ OBI backend is ready</div></div>`;
 
+    // The welcome view of a folder without an OBI project (viewsWelcome of package.json)
     const welcome = part('Object Builder for i', `
       <div class="welcome">
-        You need to open a folder containing an OBI project:<br>
-        <span class="vbtn text">Open folder</span><br>
-        Or initialize your current folder with OBI:<br>
-        <span class="vbtn text" data-btn="initialize">Initialize</span>
+        <p>This folder has no OBI project yet.</p>
+        <span class="welcome-btn" data-btn="initialize">Initialize OBI Project</span>
+        <p>Initialize adds the .obi folder with a default configuration and a sample source.</p>
+        <p>New to OBI? Follow the <a>walkthrough</a> or read <a>Getting started</a>.</p>
       </div>`);
 
-    const field = (label, value, cls = '') => `<div class="field ${cls}"><label>${label}</label><div><span data-type="${value}"></span></div></div>`;
-    const config = part('Configuration', `
+    // The connection on the configuration page (asserts/templates/controller/config_field.html)
+    const field = (label, value) => `
+      <div class="setting field">
+        <div class="setting-label"><label>${label}</label><span class="setting-tag">required</span></div>
+        <div class="obi-input"><span data-type="${value}"></span></div>
+      </div>`;
+    const config = part('OBI configuration', `
       <div class="config-page">
+        <div class="config-head"><b>Connection</b><span class="spacer"></span><span class="btn small">${icon('save')}Save</span></div>
         ${field('Remote host', PROJECT.host)}
         ${field('User', PROJECT.user)}
-        ${field('Remote ifs path', PROJECT.remote_dir)}
+        ${field('Project folder in the IFS', PROJECT.remote_dir)}
       </div>`, 'page');
 
     const STEPS = [
       { name: 'Install the backend', desc: 'Clone OBI into the IFS of your IBM i and run its setup script.', ui: terminal },
-      { name: 'Initialize the project', desc: 'Open your project folder in VS Code and click <b>Initialize</b>.', ui: welcome },
+      { name: 'Initialize the project', desc: 'Open your project folder in VS Code and click <b>Initialize OBI Project</b>.', ui: welcome },
       { name: 'Configure the connection', desc: 'Remote host, user and the path in the IFS. Then: <b>Run build</b>.', ui: config },
     ];
 

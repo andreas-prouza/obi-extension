@@ -79,7 +79,6 @@ window.SCENES.push({
     // ================================================================ in VS Code
     const STATE_ICON = { new: 'circle-outline', ready: 'play-circle', in_process: 'sync spin', finished: 'pass passed' };
     const state_of = status => ({ finished: 'finished', 'in process': 'in_process', ready: 'ready' }[status] ?? 'new');
-    const badge_class = status => ({ finished: 'success', 'in process': 'in_process' }[status] ?? 'new');
 
     /** A row of the i-Releaser view; its icon and description follow the status (see set_status) */
     const ir_row = ({ id, depth, open, label, status, suffix = '', run = false }) => `
@@ -90,24 +89,26 @@ window.SCENES.push({
         ${run ? `<span class="row-actions">${icon('play')}</span>` : ''}
       </div>`;
 
+    // As in the view: the project, its deployments (with the build they came from), stages, steps
     const deployment_rows = `
+      ${UI.row({ depth: 0, open: true, glyph: 'project', label: PROJECT.name })}
       <div data-new-deployment>
-        ${ir_row({ id: 'deployment', depth: 0, open: true, label: `${PROJECT.deployment} · ${PROJECT.workflow}`, status: 'in process' })}
-        ${ir_row({ id: 'start', depth: 1, open: true, label: 'START', status: 'in process' })}
-        ${ir_row({ id: 'start-step', depth: 2, label: 'save objects', status: 'in process', suffix: ' · SAVLIB LIB(PROUZAT1)' })}
-        ${ir_row({ id: 'test', depth: 1, open: true, label: 'TEST', status: 'new' })}
-        ${ir_row({ id: 'test-step-1', depth: 2, label: 'restore objects', status: 'new' })}
-        ${ir_row({ id: 'test-step-2', depth: 2, label: 'run tests', status: 'new', suffix: ' · CALL PGM(TEST)' })}
-        ${ir_row({ id: 'prod', depth: 1, label: 'PROD', status: 'new', run: true })}
+        ${ir_row({ id: 'deployment', depth: 1, open: true, label: `${PROJECT.deployment} · ${PROJECT.workflow}`, status: 'in process', suffix: ` · build ${PROJECT.day} 10:40` })}
+        ${ir_row({ id: 'start', depth: 2, open: true, label: 'START', status: 'in process' })}
+        ${ir_row({ id: 'start-step', depth: 3, label: 'save objects', status: 'in process', suffix: ' · SAVLIB LIB(PROUZAT1)' })}
+        ${ir_row({ id: 'test', depth: 2, open: true, label: 'TEST', status: 'new' })}
+        ${ir_row({ id: 'test-step-1', depth: 3, label: 'restore objects', status: 'new' })}
+        ${ir_row({ id: 'test-step-2', depth: 3, label: 'run tests', status: 'new', suffix: ' · CALL PGM(TEST)' })}
+        ${ir_row({ id: 'prod', depth: 2, label: 'PROD', status: 'new', run: true })}
       </div>
-      ${ir_row({ id: 'old-1', depth: 0, open: false, label: `41 · ${PROJECT.workflow}`, status: 'finished' })}
-      ${ir_row({ id: 'old-2', depth: 0, open: false, label: `40 · ${PROJECT.workflow}`, status: 'finished' })}`;
+      ${ir_row({ id: 'old-1', depth: 1, open: false, label: `41 · ${PROJECT.workflow}`, status: 'finished' })}
+      ${ir_row({ id: 'old-2', depth: 1, open: false, label: `40 · ${PROJECT.workflow}`, status: 'finished' })}`;
 
     const win = UI.vscode_window({
       zoom: ZOOM, width: 1640, height: 768, side: 318,
-      panes: UI.controller_pane() + UI.filters_pane({ collapsed: true }) + UI.history_pane() + UI.releaser_pane({ collapsed: false, body: deployment_rows }),
+      panes: UI.controller_pane({ last: { kind: 'success', text: 'Last build 10:40 AM · all 8 built' } }) + UI.filters_pane({ collapsed: true }) + UI.history_pane() + UI.releaser_pane({ collapsed: false, body: deployment_rows }),
       tabs: [{ label: 'logger.sqlrpgle.srvpgm', icon: 'file-code' }, { label: 'Build summary', active: true }],
-      editor: UI.summary_page({ done: true, created: `${PROJECT.day}T10:40:12.118Z` }),
+      editor: UI.summary_page({ done: true, created: '11/13/2026, 10:40:12 AM' }),
       overlays: UI.quick_pick({
         title: `Start i-Releaser workflow (${PROJECT.releaser})`, placeholder: 'Workflow for this build list',
         items: [{ label: PROJECT.workflow, desc: 'Default workflow' }, { label: `${PROJECT.workflow} Test` }],
@@ -124,15 +125,18 @@ window.SCENES.push({
     const quick = q('.quick');
     const toast = q('.toast');
     const new_deployment = q('[data-new-deployment]');
+    const card = q('.ir-card');
 
     // Positions in the layout after the start (status lines and the new deployment are there)
     summary.classList.add('deployed');
-    const stages_line = rect(q('.ir-stages'));
-    const prod_action = rect(q('[data-row=prod]'));
+    const test_state = rect(q('[data-stage=test] .ir-state'));
+    card.classList.add('attention');
+    const run_stage = rect(q('[data-btn=run-stage]'));
+    card.classList.remove('attention');
     summary.classList.remove('deployed');
     const notes = {
-      live: callout(scene, { x: stages_line.x + 372 * ZOOM, y: stages_line.cy - 12, text: 'Live status of the deployment', side: 'right', color: 'violet', length: 56 }),
-      run: callout(scene, { x: prod_action.r - 6, y: prod_action.cy, text: 'Run the next stage — right from VS Code', side: 'right', color: 'violet', length: 56 }),
+      live: callout(scene, { x: test_state.cx, y: test_state.b + 4, text: 'Live status of the deployment', side: 'down', color: 'violet', length: 30 }),
+      run: callout(scene, { x: run_stage.cx, y: run_stage.b + 4, text: 'Run the next stage — right from VS Code', side: 'down', color: 'violet', length: 34, shift: -150 }),
     };
 
     tl.to(win, { opacity: [0, 1], translate: ['0 70px', '0 0'], scale: [0.975, 1] }, W - 0.2, 0.9);
@@ -156,7 +160,7 @@ window.SCENES.push({
     // The deployment exists: status in the build summary, a new entry in the i-Releaser view
     tl.cls(summary, 'deployed', started + 0.15);
     tl.when(started + 0.15, on => { new_deployment.style.display = on ? '' : 'none'; });
-    fx.flash(tl, q('.ir-status'), started + 0.2, 'rgba(167,139,250,.5)');
+    fx.flash(tl, card, started + 0.2, 'rgba(167,139,250,.5)');
     fx.flash(tl, q('[data-row=deployment]'), started + 0.2, 'rgba(167,139,250,.5)');
     show_callout(tl, notes.live, started + 0.9);
 
@@ -176,23 +180,17 @@ window.SCENES.push({
       UI.states(tl, tree_row, [[0, tree_row.dataset.state], ...reports.map(([time, , status]) => [time, state_of(status)])]);
       reports.forEach(([time, , status]) => tl.text(tree_row.querySelector('[data-status]'), status, time));
     }
-    // The same in the build summary
-    const badge = (key, steps) => {
-      const element = q(`[data-st=${key}]`);
-      steps.forEach(([time, status], index) => {
-        tl.when(index === 0 ? -Infinity : time, on => {
-          if (on) {
-            element.textContent = status;
-            element.className = `st ${badge_class(status)}`;
-          }
-        }, steps[index + 1]?.[0] ?? Infinity);
-        if (index > 0)
-          fx.flash(tl, element, time, status === 'finished' ? 'rgba(74,222,128,.55)' : 'rgba(0,153,255,.5)');
-      });
-    };
-    badge('stage-start', [[0, 'in process'], [start_done, 'finished']]);
-    badge('stage-test', [[0, 'new'], [start_done, 'in process'], [test_done, 'finished']]);
-    badge('stage-prod', [[0, 'new'], [test_done, 'ready']]);
+    // The same in the card of the build summary
+    UI.ir_stage(tl, card, 'start', [[0, 'running', 'in process'], [start_done, 'finished', 'finished']]);
+    UI.ir_stage(tl, card, 'test', [[0, 'new', 'new'], [start_done, 'running', 'in process'], [test_done, 'finished', 'finished']]);
+    UI.ir_stage(tl, card, 'prod', [[0, 'new', 'new'], [test_done, 'ready', 'ready']]);
+    const bar = q('.ir-progress-bar');
+    tl.to(bar, { width: ['0%', '33%'] }, start_done, 0.4, { ease: 'inOut' });
+    tl.to(bar, { width: ['33%', '67%'] }, test_done, 0.4, { ease: 'inOut' });
+    for (const [time, name] of [[start_done, 'start'], [start_done, 'test'], [test_done, 'test'], [test_done, 'prod']])
+      fx.flash(tl, q(`[data-stage=${name}] .ir-dot`), time, 'rgba(74,222,128,.5)');
+    tl.cls(card, 'attention', test_done);
+    fx.flash(tl, q('.ir-attention'), test_done + 0.1, 'rgba(77,170,252,.5)');
     tl.text(q('.ir-updated'), '10:41:19', start_done).text(q('.ir-updated'), '10:41:42', test_done);
 
     // A notification for each finished stage

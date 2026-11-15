@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="../../node_modules/@vscode/codicons/dist/codicon.css">
   <link rel="stylesheet" href="video.css">
   <link rel="stylesheet" href="vscode.css">
+  <link rel="stylesheet" href="../../asserts/css/ui.css">
   <style>
     /* The thumbnail is seen small: few words, large type, strong contrast */
     #stage .g1 { left: 900px; top: -700px; }
@@ -159,22 +160,23 @@
         zoom: 1.5, width: 1500, height: 900, side: 300,
         panes: UI.controller_pane() + UI.filters_pane({ collapsed: true }) + UI.history_pane() + UI.releaser_pane(),
         tabs: [{ label: 'logger.sqlrpgle.srvpgm', icon: 'file-code' }, { label: 'Build summary', active: true }],
-        editor: UI.summary_page({ done: true, created: `${UI.PROJECT.day}T10:40:12.118Z` }),
+        editor: UI.summary_page({ done: true, created: '11/13/2026, 10:40:12 AM' }),
         status: UI.status_bar('ok'),
       });
+      // The deployment as at the end of the video: START and TEST done, PROD ready to run
       win.querySelector('.summary').classList.add('deployed');
-      for (const [key, status, css] of [['stage-start', 'finished', 'success'], ['stage-test', 'finished', 'success'], ['stage-prod', 'ready', 'new']]) {
-        const badge = win.querySelector(`[data-st=${key}]`);
-        badge.textContent = status;
-        badge.className = `st ${css}`;
+      const card = win.querySelector('.ir-card');
+      card.classList.add('attention');
+      win.querySelector('.ir-progress-bar').style.width = '67%';
+      for (const [name, kind, status] of [['start', 'finished', 'finished'], ['test', 'finished', 'finished'], ['prod', 'ready', 'ready']]) {
+        const stage = card.querySelector(`[data-stage=${name}]`);
+        stage.className = `ir-stage ir-${kind}${name === 'start' ? '' : ' ir-after-finished'}`;
+        stage.querySelector('.ir-state').textContent = status;
       }
 
-      // Without the side bar, scrolled to the results of the build
+      // Without the side bar
       win.querySelector('.vsc-side').style.width = '0px';
       stage.append(win);
-      const scroller = win.querySelector('.summary-scroll');
-      const offset = UI.rect(win.querySelector('.summary h3')).y - UI.rect(win.querySelector('.vsc-editor')).y - 10;
-      scroller.style.transform = `translateY(${-offset / 1.5}px)`;
       win.classList.add('thumb-shot');
 
       stage.append(html(`
