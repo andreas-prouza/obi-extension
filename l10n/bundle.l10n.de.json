@@ -75,6 +75,7 @@
   "Delete remote folder?": "Ordner auf dem IBM i löschen?",
   "Delete selected profile": "Ausgewähltes Profil löschen",
   "Deleting the remote folder failed": "Löschen des Ordners auf dem IBM i fehlgeschlagen",
+  "Creating the remote folders failed: {0}": "Anlegen der Ordner auf dem IBM i fehlgeschlagen: {0}",
   "Dependency list": "Abhängigkeits-Liste",
   "Dependent objects": "Abhängige Objekte",
   "depends on:": "hängt ab von:",

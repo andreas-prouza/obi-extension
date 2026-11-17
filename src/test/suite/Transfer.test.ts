@@ -63,6 +63,35 @@ suite('Transfers report failures', () => {
   });
 
 
+  test('build upload: the source folders are created before the parallel upload (SFTP "Failure" on mkdir)', async () => {
+    const put_files = sinon.stub(NodeSSH.prototype, 'putFiles').resolves();
+    sinon.stub(NodeSSH.prototype, 'putFile').resolves();
+    const exec = sinon.stub(NodeSSH.prototype, 'execCommand').resolves({ code: 0, stdout: '/home/MAX', stderr: '', signal: null });
+    sinon.stub(vscode.window, 'showInformationMessage').resolves(undefined);
+
+    await SSH_Tasks.transferSources(['lib1/qrpglesrc/a.rpgle.pgm', 'lib1/qrpglesrc/b.rpgle.pgm', 'lib2/qcpysrc/c.rpgle.cpy']);
+
+    const base = path.basename(Workspace.get_workspace());
+    const mkdir = exec.getCalls().filter(call => String(call.args[0]).includes('mkdir -p'));
+    assert.strictEqual(mkdir.length, 1, 'one command for all folders');
+    const command = String(mkdir[0].args[0]);
+    for (const dir of [`${base}/.obi/etc`, `${base}/src/lib1/qrpglesrc`, `${base}/src/lib2/qcpysrc`])
+      assert.ok(command.includes(dir), `${dir} in ${command}`);
+    assert.ok(mkdir[0].calledBefore(put_files.firstCall));
+  });
+
+
+  test('build upload: if the folders cannot be created, nothing is uploaded and the error names the reason', async () => {
+    const put_files = sinon.stub(NodeSSH.prototype, 'putFiles').resolves();
+    sinon.stub(NodeSSH.prototype, 'execCommand').callsFake(async (cmd: string) => cmd.includes('mkdir -p')
+      ? { code: 1, stdout: '', stderr: 'mkdir: Permission denied', signal: null }
+      : { code: 0, stdout: '/home/MAX', stderr: '', signal: null });
+
+    await assert.rejects(() => SSH_Tasks.transferSources(['lib1/qrpglesrc/a.rpgle.pgm']), /Permission denied/);
+    assert.ok(put_files.notCalled);
+  });
+
+
   test('if compile-list.json cannot be downloaded, neither history nor object-builds.json are written', async () => {
     sinon.stub(SSH_Tasks, 'getRemoteFile').rejects(new Error('No such file'));
     const get_dir = sinon.stub(SSH_Tasks, 'download_build_results').resolves([]);
