@@ -75,6 +75,7 @@
   "Delete remote folder?": "Delete remote folder?",
   "Delete selected profile": "Delete selected profile",
   "Deleting the remote folder failed": "Deleting the remote folder failed",
+  "Creating the remote folders failed: {0}": "Creating the remote folders failed: {0}",
   "Dependency list": "Dependency list",
   "Dependent objects": "Dependent objects",
   "depends on:": "depends on:",

@@ -1,4 +1,10 @@
-## [Unreleased]
+## [2.0.1]
+
+### Bugfixes
+* **Run build failed with "Error: Failure"** when several sources went into a folder that didn't exist on the IBM i yet (e.g. a new library or source file). The parallel uploads each created the folder, and the IBM i refused all but the first. The folders are now created before the upload, with one command ([spec](docs/bugfix/parallel-upload-mkdir.md))
+
+
+## [2.0.0]
 
 ### Features
 * **Build summary: the i-Releaser deployment as a card.** A header with workflow, version, status and *Open in i-Releaser*; the stages as a stepper with a progress bar; for a failed stage the failed step with *Show log*, *Continue* and *Run stage again*, for a ready stage *Run stage*. The actions are the ones of the i-Releaser view: they ask first, and `run-stages` applies ([docs](asserts/docs/building.md#i-releaser-deployment), [spec](docs/features/i-releaser-status-card.md))

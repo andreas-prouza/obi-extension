@@ -7,7 +7,7 @@ import * as path from 'path';
 import { AppConfig } from '../config/AppConfig';
 import { Constants } from '../../shared/Constants';
 import { logger } from './Logger';
-import { sh_quote } from '../../shared/ShellQuote';
+import { mkdir_parents_commands, sh_quote } from '../../shared/ShellQuote';
 import { check_remote_delete_target } from './RemotePathGuard';
 import { is_transfer_excluded } from './TransferExcludes';
 import { local_source_root } from './SourcePath';
@@ -770,10 +770,26 @@ export class SSH_Tasks {
 
     logger.info(`Transfer files: ${source_list}`);
 
-    await SSH_Tasks.ssh.putFiles(transfer_list, {concurrency: SSH_Tasks.concurrency() });
+    await SSH_Tasks.put_files(transfer_list);
     await SSH_Tasks.upload_user_config();
 
     vscode.window.showInformationMessage(source_list.length === 1 ? vscode.l10n.t('1 source transferred') : vscode.l10n.t('{0} sources transferred', source_list.length));
+  }
+
+
+
+  /**
+   * Uploads files in parallel (ssh-concurrency), after creating their folders with `mkdir -p`.
+   * Without that, node-ssh creates a missing folder per file: parallel uploads into the same new folder all send
+   * an SFTP mkdir, and the server answers all but the first with the bare status "Failure" (the folder exists).
+   */
+  private static async put_files(transfer_list: FileTransfer[]): Promise<void> {
+    for (const command of mkdir_parents_commands(transfer_list.map(file => file.remote))) {
+      const result = await SSH_Tasks.ssh.execCommand(SSH_Tasks.get_finalized_command(command));
+      if (result.code !== 0)
+        throw new Error(vscode.l10n.t('Creating the remote folders failed: {0}', result.stderr.trim() || `exit code ${result.code}`));
+    }
+    await SSH_Tasks.ssh.putFiles(transfer_list, { concurrency: SSH_Tasks.concurrency() });
   }
 
 
@@ -823,7 +839,7 @@ export class SSH_Tasks {
       })
     });
 
-    await SSH_Tasks.ssh.putFiles(transfer_list, {concurrency: SSH_Tasks.concurrency() });
+    await SSH_Tasks.put_files(transfer_list);
   }
 
 
@@ -839,7 +855,7 @@ export class SSH_Tasks {
       remote: `${remote_base}/${file.replace(/\\/g, '/')}`
     }));
     logger.info(`Upload: ${files.join(', ')}`);
-    await SSH_Tasks.ssh.putFiles(transfer_list, { concurrency: SSH_Tasks.concurrency() });
+    await SSH_Tasks.put_files(transfer_list);
   }
 
 
