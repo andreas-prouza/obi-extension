@@ -1,3 +1,22 @@
+## [2.1.1]
+
+### Features
+* **Store or remove the hash of a single source** in the compiled object list (`.obi/etc/object-builds.json`): *Mark source as built (store current hash)* and *Mark source as changed (remove hash)* in the context menu of the source list, the Explorer and the editor tab (submenu *OBI*), and in the Command Palette for the active editor ([docs](asserts/docs/building.md#hash-of-a-single-source), [spec](docs/features/source-hash-commands.md))
+
+
+### Changes
+* **One submenu *OBI* in the context menu of a source** (source list, Explorer, editor tab) with all source actions: individual build settings, source description, dependencies, and storing or removing the hash. Before, the actions were single entries of the context menu; in the source list they were only icons. In the Explorer, the submenu isn't offered on folders. In the Command Palette the commands keep their names (*OBI: …*)
+
+
+## [2.1.0]
+
+### Features
+* **Build summary: unchecking a source asks about its dependents.** Unchecking a source offers to uncheck also the sources that are in the build list only because of it (dependents that are neither new nor changed and that no other checked source needs) ([docs](asserts/docs/building.md#build-summary), [spec](docs/features/build-summary.md#uncheck-sources))
+
+### Changes
+* **Build summary: the checkboxes of sources and commands are saved in the compile list at once**, for any status (also `success`), and an unchecked source or command is greyed out. Before, they were only saved by *Run build* and got lost when the page was updated
+
+
 ## [2.0.1]
 
 ### Bugfixes

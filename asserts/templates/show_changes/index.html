@@ -158,8 +158,9 @@
         {% set status = source_item['view_status'] %}
         {% set failed = status == 'failed' or status == 'error' %}
         {% set cmds_id = 'cmds-' ~ loop.index0 ~ '-' ~ level %}
-        <tr class="src-row collapsible-content level-{{ level }}{% if failed %} is-failed{% endif %}">
-          <td class="col-check"><input type="checkbox" class="obi-check build_source" source="{{ source_item['source'] }}" aria-label="{{ source_item['source'] }}" {% if 'ignore' not in source_item or source_item['ignore'] == false %}checked{% endif %}></td>
+        {% set ignored = source_item['ignore'] == true %}
+        <tr class="src-row collapsible-content level-{{ level }}{% if failed %} is-failed{% endif %}{% if ignored %} is-ignored{% endif %}">
+          <td class="col-check"><input type="checkbox" class="obi-check build_source" source="{{ source_item['source'] }}" aria-label="{{ source_item['source'] }}" title="{{ global_stuff['get_text']('Build this source') | safe }}" {% if not ignored %}checked{% endif %}></td>
           <td>
             <span class="object"><span class="codicon codicon-file-code"></span><a class="open_file" data-file="{{ source_item['source'] }}"><span class="path-lib">{{ parts.slice(0, -1).join(' / ') }} / </span><b>{{ parts | last }}</b></a></span>
           </td>
@@ -173,8 +174,9 @@
           {% for cmd_entry in source_item['cmds'] %}
             {% set cmd_status = cmd_entry.status or 'new' %}
             {% set cmd_failed = cmd_status == 'failed' or cmd_status == 'error' %}
-            <div class="cmd{% if cmd_failed %} is-failed{% endif %}">
-              <input type="checkbox" class="obi-check build_source_cmd" source="{{ source_item['source'] }}" cmd="{{ cmd_entry['cmd'] }}" aria-label="{{ global_stuff['get_text']('command') | safe }} {{ loop.index }}" {% if 'ignore' not in cmd_entry or cmd_entry['ignore'] == false %}checked{% endif %}>
+            {% set cmd_ignored = cmd_entry['ignore'] == true %}
+            <div class="cmd{% if cmd_failed %} is-failed{% endif %}{% if cmd_ignored %} is-ignored{% endif %}">
+              <input type="checkbox" class="obi-check build_source_cmd" source="{{ source_item['source'] }}" level="{{ level }}" cmd_index="{{ loop.index0 }}" cmd="{{ cmd_entry['cmd'] }}" aria-label="{{ global_stuff['get_text']('command') | safe }} {{ loop.index }}" {% if not cmd_ignored %}checked{% endif %}>
               <details class="cmd-details" data-state-id="cmd|{{ level }}|{{ source_item['source'] }}|{{ loop.index0 }}" {% if cmd_failed %}open{% endif %}>
                 <summary>
                   <span class="codicon codicon-{{ cmd_icons[cmd_status] or cmd_icons['new'] }}" title="{{ cmd_status }}"></span>

@@ -43,6 +43,27 @@ As a user I want to modify the build command in the build summary
 * After build open the new results. Specially if an older build was rebuild.
 
 
+## Uncheck sources
+
+**Status:** ready
+
+As a user I want to uncheck a source in the build summary, whatever its status (also `success`), and have the compile list updated at once.
+When I uncheck a source, I want to be asked whether to uncheck also the dependent sources that are only in the list because of it.
+
+### Definition of done
+* The checkbox of a source or command writes `ignore` (`true` / `false`) to the displayed `compile-list.json` at once (live or build history), under the operation lock. The status is not changed
+* Unchecked sources and commands are greyed out; the page keeps the state after an update
+* Unchecking source *X* asks (modal: *Uncheck dependents too*, *Only this source*, *Cancel*) for the checked sources *D* of the list with level > 0 where
+  * *D* depends on *X* (directly or transitively, `dependency.json`),
+  * *D* is in the list only because of a dependency: not in `changed-object-list.json` (`new-objects`, `changed-sources`) and depending on another source of the list, and
+  * no other checked source that is not there because of a dependency (new, changed or added by hand) leads to *D*
+* Level 0 (related copybooks) leads to nothing
+* No question when nothing qualifies or `changed-object-list.json` of the build is missing
+* *Cancel* (or busy lock) leaves the file unchanged and renders the page again from the file
+* Checking a source again only checks that source
+* Logic without `vscode` import ([ignore_sources.ts](../../src/extension/obi/compile_list/modules/ignore_sources.ts)) with unit tests
+
+
 ## Add git branch name in compile-list
 
 In `compile-list.json` add a new key:

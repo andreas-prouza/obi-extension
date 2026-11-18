@@ -641,6 +641,12 @@ body.obi-page {
   background: color-mix(in srgb, var(--obi-failed) 6%, transparent);
 }
 
+/* Unchecked: not built. The checkbox stays fully visible */
+.src-row.is-ignored td:not(.col-check),
+.cmd.is-ignored > :not(.obi-check) {
+  opacity: .5;
+}
+
 .cmds-toggle {
   display: inline-flex;
   align-items: center;

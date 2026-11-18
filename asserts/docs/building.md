@@ -77,11 +77,12 @@ With **Current source** (`*CURRENT`, or **Show single change** in the editor), o
 **New sources / Changed sources / Dependent objects**: the number of each, with the first sources as links; **+ … more** shows the others.
 
 **Build list**: all levels, each with its number of objects and the result (✓ built, ✗ failed, ○ open); click a level to fold it. For each source:
-* **Checkbox**: exclude the source from the build
+* **Checkbox**: exclude the source from the build, whatever its status. The choice is saved in the compile list at once (`ignore`), so it stays after the page is updated or reopened. An unchecked source is shown greyed out.
+  When you uncheck a source, OBI asks whether to uncheck also the sources that are in the list only because of it: sources depending on it (also indirectly) that are neither new nor changed themselves and that no other checked source of the list needs. *Uncheck dependents too* unchecks them, *Only this source* only the source, *Cancel* nothing. Without `changed-object-list.json` of the build (e.g. older history entries), OBI doesn't ask.
 * **Source name** (library and source file in grey): opens the source and loads its [compile errors](#compile-errors)
 * **Status**: `new`, `success`, `failed`, ...
 * **Commands**: click to show them below the source; the commands of a failed source are shown at first. Each command with
-  * a checkbox to exclude this single command
+  * a checkbox to exclude this single command (saved at once, like the checkbox of the source)
   * its status icon, time (or *not run*) and the command; click it for the full command, one part per line, with a copy button. A failed command is marked red and shown in full
   * ✏️ **Edit**: change the command for this build. The original command is kept in the compile list (`change-history`). A successful command is reset to `new` and dependent objects are reset as well.
   * **Joblog**, **Spool** and **Error**: open the output of the command in a read-only editor
@@ -270,6 +271,15 @@ To hide the builds, untick **OBI builds** in the filter menu of the Timeline vie
 
 Stores the current hash of **every** source in `.obi/etc/object-builds.json`, which means "everything is built".
 Use it after migrating existing sources, or when you know that IBM i is in sync with your local sources.
+
+### Hash of a single source
+
+For one source, right-click it in the **Source list**, in the **Explorer** or on its editor tab and open the submenu **OBI** (or run the command from the Command Palette with the source open in the editor):
+
+* **Mark source as built (store current hash)** stores the current hash of the source in `.obi/etc/object-builds.json`. *Show changes* no longer lists it as new or changed (sources depending on it are only built if something else needs them). Use it when the object on IBM i is already up to date, e.g. after a change of comments only.
+* **Mark source as changed (remove hash)** removes its hash. The next *Show changes* lists it as a new source, so it is built again together with its dependents.
+
+Other entries of the file are kept. If the file is not valid JSON, nothing is written and the error shows where it is.
 
 ### Transfer all
 

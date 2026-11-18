@@ -486,5 +486,14 @@
   "Changes are saved right away.": "Changes are saved right away.",
   "None": "None",
   "A description is saved when you leave its field.": "A description is saved when you leave its field.",
-  "Edit the descriptions with OBI: Maintain source infos.": "Edit the descriptions with OBI: Maintain source infos."
+  "Edit the descriptions with OBI: Maintain source infos.": "Edit the descriptions with OBI: Maintain source infos.",
+  "Build this source": "Build this source",
+  "Saving the build summary failed": "Saving the build summary failed",
+  "Uncheck dependents too": "Uncheck dependents too",
+  "Only this source": "Only this source",
+  "{0} source(s) are only in the build list because of {1}. Uncheck them too?": "{0} source(s) are only in the build list because of {1}. Uncheck them too?",
+  "{0}: the current hash is already stored in {1}.": "{0}: the current hash is already stored in {1}.",
+  "{0}: current hash stored in {1}. It counts as built.": "{0}: current hash stored in {1}. It counts as built.",
+  "{0} has no hash in {1}.": "{0} has no hash in {1}.",
+  "{0}: hash removed from {1}. It counts as new at the next build.": "{0}: hash removed from {1}. It counts as new at the next build."
 }

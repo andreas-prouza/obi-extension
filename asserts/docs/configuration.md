@@ -282,7 +282,7 @@ Per profile: all user settings, the stored SSH password and the user's extended 
 
 For single sources you can override settings, define own commands and replace the steps:
 
-* **OBI: Individual build settings** on a source (Source filters tree, explorer or editor tab context menu)
+* **Individual build settings** on a source (icon in the Source filters tree, or submenu **OBI** in the context menu of the tree, explorer or editor tab)
 * or the **Sources** scope of the configuration
 
 Stored in `.obi/etc/source-config.toml`, keyed by the source path relative to `src`:

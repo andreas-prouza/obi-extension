@@ -16,12 +16,14 @@ import { CompileDiagnostics } from '../../extension/source/CompileDiagnostics';
 import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
 import { DependencyList } from '../../extension/obi/Dependency';
 import { mergeSourcesIntoCompileList, resetDependentStatuses } from '../../extension/obi/compile_list/modules/add_sources';
+import { create_dependency_graph } from '../../extension/obi/compile_list/modules/dependency';
+import { dependents_only_needed_by } from '../../extension/obi/compile_list/modules/ignore_sources';
 import { ISourceInfos } from '../../shared/Source';
 import { SystemCmdExecution } from '../../extension/utilities/SystemCmdExecution';
 import { OperationLock } from '../../extension/utilities/OperationLock';
 import { render_template } from '../Templates';
 import { DeploymentConfig } from '../deployment/DeploymentConfig';
-import { CUSTOM_DATA_KEY, DeploymentRecord, IReleaserError, deployment_data, deployment_of, get_workflows, show_details_url, start_workflow, workflow_choices } from '../../shared/IReleaser';
+import { CUSTOM_DATA_KEY, DeploymentRecord, IReleaserError, deployment_data, is_object, deployment_of, get_workflows, show_details_url, start_workflow, workflow_choices } from '../../shared/IReleaser';
 import { StageActions, StatusKind, deployment_overview, status_kind } from '../../shared/IReleaserDeployments';
 import { annotate_build_list } from '../../shared/BuildListView';
 import { DeploymentWatcher } from '../deployment/DeploymentWatcher';
@@ -136,6 +138,14 @@ export class BuildSummary {
 
       case "run_build":
         OBICommands.rerun_build(message.ignore_sources, message.ignore_sources_cmd);
+        return;
+
+      case "ignore_source":
+        BuildSummary.ignore_source(message.source, message.ignore);
+        return;
+
+      case "ignore_cmd":
+        BuildSummary.ignore_cmd(message.level, message.source, message.cmd_index, message.ignore);
         return;
 
       case "open_file": {
@@ -488,6 +498,105 @@ export class BuildSummary {
 
 
   /**
+   * Checkbox of a source, written to the displayed compile-list.json at once (any status). Unchecking asks whether
+   * the sources that are only in the build list because of this one should be unchecked too.
+   */
+  public static async ignore_source(source: string, ignore: boolean): Promise<void> {
+    await BuildSummary.edit_checkboxes(() => BuildSummary.do_ignore_source(source, ignore));
+  }
+
+
+  /** Checkbox of a command, written to the displayed compile-list.json at once */
+  public static async ignore_cmd(level: string, source: string, cmd_index: number, ignore: boolean): Promise<void> {
+    await BuildSummary.edit_checkboxes(async () => {
+      const compile_list: unknown = BuildSummary.get_compile_list();
+      const cmd_entry = BuildSummary.entries_of(compile_list, source, level)
+        .map(entry => Array.isArray(entry['cmds']) ? entry['cmds'][cmd_index] : undefined)
+        .find(is_object);
+      if (!cmd_entry || !is_object(compile_list)) {
+        logger.warn(`Build summary: command ${cmd_index} of ${source} (level ${level}) not found`);
+        return false;
+      }
+      cmd_entry['ignore'] = ignore;
+      OBITools.write_compile_list(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), compile_list);
+      return true;
+    });
+  }
+
+
+  /**
+   * Runs a checkbox change under the lock. `edit` returns whether the page already shows the result;
+   * otherwise (busy, cancelled, error, more checkboxes changed) the page is rendered again from the file.
+   */
+  private static async edit_checkboxes(edit: () => Promise<boolean>): Promise<void> {
+    let in_sync: boolean | undefined;
+    try {
+      // The compile-list must not change while a build runs
+      in_sync = await OperationLock.run('Edit build summary', edit);
+    }
+    catch (e: unknown) {
+      show_error(vscode.l10n.t('Saving the build summary failed'), e);
+    }
+    if (in_sync !== true)
+      await BuildSummary.update();
+  }
+
+
+  private static async do_ignore_source(source: string, ignore: boolean): Promise<boolean> {
+
+    const compile_list: unknown = BuildSummary.get_compile_list();
+    const entries = BuildSummary.entries_of(compile_list, source);
+    if (entries.length === 0 || !is_object(compile_list)) {
+      logger.warn(`Build summary: ${source} is not in the build list`);
+      return false;
+    }
+
+    let dependents: string[] = [];
+    // Without the changed sources of this build, changed and dependent sources can't be told apart: no question
+    const changed = ignore ? BuildSummary.changed_sources() : undefined;
+    if (changed) {
+      const graph = create_dependency_graph(await DependencyList.get_dependencies());
+      dependents = dependents_only_needed_by(compile_list, source, changed, graph);
+    }
+
+    if (dependents.length > 0) {
+      const max_shown = 20;
+      const detail = dependents.slice(0, max_shown).join('\n')
+        + (dependents.length > max_shown ? '\n' + vscode.l10n.t('… and {0} more', dependents.length - max_shown) : '');
+      const uncheck_all = vscode.l10n.t('Uncheck dependents too');
+      const only_this = vscode.l10n.t('Only this source');
+      const choice = await vscode.window.showInformationMessage(
+        vscode.l10n.t('{0} source(s) are only in the build list because of {1}. Uncheck them too?', dependents.length, source),
+        { modal: true, detail: detail },
+        uncheck_all, only_this);
+      if (choice === undefined)
+        return false;
+      if (choice !== uncheck_all)
+        dependents = [];
+    }
+
+    for (const name of [source, ...dependents])
+      BuildSummary.entries_of(compile_list, name).forEach(entry => entry['ignore'] = ignore);
+    OBITools.write_compile_list(path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name()), compile_list);
+    if (dependents.length > 0)
+      logger.info(`Build summary: unchecked ${source} and its dependents ${dependents.join(', ')}`);
+
+    return dependents.length === 0;
+  }
+
+
+  /** Entries of a source in the build list (of one level, if given) */
+  private static entries_of(compile_list: unknown, source: string, level?: string): Record<string, unknown>[] {
+    const levels = is_object(compile_list) && Array.isArray(compile_list['compiles']) ? compile_list['compiles'] : [];
+    return levels
+      .filter((level_item): level_item is Record<string, unknown> => is_object(level_item) && (level === undefined || String(level_item['level']) === level))
+      .flatMap(level_item => Array.isArray(level_item['sources']) ? level_item['sources'] : [])
+      .filter((entry): entry is Record<string, unknown> => is_object(entry) && entry['source'] === source);
+  }
+
+
+
+  /**
    * Lets the user modify a build command's text, recording the previous value in the cmd's change-history.
    */
   public static async edit_cmd(level: string, source: string, cmd_index: number): Promise<void> {
@@ -756,16 +865,34 @@ export class BuildSummary {
 
 
 
+  /** changed-object-list.json of the displayed build list (live or of the history entry) */
+  private static changed_object_list_file(): string {
+    const ws: string = Workspace.get_workspace();
+    const folder = BuildSummary._current_compile_output_folder;
+    return folder ? path.join(ws, folder, Constants.CHANGED_OBJECT_LIST_FILE_NAME) : path.join(ws, Constants.CHANGED_OBJECT_LIST);
+  }
+
+
+  /** New and changed sources of the displayed build list; undefined without a readable changed-object-list.json */
+  private static changed_sources(): string[] | undefined {
+    const file = BuildSummary.changed_object_list_file();
+    const changed: unknown = DirTool.file_exists(file) ? DirTool.get_json(file, false) : undefined;
+    if (!is_object(changed))
+      return undefined;
+    return ['new-objects', 'changed-sources']
+      .flatMap(key => Array.isArray(changed[key]) ? changed[key] as unknown[] : [])
+      .filter((source): source is string => typeof source === 'string');
+  }
+
+
+
   private static get_object_list(workspaceUri: vscode.Uri): any|undefined {
 
 
 
     const ws: string = Workspace.get_workspace();
-    
-    let changed_object_list = path.join(ws, Constants.CHANGED_OBJECT_LIST);
-    if (BuildSummary._current_compile_output_folder) {
-      changed_object_list = path.join(ws, BuildSummary._current_compile_output_folder, Constants.CHANGED_OBJECT_LIST_FILE_NAME);
-    }
+
+    const changed_object_list = BuildSummary.changed_object_list_file();
     let dependend_object_list = path.join(ws, Constants.DEPENDEND_OBJECT_LIST);
     if (BuildSummary._current_compile_output_folder) {
       dependend_object_list = path.join(ws, BuildSummary._current_compile_output_folder, Constants.DEPENDEND_OBJECT_LIST_FILE_NAME);
