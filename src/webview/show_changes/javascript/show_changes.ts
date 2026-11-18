@@ -71,6 +71,26 @@ function main() {
     editCmdButton[i].addEventListener("click", function (e) {edit_cmd(editCmdButton[i]);});
   }
 
+  // A checkbox is written to compile-list.json at once; unchecking a source may also uncheck its dependents (asked by the extension)
+  document.querySelectorAll<HTMLInputElement>('.build_source').forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+      checkbox.closest('tr')?.classList.toggle('is-ignored', !checkbox.checked);
+      post({ command: 'ignore_source', source: checkbox.getAttribute('source') ?? '', ignore: !checkbox.checked });
+    });
+  });
+  document.querySelectorAll<HTMLInputElement>('.build_source_cmd').forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+      checkbox.closest('.cmd')?.classList.toggle('is-ignored', !checkbox.checked);
+      post({
+        command: 'ignore_cmd',
+        level: checkbox.getAttribute('level') ?? '',
+        source: checkbox.getAttribute('source') ?? '',
+        cmd_index: Number(checkbox.getAttribute('cmd_index')),
+        ignore: !checkbox.checked
+      });
+    });
+  });
+
   const openFileButton = document.getElementsByClassName("open_file");
   for (let i = 0; i < openFileButton.length; i++) {
     openFileButton[i].addEventListener("click", function (e) {open_file(openFileButton[i]);});

@@ -65,7 +65,7 @@ Open the dependency editor for a source:
 
   ![Dependency in source filter](../img/ext/dependency-1.png)
 
-* Via the context menu of the explorer or the editor tab: **OBI: Maintain source dependencies**
+* Via the context menu of the explorer or the editor tab: **OBI** → **Maintain source dependencies**
 
   ![Context menu](../img/ext/context-1.png)
 

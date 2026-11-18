@@ -287,6 +287,31 @@ function register_project_features(context: vscode.ExtensionContext): void {
 
 	});
 
+	// Hash of a source in the compiled object list: from the source list, the explorer, an editor tab or the active editor
+	const source_of = (item: SourceListItem | vscode.Uri | undefined): string | undefined => {
+		if (item instanceof SourceListItem)
+			return item.src_lib && item.src_file && item.src_member ? `${item.src_lib}/${item.src_file}/${item.src_member}` : undefined;
+		if (item instanceof vscode.Uri) {
+			const source_path = DirTool.to_obi_source(item.fsPath);
+			if (!source_path)
+				vscode.window.showErrorMessage(DirTool.not_in_source_dir_message(item.fsPath));
+			return source_path;
+		}
+		return OBICommands.get_current_active_source();
+	};
+
+	register_command(context, 'obi.source.store-hash', async (item?: SourceListItem | vscode.Uri) => {
+		const source = source_of(item);
+		if (source)
+			await OBICommands.store_source_hash(source);
+	});
+
+	register_command(context, 'obi.source.remove-hash', async (item?: SourceListItem | vscode.Uri) => {
+		const source = source_of(item);
+		if (source)
+			await OBICommands.remove_source_hash(source);
+	});
+
 	register_command(context, 'obi.clearDiagnostics', () => {
 		CompileDiagnostics.clear();
 		vscode.window.setStatusBarMessage(vscode.l10n.t('Diagnostics cleared'), 3000);

@@ -84,7 +84,7 @@ Click a member to open the source.
 
 Descriptions are stored in `.obi/etc/source-infos.json` and shown in the tree, the table view and the quick search.
 
-* **Change source description**: on a member in the tree, or via the context menu of the explorer or editor tab
+* **Change source description**: on a member in the tree, or in the submenu **OBI** of the context menu of the explorer or editor tab
 * **Show source infos** (view title): read-only table of all descriptions
 * **Maintain source infos** (view title): edit all descriptions in a table; a description is saved when you leave its field
 
@@ -113,10 +113,12 @@ This works for renaming single source files. Renaming a library or source file f
 
 ## Source actions
 
-On a member in the tree, and in the context menu of the explorer and editor tab:
+In the context menu of a member in the tree, of a file in the explorer and of an editor tab, all in the submenu **OBI** (the first three also as icons on a member in the tree; in the Command Palette with the prefix *OBI:*, for the active editor):
 
 | Action | Description |
 |---|---|
-| **OBI: Individual build settings** | Settings and build steps for this source only. See [Per-source build settings](configuration.md#per-source-build-settings) |
-| **OBI: Maintain source dependencies** | Which sources this source depends on, and which depend on it. See [Dependencies](dependencies.md) |
-| **OBI: Change source description** | See [Source descriptions](#source-descriptions) |
+| **Individual build settings** | Settings and build steps for this source only. See [Per-source build settings](configuration.md#per-source-build-settings) |
+| **Change source description** | See [Source descriptions](#source-descriptions) |
+| **Maintain source dependencies** | Which sources this source depends on, and which depend on it. See [Dependencies](dependencies.md) |
+| **Mark source as built (store current hash)** | The source counts as built. See [Hash of a single source](building.md#hash-of-a-single-source) |
+| **Mark source as changed (remove hash)** | The source counts as new at the next build. See [Hash of a single source](building.md#hash-of-a-single-source) |

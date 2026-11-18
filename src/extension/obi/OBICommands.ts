@@ -30,6 +30,7 @@ import * as fs from 'fs';
 import { PhaseTimer, result_download_plan } from './ResultDownload';
 import { ExtensionSettings } from '../utilities/ExtensionSettings';
 import { BackendUpdate } from './BackendUpdate';
+import { has_extension, md5_file } from './compile_list/modules/source_hashes';
 
 
 
@@ -587,6 +588,61 @@ export class OBICommands {
     catch (e: unknown) {
       show_error(vscode.l10n.t('Resetting the compiled object list failed'), e);
     }
+  }
+
+
+
+  /**
+   * Stores the current hash of a source in the compiled object list: the source counts as built
+   * and is not part of the next build (unless something it depends on changed).
+   */
+  public static async store_source_hash(source: string): Promise<void> {
+
+    const object_list_file = AppConfig.get_app_config().general['compiled-object-list'];
+    const file = path.join(DirTool.get_local_source_dir(), source);
+    if (!has_extension(source, AppConfig.get_app_config().general['supported-object-types'] || [])) {
+      vscode.window.showWarningMessage(vscode.l10n.t('{0} is not a supported source type', source));
+      return;
+    }
+    if (!DirTool.file_exists(file)) {
+      vscode.window.showErrorMessage(vscode.l10n.t('Source {0} not found in the OBI project', source));
+      return;
+    }
+
+    await OperationLock.run('Edit compiled object list', async () => {
+      try {
+        const hash = await md5_file(file);
+        const previous = OBITools.set_source_hash(source, hash);
+        logger.info(`Compiled object list: hash of ${source} set to ${hash} (before: ${previous ?? 'none'})`);
+        vscode.window.showInformationMessage(previous === hash
+          ? vscode.l10n.t('{0}: the current hash is already stored in {1}.', source, object_list_file)
+          : vscode.l10n.t('{0}: current hash stored in {1}. It counts as built.', source, object_list_file));
+      }
+      catch (e: unknown) {
+        DirTool.show_save_error(e);
+      }
+    });
+  }
+
+
+
+  /** Removes the hash of a source from the compiled object list: the source counts as new and is part of the next build */
+  public static async remove_source_hash(source: string): Promise<void> {
+
+    const object_list_file = AppConfig.get_app_config().general['compiled-object-list'];
+
+    await OperationLock.run('Edit compiled object list', async () => {
+      try {
+        const previous = OBITools.set_source_hash(source, undefined);
+        logger.info(`Compiled object list: hash of ${source} removed (was: ${previous ?? 'none'})`);
+        vscode.window.showInformationMessage(previous === undefined
+          ? vscode.l10n.t('{0} has no hash in {1}.', source, object_list_file)
+          : vscode.l10n.t('{0}: hash removed from {1}. It counts as new at the next build.', source, object_list_file));
+      }
+      catch (e: unknown) {
+        DirTool.show_save_error(e);
+      }
+    });
   }
 
 

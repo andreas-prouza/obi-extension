@@ -486,5 +486,14 @@
   "Changes are saved right away.": "Änderungen werden sofort gespeichert.",
   "None": "Keine",
   "A description is saved when you leave its field.": "Eine Beschreibung wird gespeichert, sobald das Feld verlassen wird.",
-  "Edit the descriptions with OBI: Maintain source infos.": "Die Beschreibungen werden mit OBI: Source Informationen verwalten bearbeitet."
+  "Edit the descriptions with OBI: Maintain source infos.": "Die Beschreibungen werden mit OBI: Source Informationen verwalten bearbeitet.",
+  "Build this source": "Diese Source bauen",
+  "Saving the build summary failed": "Speichern der Build-Zusammenfassung fehlgeschlagen",
+  "Uncheck dependents too": "Abhängige auch abwählen",
+  "Only this source": "Nur diese Source",
+  "{0} source(s) are only in the build list because of {1}. Uncheck them too?": "{0} Source(n) sind nur wegen {1} in der Build-Liste. Auch abwählen?",
+  "{0}: the current hash is already stored in {1}.": "{0}: der aktuelle Hash ist bereits in {1} gespeichert.",
+  "{0}: current hash stored in {1}. It counts as built.": "{0}: aktueller Hash in {1} gespeichert. Die Source gilt als gebaut.",
+  "{0} has no hash in {1}.": "{0} hat keinen Hash in {1}.",
+  "{0}: hash removed from {1}. It counts as new at the next build.": "{0}: Hash aus {1} entfernt. Die Source gilt beim nächsten Build als neu."
 }

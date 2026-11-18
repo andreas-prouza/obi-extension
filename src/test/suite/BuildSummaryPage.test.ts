@@ -4,6 +4,9 @@ import * as vscode from 'vscode';
 import { AppConfig } from '../../extension/config/AppConfig';
 import { Constants } from '../../shared/Constants';
 import { BuildSummary } from '../../webview/show_changes/BuildSummary';
+import { DependencyList } from '../../extension/obi/Dependency';
+import { DirTool } from '../../extension/utilities/DirTool';
+import { OBITools } from '../../extension/utilities/OBITools';
 import { reset_workspace } from './workspace_fixture';
 
 
@@ -62,7 +65,86 @@ suite('Build summary page', () => {
     assert.match(html, /<div class="cmd is-failed">/);
     assert.match(html, /class="btn secondary small stderr" source="lib\/qrpglesrc\/b\.rpgle\.pgm" level="2" cmd_index="1"/);
     assert.match(html, /<span class="cmd-time">not run<\/span>/, 'a command without time');
-    assert.match(html, /class="obi-check build_source_cmd" source="lib\/qrpglesrc\/b\.rpgle\.pgm" cmd="liblist -a LIB ; CRTBNDRPG failed"/);
+    assert.match(html, /class="obi-check build_source_cmd" source="lib\/qrpglesrc\/b\.rpgle\.pgm" level="2" cmd_index="1" cmd="liblist -a LIB ; CRTBNDRPG failed"/);
+  });
+
+
+  test('unchecked sources and commands: not checked, greyed out; command checkboxes name level and index', () => {
+    sinon.stub(BuildSummary, 'get_compile_list').returns({
+      compiles: [{ level: 1, sources: [
+        { source: 'lib/qrpglesrc/a.rpgle.pgm', ignore: true, cmds: [cmd('success')] },
+        { source: 'lib/qrpglesrc/b.rpgle.pgm', ignore: false, cmds: [cmd('new', { ignore: true }), cmd('new')] },
+      ] }],
+    });
+    const html = render();
+    assert.match(html, /<tr class="src-row collapsible-content level-1 is-ignored">\s*<td class="col-check"><input type="checkbox" class="obi-check build_source" source="lib\/qrpglesrc\/a\.rpgle\.pgm"[^>]*title="Build this source" >/);
+    assert.match(html, /<input type="checkbox" class="obi-check build_source" source="lib\/qrpglesrc\/b\.rpgle\.pgm"[^>]* checked>/);
+    assert.match(html, /<div class="cmd is-ignored">\s*<input type="checkbox" class="obi-check build_source_cmd" source="lib\/qrpglesrc\/b\.rpgle\.pgm" level="1" cmd_index="0"[^>]*"command 1" >/);
+    assert.match(html, /<div class="cmd">\s*<input type="checkbox" class="obi-check build_source_cmd" source="lib\/qrpglesrc\/b\.rpgle\.pgm" level="1" cmd_index="1"[^>]* checked>/);
+  });
+
+
+  suite('checkboxes are saved at once', () => {
+
+    const a = 'lib/qrpglesrc/a.rpgle.pgm', d = 'lib/qrpglesrc/d.rpgle.pgm', e = 'lib/qrpglesrc/e.rpgle.pgm', b = 'lib/qrpglesrc/b.rpgle.pgm';
+    let write: sinon.SinonStub;
+    let ask: sinon.SinonStub;
+
+    /** Ignored sources of the written list */
+    const ignored = () => (write.lastCall.args[1] as { compiles: { sources: { source: string; ignore?: boolean }[] }[] }).compiles
+      .flatMap(level => level.sources).filter(source => source.ignore).map(source => source.source);
+
+    setup(() => {
+      // a changed, d depends on a, e on d; b changed without dependents
+      sinon.stub(BuildSummary, 'get_compile_list').callsFake(() => ({
+        compiles: [
+          { level: 1, sources: [{ source: a, cmds: [cmd('success')] }, { source: b, cmds: [cmd('new')] }] },
+          { level: 2, sources: [{ source: d, cmds: [cmd('success')] }] },
+          { level: 3, sources: [{ source: e, cmds: [cmd('new'), cmd('new')] }] },
+        ],
+      }));
+      sinon.stub(BuildSummary as unknown as { changed_sources: () => string[] }, 'changed_sources').returns([a, b]);
+      sinon.stub(DependencyList, 'get_dependencies').resolves({ [d]: [a], [e]: [d] });
+      sinon.stub(DirTool, 'file_exists').returns(true);
+      write = sinon.stub(OBITools, 'write_compile_list');
+      ask = sinon.stub(vscode.window, 'showInformationMessage');
+    });
+
+
+    test('unchecking a successful source, with its dependents', async () => {
+      ask.resolves('Uncheck dependents too');
+      await BuildSummary.ignore_source(a, true);
+      assert.ok(ask.calledOnce);
+      assert.match(String(ask.firstCall.args[0]), /^2 source\(s\) are only in the build list because of lib\/qrpglesrc\/a\.rpgle\.pgm/);
+      assert.strictEqual((ask.firstCall.args[1] as vscode.MessageOptions).detail, `${d}\n${e}`);
+      assert.deepStrictEqual(ignored(), [a, d, e]);
+    });
+
+
+    test('only this source; cancel writes nothing', async () => {
+      ask.resolves('Only this source');
+      await BuildSummary.ignore_source(a, true);
+      assert.deepStrictEqual(ignored(), [a]);
+
+      ask.resolves(undefined);
+      await BuildSummary.ignore_source(a, true);
+      assert.ok(write.calledOnce);
+    });
+
+
+    test('no question without dependents or when checking; commands', async () => {
+      await BuildSummary.ignore_source(b, true);
+      await BuildSummary.ignore_source(e, true);
+      await BuildSummary.ignore_source(a, false);
+      assert.ok(ask.notCalled);
+      assert.strictEqual(write.callCount, 3);
+
+      await BuildSummary.ignore_cmd('3', e, 1, true);
+      const written = write.lastCall.args[1] as { compiles: { sources: { cmds: { ignore?: boolean }[] }[] }[] };
+      assert.deepStrictEqual(written.compiles[2].sources[0].cmds.map(c => c.ignore), [undefined, true]);
+      await BuildSummary.ignore_cmd('1', e, 1, true);
+      assert.strictEqual(write.callCount, 4, 'wrong level: nothing written');
+    });
   });
 
 

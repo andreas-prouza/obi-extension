@@ -1,10 +1,13 @@
 // Messages of the build summary webview (show_changes.ts → BuildSummary.ts)
-import { MessageOf, is_number, is_source_name, is_string, is_string_array, is_string_array_record, json_value, matches, one_of } from './MessageGuard';
+import { MessageOf, is_boolean, is_index, is_number, is_source_name, is_string, is_string_array, is_string_array_record, json_value, matches, one_of } from './MessageGuard';
 
 
 export const BUILD_SUMMARY_REQUESTS = {
   show_log: { type: one_of('joblog', 'stdout', 'stderr'), level: is_string, source: is_source_name, cmd_index: is_number },
   run_build: { ignore_sources: is_string_array, ignore_sources_cmd: is_string_array_record },
+  // Checkbox of a source or a command: written to the displayed compile-list.json at once
+  ignore_source: { source: is_source_name, ignore: is_boolean },
+  ignore_cmd: { level: is_string, source: is_source_name, cmd_index: is_index, ignore: is_boolean },
   open_file: { source: is_source_name },
   add_source: {},
   edit_cmd: { level: is_string, source: is_source_name, cmd_index: is_number },

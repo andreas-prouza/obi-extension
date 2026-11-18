@@ -632,6 +632,35 @@ export class OBITools {
 
 
 
+  /**
+   * Sets the hash of a source in the compiled object list, or removes it (hash undefined).
+   * Returns the previous hash (undefined: none). Throws ConfigFileError if the file isn't valid JSON (nothing written).
+   */
+  public static set_source_hash(source: string, hash: string | undefined): string | undefined {
+
+    const config = AppConfig.get_app_config();
+    if (!config.general['compiled-object-list'])
+      throw Error(`Invalid config for config.general['compiled-object-list']: ${config.general['compiled-object-list']}`);
+
+    const file: string = path.join(Workspace.get_workspace(), config.general['compiled-object-list']);
+    const parsed: unknown = DirTool.read_json_strict<unknown>(file);
+    const source_hash_list: Record<string, unknown> = typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+
+    const previous = typeof source_hash_list[source] === 'string' ? source_hash_list[source] as string : undefined;
+    const unchanged = hash === undefined ? !Object.hasOwn(source_hash_list, source) : previous === hash;
+    if (unchanged)
+      return previous;
+    if (hash === undefined)
+      delete source_hash_list[source];
+    else
+      source_hash_list[source] = hash;
+
+    DirTool.write_json(file, source_hash_list);
+    return previous;
+  }
+
+
+
   /** Sources that are new or changed since the last successful build */
   public static async get_changed_sources(): Promise<source.ISourceList> {
     const hashes = await OBITools.retrieve_current_source_hashes();
