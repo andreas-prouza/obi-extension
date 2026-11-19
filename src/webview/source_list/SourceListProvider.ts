@@ -12,6 +12,8 @@ import { SourceListConfig } from './SourceListConfig';
 import { OBITools } from '../../extension/utilities/OBITools';
 import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
 import { DependencyList } from '../../extension/obi/Dependency';
+import { BuildPackageStore } from '../../extension/obi/BuildPackageStore';
+import { SOURCES_MIME_TYPE } from '../../shared/BuildPackage';
 import { register_command } from '../../extension/utilities/Registration';
 
 
@@ -408,6 +410,15 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     // Keep object-list.json (compiled-object-list) in sync with source rename.
     OBITools.rename_source_in_object_list(old_source_normalized, new_source_normalized);
 
+    // Build packages containing the source; one that can't be read doesn't stop the others
+    const packages = new BuildPackageStore(Workspace.get_workspace()).rename_source_everywhere(old_source_normalized, new_source_normalized);
+    if (packages.changed.length > 0)
+      logger.info(`Renamed ${old_source_normalized} in build packages: ${packages.changed.join(', ')}`);
+    if (packages.errors.length > 0) {
+      logger.warn(`Build packages not updated: ${packages.errors.join('; ')}`);
+      vscode.window.showWarningMessage(vscode.l10n.t('{0} build package(s) could not be updated: {1}', packages.errors.length, packages.errors[0]));
+    }
+
     // Update source-infos entry.
     const source_infos: source.ISourceInfos = await LocalSourceList.get_source_info_list();
     if (source_infos[old_source_normalized]) {
@@ -451,9 +462,24 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
 
   public register(context: vscode.ExtensionContext): any {
     // setup
-    const options = {
+    const options: vscode.TreeViewOptions<SourceListItem> = {
       treeDataProvider: this,
-      showCollapseAll: true
+      showCollapseAll: true,
+      canSelectMany: true,
+      // Members can be dragged onto a build package (and into the editor, which opens them)
+      dragAndDropController: {
+        dragMimeTypes: [SOURCES_MIME_TYPE, 'text/uri-list'],
+        dropMimeTypes: [],
+        handleDrag: (items, data) => {
+          const members = items.filter(item => item.contextValue === 'obi-source' && item.src_lib && item.src_file && item.src_member);
+          if (members.length === 0)
+            return;
+          const sources = members.map(item => `${item.src_lib}/${item.src_file}/${item.src_member}`);
+          data.set(SOURCES_MIME_TYPE, new vscode.DataTransferItem(JSON.stringify(sources)));
+          const uris = sources.map(source => DirTool.get_file_URI(path.join(DirTool.get_local_source_dir_relative(), source)).toString());
+          data.set('text/uri-list', new vscode.DataTransferItem(uris.join('\r\n')));
+        }
+      }
     };
 
     // create (createTreeView registers the data provider as well)

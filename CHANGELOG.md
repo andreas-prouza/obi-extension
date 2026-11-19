@@ -1,3 +1,18 @@
+## [2.2.0]
+
+### Features
+* **Build packages:** a named list of sources that is always built completely, with the objects depending on it, e.g. for a ticket. Packages are files in `.obi/build-packages`, shared with the team via git. The new view *Build packages* creates, renames and deletes them, adds and removes sources, shows their build list and builds them; *Add to build package…* is in the submenu *OBI* of the Explorer, the editor tab and the source filters. The build summary and the build history show the package of a build. With a local OBI, it needs backend version 5 (`create --package`) ([docs](asserts/docs/building.md#build-packages), [spec](docs/features/build-packages.md))
+
+* **Build packages: more ways to fill and find them.** *Add sources changed on this branch* (git, compared with the base branch, setting `obi.buildPackages.baseBranch`), drag and drop from the Source filters, the Explorer and other packages, a text filter and archiving in the view, and the build history filtered by package ([docs](asserts/docs/building.md#build-packages))
+
+* **Build packages: the last build.** A package shows the result and time of its last build (✓ built, ✗ failed, ○ cancelled) and links to its build summary. Stored per person in `.obi/cache` ([docs](asserts/docs/building.md#build-packages))
+
+### Changes
+* **Source filters view: several members can be selected** (e.g. to drag them onto a build package). The commands of a member still act on the member they were started on
+* **Show changes with a local OBI:** if the OBI backend reports an error, the previous build list is no longer shown or built ([spec](docs/features/build-packages.md))
+* *Current source:* `changed-object-list.json` lists the source as new if it was never built (before: always as changed)
+
+
 ## [2.1.1]
 
 ### Features

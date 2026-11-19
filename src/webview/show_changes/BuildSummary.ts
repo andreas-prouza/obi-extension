@@ -14,6 +14,7 @@ import { OBICommands } from '../../extension/obi/OBICommands';
 import { LogOutputProvider } from './LogOutputProvider';
 import { CompileDiagnostics } from '../../extension/source/CompileDiagnostics';
 import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
+import { pick_sources } from '../tools/SourcePick';
 import { DependencyList } from '../../extension/obi/Dependency';
 import { mergeSourcesIntoCompileList, resetDependentStatuses } from '../../extension/obi/compile_list/modules/add_sources';
 import { create_dependency_graph } from '../../extension/obi/compile_list/modules/dependency';
@@ -401,30 +402,12 @@ export class BuildSummary {
     }
 
     const source_info_list: ISourceInfos = await LocalSourceList.get_source_info_list();
-    const candidates = Object.entries(source_info_list).filter(([source]) => !existing_sources.has(source));
-
-    if (candidates.length === 0) {
+    if (Object.keys(source_info_list).every(source => existing_sources.has(source))) {
       vscode.window.showInformationMessage(vscode.l10n.t('All sources are already part of the build summary.'));
       return;
     }
 
-    const quick_pick = vscode.window.createQuickPick();
-    quick_pick.placeholder = 'Select sources to add to the build summary...';
-    quick_pick.canSelectMany = true;
-    quick_pick.matchOnDescription = true;
-    quick_pick.items = candidates.map(([source, info]) => ({ label: source, description: (info || {}).description || '' }));
-
-    const selected_sources: string[] = await new Promise((resolve) => {
-      quick_pick.onDidAccept(() => {
-        resolve(quick_pick.selectedItems.map(item => item.label));
-        quick_pick.hide();
-      });
-      quick_pick.onDidHide(() => {
-        resolve([]);
-        quick_pick.dispose();
-      });
-      quick_pick.show();
-    });
+    const selected_sources = await pick_sources({ placeholder: 'Select sources to add to the build summary...', exclude: existing_sources });
 
     if (selected_sources.length === 0) {
       return;

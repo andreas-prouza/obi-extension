@@ -39,6 +39,8 @@ import { remove_secrets_from_history } from './extension/obi/HistorySecrets';
 import { ProjectState } from './extension/ProjectState';
 import { BackendUpdate } from './extension/obi/BackendUpdate';
 import { FILE_CALLBACKS } from './file_callbacks';
+import { BuildPackagesProvider } from './webview/build_packages/BuildPackagesProvider';
+import { BuildPackageCommands } from './webview/build_packages/BuildPackageCommands';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -128,6 +130,11 @@ function register_project_features(context: vscode.ExtensionContext): void {
 	// Create new source list provider
 	const source_list_provider = new SourceListProvider(rootPath);
 	source_list_provider.register(context);
+
+	// Build packages: named source lists, committed with the project
+	const build_packages_provider = new BuildPackagesProvider(rootPath);
+	build_packages_provider.register(context);
+	BuildPackageCommands.register(context, build_packages_provider);
 
 	//--------------------------------------------------------
 	// i-Releaser
@@ -346,6 +353,7 @@ function register_project_features(context: vscode.ExtensionContext): void {
 		}
 
 		SourceListProvider.get_instance().refresh();
+		BuildPackagesProvider.get_instance()?.refresh();
 	});
 
     context.subscriptions.push(renameListener);

@@ -25,6 +25,23 @@
         }
       }
     },
+    "package": {
+      "type": "object",
+      "description": "The build package the list was created for (.obi/build-packages/<name>.json).",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the build package."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the build package."
+        }
+      }
+    },
     "config": {
       "type": "object",
       "description": "Older versions: the configuration of the build. Now in config.json of the build history."

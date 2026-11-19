@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -373,6 +373,162 @@
       {
         "command": "obi.initialize-folder",
         "title": "%obi.initialize-folder%"
+      },
+      {
+        "command": "obi.build-package.refresh",
+        "title": "%obi.build-package.refresh%",
+        "category": "OBI",
+        "icon": "$(refresh)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.create",
+        "title": "%obi.build-package.create%",
+        "category": "OBI",
+        "icon": "$(add)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.add-sources",
+        "title": "%obi.build-package.add-sources%",
+        "category": "OBI",
+        "icon": "$(add)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.add-changed-sources",
+        "title": "%obi.build-package.add-changed-sources%",
+        "category": "OBI",
+        "icon": "$(diff-added)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.add-to-package",
+        "title": "%obi.build-package.add-to-package%",
+        "category": "OBI",
+        "icon": "$(package)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.remove-sources",
+        "title": "%obi.build-package.remove-sources%",
+        "category": "OBI",
+        "icon": "$(remove)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.rename",
+        "title": "%obi.build-package.rename%",
+        "category": "OBI",
+        "icon": "$(edit)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.edit-description",
+        "title": "%obi.build-package.edit-description%",
+        "category": "OBI",
+        "icon": "$(note)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.open-file",
+        "title": "%obi.build-package.open-file%",
+        "category": "OBI",
+        "icon": "$(json)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.delete",
+        "title": "%obi.build-package.delete%",
+        "category": "OBI",
+        "icon": "$(trash)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.show-build-list",
+        "title": "%obi.build-package.show-build-list%",
+        "category": "OBI",
+        "icon": "$(list-flat)",
+        "when": "obi.contains_obi_project && obi.valid-config",
+        "enablement": "!obi.busy"
+      },
+      {
+        "command": "obi.build-package.run-build",
+        "title": "%obi.build-package.run-build%",
+        "category": "OBI",
+        "icon": "$(play)",
+        "when": "obi.contains_obi_project && obi.valid-config",
+        "enablement": "!obi.busy"
+      },
+      {
+        "command": "obi.build-package.add-branch-changes",
+        "title": "%obi.build-package.add-branch-changes%",
+        "category": "OBI",
+        "icon": "$(git-compare)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.archive",
+        "title": "%obi.build-package.archive%",
+        "category": "OBI",
+        "icon": "$(archive)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.unarchive",
+        "title": "%obi.build-package.unarchive%",
+        "category": "OBI",
+        "icon": "$(discard)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.filter",
+        "title": "%obi.build-package.filter%",
+        "category": "OBI",
+        "icon": "$(filter)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.clear-filter",
+        "title": "%obi.build-package.clear-filter%",
+        "category": "OBI",
+        "icon": "$(filter-filled)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.show-archived",
+        "title": "%obi.build-package.show-archived%",
+        "category": "OBI",
+        "icon": "$(archive)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.hide-archived",
+        "title": "%obi.build-package.hide-archived%",
+        "category": "OBI",
+        "icon": "$(eye-closed)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.show-builds",
+        "title": "%obi.build-package.show-builds%",
+        "category": "OBI",
+        "icon": "$(history)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-history.filter-package",
+        "title": "%obi.build-history.filter-package%",
+        "category": "OBI",
+        "icon": "$(package)",
+        "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.open-last-build",
+        "title": "%obi.build-package.open-last-build%",
+        "category": "OBI",
+        "icon": "$(go-to-file)",
+        "when": "obi.contains_obi_project && obi.valid-config"
       }
     ],
     "submenus": [
@@ -484,6 +640,41 @@
           "command": "obi.build-history.delete-all",
           "when": "view == obi.build-history",
           "group": "navigation@2"
+        },
+        {
+          "command": "obi.build-package.create",
+          "when": "view == obi.build-packages",
+          "group": "navigation@0"
+        },
+        {
+          "command": "obi.build-package.refresh",
+          "when": "view == obi.build-packages",
+          "group": "navigation@9"
+        },
+        {
+          "command": "obi.build-package.filter",
+          "when": "view == obi.build-packages && !obi.build-packages.filtered",
+          "group": "navigation@2"
+        },
+        {
+          "command": "obi.build-package.clear-filter",
+          "when": "view == obi.build-packages && obi.build-packages.filtered",
+          "group": "navigation@2"
+        },
+        {
+          "command": "obi.build-package.show-archived",
+          "when": "view == obi.build-packages && !obi.build-packages.show-archived",
+          "group": "navigation@3"
+        },
+        {
+          "command": "obi.build-package.hide-archived",
+          "when": "view == obi.build-packages && obi.build-packages.show-archived",
+          "group": "navigation@3"
+        },
+        {
+          "command": "obi.build-history.filter-package",
+          "when": "view == obi.build-history",
+          "group": "navigation@0"
         }
       ],
       "obi.source": [
@@ -509,6 +700,11 @@
           "command": "obi.source.remove-hash",
           "when": "obi.valid-config",
           "group": "2_hash@2"
+        },
+        {
+          "command": "obi.build-package.add-to-package",
+          "when": "obi.valid-config",
+          "group": "3_package@1"
         }
       ],
       "editor/title/context": [
@@ -648,6 +844,101 @@
           "command": "obi.deployment.cancel",
           "when": "view == obi.deployment && viewItem =~ /^obi\\.ir\\.deployment\\.open/",
           "group": "9_cancel@0"
+        },
+        {
+          "command": "obi.build-package.run-build",
+          "when": "view == obi.build-packages && viewItem =~ /^obi-build-package(-archived)?$/",
+          "group": "inline@0"
+        },
+        {
+          "command": "obi.build-package.show-build-list",
+          "when": "view == obi.build-packages && viewItem =~ /^obi-build-package(-archived)?$/",
+          "group": "inline@1"
+        },
+        {
+          "command": "obi.build-package.add-sources",
+          "when": "view == obi.build-packages && viewItem =~ /^obi-build-package(-archived)?$/",
+          "group": "inline@2"
+        },
+        {
+          "command": "obi.build-package.show-build-list",
+          "when": "view == obi.build-packages && viewItem =~ /^obi-build-package(-archived)?$/",
+          "group": "1_build@1"
+        },
+        {
+          "command": "obi.build-package.run-build",
+          "when": "view == obi.build-packages && viewItem =~ /^obi-build-package(-archived)?$/",
+          "group": "1_build@2"
+        },
+        {
+          "command": "obi.build-package.add-sources",
+          "when": "view == obi.build-packages && viewItem =~ /^obi-build-package(-archived)?$/",
+          "group": "2_sources@1"
+        },
+        {
+          "command": "obi.build-package.add-changed-sources",
+          "when": "view == obi.build-packages && viewItem =~ /^obi-build-package(-archived)?$/",
+          "group": "2_sources@2"
+        },
+        {
+          "command": "obi.build-package.rename",
+          "when": "view == obi.build-packages && viewItem =~ /^obi-build-package(-archived)?$/ || view == obi.build-packages && viewItem == obi-build-package-invalid",
+          "group": "3_edit@1"
+        },
+        {
+          "command": "obi.build-package.edit-description",
+          "when": "view == obi.build-packages && viewItem =~ /^obi-build-package(-archived)?$/",
+          "group": "3_edit@2"
+        },
+        {
+          "command": "obi.build-package.open-file",
+          "when": "view == obi.build-packages && viewItem =~ /^obi-build-package(-archived)?$/ || view == obi.build-packages && viewItem == obi-build-package-invalid",
+          "group": "3_edit@3"
+        },
+        {
+          "command": "obi.build-package.open-file",
+          "when": "view == obi.build-packages && viewItem == obi-build-package-invalid",
+          "group": "inline@0"
+        },
+        {
+          "command": "obi.build-package.delete",
+          "when": "view == obi.build-packages && viewItem =~ /^obi-build-package(-archived)?$/ || view == obi.build-packages && viewItem == obi-build-package-invalid",
+          "group": "4_delete@1"
+        },
+        {
+          "command": "obi.build-package.remove-sources",
+          "when": "view == obi.build-packages && viewItem == obi-build-package-source",
+          "group": "inline@0"
+        },
+        {
+          "command": "obi.build-package.remove-sources",
+          "when": "view == obi.build-packages && viewItem == obi-build-package-source",
+          "group": "1_package@1"
+        },
+        {
+          "command": "obi.build-package.add-branch-changes",
+          "when": "view == obi.build-packages && viewItem =~ /^obi-build-package(-archived)?$/",
+          "group": "2_sources@3"
+        },
+        {
+          "command": "obi.build-package.show-builds",
+          "when": "view == obi.build-packages && viewItem =~ /^obi-build-package(-archived)?$/",
+          "group": "1_build@3"
+        },
+        {
+          "command": "obi.build-package.archive",
+          "when": "view == obi.build-packages && viewItem == obi-build-package",
+          "group": "3_edit@4"
+        },
+        {
+          "command": "obi.build-package.unarchive",
+          "when": "view == obi.build-packages && viewItem == obi-build-package-archived",
+          "group": "3_edit@4"
+        },
+        {
+          "command": "obi.build-package.open-last-build",
+          "when": "view == obi.build-packages && viewItem =~ /^obi-build-package(-archived)?$/",
+          "group": "1_build@4"
         }
       ],
       "commandPalette": [
@@ -718,6 +1009,94 @@
         {
           "command": "obi.timeline.delete-build",
           "when": "false"
+        },
+        {
+          "command": "obi.build-package.refresh",
+          "when": "false"
+        },
+        {
+          "command": "obi.build-package.remove-sources",
+          "when": "false"
+        },
+        {
+          "command": "obi.build-package.create",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.add-sources",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.add-changed-sources",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.add-to-package",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.rename",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.edit-description",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.open-file",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.delete",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.show-build-list",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.run-build",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.add-branch-changes",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.archive",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.unarchive",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.filter",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.clear-filter",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.show-archived",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.hide-archived",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.show-builds",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-history.filter-package",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.open-last-build",
+          "when": "obi.contains_obi_project && obi.valid-config"
         }
       ],
       "timeline/item/context": [
@@ -759,6 +1138,12 @@
           "type": "tree",
           "id": "obi.source-filter",
           "name": "%Source filters%",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "type": "tree",
+          "id": "obi.build-packages",
+          "name": "%view.obi.build-packages%",
           "when": "obi.contains_obi_project && obi.valid-config"
         },
         {
@@ -808,6 +1193,10 @@
       {
         "view": "obi-config-invalid",
         "contents": "%viewsWelcome.config-invalid%"
+      },
+      {
+        "view": "obi.build-packages",
+        "contents": "%viewsWelcome.build-packages%"
       }
     ],
     "configuration": {
@@ -875,6 +1264,12 @@
           "default": false,
           "scope": "machine",
           "description": "%obi.backend.autoUpdateRemote%"
+        },
+        "obi.buildPackages.baseBranch": {
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "markdownDescription": "%obi.buildPackages.baseBranch%"
         }
       }
     },
@@ -975,6 +1370,10 @@
           "**/.obi/build-history/*/compile-list.json"
         ],
         "url": "./asserts/schemas/compile-list.schema.json"
+      },
+      {
+        "fileMatch": "**/.obi/build-packages/*.json",
+        "url": "./asserts/schemas/build-package.schema.json"
       }
     ]
   },

@@ -42,6 +42,7 @@
       <span title="{{ global_stuff['get_text']('Remote host') | safe }}"><span class="codicon codicon-remote"></span>{{ compile_app_config['connection']['ssh-user'] }}@{{ compile_app_config['connection']['remote-host'] }}</span>
       <span title="{{ global_stuff['get_text']('IBM i IFS path') | safe }}"><span class="codicon codicon-folder"></span>{{ compile_app_config['general']['remote-base-dir'] }}</span>
       {% if compile_list['git'] and (compile_list['git']['branch'] or compile_list['git']['commit']) %}<span title="git"><span class="codicon codicon-git-branch"></span>{{ compile_list['git']['branch'] or '' }}{% if compile_list['git']['branch'] and compile_list['git']['commit'] %} · {% endif %}{{ (compile_list['git']['commit'] or '') | truncate(7, true, '') }}</span>{% endif %}
+      {% if compile_list['package'] and compile_list['package']['name'] %}<span title="{{ global_stuff['get_text']('Build package') | safe }}{% if compile_list['package']['description'] %}: {{ compile_list['package']['description'] }}{% endif %}"><span class="codicon codicon-package"></span>{{ compile_list['package']['name'] }}</span>{% endif %}
     </div>
     {% if custom_build_list_template %}<div class="custom-content">{% include custom_build_list_template ignore missing %}</div>{% endif %}
     {% if i_releaser and i_releaser.deployment and i_releaser.deployment.watched %}

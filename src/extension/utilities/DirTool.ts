@@ -12,6 +12,7 @@ import { ConfigFileError, get_error_message, json_error_position } from "../../s
 import { show_error } from "./Notify";
 import { local_source_dir, local_source_root, relative_inside } from "./SourcePath";
 import { md5_file } from "../obi/compile_list/modules/source_hashes";
+import { write_file_atomic } from "./AtomicFile";
 
 
 const crypto = require('crypto')
@@ -121,32 +122,8 @@ export class DirTool {
    * Writes via a temp file + rename, so readers never see a partially written file. Throws on failure.
    */
   public static write_atomic(file: string, content: string): void {
-
-    file = DirTool.resolve_env_in_path(file);
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-
-    // Write next to the real file if `file` is a symlink, so the link is kept
-    const target = fs.existsSync(file) ? fs.realpathSync(file) : file;
-    const tmp = `${target}.${process.pid}.${Date.now()}.tmp`;
-    fs.writeFileSync(tmp, content, 'utf8');
-
-    for (let attempt = 0; ; attempt++) {
-      try {
-        fs.renameSync(tmp, target);
-        logger.debug(`Written: ${target}`);
-        return;
-      }
-      catch (e) {
-        const code = (e as NodeJS.ErrnoException).code;
-        // Windows: the target can be locked for a moment (file watcher, virus scanner)
-        if (attempt < 3 && (code === 'EPERM' || code === 'EBUSY' || code === 'EACCES')) {
-          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50);
-          continue;
-        }
-        fs.rmSync(tmp, { force: true });
-        throw e;
-      }
-    }
+    const target = write_file_atomic(DirTool.resolve_env_in_path(file), content);
+    logger.debug(`Written: ${target}`);
   }
 
 

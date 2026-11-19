@@ -80,6 +80,15 @@ suite('Build history index', () => {
     assert.strictEqual(read_build(dir, { ...compile_list([]), custom_data: { json: { meta_file: { general: { id: 'x7' } } } } })?.deployment, 'x7');
   });
 
+  test('read_build: the build package of the build', () => {
+    const dir = '2026-11-07T10.00.00.000Z';
+    const build = read_build(dir, compile_list([{ source: 'a', cmds: [ok()] }]));
+    assert.ok(build && !('package' in build));
+    assert.strictEqual(read_build(dir, { ...compile_list([]), package: { name: 'ABC-123', description: 'Order' } })?.package, 'ABC-123');
+    assert.strictEqual(read_build(dir, { ...compile_list([]), package: 'ABC-123' })?.package, undefined);
+    assert.strictEqual(read_build(dir, { ...compile_list([]), package: { name: '' } })?.package, undefined);
+  });
+
   test('builds of a source and below a folder, newest first', () => {
     const index = [
       entry('2026-11-05T10.00.00.000Z', ['lib/qrpglesrc/a.rpgle', 'success']),

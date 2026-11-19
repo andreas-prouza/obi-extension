@@ -63,6 +63,12 @@ export class ExtensionSettings {
   }
 
 
+  /** Base branch of "Add sources changed on this branch" (build packages); '' = detect it */
+  public static build_packages_base_branch(): string {
+    return (vscode.workspace.getConfiguration('obi', ExtensionSettings.resource()).get<string>('buildPackages.baseBranch', '') ?? '').trim();
+  }
+
+
   public static build_history_max_builds(): number {
     return vscode.workspace.getConfiguration('obi', ExtensionSettings.resource()).get<number>('buildHistory.maxBuilds', 100);
   }
