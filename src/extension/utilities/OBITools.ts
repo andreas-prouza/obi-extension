@@ -15,6 +15,7 @@ import { OBICommands } from '../../extension/obi/OBICommands';
 import { template_text } from './TemplateTexts';
 import { OperationLock } from './OperationLock';
 import { createBuildList } from '../../extension/obi/compile_list/createBuildList';
+import { ALL_CHANGES, BuildScope } from '../obi/compile_list/BuildScope';
 import { compare_hashes, compute_source_hashes } from '../../extension/obi/compile_list/modules/source_hashes';
 import { Dependencies, DependencyList } from '../obi/Dependency';
 import { GitInfo } from './GitInfo';
@@ -669,23 +670,19 @@ export class OBITools {
 
 
 
-  public static async generate_source_change_lists(source?: string): Promise<string[]> {
+  /** Creates the build list for `scope` and the lists of changed and dependent sources; returns all sources to build */
+  public static async generate_source_change_lists(scope: BuildScope = ALL_CHANGES): Promise<string[]> {
     const ws = Workspace.get_workspace();
 
     DirTool.clean_dir(path.join(ws, '.obi', 'tmp'));
     DirTool.clean_dir(path.join(ws, '.obi', 'build-output'));
 
-    logger.info('Get changed sources');
-    let changed_sources: source.ISourceList = {
-      "new-objects": [],
-      "changed-sources": [source || ''],
-      "old-sources": []
-    }
-    if (!source)
-      changed_sources = await OBITools.get_changed_sources();
+    logger.info(scope.kind === 'changes' ? 'Get changed sources' : `Build list for ${scope.package ? `build package ${scope.package.name}` : scope.sources.join(', ')}`);
+    const changed = scope.kind === 'changes' ? await OBITools.get_changed_sources() : undefined;
 
     // Dependents come from the build order (computed once)
-    const build = await createBuildList(source, source ? undefined : changed_sources);
+    const build = await createBuildList(scope, changed);
+    const changed_sources: source.ISourceList = { ...build.changed, 'old-sources': [] };
     const dependend_sources: string[] = build.dependents;
 
     logger.info('Clean dir');

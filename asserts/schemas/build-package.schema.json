@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OBI build package",
+  "description": "A named list of sources that are built together with their dependent objects. The file name is the name of the package.",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string",
+      "description": "Description, e.g. the ticket."
+    },
+    "archived": {
+      "type": "boolean",
+      "description": "Done (e.g. merged): hidden in the Build packages view unless archived packages are shown. It can still be built."
+    },
+    "sources": {
+      "type": "array",
+      "description": "Sources of the package, relative to the source directory. They are always built, also if they didn't change.",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_$#@.\\-]+/[A-Za-z0-9_$#@.\\-]+/[A-Za-z0-9_$#@.\\-]+$",
+        "patternErrorMessage": "A source in the form lib/file/member.ext, e.g. mylib/qrpglesrc/hello.rpgle.pgm"
+      }
+    }
+  }
+}

@@ -31,6 +31,9 @@ import { PhaseTimer, result_download_plan } from './ResultDownload';
 import { ExtensionSettings } from '../utilities/ExtensionSettings';
 import { BackendUpdate } from './BackendUpdate';
 import { has_extension, md5_file } from './compile_list/modules/source_hashes';
+import { ALL_CHANGES, BuildScope, single_source_scope } from './compile_list/BuildScope';
+import { is_valid_package_name } from '../../shared/BuildPackage';
+import { PackageLastBuilds } from './PackageLastBuilds';
 
 
 
@@ -335,6 +338,15 @@ export class OBICommands {
     OBITools.write_compile_list(path.join(historyDir, 'compile-list.json'), compile_list);
     DirTool.write_json(path.join(historyDir, Constants.BUILD_HISTORY_CONFIG_FILE), config_without_secrets(config));
     DirTool.copy_dir(path.join(ws, Constants.OBI_TMP_DIR), historyDir);
+    // Last build of its build package (status and link to this build summary in the Build packages view)
+    try {
+      const build_package = new PackageLastBuilds(ws).record(historyDirName, compile_list);
+      if (build_package)
+        logger.info(`Last build of build package ${build_package}: ${historyDirName}`);
+    }
+    catch (e: unknown) {
+      logger.warn(`The last build of the build package could not be stored: ${get_error_message(e)}`);
+    }
     return historyDirName;
   }
 
@@ -436,16 +448,16 @@ export class OBICommands {
     if (!source)
       return OBIController.run_finished('run_build');
 
-    OBICommands.run_build(context, source);
+    OBICommands.run_build(context, single_source_scope(source));
   }
 
 
 
 
-  public static async run_build(context: vscode.ExtensionContext, source?: string) {
+  public static async run_build(context: vscode.ExtensionContext, scope: BuildScope = ALL_CHANGES) {
 
     await OperationLock.run('Run build', async () => {
-      if (await OBICommands.do_show_changes(context, source))
+      if (await OBICommands.do_show_changes(context, scope))
         await OBICommands.do_rerun_build([], {});
     });
 
@@ -501,15 +513,15 @@ export class OBICommands {
       return false;
     }
 
-    return await OBICommands.show_changes(context, source);
+    return await OBICommands.show_changes(context, single_source_scope(source));
   }
 
 
 
 
-  public static async show_changes(context: vscode.ExtensionContext, source?: string): Promise<boolean> {
+  public static async show_changes(context: vscode.ExtensionContext, scope: BuildScope = ALL_CHANGES): Promise<boolean> {
 
-    const is_success = await OperationLock.run('Show changes', () => OBICommands.do_show_changes(context, source));
+    const is_success = await OperationLock.run('Show changes', () => OBICommands.do_show_changes(context, scope));
 
     OBIController.run_finished('show_changes');
     OBIController.update_build_summary_timestamp();
@@ -520,7 +532,23 @@ export class OBICommands {
 
 
 
-  private static async do_show_changes(context: vscode.ExtensionContext, source?: string): Promise<boolean> {
+  /** Arguments of `create` for the local OBI: `--source` for one source, `--package` for a build package */
+  private static local_obi_create_args(config: AppConfig, scope: BuildScope): string[] {
+    if (scope.kind === 'changes')
+      return OBICommands.local_obi_args(config, 'create');
+    if (scope.package) {
+      if (!is_valid_package_name(scope.package.name))
+        throw new Error(`Invalid build package name '${scope.package.name}'`);
+      return OBICommands.local_obi_args(config, 'create', undefined, [`--package=${scope.package.name}`]);
+    }
+    if (scope.sources.length !== 1)
+      throw new Error('The OBI backend creates a build list for one source or a build package only');
+    return OBICommands.local_obi_args(config, 'create', scope.sources[0]);
+  }
+
+
+
+  private static async do_show_changes(context: vscode.ExtensionContext, scope: BuildScope = ALL_CHANGES): Promise<boolean> {
 
     let is_success: boolean = false;
     OBITools.self_check();
@@ -535,12 +563,38 @@ export class OBICommands {
 
     try {
       if (OBITools.without_local_obi() || !config.general['local-obi-dir'])
-        await OBITools.generate_source_change_lists(source);
+        await OBITools.generate_source_change_lists(scope);
       else {
         logger.info(`WS: ${Workspace.get_workspace()}`);
-        const args = OBICommands.local_obi_args(config, 'create', source);
-        BuildOutput.start('Show changes (local OBI)');
-        await SystemCmdExecution.run_system_cmd(Workspace.get_workspace(), OBICommands.local_obi_python(), args, 'show_changes', { token: OperationLock.token, on_line: line => BuildOutput.line(line) });
+        const args = OBICommands.local_obi_create_args(config, scope);
+        BuildOutput.start(scope.kind === 'sources' && scope.package ? `Build package ${scope.package.name} (local OBI)` : 'Show changes (local OBI)');
+        let unknown_package_argument = false;
+        try {
+          await SystemCmdExecution.run_system_cmd(Workspace.get_workspace(), OBICommands.local_obi_python(), args, 'show_changes', {
+            token: OperationLock.token,
+            on_line: line => {
+              BuildOutput.line(line);
+              // argparse of a local OBI older than build packages
+              if (/unrecognized arguments:.*--package/.test(line))
+                unknown_package_argument = true;
+            }
+          });
+        }
+        catch (e: unknown) {
+          if (unknown_package_argument)
+            throw new Error(vscode.l10n.t('The local OBI is too old for build packages. Update it in {0} (e.g. git pull).', config.general['local-obi-dir'] ?? ''), { cause: e });
+          throw e;
+        }
+
+        // The backend ends with exit code 0 also after an error (e.g. an invalid build package), which can leave the
+        // previous build list in place: don't show or build it. OBIController.check_obi_response shows the message.
+        // On success there is none: create deletes the build output
+        const status_file = path.join(Workspace.get_workspace(), Constants.OBI_STATUS_FILE);
+        const status = DirTool.file_exists(status_file) ? DirTool.get_json(status_file, false) : undefined;
+        if (status && status['status'] === 'error') {
+          logger.error(`Local OBI could not create the build list: ${status['message']}`);
+          return false;
+        }
 
         // Python OBI doesn't know about git info; refresh the compile-list it just wrote.
         const created_compile_list = OBITools.get_compile_list(Workspace.get_workspace_uri());

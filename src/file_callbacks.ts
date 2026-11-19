@@ -8,6 +8,8 @@ import { BuildIndex } from "./webview/build_history/BuildIndex";
 import { AppConfig } from "./extension/config/AppConfig";
 import { SourceListProvider } from "./webview/source_list/SourceListProvider";
 import { DeploymentsView } from "./webview/deployment/DeploymentsView";
+import { BuildPackagesProvider } from "./webview/build_packages/BuildPackagesProvider";
+import { PACKAGE_LAST_BUILDS_FILE } from "./extension/obi/PackageLastBuilds";
 
 
 /** What happens when files of the project change (see HealthyWatchdog) */
@@ -24,6 +26,10 @@ export const FILE_CALLBACKS: FileCallback[] = [
   { pattern: Constants.DEPENDENCY_LIST, delay: 200, action: () => DependencyList.load_dependencies() },
   // The folders themselves too (deleted)
   { pattern: `${Constants.SOURCE_FILTER_FOLDER_NAME}{,/**}`, delay: 200, action: () => SourceListProvider.get_instance().refresh() },
+  // Also changed by git (checkout, pull, merge)
+  { pattern: `${Constants.BUILD_PACKAGE_DIR}{,/**}`, delay: 200, action: () => BuildPackagesProvider.get_instance()?.refresh() },
+  // Last build of each package (written after a build)
+  { pattern: PACKAGE_LAST_BUILDS_FILE, delay: 200, action: () => BuildPackagesProvider.get_instance()?.refresh() },
   { pattern: `${Constants.BUILD_HISTORY_DIR}{,/*,/*/compile-list.json}`, delay: 500, action: () => {
     BuildHistoryProvider.get_instance().refresh();
     BuildIndex.changed();   // Timeline

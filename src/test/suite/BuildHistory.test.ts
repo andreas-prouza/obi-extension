@@ -15,7 +15,7 @@ function history_root(timestamps: string[]): string {
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'compile-list.json'), JSON.stringify({ timestamp, compiles: [] }));
   }
-  fs.mkdirSync(path.join(root, Constants.BUILD_HISTORY_DIR, 'not-a-timestamp'));
+  fs.mkdirSync(path.join(root, Constants.BUILD_HISTORY_DIR, 'not-a-timestamp'), { recursive: true });
   return root;
 }
 
@@ -37,6 +37,35 @@ suite('Build history tree', () => {
       const builds: BuildHistoryItem[] = await provider.getChildren(date_item);
       assert.strictEqual(builds.length, 2, 'both timestamp formats are shown');
       assert.ok((builds[0].build_time?.getTime() ?? 0) > (builds[1].build_time?.getTime() ?? 0), 'newest first');
+    }
+    finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+
+  test('filter by build package: only the builds of the package, with its name next to the time', async () => {
+    const root = history_root([]);
+    const add = (timestamp: string, build_package?: string) => {
+      const dir = path.join(root, Constants.BUILD_HISTORY_DIR, history_dir_name(timestamp));
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, 'compile-list.json'), JSON.stringify({ timestamp, compiles: [], ...(build_package ? { package: { name: build_package } } : {}) }));
+    };
+    add('2026-10-22T08:00:00.000Z', 'ABC-123');
+    add('2026-10-22T09:00:00.000Z', 'other');
+    add('2026-10-22T10:00:00.000Z');
+    try {
+      const provider = new BuildHistoryProvider(root);
+      const builds = async () => (await Promise.all((await provider.getChildren()).map(date => provider.getChildren(date)))).flat();
+
+      assert.strictEqual((await builds()).length, 3);
+      await provider.set_package_filter('ABC-123');
+      const filtered = await builds();
+      assert.deepStrictEqual(filtered.map(item => item.dirName), [history_dir_name('2026-10-22T08:00:00.000Z')]);
+      assert.strictEqual(filtered[0].description, 'ABC-123');
+
+      await provider.set_package_filter(undefined);
+      assert.strictEqual((await builds()).length, 3);
     }
     finally {
       fs.rmSync(root, { recursive: true, force: true });

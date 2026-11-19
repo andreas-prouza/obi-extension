@@ -30,6 +30,8 @@ export interface BuildEntry {
   failed: number;
   /** Id of the i-Releaser deployment started for this build */
   deployment?: string;
+  /** Name of the build package the build list was created for */
+  package?: string;
 }
 
 export interface FolderBuild {
@@ -71,8 +73,14 @@ export function read_build(dir: string, compile_list: unknown): BuildEntry | und
       }
     }
   }
+  const entry: BuildEntry = { dir, time, sources, total, failed };
   const deployment = deployment_of(compile_list);
-  return deployment ? { dir, time, sources, total, failed, deployment: String(deployment.id) } : { dir, time, sources, total, failed };
+  if (deployment)
+    entry.deployment = String(deployment.id);
+  const build_package = compile_list.package;
+  if (is_object(build_package) && typeof build_package.name === 'string' && build_package.name !== '')
+    entry.package = build_package.name;
+  return entry;
 }
 
 

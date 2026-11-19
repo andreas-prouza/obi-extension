@@ -26,6 +26,8 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
   private workspaceRoot: string = '';
   private view_mode: 'date' | 'source' = 'date';
   private source_filter: Set<string> | undefined;
+  /** Only builds of this build package (docs/features/build-packages.md) */
+  private package_filter: string | undefined;
   private _onDidChangeTreeData: vscode.EventEmitter<BuildHistoryItem | undefined | null | void> = new vscode.EventEmitter<BuildHistoryItem | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<BuildHistoryItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
@@ -62,9 +64,16 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
   private static build_item(dir: string, dirPath: string, date: Date): BuildHistoryItem {
     const item = new BuildHistoryItem(date.toLocaleTimeString(), vscode.TreeItemCollapsibleState.Collapsed, dirPath, 'build', dir, local_date_label(date));
     item.build_time = date;
-    const deployment = BuildIndex.read(dirPath)?.deployment;
-    if (deployment)
-      item.description = vscode.l10n.t('i-Releaser {0}', deployment);
+    const entry = BuildIndex.read(dirPath);
+    const parts: string[] = [];
+    if (entry?.package)
+      parts.push(entry.package);
+    if (entry?.deployment)
+      parts.push(vscode.l10n.t('i-Releaser {0}', entry.deployment));
+    if (parts.length > 0)
+      item.description = parts.join(' · ');
+    if (entry?.package)
+      item.tooltip = `${item.tooltip ?? ''}\n${vscode.l10n.t('Build package')}: ${entry.package}`;
     return item;
   }
 
@@ -204,6 +213,8 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
    * True when no source filter is active, or the build at dirPath contains at least one filtered source.
    */
   private matches_filter(dirPath: string): boolean {
+    if (!this.matches_package(dirPath))
+      return false;
     if (!this.source_filter || this.source_filter.size === 0) {
       return true;
     }
@@ -214,6 +225,12 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
       }
     }
     return false;
+  }
+
+
+  /** True when no package filter is active, or the build was created for the filtered build package */
+  private matches_package(dirPath: string): boolean {
+    return !this.package_filter || BuildIndex.read(dirPath)?.package === this.package_filter;
   }
 
 
@@ -242,7 +259,7 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
       return build_history_dirs
         .map(dir => {
           const dirPath = path.join(build_history_path, dir);
-          if (!DirTool.dir_exists(dirPath) || !BuildHistoryProvider.get_sources_from_build(dirPath).has(source_filter)) {
+          if (!DirTool.dir_exists(dirPath) || !this.matches_package(dirPath) || !BuildHistoryProvider.get_sources_from_build(dirPath).has(source_filter)) {
             return null;
           }
           const date = BuildHistoryProvider.parse_dir(dir);
@@ -261,7 +278,7 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
       const dates = new Set<string>();
       for (const dir of build_history_dirs) {
         const dirPath = path.join(build_history_path, dir);
-        if (!DirTool.dir_exists(dirPath) || !BuildHistoryProvider.get_sources_from_build(dirPath).has(source_filter)) {
+        if (!DirTool.dir_exists(dirPath) || !this.matches_package(dirPath) || !BuildHistoryProvider.get_sources_from_build(dirPath).has(source_filter)) {
           continue;
         }
         const date = BuildHistoryProvider.parse_dir(dir);
@@ -278,7 +295,7 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
       const sources = new Set<string>();
       for (const dir of build_history_dirs) {
         const dirPath = path.join(build_history_path, dir);
-        if (!DirTool.dir_exists(dirPath)) {
+        if (!DirTool.dir_exists(dirPath) || !this.matches_package(dirPath)) {
           continue;
         }
         for (const src of BuildHistoryProvider.get_sources_from_build(dirPath)) {
@@ -447,15 +464,69 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
    */
   private async set_source_filter(sources: string[]): Promise<void> {
     this.source_filter = sources.length > 0 ? new Set(sources) : undefined;
+    await this.filter_changed();
+  }
 
+
+  /** Applies (or clears) the build package filter; combined with the source filter */
+  public async set_package_filter(name: string | undefined): Promise<void> {
+    this.package_filter = name || undefined;
+    await this.filter_changed();
+  }
+
+
+  private async filter_changed(): Promise<void> {
     if (BuildHistoryProvider._treeView) {
-      BuildHistoryProvider._treeView.message = this.source_filter
-        ? `Filtered by source: ${Array.from(this.source_filter).join(', ')}`
-        : undefined;
+      const parts: string[] = [];
+      if (this.package_filter)
+        parts.push(vscode.l10n.t('Filtered by build package: {0}', this.package_filter));
+      if (this.source_filter)
+        parts.push(`Filtered by source: ${Array.from(this.source_filter).join(', ')}`);
+      BuildHistoryProvider._treeView.message = parts.length > 0 ? parts.join(' · ') : undefined;
     }
 
-    await vscode.commands.executeCommand('setContext', 'obi.build-history.filter-active', !!this.source_filter);
+    await vscode.commands.executeCommand('setContext', 'obi.build-history.filter-active', !!this.source_filter || !!this.package_filter);
     await this.refresh();
+  }
+
+
+  /**
+   * QuickPick of the build packages found in the build history; `name` (from the Build packages view) applies it directly.
+   */
+  private async filter_by_package(name?: string): Promise<void> {
+    if (typeof name === 'string') {
+      await this.set_package_filter(name);
+      await vscode.commands.executeCommand('obi.build-history.focus');
+      return;
+    }
+
+    const build_history_path = path.join(this.workspaceRoot, Constants.BUILD_HISTORY_DIR);
+    const packages = new Map<string, number>();
+    if (DirTool.dir_exists(build_history_path)) {
+      for (const dir of DirTool.list_dir(build_history_path)) {
+        const build_package = BuildIndex.read(path.join(build_history_path, dir))?.package;
+        if (build_package)
+          packages.set(build_package, (packages.get(build_package) ?? 0) + 1);
+      }
+    }
+    if (packages.size === 0 && !this.package_filter) {
+      vscode.window.showInformationMessage(vscode.l10n.t('The build history has no builds of build packages.'));
+      return;
+    }
+
+    const ALL = '\0all';
+    const items: (vscode.QuickPickItem & { name: string })[] = [
+      { name: ALL, label: `$(clear-all) ${vscode.l10n.t('All builds')}` },
+      ...[...packages.keys()].sort((a, b) => a.localeCompare(b)).map(build_package => ({
+        name: build_package,
+        label: `$(package) ${build_package}`,
+        description: packages.get(build_package) === 1 ? vscode.l10n.t('1 build') : vscode.l10n.t('{0} builds', packages.get(build_package) ?? 0),
+        picked: build_package === this.package_filter
+      }))
+    ];
+    const picked = await vscode.window.showQuickPick(items, { placeHolder: vscode.l10n.t('Show the builds of a build package') });
+    if (picked)
+      await this.set_package_filter(picked.name === ALL ? undefined : picked.name);
   }
 
 
@@ -589,6 +660,8 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
     register_command(context, 'obi.build-history.search', () => {
       this.search();
     });
+
+    register_command(context, 'obi.build-history.filter-package', (name?: string) => this.filter_by_package(name));
 
     register_command(context, 'obi.build-history.update', () => {
       this.refresh();

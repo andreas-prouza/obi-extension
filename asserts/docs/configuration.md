@@ -84,11 +84,12 @@ On each build, the project configuration and your active user configuration are 
 | `etc/constants.py`, `etc/logger_config.py` | Settings for the OBI backend; do not modify | ✅ commit |
 | `etc/source-list-local.json` | Generated source list | ❌ local |
 | `source-list/*.json` | [Source filters](sources.md#source-filters) | ✅ commit |
+| `build-packages/*.json` | [Build packages](building.md#build-packages) | ✅ commit |
 | `.vscode/templates/` | [Custom build summary template](#custom-build-summary-template) | ✅ commit |
 | `build-output/` | Current build list and results | ❌ local |
 | `build-history/` | [Build history](building.md#build-history) | ❌ local |
 | `tmp/`, `log/` | Temporary files, compiler events, logs | ❌ local |
-| `cache/` | Cache of the source hashes | ❌ local |
+| `cache/` | Cache of the source hashes, the [last build of each build package](building.md#build-packages) | ❌ local |
 
 *Initialize* creates a `.gitignore` with these entries (unless the folder already has one). In an existing git project without them, OBI offers once to append the missing entries; existing lines are never changed:
 
@@ -108,7 +109,7 @@ On each build, the project configuration and your active user configuration are 
 .obi/etc/source-list-*.json
 ```
 
-VS Code checks `dependency.json`, `source-infos.json`, the files in `source-list` and `compile-list.json` against a schema: you get completion and error marks while editing. This works at the default locations. If you moved a file with `dependency-list` or `source-infos`, add it to the VS Code setting `json.schemas`.
+VS Code checks `dependency.json`, `source-infos.json`, the files in `source-list` and `build-packages`, and `compile-list.json` against a schema: you get completion and error marks while editing. This works at the default locations. If you moved a file with `dependency-list` or `source-infos`, add it to the VS Code setting `json.schemas`.
 
 
 ## Connection
@@ -358,6 +359,7 @@ These settings are VS Code settings (*File → Preferences → Settings*, search
 | `obi.buildHistory.maxAgeDays` | `0` | Builds older than this many days are deleted from the build history; `0` = unlimited |
 | `obi.backend.autoUpdateLocal` | `false` | [Update the local OBI backend](#updating-the-obi-backend) when VS Code starts |
 | `obi.backend.autoUpdateRemote` | `false` | [Update the OBI backend on IBM i](#updating-the-obi-backend) once per VS Code session, before the first build |
+| `obi.buildPackages.baseBranch` | *(empty)* | Branch that [*Add sources changed on this branch*](building.md#build-packages) compares with, e.g. `main` or `origin/develop`. Empty: the default branch of `origin`, otherwise `main` or `master` |
 
 The log is also shown in the output panel **OBI**. Its level is `info` by default; change it with **Developer: Set Log Level… → OBI** (e.g. `Debug` to see every remote command and its output). Values of `secret*` variables are replaced with `***` in the log.
 

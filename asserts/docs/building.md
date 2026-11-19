@@ -6,6 +6,7 @@
 - [Show changes](#show-changes)
 - [Build summary](#build-summary)
 - [Run build](#run-build)
+- [Build packages](#build-packages)
 - [Compile errors](#compile-errors)
 - [Build history](#build-history)
 - [Other actions](#other-actions)
@@ -208,6 +209,60 @@ Only sources that still have commands that are not `success` are built. So after
 If the OBI backend on IBM i is too old, the extension notifies you after the build.
 
 
+## Build packages
+
+A **build package** is a named list of sources that belong together, e.g. the sources of a ticket. Building a package always builds **all its sources**, also the unchanged ones, and the objects that depend on them.
+
+Packages are files in `.obi/build-packages`, committed with the project: your team sees and builds the same packages, e.g. on the branch of the ticket. A branch can have several packages, and they stay in the project after the branch is merged.
+
+The **Build packages** view lists them:
+
+* ➕ in the view title (**New build package…**) creates a package. The name is suggested from the current git branch (`feature/ABC-123` → `feature-ABC-123`; if that exists, `feature-ABC-123-2`). Allowed are letters, digits, `.`, `_` and `-`, starting with a letter or digit. The description is optional.
+* On a **package**: ▶ **Run build of build package**, **Show build list of build package** and ➕ **Add sources to build package…**. The context menu also has **Add changed sources to build package…**, **Rename build package…**, **Edit build package description…**, **Open build package as JSON** and **Delete build package** (asks first).
+  * **Add sources**: all sources that aren't in the package yet, searchable by name and description.
+  * **Add changed sources**: the sources that are new or changed since your last build, all selected.
+  * **Add sources changed on this branch**: the sources changed since the current git branch left its base branch: committed, not yet committed and new files, all selected. Unlike *Add changed sources*, this is the same for everybody on the branch. The base branch is the default branch of `origin` (otherwise `main` or `master`); set another one with the setting `obi.buildPackages.baseBranch`.
+  * **Show builds of build package**: the [build history](#build-history) filtered by the package.
+  * **Open last build summary of build package**: the build summary of the last build of the package (also a link in the tooltip of the package).
+  * **Archive build package**: for a package that is done (e.g. merged). Archived packages are hidden; the view title shows how many. They can still be built. **Restore archived build package** brings one back.
+* On a **source**: a click opens it; 🗑 removes it from the package (also several selected sources). A source whose file doesn't exist has a warning icon.
+* A file that isn't a valid package is shown with an error icon. Open it as JSON to fix it.
+* View title: **Filter build packages…** shows only packages whose name, description or one of whose sources contains the text (the filter icon removes it again); **Show archived build packages** / **Hide archived build packages**.
+* **Drag and drop**: drag sources from the **Source filters** view (several with `Ctrl`/`Shift`), files from the **Explorer** or sources of another package onto a package (or onto one of its sources) to add them.
+
+**Add to build package…** is in the submenu **OBI** of the Explorer (also for several selected files), of an editor tab and of a member in the Source filters view. Choose a package or create a new one.
+
+All commands are in the Command Palette too (*OBI: …*). Without a package selected in the view, they ask for one.
+
+**Build list of a package:** as with [Show changes](#show-changes), but with the sources of the package instead of the changed ones.
+
+* All sources of the package are built, also those whose hash didn't change, plus all objects depending on them.
+* A source that doesn't exist, or whose type isn't in *supported object types*, stops the build: nothing is built, and the message offers **Remove from package**.
+* The build summary shows the package next to the git branch, and the build history next to the time of the build. i-Releaser gets it with the build list (`package`).
+* With a [local OBI](#show-changes), the local OBI creates the build list (`main.py -a create --package <name>`). It needs an up-to-date OBI backend (backend version 5).
+
+**Last build:** after a build of a package, the package shows its result and time: ✓ all sources built, ✗ a source failed, ○ not all sources were built (cancelled); the package icon has the colour of the result. The tooltip says how many sources failed and links to the build summary. A build summary opened from the history and built again counts too, unless a newer build of the package exists.
+The last build is personal (your builds on your IBM i): it is stored in `.obi/cache/build-packages-last-build.json`, not in the package file. Once the build was deleted from the [build history](#build-history-size), the result is still shown, but without a build summary.
+
+Renaming a source in the Source filters view or in the Explorer also renames it in all packages.
+
+The package file, e.g. `.obi/build-packages/ABC-123.json`:
+
+```json
+{
+  "description": "Order entry rework",
+  "sources": [
+    "mylib/qddssrc/orders.pf.file",
+    "mylib/qrpglesrc/order.sqlrpgle.pgm"
+  ]
+}
+```
+
+The sources are written sorted, one per line, so changes from different branches merge easily. Other keys in the file are kept. An archived package has `"archived": true`.
+
+> Rename, delete and archive change the file in your working copy. Commit the change, so your team gets it too.
+
+
 ## Compile errors
 
 The default compile commands use `OPTION(*EVENTF)` and export the event file into the folder `evfevent-output-dir` (default `.obi/tmp/evfevent`), which is downloaded after the build.
@@ -229,6 +284,7 @@ The **Build history** view lists all builds stored in `.obi/build-history`.
 * **Source view**: source → date → time  
   Switch between both views with the button in the view title.
 * **Filter** (🔍): select one or more sources to see only builds containing them. To remove the filter, confirm the selection with nothing selected.
+* **Filter by build package** (package icon): only the builds of a [build package](#build-packages). *All builds* removes the filter. Both filters can be combined.
 * Click a **build** to open its build summary, including joblogs, spool files and compile errors of that build.
   **Run build** from a historical build summary builds that list again (all commands are reset to `new`).
 * Click a **source** to open it.

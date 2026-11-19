@@ -62,9 +62,25 @@ suite('JSON schemas', () => {
   });
 
 
+  test('build packages: the file written by the extension is valid, typical mistakes are reported', () => {
+    const validate = schema('build-package');
+    assert.ok(validate({ description: 'Order', sources: [SOURCE, 'mylib/qddssrc/orders.pf.file'] }), JSON.stringify(validate.errors));
+    assert.ok(validate({ sources: [], ticket: 'other keys are kept' }));
+    assert.ok(validate({ sources: [], archived: true }));
+    assert.ok(!validate({ sources: [], archived: 'yes' }), 'archived is true or false');
+    assert.ok(!validate({ sources: SOURCE }), 'a list, not a string');
+    assert.ok(!validate({ sources: ['hello.rpgle.pgm'] }), 'without lib/file');
+    assert.ok(!validate({ sources: [SOURCE, SOURCE] }), 'duplicates');
+
+    const compile_list = schema('compile-list');
+    assert.ok(compile_list({ package: { name: 'ABC-123', description: 'Order' }, compiles: [] }), JSON.stringify(compile_list.errors));
+    assert.ok(!compile_list({ package: { description: 'Order' }, compiles: [] }), 'the package needs its name');
+  });
+
+
   test('every schema of package.json exists', () => {
     const manifest = read_json('package.json') as { contributes: { jsonValidation: { url: string }[] } };
-    assert.strictEqual(manifest.contributes.jsonValidation.length, 4);
+    assert.strictEqual(manifest.contributes.jsonValidation.length, 5);
     for (const entry of manifest.contributes.jsonValidation)
       assert.ok(fs.existsSync(path.join(ROOT, entry.url)), entry.url);
   });

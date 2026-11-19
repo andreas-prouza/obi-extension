@@ -12,15 +12,10 @@ import { DependencyList } from '../Dependency';
 import { GitInfo } from '../../utilities/GitInfo';
 import { OBITools } from '../../utilities/OBITools';
 import { Constants } from '../../../shared/Constants';
+import { ALL_CHANGES, BuildScope, ChangedSources, classify_forced_sources } from './BuildScope';
 
 
-
-export interface ChangedSources {
-  'new-objects': string[];
-  'changed-sources': string[];
-}
-
-/** Result of createBuildList: what changed, and the sources that depend on it (also built) */
+/** Result of createBuildList: the sources it was created for (new and changed), and the sources depending on them (also built) */
 export interface BuildListResult {
   changed: ChangedSources;
   dependents: string[];
@@ -28,10 +23,10 @@ export interface BuildListResult {
 
 
 /**
- * Writes the compile list for `source`, or for all changed sources. `changed` is the result of comparing the
- * current source hashes with the last build (computed by the caller, so sources are hashed only once).
+ * Writes the compile list for the sources of `scope`, or for all changed sources. `changed` is the result of comparing
+ * the current source hashes with the last build (computed by the caller, so sources are hashed only once).
  */
-export async function createBuildList(source?: string, changed?: ChangedSources): Promise<BuildListResult> {
+export async function createBuildList(scope: BuildScope = ALL_CHANGES, changed?: ChangedSources): Promise<BuildListResult> {
   logger.debug('Create build list');
   take_unresolved_report();   // start with an empty report
 
@@ -49,9 +44,8 @@ export async function createBuildList(source?: string, changed?: ChangedSources)
 
   const built: Record<string, unknown> = DirTool.get_json(buildListPath) || {};
   let changedSourcesList: ChangedSources;
-  if (source) {
-    const known = Object.prototype.hasOwnProperty.call(built, source);
-    changedSourcesList = { 'new-objects': known ? [] : [source], 'changed-sources': known ? [source] : [] };
+  if (scope.kind === 'sources') {
+    changedSourcesList = classify_forced_sources(scope.sources, built);
   } else if (changed) {
     changedSourcesList = changed;
   } else {
@@ -68,6 +62,8 @@ export async function createBuildList(source?: string, changed?: ChangedSources)
   const buildTargets = orderBuilds(plan.tree);
 
   GitInfo.attach_git_info(buildTargets, ws);
+  if (scope.kind === 'sources' && scope.package)
+    buildTargets.package = scope.package;
   const compile_list_file = path.join(ws, generalConfig['compile-list']);
   DirTool.write_json(compile_list_file, buildTargets);
   logger.debug(`${compile_list_file}: ${fs.statSync(compile_list_file).size} bytes`);

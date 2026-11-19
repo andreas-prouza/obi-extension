@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { BUILD_PACKAGE_DIR } from './BuildPackage';
 
 
 /** Folder containing the extension's package.json: works for the bundle (out/) and the unbundled test build (out-test/…). */
@@ -19,6 +20,8 @@ export class Constants {
   public static readonly OBI_CONFIGS_DIR: string = ".obi/etc";
   public static readonly OBI_APP_CONFIG_DIR: string = `${Constants.OBI_CONFIGS_DIR}`;
   public static readonly SOURCE_FILTER_FOLDER_NAME: string = '.obi/source-list';
+  /** Build packages (docs/features/build-packages.md), created with the first package */
+  public static readonly BUILD_PACKAGE_DIR: string = BUILD_PACKAGE_DIR;
   public static readonly BUILD_OUTPUT_DIR: string = ".obi/build-output";
   public static readonly BUILD_HISTORY_DIR: string = ".obi/build-history";
   public static readonly OBI_STATUS_FILE: string = `${Constants.BUILD_OUTPUT_DIR}/status.json`;
