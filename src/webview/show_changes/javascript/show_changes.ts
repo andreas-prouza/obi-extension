@@ -36,6 +36,10 @@ function main() {
   if (add_source_button)
     add_source_button.addEventListener('click', add_source);
 
+  const add_to_package_button = document.getElementById('add_to_build_package');
+  if (add_to_package_button)
+    add_to_package_button.addEventListener('click', () => post({ command: "add_to_build_package" }));
+
   const start_deployment_button = document.getElementById('start_deployment');
   if (start_deployment_button)
     start_deployment_button.addEventListener('click', () => post({ command: 'start_deployment' }));

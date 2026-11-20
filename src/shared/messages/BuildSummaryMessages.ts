@@ -10,6 +10,8 @@ export const BUILD_SUMMARY_REQUESTS = {
   ignore_cmd: { level: is_string, source: is_source_name, cmd_index: is_index, ignore: is_boolean },
   open_file: { source: is_source_name },
   add_source: {},
+  // All sources of the displayed build list to a build package (docs/features/build-packages.md)
+  add_to_build_package: {},
   edit_cmd: { level: is_string, source: is_source_name, cmd_index: is_number },
   // i-Releaser workflow for the displayed build list: URL, token and workflow are chosen in the extension
   start_deployment: {},

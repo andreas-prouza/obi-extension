@@ -6,7 +6,8 @@ import { Constants } from '../../shared/Constants';
 import { BuildPackageNameError, BuildPackageStore, PackageEntry } from '../../extension/obi/BuildPackageStore';
 import { ExtensionSettings } from '../../extension/utilities/ExtensionSettings';
 import { detect_base_branch, files_changed_since, is_valid_base_branch } from '../../extension/utilities/GitChanges';
-import { BUILD_PACKAGE_DIR, BuildPackage, PackageNameProblem, invalid_source_names, is_valid_package_name, package_file_name, suggest_package_name, validate_package_name } from '../../shared/BuildPackage';
+import { BUILD_PACKAGE_DIR, BuildPackage, PackageNameProblem, invalid_source_names, is_valid_package_name, package_file_name, sources_of_build_list, suggest_package_name, validate_package_name } from '../../shared/BuildPackage';
+import { relative_inside } from '../../extension/utilities/SourcePath';
 import { ConfigFileError } from '../../shared/Errors';
 import { package_scope, unbuildable_sources } from '../../extension/obi/compile_list/BuildScope';
 import { has_extension } from '../../extension/obi/compile_list/modules/source_hashes';
@@ -21,6 +22,13 @@ import { ask, show_error } from '../../extension/utilities/Notify';
 import { register_command } from '../../extension/utilities/Registration';
 import { pick_sources } from '../tools/SourcePick';
 import { SourceListItem } from '../source_list/SourceListProvider';
+
+
+/** A build item of the Build history view (BuildHistoryItem): its folder */
+interface HistoryBuildLike {
+  contextValue?: string;
+  file_path: string;
+}
 
 
 /** Workspace state: the package used last by "Add to build package", offered first */
@@ -53,6 +61,8 @@ export class BuildPackageCommands {
     guarded('obi.build-package.add-sources', (item?: BuildPackageItem) => commands.add_sources(item));
     guarded('obi.build-package.add-changed-sources', (item?: BuildPackageItem) => commands.add_changed_sources(item));
     guarded('obi.build-package.add-to-package', (item?: vscode.Uri | SourceListItem, items?: (vscode.Uri | SourceListItem)[]) => commands.add_to_package(item, items));
+    // A build of the build history, the compile list of the build summary (path), or the current build list
+    guarded('obi.build-package.add-build-sources', (build?: HistoryBuildLike | string) => commands.add_build_sources(build));
     guarded('obi.build-package.remove-sources', (item?: BuildPackageTreeItem, items?: BuildPackageTreeItem[]) => commands.remove_sources(item, items));
     guarded('obi.build-package.rename', (item?: BuildPackageItem) => commands.rename(item));
     guarded('obi.build-package.edit-description', (item?: BuildPackageItem) => commands.edit_description(item));
@@ -228,6 +238,43 @@ export class BuildPackageCommands {
     if (!name)
       return;
     this.add(name, sources);
+  }
+
+
+  /**
+   * All sources of a build (not the ones unchecked in its build summary) to a package: a build of the build history,
+   * the compile list shown in a build summary (path in the workspace), or the current build list.
+   */
+  public async add_build_sources(build?: HistoryBuildLike | string): Promise<void> {
+    const ws = Workspace.get_workspace();
+    const history_build = typeof build === 'object' && build !== null && build.contextValue === 'buildHistoryBuild' && typeof build.file_path === 'string';
+    if (typeof build === 'object' && build !== null && !history_build)
+      throw new Error('Not a build of the build history');
+    const file = history_build ? path.join((build as HistoryBuildLike).file_path, 'compile-list.json')
+      : typeof build === 'string' ? (path.isAbsolute(build) ? build : path.join(ws, build))
+        : path.join(ws, AppConfig.get_app_config().general['compile-list']);
+    // Only files of the workspace (the path can come from a webview message)
+    if (relative_inside(ws, file) === undefined)
+      throw new Error(`Not a file of the workspace: ${file}`);
+
+    const { sources, unchecked } = sources_of_build_list(DirTool.read_json_strict<unknown>(file));
+    if (sources.length === 0) {
+      vscode.window.showInformationMessage(vscode.l10n.t('The build has no sources to add.'));
+      return;
+    }
+
+    // First the sources (like "Add source"): all of the build, those unchecked in the build list unchecked here too
+    const selected = await pick_sources({
+      title: vscode.l10n.t('Add sources of the build to a build package'),
+      placeholder: vscode.l10n.t('Uncheck the sources to skip'),
+      offered: { sources, selected: new Set(sources.filter(source => !unchecked.has(source))) }
+    });
+    if (selected.length === 0)
+      return;
+
+    const name = await this.pick_package(vscode.l10n.t('Add {0} sources to build package', selected.length), true);
+    if (name)
+      this.add(name, selected);
   }
 
 

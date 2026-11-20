@@ -240,4 +240,48 @@ suite('Build packages', () => {
     await vscode.commands.executeCommand('obi.build-package.open-last-build', 'ABC-123');
     assert.match(String(info.lastCall.args[0]), /no longer in the build history/);
   });
+
+
+  test('add the sources of a build: all offered, those unchecked in the build list unchecked', async () => {
+    store().create('ABC-123', undefined, [TEST4]);
+    const history = path.join(ws(), Constants.BUILD_HISTORY_DIR, '2026-11-20T08.00.00.000Z');
+    DirTool.write_json(path.join(history, 'compile-list.json'), { compiles: [
+      { level: 1, sources: [{ source: CUST, cmds: [] }, { source: TEST4, cmds: [] }, { source: OTHER, cmds: [], ignore: true }] },
+      { level: 2, sources: [{ source: SRV, cmds: [] }] },
+    ] });
+    sinon.stub(vscode.window, 'showQuickPick').callsFake(async (items: unknown) =>
+      (await items as { name: string }[]).find(item => item.name === 'ABC-123') as unknown as vscode.QuickPickItem);
+    sinon.stub(vscode.window, 'showInformationMessage').resolves(undefined);
+
+    // The source QuickPick: accepts what is preselected
+    let offered: string[] = [];
+    let preselected: string[] = [];
+    sinon.stub(vscode.window, 'createQuickPick').callsFake(() => {
+      const handlers: { accept?: () => void; hide?: () => void } = {};
+      const pick = {
+        items: [] as vscode.QuickPickItem[], selectedItems: [] as vscode.QuickPickItem[],
+        onDidAccept: (handler: () => void) => { handlers.accept = handler; },
+        onDidHide: (handler: () => void) => { handlers.hide = handler; },
+        show: () => {
+          offered = pick.items.map(item => item.label);
+          preselected = pick.selectedItems.map(item => item.label);
+          setTimeout(() => handlers.accept?.(), 0);
+        },
+        hide: () => handlers.hide?.(), dispose: () => undefined,
+      };
+      return pick as unknown as vscode.QuickPick<vscode.QuickPickItem>;
+    });
+
+    await vscode.commands.executeCommand('obi.build-package.add-build-sources', { contextValue: 'buildHistoryBuild', file_path: history });
+
+    assert.deepStrictEqual(offered, [CUST, TEST4, OTHER, SRV]);
+    assert.deepStrictEqual(preselected, [CUST, TEST4, SRV], 'unchecked in the build list: unchecked');
+    assert.deepStrictEqual(store().get('ABC-123').sources, [CUST, TEST4, SRV].sort());
+
+    // A path outside the workspace (e.g. from a page) is refused
+    const error = sinon.stub(vscode.window, 'showErrorMessage').resolves(undefined);
+    await vscode.commands.executeCommand('obi.build-package.add-build-sources', '/etc/compile-list.json');
+    assert.match(String(error.firstCall.args[0]), /action failed/);
+  });
 });
+

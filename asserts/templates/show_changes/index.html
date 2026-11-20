@@ -31,6 +31,7 @@
         {% if i_releaser and is_compile_list_completed %}<button type="button" class="btn" id="start_deployment"><span class="codicon codicon-rocket"></span>{{ global_stuff['get_text']('Start i-Releaser workflow') | safe }}</button>{% endif %}
         {% if i_releaser and i_releaser.deployment and not i_releaser.deployment.watched %}<a class="btn secondary" id="i_releaser_deployment" href="{{ i_releaser.deployment.link }}"><span class="codicon codicon-link-external"></span>{{ global_stuff['get_text']('i-Releaser deployment') | safe }} {{ i_releaser.deployment.id }}</a>{% endif %}
         <button type="button" class="btn secondary" id="add_source"><span class="codicon codicon-add"></span>{{ global_stuff['get_text']('Add source') | safe }}</button>
+        <button type="button" class="btn secondary" id="add_to_build_package" title="{{ global_stuff['get_text']('Add all sources of this build to a build package') | safe }}"><span class="codicon codicon-package"></span>{{ global_stuff['get_text']('Add to build package') | safe }}</button>
         <a class="icon-btn" href='command:vscode.open?{{ compile_file_uri }}' title="{{ global_stuff['get_text']('open JSON file') | safe }}" aria-label="{{ global_stuff['get_text']('open JSON file') | safe }}"><span class="codicon codicon-json"></span></a>
         <a class="icon-btn" href='command:vscode.open?{{ log_file_uri }}' title="{{ global_stuff['get_text']('open OBI log') | safe }}" aria-label="{{ global_stuff['get_text']('open OBI log') | safe }}"><span class="codicon codicon-output"></span></a>
       </div>
@@ -67,7 +68,7 @@
           <li class="ir-stage ir-{{ stage.kind }}{% if not loop.first and dep.state.stages[loop.index0 - 1].kind == 'finished' %} ir-after-finished{% endif %}" data-stage-id="{{ stage.id }}">
             <span class="ir-dot">{% if stage.step_icon %}<span class="codicon codicon-{{ stage.step_icon }}"></span>{% else %}{{ stage.number }}{% endif %}</span>
             <span class="ir-name">{{ stage.name }}</span>
-            <span class="ir-state">{{ stage.status }}</span>
+            <span class="ir-state">{{ stage.state_text }}</span>
           </li>
           {% endfor %}
         </ol>

@@ -99,6 +99,14 @@ New tree view **Build packages** in the OBI view container, between *Source filt
 * *Archive build package* writes `"archived": true` into the file (so it is shared via git); *Restore archived build package* removes the key. Archived packages are hidden; the view title shows `n archived hidden`. *Show / Hide archived build packages* switches (stored per workspace). Archived packages can still be built, and are listed last in the package QuickPicks.
 * Invalid package files are always shown.
 
+## Sources of a build
+
+*Add sources of the build to build package…* (`obi.build-package.add-build-sources`):
+
+* From the build summary (button *Add to build package*, message `add_to_build_package` without fields: the extension uses the displayed compile list, live or from the history), the context menu of a build in the build history, or the Command Palette (current build list). A path outside the workspace is refused.
+* Sources: all of the build list in build order, also dependents and related copybooks, without invalid names (`sources_of_build_list`).
+* First a multi-select QuickPick of these sources (like *Add source*): selected, except those unchecked in the build list (`ignore`; a source listed more than once counts as checked if one entry is). Then the package (QuickPick with *New build package…*). Sources already in the package are reported as such.
+
 ## Last build of a package
 
 * Stored per person in `.obi/cache/build-packages-last-build.json` (git-ignored with `.obi/cache/`), not in the package file: the result belongs to the own IBM i, and the build history it links to is local. Decided 2026-11-19.
@@ -128,6 +136,7 @@ New tree view **Build packages** in the OBI view container, between *Source filt
   * tree items of the view; archived packages and the text filter
   * drag and drop: dragged sources, Explorer files (unsupported ones left out), drop beside a package
   * `BuildHistory.test.ts`: the build history filtered by package
+  * sources of a build: all offered, the ones unchecked in the build list unchecked; path outside the workspace refused
   * last build: recorded by `write_build_history`, description, icon colour and tooltip link of the package; the command for a package never built and for a build no longer in the history
 * **Backend**: `../obi-unit-tests`, the same build list as the TypeScript port for the test project.
 

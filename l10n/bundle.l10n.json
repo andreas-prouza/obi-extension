@@ -571,5 +571,11 @@
   "The build summary is no longer in the build history.": "The build summary is no longer in the build history.",
   "Open the last build of build package": "Open the last build of build package",
   "Build package {0} wasn't built on this computer yet.": "Build package {0} wasn't built on this computer yet.",
-  "The build summary of the last build of {0} ({1}) is no longer in the build history.": "The build summary of the last build of {0} ({1}) is no longer in the build history."
+  "The build summary of the last build of {0} ({1}) is no longer in the build history.": "The build summary of the last build of {0} ({1}) is no longer in the build history.",
+  "waits for {0}": "waits for {0}",
+  "The build has no sources to add.": "The build has no sources to add.",
+  "Add all sources of this build to a build package": "Add all sources of this build to a build package",
+  "Add to build package": "Add to build package",
+  "Add sources of the build to a build package": "Add sources of the build to a build package",
+  "Uncheck the sources to skip": "Uncheck the sources to skip"
 }

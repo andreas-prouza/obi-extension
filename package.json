@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -529,6 +529,13 @@
         "category": "OBI",
         "icon": "$(go-to-file)",
         "when": "obi.contains_obi_project && obi.valid-config"
+      },
+      {
+        "command": "obi.build-package.add-build-sources",
+        "title": "%obi.build-package.add-build-sources%",
+        "category": "OBI",
+        "icon": "$(package)",
+        "when": "obi.contains_obi_project && obi.valid-config"
       }
     ],
     "submenus": [
@@ -939,6 +946,11 @@
           "command": "obi.build-package.open-last-build",
           "when": "view == obi.build-packages && viewItem =~ /^obi-build-package(-archived)?$/",
           "group": "1_build@4"
+        },
+        {
+          "command": "obi.build-package.add-build-sources",
+          "when": "view == obi.build-history && viewItem == buildHistoryBuild",
+          "group": "2_package@1"
         }
       ],
       "commandPalette": [
@@ -1096,6 +1108,10 @@
         },
         {
           "command": "obi.build-package.open-last-build",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.build-package.add-build-sources",
           "when": "obi.contains_obi_project && obi.valid-config"
         }
       ],

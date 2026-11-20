@@ -104,9 +104,15 @@ export function may_run_stage(stage_name: string, run_stages: unknown): boolean 
 }
 
 
-/** How a stage can be run from VS Code: ready → continue; failed → continue or run_all; nothing for final deployments */
+/** The stage waits for other stages (`after_stages_finished`): i-Releaser refuses to run it */
+export function is_waiting(stage: StageState): boolean {
+  return (stage.waiting_for?.length ?? 0) > 0;
+}
+
+
+/** How a stage can be run from VS Code: ready → continue; failed → continue or run_all; nothing for final deployments and waiting stages */
 export function stage_options(deployment_status: string, stage: StageState, run_stages: unknown): StageOption[] {
-  if (is_final_status(deployment_status) || !may_run_stage(stage.name, run_stages))
+  if (is_final_status(deployment_status) || !may_run_stage(stage.name, run_stages) || is_waiting(stage))
     return [];
   if (stage.status === 'ready')
     return ['continue'];
@@ -164,7 +170,8 @@ export interface DeploymentOverview {
 
 export function deployment_overview(state: DeploymentState, run_stages: unknown): DeploymentOverview {
   const overview: DeploymentOverview = { done: state.stages.filter(stage => stage.status === 'finished').length, total: state.stages.length };
-  const stage = state.stages.find(item => item.status === 'failed') ?? state.stages.find(item => item.status === 'ready');
+  // A ready stage which waits for other stages can't be run yet (deployments of i-Releaser before 3.1 set it ready too early)
+  const stage = state.stages.find(item => item.status === 'failed') ?? state.stages.find(item => item.status === 'ready' && !is_waiting(item));
   // A ready stage of a finished or canceled deployment won't run any more
   if (!stage || (stage.status === 'ready' && is_final_status(state.status)))
     return overview;

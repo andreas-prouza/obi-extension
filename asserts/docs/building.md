@@ -72,6 +72,7 @@ With **Current source** (`*CURRENT`, or **Show single change** in the editor), o
 * **Run build**: shown as long as not all commands succeeded
 * **Add source**: add further sources (multi-select, searchable by name and description). Their dependent objects are added too.
   An added source that is already in the list gets new build commands. Dependent objects that were already built successfully are reset so they are built again (their commands and output are kept). With `ALWAYS_TRANSFER_RELATED_COPYBOOKS`, the copybooks they use are added on level 0. The levels of the whole list are calculated again, so a source can move to a higher level. This is the same with and without a local OBI.
+* **Add to build package**: adds the sources of this build list to a [build package](#build-packages) (see there).
 * **Start i-Releaser workflow**: shown when all commands succeeded and an [i-Releaser](#i-releaser-deployment) is configured. After the start, the [deployment card](#i-releaser-deployment) shows it.
 * `{}` opens the compile list (JSON), the log icon the OBI log (`.obi/log/main.log`)
 
@@ -117,7 +118,7 @@ The build list goes to i-Releaser as the deployment's custom data, without joblo
 **Status of the deployment:** while the build summary shows a build list with a deployment, a card below the buttons shows it:
 
 * **Header:** deployment, workflow, version, its status, when it was read last, and **Open in i-Releaser** (browser).
-* **Stages:** a bar with the share of finished stages, and every stage with its status: ✓ finished, ✗ failed, a turning icon while it runs, ▷ ready to run, otherwise its number. On a narrow editor the stages continue in a second row.
+* **Stages:** a bar with the share of finished stages, and every stage with its status: ✓ finished, ✗ failed, a turning icon while it runs, ▷ ready to run, otherwise its number. A stage that waits for parallel stages (`after_stages_finished` of the workflow) says for which: *waits for TEST*. On a narrow editor the stages continue in a second row.
 * **A stage that waits** gets a bar below the stages, with the same actions as in the [i-Releaser view](#i-releaser-view):
   * failed: *Stage TEST failed in step run tests.* **Show log** (of the failed step), **Continue** (from the step that didn't finish), **Run stage again** (all steps);
   * ready: *Stage PROD is ready to run.* **Run stage**.
@@ -155,7 +156,7 @@ Actions (context menu, or the buttons on the right of an item):
 | Item | Action |
 |---|---|
 | Deployment | **Open in i-Releaser** (browser), **Open build summary** (if the build is in your history), **Cancel deployment** (while it isn't finished or canceled; a stage that is already running is not stopped) |
-| Stage `ready` | **Run stage** |
+| Stage `ready` | **Run stage** (not while it waits for parallel stages: the stage then shows *waits for …*) |
 | Stage `failed` | **Continue stage** (from the step that didn't finish), **Run stage again (all steps)**, **Show log of the failed step** |
 | Step | **Show log** (also by clicking it): the latest run of the step with its output and errors, in a read-only editor |
 
@@ -229,6 +230,8 @@ The **Build packages** view lists them:
 * A file that isn't a valid package is shown with an error icon. Open it as JSON to fix it.
 * View title: **Filter build packages…** shows only packages whose name, description or one of whose sources contains the text (the filter icon removes it again); **Show archived build packages** / **Hide archived build packages**.
 * **Drag and drop**: drag sources from the **Source filters** view (several with `Ctrl`/`Shift`), files from the **Explorer** or sources of another package onto a package (or onto one of its sources) to add them.
+
+**Add sources of the build to build package…** takes the sources of a build: from the button **Add to build package** in the [build summary](#build-summary), from the context menu of a build in the [build history](#build-history), or in the Command Palette for the current build list. First a list of all sources of the build shows up (like for **Add source**), also the dependent objects. They are selected, except the sources unchecked in the build list: uncheck the ones you want to skip. Then choose the package or create a new one. Sources already in the package stay as they are.
 
 **Add to build package…** is in the submenu **OBI** of the Explorer (also for several selected files), of an editor tab and of a member in the Source filters view. Choose a package or create a new one.
 

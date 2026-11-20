@@ -240,3 +240,27 @@ export function parse_dragged_sources(json: string): string[] {
   const invalid = new Set(invalid_source_names(strings));
   return [...new Set(strings.filter(source => !invalid.has(source)))];
 }
+
+
+/**
+ * Sources of a build list (compile-list.json) in build order, without duplicates and invalid names, and those of them
+ * that are unchecked in the build summary (`ignore`): to add the sources of a build to a build package.
+ */
+export function sources_of_build_list(compile_list: unknown): { sources: string[]; unchecked: Set<string> } {
+  const is_object = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
+  if (!is_object(compile_list) || !Array.isArray(compile_list.compiles))
+    return { sources: [], unchecked: new Set() };
+  const sources: string[] = [];
+  const checked = new Set<string>();
+  for (const level of compile_list.compiles)
+    for (const entry of is_object(level) && Array.isArray(level.sources) ? level.sources : [])
+      if (is_object(entry) && typeof entry.source === 'string') {
+        sources.push(entry.source);
+        if (!entry.ignore)
+          checked.add(entry.source);
+      }
+  const invalid = new Set(invalid_source_names(sources));
+  const valid = [...new Set(sources.filter(source => !invalid.has(source)))];
+  // A source that is in the list more than once counts as checked if one of its entries is
+  return { sources: valid, unchecked: new Set(valid.filter(source => !checked.has(source))) };
+}

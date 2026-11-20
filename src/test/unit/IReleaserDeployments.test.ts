@@ -2,7 +2,7 @@ import assert from 'assert';
 import * as http from 'http';
 import { AddressInfo } from 'net';
 import { DeploymentState, IReleaserError, StageState, get_workflow_definitions, parse_deployment } from '../../shared/IReleaser';
-import { cancel_deployment, deployment_overview, deployment_projects, failed_step, get_action_log, is_final_status, list_deployments, may_run_stage, run_stage, stage_options, status_kind } from '../../shared/IReleaserDeployments';
+import { cancel_deployment, deployment_overview, deployment_projects, failed_step, get_action_log, is_final_status, is_waiting, list_deployments, may_run_stage, run_stage, stage_options, status_kind } from '../../shared/IReleaserDeployments';
 
 
 interface Received { method?: string; url?: string; headers: http.IncomingHttpHeaders }
@@ -191,5 +191,33 @@ suite('i-Releaser deployments view', () => {
     // A failed stage of a canceled deployment is shown, without actions
     assert.deepStrictEqual(deployment_overview(state('canceled', [failed]), undefined).attention?.options, []);
     assert.strictEqual(deployment_overview(state('canceled', [failed]), undefined).attention?.not_in_run_stages, false);
+  });
+
+
+  test('waiting stages: waiting_for of i-Releaser; not offered to run; the overview takes another stage', () => {
+    const deployment = parse_deployment({ general: { id: 1, status: 'ready', processed_stages: [{ id: 1, name: 'A', status: 'finished', waiting_for: [] }], open_stages: [
+      { id: 2, name: 'B', status: 'ready', waiting_for: [] },
+      { id: 3, name: 'MERGE', status: 'new', waiting_for: ['B', '', 7, 'C'] },
+      { id: 4, name: 'OLD', status: 'new', waiting_for: 'B' },
+      { id: 5, name: 'NONE', status: 'new' },
+    ] } });
+    const [a, b, merge, old, none] = deployment.stages;
+    assert.deepStrictEqual(merge.waiting_for, ['B', 'C']);
+    // Waits for nothing, or an answer it can't read: no field
+    for (const item of [a, b, old, none])
+      assert.ok(!('waiting_for' in item), item.name);
+    assert.ok(is_waiting(merge));
+    assert.ok(!is_waiting(b) && !is_waiting(none));
+
+    // i-Releaser before the fix set it ready as soon as one branch was finished: not offered to run
+    const early: StageState = { id: 6, name: 'MERGE', status: 'ready', waiting_for: ['B'], steps: [] };
+    assert.deepStrictEqual(stage_options('ready', early, undefined), []);
+
+    const both_ready = deployment_overview({ id: 80, status: 'ready', stages: [stage('A', 'finished'), early, { ...stage('B', 'ready'), id: 2 }] }, undefined);
+    assert.strictEqual(both_ready.attention?.stage.name, 'B');
+    assert.deepStrictEqual(both_ready.attention?.options, ['continue']);
+
+    // B runs: nothing to do in VS Code, MERGE is no "ready to run" stage
+    assert.strictEqual(deployment_overview({ id: 80, status: 'in process', stages: [stage('A', 'finished'), early, { ...stage('B', 'in process'), id: 2 }] }, undefined).attention, undefined);
   });
 });
