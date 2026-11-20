@@ -121,5 +121,6 @@
   "obi.build-package.show-builds": "Builds des Build-Pakets anzeigen",
   "obi.build-history.filter-package": "Build-Historie nach Build-Paket filtern",
   "obi.buildPackages.baseBranch": "Branch, mit dem *Auf diesem Branch geänderte Sourcen zum Build-Paket hinzufügen* den aktuellen Branch vergleicht, z. B. `main` oder `origin/develop`. Leer: der Standard-Branch von `origin`, sonst `main` oder `master`.",
-  "obi.build-package.open-last-build": "Build-Zusammenfassung des letzten Builds des Build-Pakets öffnen"
+  "obi.build-package.open-last-build": "Build-Zusammenfassung des letzten Builds des Build-Pakets öffnen",
+  "obi.build-package.add-build-sources": "Sourcen des Builds zum Build-Paket hinzufügen…"
 }

@@ -1,7 +1,7 @@
 import assert from 'assert';
 import {
   BuildPackage, is_valid_package_name, package_file_name, package_info, package_matches, package_name_of_file, parse_build_package, parse_dragged_sources,
-  serialize_build_package, suggest_package_name, validate_package_name, with_source_renamed, with_sources, without_sources
+  serialize_build_package, suggest_package_name, validate_package_name, with_source_renamed, with_sources, without_sources, sources_of_build_list
 } from '../../shared/BuildPackage';
 import { ConfigFileError } from '../../shared/Errors';
 
@@ -141,5 +141,21 @@ suite('BuildPackage', () => {
     assert.deepStrictEqual(parse_dragged_sources('["a/q/x.pgm", "a/q/x.pgm", "../etc/passwd", 1, "a/q/y.pgm"]'), ['a/q/x.pgm', 'a/q/y.pgm']);
     for (const text of ['', 'x', '{"a": 1}', 'null'])
       assert.deepStrictEqual(parse_dragged_sources(text), [], text);
+  });
+});
+
+
+suite('BuildPackage: sources of a build list', () => {
+
+  test('in build order, without duplicates and invalid names; the unchecked (ignored) ones', () => {
+    const compile_list = { compiles: [
+      { level: 1, sources: [{ source: 'a/q/b.file', ignore: true }, { source: 'a/q/x.pgm', ignore: true }] },
+      { level: 2, sources: [{ source: 'a/q/a.pgm' }, { source: 'a/q/b.file' }, { source: '../x.pgm' }, { nosource: 1 }, 'junk'] },
+    ] };
+    const result = sources_of_build_list(compile_list);
+    assert.deepStrictEqual(result.sources, ['a/q/b.file', 'a/q/x.pgm', 'a/q/a.pgm']);
+    assert.deepStrictEqual([...result.unchecked], ['a/q/x.pgm'], 'b.file is checked in one of its entries');
+    for (const broken of [null, {}, { compiles: 'x' }, []])
+      assert.deepStrictEqual(sources_of_build_list(broken).sources, [], JSON.stringify(broken));
   });
 });

@@ -1,3 +1,9 @@
+## [2.2.1]
+
+### Changes
+* **i-Releaser: a stage that waits for parallel stages says for which** (*waits for TEST*) in the deployment card of the build summary and in the i-Releaser view, and it isn't offered to run before. Needs i-Releaser with `waiting_for` ([docs](asserts/docs/building.md#i-releaser-view), [spec](docs/features/i-releaser-waiting-stages.md))
+
+
 ## [2.2.0]
 
 ### Features
@@ -5,6 +11,7 @@
 
 * **Build packages: more ways to fill and find them.** *Add sources changed on this branch* (git, compared with the base branch, setting `obi.buildPackages.baseBranch`), drag and drop from the Source filters, the Explorer and other packages, a text filter and archiving in the view, and the build history filtered by package ([docs](asserts/docs/building.md#build-packages))
 
+* **Build packages: add the sources of a build.** *Add to build package* in the build summary, *Add sources of the build to build package…* on a build in the build history: all sources of the build list to choose from; the ones unchecked in the build list are unchecked ([docs](asserts/docs/building.md#build-packages))
 * **Build packages: the last build.** A package shows the result and time of its last build (✓ built, ✗ failed, ○ cancelled) and links to its build summary. Stored per person in `.obi/cache` ([docs](asserts/docs/building.md#build-packages))
 
 ### Changes

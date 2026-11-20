@@ -3,7 +3,7 @@ import * as path from 'path';
 import { Constants } from '../../shared/Constants';
 import { get_error_message } from '../../shared/Errors';
 import { DeploymentState, StageState, StepState, get_deployment, get_workflow_definitions, show_details_url, shorten } from '../../shared/IReleaser';
-import { ActionLog, DeploymentRef, DeploymentSummary, StageActions, StageOption, cancel_deployment, deployment_projects, failed_step, get_action_log, is_final_status, list_deployments, run_stage, stage_options } from '../../shared/IReleaserDeployments';
+import { ActionLog, DeploymentRef, DeploymentSummary, StageActions, StageOption, cancel_deployment, deployment_projects, failed_step, get_action_log, is_final_status, is_waiting, list_deployments, run_stage, stage_options } from '../../shared/IReleaserDeployments';
 import { logger } from '../../extension/utilities/Logger';
 import { register_command } from '../../extension/utilities/Registration';
 import { require_trust } from '../../extension/utilities/Trust';
@@ -344,7 +344,8 @@ export class DeploymentsView implements vscode.TreeDataProvider<Node>, vscode.Te
     const item = new vscode.TreeItem(stage.name, stage.steps.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
     item.id = node.key;
     item.iconPath = status_icon(stage.status);
-    item.description = stage.status;
+    const waits_for = is_waiting(stage) ? vscode.l10n.t('waits for {0}', (stage.waiting_for ?? []).join(', ')) : undefined;
+    item.description = waits_for ?? stage.status;
 
     const run_stages = DeploymentConfig.get_deployment_config()['i-releaser']['run-stages'];
     const options = stage_options(this.status_of(node.deployment), stage, run_stages);
@@ -358,6 +359,8 @@ export class DeploymentsView implements vscode.TreeDataProvider<Node>, vscode.Te
     item.contextValue = context.join('');
 
     const lines = [`${stage.name}: ${stage.status}`];
+    if (waits_for)
+      lines.push(waits_for);
     const would_run = stage_options(this.status_of(node.deployment), stage, undefined);
     if (would_run.length > 0 && options.length === 0)
       lines.push(vscode.l10n.t('Not in run-stages of {0}: run it in i-Releaser.', Constants.DEPLOYMENT_CONFIG_FILE));

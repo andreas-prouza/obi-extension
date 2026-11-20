@@ -571,5 +571,11 @@
   "The build summary is no longer in the build history.": "Die Build-Zusammenfassung ist nicht mehr in der Build-Historie.",
   "Open the last build of build package": "Den letzten Build des Build-Pakets öffnen",
   "Build package {0} wasn't built on this computer yet.": "Build-Paket {0} wurde auf diesem Computer noch nicht gebaut.",
-  "The build summary of the last build of {0} ({1}) is no longer in the build history.": "Die Build-Zusammenfassung des letzten Builds von {0} ({1}) ist nicht mehr in der Build-Historie."
+  "The build summary of the last build of {0} ({1}) is no longer in the build history.": "Die Build-Zusammenfassung des letzten Builds von {0} ({1}) ist nicht mehr in der Build-Historie.",
+  "waits for {0}": "wartet auf {0}",
+  "The build has no sources to add.": "Der Build enthält keine Sourcen zum Hinzufügen.",
+  "Add all sources of this build to a build package": "Alle Sourcen dieses Builds zu einem Build-Paket hinzufügen",
+  "Add to build package": "Zum Build-Paket hinzufügen",
+  "Add sources of the build to a build package": "Sourcen des Builds zu einem Build-Paket hinzufügen",
+  "Uncheck the sources to skip": "Die Sourcen abwählen, die nicht hinzugefügt werden sollen"
 }

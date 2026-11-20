@@ -9,6 +9,8 @@ export interface SourcePickOptions {
   exclude?: Set<string>;
   /** Only these sources are offered, all selected (e.g. the changed ones); default: all sources */
   only_preselected?: string[];
+  /** Only these sources are offered, in this order, with `selected` selected (e.g. the sources of a build) */
+  offered?: { sources: string[]; selected: Set<string> };
 }
 
 
@@ -19,7 +21,7 @@ export interface SourcePickOptions {
 export async function pick_sources(options: SourcePickOptions): Promise<string[]> {
 
   const infos = await LocalSourceList.get_source_info_list();
-  const offered = options.only_preselected ?? Object.keys(infos);
+  const offered = options.only_preselected ?? options.offered?.sources ?? Object.keys(infos);
   const items: vscode.QuickPickItem[] = offered
     .filter(source => !options.exclude?.has(source))
     .map(source => ({ label: source, description: infos[source]?.description || '' }));
@@ -35,6 +37,8 @@ export async function pick_sources(options: SourcePickOptions): Promise<string[]
   quick_pick.items = items;
   if (options.only_preselected)
     quick_pick.selectedItems = items;
+  else if (options.offered)
+    quick_pick.selectedItems = items.filter(item => options.offered!.selected.has(item.label));
 
   return await new Promise<string[]>(resolve => {
     quick_pick.onDidAccept(() => {

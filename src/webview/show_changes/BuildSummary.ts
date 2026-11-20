@@ -25,7 +25,7 @@ import { OperationLock } from '../../extension/utilities/OperationLock';
 import { render_template } from '../Templates';
 import { DeploymentConfig } from '../deployment/DeploymentConfig';
 import { CUSTOM_DATA_KEY, DeploymentRecord, IReleaserError, deployment_data, is_object, deployment_of, get_workflows, show_details_url, start_workflow, workflow_choices } from '../../shared/IReleaser';
-import { StageActions, StatusKind, deployment_overview, status_kind } from '../../shared/IReleaserDeployments';
+import { StageActions, StatusKind, deployment_overview, is_waiting, status_kind } from '../../shared/IReleaserDeployments';
 import { annotate_build_list } from '../../shared/BuildListView';
 import { DeploymentWatcher } from '../deployment/DeploymentWatcher';
 import { history_dir_name } from '../build_history/HistoryTimestamp';
@@ -176,6 +176,11 @@ export class BuildSummary {
 
       case "add_source":
         BuildSummary.add_sources();
+        return;
+
+      case "add_to_build_package":
+        // The displayed list (current build or a build of the history), not a path from the page
+        vscode.commands.executeCommand('obi.build-package.add-build-sources', BuildSummary.get_current_compile_list_name());
         return;
 
       case "edit_cmd":
@@ -713,7 +718,9 @@ export class BuildSummary {
         percent: overview.total > 0 ? Math.round(overview.done / overview.total * 100) : 0,
         stages: state.stages.map((stage, index) => {
           const stage_kind = status_kind(stage.status);
-          return { id: String(stage.id), name: stage.name, status: stage.status, kind: stage_kind, step_icon: BuildSummary.STEP_ICON[stage_kind], number: index + 1 };
+          // A stage which waits for parallel stages says for which (else its status)
+          const state_text = is_waiting(stage) ? vscode.l10n.t('waits for {0}', (stage.waiting_for ?? []).join(', ')) : stage.status;
+          return { id: String(stage.id), name: stage.name, status: stage.status, state_text: state_text, kind: stage_kind, step_icon: BuildSummary.STEP_ICON[stage_kind], number: index + 1 };
         }),
         attention: attention && attention_text ? {
           stage_id: String(attention.stage.id),

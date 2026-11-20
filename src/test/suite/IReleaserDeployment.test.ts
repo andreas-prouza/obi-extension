@@ -58,8 +58,8 @@ async function i_releaser(): Promise<{ url: string; received: Received[]; close:
 }
 
 
-/** A stage of the local i-Releaser: id, name, status, and optionally its steps (actions) */
-type TestStage = [number, string, string, unknown[]?];
+/** A stage of the local i-Releaser: id, name, status, and optionally its steps (actions) and the stages it waits for */
+type TestStage = [number, string, string, unknown[]?, string[]?];
 
 /** Local i-Releaser with deployment 123: `stages` is its state, `push()` sends an event to the open watch_state streams */
 async function i_releaser_status(stages: TestStage[]) {
@@ -79,7 +79,7 @@ async function i_releaser_status(stages: TestStage[]) {
       res.on('close', () => streams.delete(res));
       return;
     }
-    const as_dict = ([id, name, status, actions]: TestStage) => ({ id: id, name: name, status: status, ...(actions ? { actions: actions } : {}) });
+    const as_dict = ([id, name, status, actions, waiting_for]: TestStage) => ({ id: id, name: name, status: status, ...(actions ? { actions: actions } : {}), ...(waiting_for ? { waiting_for: waiting_for } : {}) });
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ general: {
       id: 123, status: ir.status, deploy_version: 7, workflow: { name: 'wf' },
@@ -412,6 +412,37 @@ suite('i-Releaser deployment from the build summary', () => {
       html = render();
       assert.match(html, /class="ir-attention ir-ready">[\s\S]*Stage DEPLOY is ready to run\./);
       assert.deepStrictEqual(actions_of(html), ['continue 13']);
+    }
+    finally {
+      await ir.close();
+    }
+  });
+
+
+  test('status: a stage which waits for parallel stages says for which, and is not offered to run', async () => {
+    const ir = await i_releaser_status([[11, 'START', 'finished'], [12, 'A', 'finished'], [13, 'B', 'ready'], [14, 'MERGE', 'new', undefined, ['B']]]);
+    ir.status = 'ready';
+    try {
+      await deployment_toml(`[i-releaser]\nurl = "${ir.url}"\n`);
+      await DeploymentConfig.store_auth_token(ir.url, 'TOKEN-1');
+      sinon.stub(BuildSummary, 'get_compile_list').callsFake(() => completed_list({ 'i-releaser': { id: 123, workflow: 'wf' } }));
+      DeploymentWatcher.show({ base: ir.url, id: 123 });
+      await until(() => DeploymentWatcher.info(ir.url, 123)?.state !== undefined, 'first read');
+
+      let html = render();
+      assert.deepStrictEqual(stages_of(html)[3], 'ir-stage ir-new|4|MERGE|waits for B');
+      assert.match(html, /class="ir-attention ir-ready">[\s\S]*Stage B is ready to run\./);
+      assert.deepStrictEqual(actions_of(html), ['continue 13']);
+
+      // i-Releaser before the fix: MERGE ready as soon as A was finished. While B runs, nothing is offered
+      ir.stages = [[11, 'START', 'finished'], [12, 'A', 'finished'], [13, 'B', 'in process'], [14, 'MERGE', 'ready', undefined, ['B']]];
+      ir.status = 'in process';
+      ir.push();
+      await until(() => DeploymentWatcher.info(ir.url, 123)?.state?.stages[3].status === 'ready', 'ready too early');
+      html = render();
+      assert.match(stages_of(html)[3], /\|MERGE\|waits for B$/);
+      assert.ok(!html.includes('i_releaser_attention'), 'MERGE is not ready to run');
+      assert.deepStrictEqual(actions_of(html), []);
     }
     finally {
       await ir.close();

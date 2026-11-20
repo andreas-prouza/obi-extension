@@ -230,6 +230,8 @@ export interface StageState {
   id: number | string;
   name: string;
   status: string;
+  /** Stages of its `after_stages_finished` which aren't finished yet: it can't be run before (`waiting_for`, i-Releaser 3.1). Not set if it waits for nothing */
+  waiting_for?: string[];
   /** In the order of their sequence */
   steps: StepState[];
 }
@@ -291,7 +293,12 @@ function parse_stage(stage: unknown): StageState | undefined {
     .map(parse_step)
     .filter((step): step is StepState => step !== undefined)
     .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0) || compare_ids(a.id, b.id));
-  return { id: stage['id'], name: typeof stage['name'] === 'string' ? stage['name'] : String(stage['id']), status: stage['status'], steps: steps };
+  const parsed: StageState = { id: stage['id'], name: typeof stage['name'] === 'string' ? stage['name'] : String(stage['id']), status: stage['status'], steps: steps };
+  // Older versions of i-Releaser don't send it
+  const waiting_for = Array.isArray(stage['waiting_for']) ? stage['waiting_for'].filter((name): name is string => typeof name === 'string' && name !== '') : [];
+  if (waiting_for.length > 0)
+    parsed.waiting_for = waiting_for;
+  return parsed;
 }
 
 
