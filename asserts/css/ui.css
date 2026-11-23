@@ -428,6 +428,60 @@ body.obi-page {
   margin: 16px 0 22px;
 }
 
+/* Collapsible section of the tiles; the counts stay visible in the head when it is closed */
+.section-details {
+  margin: 16px 0 22px;
+}
+
+.section-details > summary {
+  margin: 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.section-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.section-details > summary:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 2px;
+}
+
+.section-chevron {
+  align-self: center;
+  color: var(--obi-muted);
+  transition: transform .1s;
+}
+
+.section-details[open] .section-chevron {
+  transform: rotate(90deg);
+}
+
+.section-counts {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.section-counts > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.section-counts .codicon {
+  font-size: 14px;
+}
+
+.section-counts .codicon-diff-added { color: var(--obi-passed); }
+.section-counts .codicon-diff-modified { color: var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d); }
+.section-counts .codicon-references { color: var(--obi-running); }
+
+.section-details > .tiles {
+  margin: 8px 0 0;
+}
+
 .tile {
   min-width: 0;
   padding: 12px 14px;

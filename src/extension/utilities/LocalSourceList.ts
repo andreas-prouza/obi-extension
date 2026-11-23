@@ -71,9 +71,12 @@ export class LocalSourceList {
     }
 
 
+    /** Sources of a supported type in the source folder, from the last walk (walks first if there was none) */
     public static async get_source_list(): Promise<string[]> {
         if (LocalSourceList.source_loading_promise)
             await LocalSourceList.source_loading_promise;
+        if (!LocalSourceList.source_list)
+            await LocalSourceList.load_source_list();
         return LocalSourceList.source_list || [];
     }
 

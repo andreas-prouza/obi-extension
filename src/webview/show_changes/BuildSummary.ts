@@ -19,7 +19,6 @@ import { DependencyList } from '../../extension/obi/Dependency';
 import { mergeSourcesIntoCompileList, resetDependentStatuses } from '../../extension/obi/compile_list/modules/add_sources';
 import { create_dependency_graph } from '../../extension/obi/compile_list/modules/dependency';
 import { dependents_only_needed_by } from '../../extension/obi/compile_list/modules/ignore_sources';
-import { ISourceInfos } from '../../shared/Source';
 import { SystemCmdExecution } from '../../extension/utilities/SystemCmdExecution';
 import { OperationLock } from '../../extension/utilities/OperationLock';
 import { render_template } from '../Templates';
@@ -406,8 +405,8 @@ export class BuildSummary {
       }
     }
 
-    const source_info_list: ISourceInfos = await LocalSourceList.get_source_info_list();
-    if (Object.keys(source_info_list).every(source => existing_sources.has(source))) {
+    const source_list: string[] = await LocalSourceList.get_source_list();
+    if (source_list.every(source => existing_sources.has(source))) {
       vscode.window.showInformationMessage(vscode.l10n.t('All sources are already part of the build summary.'));
       return;
     }

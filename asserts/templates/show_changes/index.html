@@ -105,6 +105,12 @@
       ['changed', 'diff-modified', 'Changed sources', object_list['changed_sources']],
       ['dependent', 'references', 'Dependent objects', object_list['dependend_sources']]
     ] %}
+    <details class="section-details" data-state-id="objects" open>
+    <summary class="section-head">
+      <span class="codicon codicon-chevron-right section-chevron"></span>
+      <h2>{{ global_stuff['get_text']('Sources') | safe }}</h2>
+      <span class="section-counts obi-muted">{% for tile in tiles %}<span title="{{ global_stuff['get_text'](tile[2]) | safe }}"><span class="codicon codicon-{{ tile[1] }}"></span>{{ tile[3] | length }}</span>{% endfor %}</span>
+    </summary>
     <div class="tiles">
       {% for tile in tiles %}
       <div class="tile" data-tile="{{ tile[0] }}">
@@ -120,6 +126,7 @@
       </div>
       {% endfor %}
     </div>
+    </details>
     {% endif %}
 
     {% if compile_list %}

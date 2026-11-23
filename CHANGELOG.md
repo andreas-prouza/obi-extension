@@ -1,3 +1,12 @@
+## [2.2.3]
+
+### Changes
+* **Build summary: the section with the new, changed and dependent sources can be collapsed.** Collapsed, its head still shows the three numbers; the state is kept when the page is updated ([docs](asserts/docs/building.md#build-summary))
+
+### Bugfixes
+* ***Add source* (build summary) and *Add sources* (build packages) offer all sources of the source folder again.** After `source-infos.json` changed (e.g. a description was edited), only sources with a description were offered until the source folder was read again
+
+
 ## [2.2.2]
 
 ### Changes

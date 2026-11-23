@@ -21,7 +21,9 @@ export interface SourcePickOptions {
 export async function pick_sources(options: SourcePickOptions): Promise<string[]> {
 
   const infos = await LocalSourceList.get_source_info_list();
-  const offered = options.only_preselected ?? options.offered?.sources ?? Object.keys(infos);
+  // All sources of the source folder, not the keys of the source infos: a reload of source-infos.json
+  // (e.g. after editing a description) leaves only the sources with a description there
+  const offered = options.only_preselected ?? options.offered?.sources ?? await LocalSourceList.get_source_list();
   const items: vscode.QuickPickItem[] = offered
     .filter(source => !options.exclude?.has(source))
     .map(source => ({ label: source, description: infos[source]?.description || '' }));

@@ -76,7 +76,7 @@ With **Current source** (`*CURRENT`, or **Show single change** in the editor), o
 * **Start i-Releaser workflow**: shown when all commands succeeded and an [i-Releaser](#i-releaser-deployment) is configured. After the start, the [deployment card](#i-releaser-deployment) shows it.
 * `{}` opens the compile list (JSON), the log icon the OBI log (`.obi/log/main.log`)
 
-**New sources / Changed sources / Dependent objects**: the number of each, with the first sources as links; **+ … more** shows the others.
+**New sources / Changed sources / Dependent objects**: the number of each, with the first sources as links; **+ … more** shows the others. A click on **Sources** collapses the section; its head still shows the three numbers, and the page keeps it collapsed until you open it again.
 
 **Build list**: all levels, each with its number of objects and the result (✓ built, ✗ failed, ○ open); click a level to fold it. For each source:
 * **Checkbox**: exclude the source from the build, whatever its status. The choice is saved in the compile list at once (`ignore`), so it stays after the page is updated or reopened. An unchecked source is shown greyed out.
