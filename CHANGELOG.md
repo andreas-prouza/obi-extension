@@ -1,8 +1,12 @@
-## [Unreleased]
+## [2.2.2]
 
 ### Changes
+* **"Show changes" is now called "Preview build"** (German: *Build-Vorschau*): it shows what would be built, also for the current source and build packages. The command ID `obi.show_changes` stays, so keybindings keep working ([docs](asserts/docs/building.md#preview-build))
 * **The local OBI backend is updated when VS Code starts by default:** `obi.backend.autoUpdateLocal` is now on, also for existing installations that never changed it. Set it to `false` to keep updating by hand ([docs](asserts/docs/configuration.md#updating-the-obi-backend))
 * **Local OBI too old for build packages:** the error has an **Update** button (`git pull` in `local-obi-dir`) and shows the resolved folder ([docs](asserts/docs/building.md#build-packages))
+
+### Bugfixes
+* **Build packages: *Add sources of the build* no longer adds the related copybooks** (level 0, `ALWAYS_TRANSFER_RELATED_COPYBOOKS`). As sources of the package they pulled in every object using them, so the build of the package was much larger than the build it came from. Remove such copybooks from existing packages ([docs](asserts/docs/building.md#build-packages))
 
 
 ## [2.2.1]

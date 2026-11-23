@@ -104,7 +104,7 @@ New tree view **Build packages** in the OBI view container, between *Source filt
 *Add sources of the build to build package…* (`obi.build-package.add-build-sources`):
 
 * From the build summary (button *Add to build package*, message `add_to_build_package` without fields: the extension uses the displayed compile list, live or from the history), the context menu of a build in the build history, or the Command Palette (current build list). A path outside the workspace is refused.
-* Sources: all of the build list in build order, also dependents and related copybooks, without invalid names (`sources_of_build_list`).
+* Sources: all of the build list in build order, also dependents, without invalid names (`sources_of_build_list`). Not the related copybooks of level 0 (`ALWAYS_TRANSFER_RELATED_COPYBOOKS`): forced into a package, each of them would pull in all objects that use it (a build of 81 sources became 1460). The build of the package adds them on level 0 again. Bugfix 2026-11-23.
 * First a multi-select QuickPick of these sources (like *Add source*): selected, except those unchecked in the build list (`ignore`; a source listed more than once counts as checked if one entry is). Then the package (QuickPick with *New build package…*). Sources already in the package are reported as such.
 
 ## Last build of a package

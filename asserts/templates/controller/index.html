@@ -23,7 +23,7 @@
 
     <div class="view-actions" id="view_actions">
       <button type="button" class="btn full" id="run_build"><span class="codicon codicon-run-all"></span>{{ global_stuff['get_text']('Run build') | safe }}</button>
-      <button type="button" class="btn secondary full" id="show_changes"><span class="codicon codicon-checklist"></span>{{ global_stuff['get_text']('Show changes') | safe }}</button>
+      <button type="button" class="btn secondary full" id="show_changes"><span class="codicon codicon-checklist"></span>{{ global_stuff['get_text']('Preview build') | safe }}</button>
     </div>
 
     <div id="running_ring" style="display: {% if running %}flex{% else %}none{% endif %}" title="{{ running or '' }}" class="run-box">

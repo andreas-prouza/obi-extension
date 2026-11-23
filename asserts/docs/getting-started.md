@@ -117,7 +117,7 @@ See [Sources](sources.md) for working with sources in the extension.
 ## 5. First build
 
 1. Open the **OBI Build** view.
-2. Select **All changes** and click **Show changes**. The build summary lists all new and changed sources.
+2. Select **All changes** and click **Preview build**. The build summary lists all new and changed sources.
 3. Click **Run build** and confirm.
 
 On the first build, OBI detects that the project is missing on IBM i and offers **Transfer all** (also available in the Command Palette as **OBI: Transfer all to remote**):
@@ -145,7 +145,7 @@ More about building in [Building](building.md).
 3. **Reset the compiled object list**  
    Without this, OBI treats every source as *new* and would build all of them.
    **Reset compiled object list** (toolbar of the OBI Build view) stores the current hash of every source as "already built".
-   From then on, **Show changes** only shows sources you really changed.
+   From then on, **Preview build** only shows sources you really changed.
 
    ![Reset compiled object list](../img/ext/compiled-obj-list.png)
 

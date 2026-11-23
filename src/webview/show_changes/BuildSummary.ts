@@ -267,7 +267,7 @@ export class BuildSummary {
     const compile_list_file = path.join(Workspace.get_workspace(), BuildSummary.get_current_compile_list_name());
     const compile_list = BuildSummary.get_compile_list();
     if (!compile_list) {
-      report('error', vscode.l10n.t('No build summary found. Run "Show changes" first.'));
+      report('error', vscode.l10n.t('No build summary found. Run "Preview build" first.'));
       return;
     }
 
@@ -395,7 +395,7 @@ export class BuildSummary {
 
     const compile_list: any = BuildSummary.get_compile_list();
     if (!compile_list) {
-      vscode.window.showErrorMessage(vscode.l10n.t('No build summary found. Run "Show changes" first.'));
+      vscode.window.showErrorMessage(vscode.l10n.t('No build summary found. Run "Preview build" first.'));
       return;
     }
 

@@ -245,6 +245,10 @@ export function parse_dragged_sources(json: string): string[] {
 /**
  * Sources of a build list (compile-list.json) in build order, without duplicates and invalid names, and those of them
  * that are unchecked in the build summary (`ignore`): to add the sources of a build to a build package.
+ *
+ * Level 0 is left out: it holds the related copybooks (ALWAYS_TRANSFER_RELATED_COPYBOOKS), which are only transferred.
+ * In a package they would be forced sources and pull in every object that uses them; the build of the package adds
+ * them on level 0 again anyway.
  */
 export function sources_of_build_list(compile_list: unknown): { sources: string[]; unchecked: Set<string> } {
   const is_object = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -253,7 +257,7 @@ export function sources_of_build_list(compile_list: unknown): { sources: string[
   const sources: string[] = [];
   const checked = new Set<string>();
   for (const level of compile_list.compiles)
-    for (const entry of is_object(level) && Array.isArray(level.sources) ? level.sources : [])
+    for (const entry of is_object(level) && level.level !== 0 && Array.isArray(level.sources) ? level.sources : [])
       if (is_object(entry) && typeof entry.source === 'string') {
         sources.push(entry.source);
         if (!entry.ignore)

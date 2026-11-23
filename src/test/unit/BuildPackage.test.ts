@@ -158,4 +158,14 @@ suite('BuildPackage: sources of a build list', () => {
     for (const broken of [null, {}, { compiles: 'x' }, []])
       assert.deepStrictEqual(sources_of_build_list(broken).sources, [], JSON.stringify(broken));
   });
+
+
+  test('not the related copybooks of level 0: in a package they would pull in all objects using them', () => {
+    const compile_list = { compiles: [
+      { level: 0, sources: [{ source: 'a/qcpy/related.rpgle.cpy' }] },
+      { level: 1, sources: [{ source: 'a/qcpy/changed.rpgle.cpy' }] },
+      { level: 2, sources: [{ source: 'a/q/x.sqlrpgle.pgm' }] },
+    ] };
+    assert.deepStrictEqual(sources_of_build_list(compile_list).sources, ['a/qcpy/changed.rpgle.cpy', 'a/q/x.sqlrpgle.pgm']);
+  });
 });

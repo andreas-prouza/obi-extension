@@ -15,7 +15,7 @@ suite('OperationLock', () => {
     const first = OperationLock.run('Run build', () => new Promise<string>(resolve => { release = () => resolve('done'); }));
 
     assert.strictEqual(OperationLock.running, 'Run build');
-    assert.strictEqual(await OperationLock.run('Show changes', async () => 'second'), undefined);
+    assert.strictEqual(await OperationLock.run('Preview build', async () => 'second'), undefined);
     assert.ok(warning.calledOnce && String(warning.firstCall.args[0]).includes('Run build'));
 
     release();

@@ -521,7 +521,7 @@ export class OBICommands {
 
   public static async show_changes(context: vscode.ExtensionContext, scope: BuildScope = ALL_CHANGES): Promise<boolean> {
 
-    const is_success = await OperationLock.run('Show changes', () => OBICommands.do_show_changes(context, scope));
+    const is_success = await OperationLock.run('Preview build', () => OBICommands.do_show_changes(context, scope));
 
     OBIController.run_finished('show_changes');
     OBIController.update_build_summary_timestamp();
@@ -567,7 +567,7 @@ export class OBICommands {
       else {
         logger.info(`WS: ${Workspace.get_workspace()}`);
         const args = OBICommands.local_obi_create_args(config, scope);
-        BuildOutput.start(scope.kind === 'sources' && scope.package ? `Build package ${scope.package.name} (local OBI)` : 'Show changes (local OBI)');
+        BuildOutput.start(scope.kind === 'sources' && scope.package ? `Build package ${scope.package.name} (local OBI)` : 'Preview build (local OBI)');
         let unknown_package_argument = false;
         try {
           await SystemCmdExecution.run_system_cmd(Workspace.get_workspace(), OBICommands.local_obi_python(), args, 'show_changes', {
@@ -586,7 +586,7 @@ export class OBICommands {
           // The old backend stopped before it wrote status.json, so check_obi_response can't offer the update
           const local_obi_dir = OBITools.get_local_obi_dir();
           show_error(
-            vscode.l10n.t('Show changes failed'),
+            vscode.l10n.t('Preview build failed'),
             new Error(vscode.l10n.t('The local OBI is too old for build packages. Update it in {0} (e.g. git pull).', local_obi_dir ?? ''), { cause: e }),
             local_obi_dir ? [{ title: vscode.l10n.t('Update'), run: () => BackendUpdate.update_now(local_obi_dir, false).catch((err: unknown) => show_error(vscode.l10n.t('Updating the OBI backend in {0} failed', local_obi_dir), err)) }] : []
           );
@@ -614,7 +614,7 @@ export class OBICommands {
       is_success = true;
     }
     catch (error: unknown) {
-      show_error(vscode.l10n.t('Show changes failed'), error);
+      show_error(vscode.l10n.t('Preview build failed'), error);
     }
 
     return is_success;

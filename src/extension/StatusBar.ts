@@ -123,7 +123,7 @@ export class StatusBar {
     if (StatusBar.active_source())
       items.push({ label: `$(run) ${vscode.l10n.t('Run build for the current source')}`, run: command('obi.run_single_build') });
     items.push(
-      { label: `$(loaded-scripts-view-icon) ${vscode.l10n.t('Show changes')}`, run: command('obi.show_changes') },
+      { label: `$(loaded-scripts-view-icon) ${vscode.l10n.t('Preview build')}`, run: command('obi.show_changes') },
       { label: `$(output) ${vscode.l10n.t('Open build summary')}`, run: command('obi.open_build_summary') },
       { label: `$(person) ${vscode.l10n.t('Switch profile…')}`, run: () => StatusBar.switch_profile() },
     );

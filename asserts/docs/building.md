@@ -3,7 +3,7 @@
 # Building
 
 - [The OBI Build view](#the-obi-build-view)
-- [Show changes](#show-changes)
+- [Preview build](#preview-build)
 - [Build summary](#build-summary)
 - [Run build](#run-build)
 - [Build packages](#build-packages)
@@ -20,8 +20,8 @@
 | Element | Meaning |
 |---|---|
 | **Current source** / **All changes** | Build only the source in the active editor (`*CURRENT`, its name is shown below), or all changes in the project (`*ALL`) |
-| **Run build** | Show changes, then build |
-| **Show changes** | Create the build list and open the build summary |
+| **Run build** | Preview build, then build |
+| **Preview build** | Create the build list and open the build summary |
 | *Using profile* | Active user profile; ➕ copies it into a new profile, 🗑 deletes it (see [Profiles](configuration.md#profiles)) |
 | *Last build* | Time and result of the current build list; **Open** opens its build summary |
 
@@ -40,12 +40,12 @@ When a source (`.pgm`, `.srvpgm`, `.module`, `.file`) is open in the editor, the
 
 ### Status bar
 
-The status bar shows the active profile and the result of the last build (a check mark with its time, or the number of failed sources), or the running operation, with the elapsed time in the tooltip. Click it for a menu: run build (all changes or the current source), show changes, open build summary, switch profile, cancel the running operation, show build output or log. Turn it off with the setting `obi.statusBar.enabled`.
+The status bar shows the active profile and the result of the last build (a check mark with its time, or the number of failed sources), or the running operation, with the elapsed time in the tooltip. Click it for a menu: run build (all changes or the current source), preview build, open build summary, switch profile, cancel the running operation, show build output or log. Turn it off with the setting `obi.statusBar.enabled`.
 
 
-## Show changes
+## Preview build
 
-**Show changes** creates the build list and opens the build summary. Nothing is executed on IBM i.
+**Preview build** creates the build list and opens the build summary. Nothing is executed on IBM i.
 
 1. **Change detection**: OBI computes a hash of every source and compares it with the hashes of the last successful build (`.obi/etc/object-builds.json`).
    * Source not in the list → **new**
@@ -175,7 +175,7 @@ The template is code from your project (Nunjucks templates can run JavaScript in
 
 ## Run build
 
-**Run build** in the OBI Build view first runs **Show changes**, then builds. **Run build** in the build summary builds the list as shown, including your changes.
+**Run build** in the OBI Build view first runs **Preview build**, then builds. **Run build** in the build summary builds the list as shown, including your changes.
 
 In an editor, `Ctrl+Alt+Shift+B` builds the current source and `Ctrl+Alt+Shift+C` shows its changes (macOS: `Cmd` instead of `Ctrl`).
 
@@ -197,11 +197,11 @@ Steps:
 
    Outputs of earlier builds that are still on the IBM i are not downloaded again. The OBI log lists the duration of each step (`Build timings: upload sources 0:02 · build list 0:01 · remote run 2:31 · download results 0:04 · total 2:38`).
 6. **History**: a snapshot of the build (compile list with git branch/commit, and the configuration without `secret*` variables in `config.json`) is stored in `.obi/build-history` (see [Build history](#build-history)).
-7. **Hashes**: only sources that were built **successfully** get their hash updated in `.obi/etc/object-builds.json`. Failed sources show up again on the next **Show changes**.
+7. **Hashes**: only sources that were built **successfully** get their hash updated in `.obi/etc/object-builds.json`. Failed sources show up again on the next **Preview build**.
 
 Only sources that still have commands that are not `success` are built. So after fixing an error you can simply **Run build** again in the build summary, and only the remaining commands run.
 
-**Live output:** the output of the OBI backend appears in the output panel **OBI Build** while the build runs (also for *Show changes* with a local OBI). The progress notification shows the elapsed time and the latest line. Open it any time with **OBI: Show build output**. The setting `obi.build.revealOutput` decides when the panel opens by itself: `onError` (default), `onStart` or `never`.
+**Live output:** the output of the OBI backend appears in the output panel **OBI Build** while the build runs (also for *Preview build* with a local OBI). The progress notification shows the elapsed time and the latest line. Open it any time with **OBI: Show build output**. The setting `obi.build.revealOutput` decides when the panel opens by itself: `onError` (default), `onStart` or `never`.
 
 **Cancel** (in the notification or in the OBI Build view) stops the build:
 * before the build runs on IBM i, it stops after the current step (no further upload or build);
@@ -231,18 +231,18 @@ The **Build packages** view lists them:
 * View title: **Filter build packages…** shows only packages whose name, description or one of whose sources contains the text (the filter icon removes it again); **Show archived build packages** / **Hide archived build packages**.
 * **Drag and drop**: drag sources from the **Source filters** view (several with `Ctrl`/`Shift`), files from the **Explorer** or sources of another package onto a package (or onto one of its sources) to add them.
 
-**Add sources of the build to build package…** takes the sources of a build: from the button **Add to build package** in the [build summary](#build-summary), from the context menu of a build in the [build history](#build-history), or in the Command Palette for the current build list. First a list of all sources of the build shows up (like for **Add source**), also the dependent objects. They are selected, except the sources unchecked in the build list: uncheck the ones you want to skip. Then choose the package or create a new one. Sources already in the package stay as they are.
+**Add sources of the build to build package…** takes the sources of a build: from the button **Add to build package** in the [build summary](#build-summary), from the context menu of a build in the [build history](#build-history), or in the Command Palette for the current build list. First a list of all sources of the build shows up (like for **Add source**), also the dependent objects, but not the related copybooks of level 0 (`ALWAYS_TRANSFER_RELATED_COPYBOOKS`): as a source of the package, a copybook would pull in every object that uses it, and the build of the package transfers them anyway. They are selected, except the sources unchecked in the build list: uncheck the ones you want to skip. Then choose the package or create a new one. Sources already in the package stay as they are.
 
 **Add to build package…** is in the submenu **OBI** of the Explorer (also for several selected files), of an editor tab and of a member in the Source filters view. Choose a package or create a new one.
 
 All commands are in the Command Palette too (*OBI: …*). Without a package selected in the view, they ask for one.
 
-**Build list of a package:** as with [Show changes](#show-changes), but with the sources of the package instead of the changed ones.
+**Build list of a package:** as with [Preview build](#preview-build), but with the sources of the package instead of the changed ones.
 
 * All sources of the package are built, also those whose hash didn't change, plus all objects depending on them.
 * A source that doesn't exist, or whose type isn't in *supported object types*, stops the build: nothing is built, and the message offers **Remove from package**.
 * The build summary shows the package next to the git branch, and the build history next to the time of the build. i-Releaser gets it with the build list (`package`).
-* With a [local OBI](#show-changes), the local OBI creates the build list (`main.py -a create --package <name>`). It needs an up-to-date OBI backend (backend version 5). If the local OBI is older, the error offers **Update** (`git pull` in `local-obi-dir`).
+* With a [local OBI](#preview-build), the local OBI creates the build list (`main.py -a create --package <name>`). It needs an up-to-date OBI backend (backend version 5). If the local OBI is older, the error offers **Update** (`git pull` in `local-obi-dir`).
 
 **Last build:** after a build of a package, the package shows its result and time: ✓ all sources built, ✗ a source failed, ○ not all sources were built (cancelled); the package icon has the colour of the result. The tooltip says how many sources failed and links to the build summary. A build summary opened from the history and built again counts too, unless a newer build of the package exists.
 The last build is personal (your builds on your IBM i): it is stored in `.obi/cache/build-packages-last-build.json`, not in the package file. Once the build was deleted from the [build history](#build-history-size), the result is still shown, but without a build summary.
@@ -335,8 +335,8 @@ Use it after migrating existing sources, or when you know that IBM i is in sync 
 
 For one source, right-click it in the **Source list**, in the **Explorer** or on its editor tab and open the submenu **OBI** (or run the command from the Command Palette with the source open in the editor):
 
-* **Mark source as built (store current hash)** stores the current hash of the source in `.obi/etc/object-builds.json`. *Show changes* no longer lists it as new or changed (sources depending on it are only built if something else needs them). Use it when the object on IBM i is already up to date, e.g. after a change of comments only.
-* **Mark source as changed (remove hash)** removes its hash. The next *Show changes* lists it as a new source, so it is built again together with its dependents.
+* **Mark source as built (store current hash)** stores the current hash of the source in `.obi/etc/object-builds.json`. *Preview build* no longer lists it as new or changed (sources depending on it are only built if something else needs them). Use it when the object on IBM i is already up to date, e.g. after a change of comments only.
+* **Mark source as changed (remove hash)** removes its hash. The next *Preview build* lists it as a new source, so it is built again together with its dependents.
 
 Other entries of the file are kept. If the file is not valid JSON, nothing is written and the error shows where it is.
 
