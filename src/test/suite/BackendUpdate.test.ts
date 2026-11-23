@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { BackendUpdate } from '../../extension/obi/BackendUpdate';
 import { SystemCmdError } from '../../shared/Errors';
+import { ExtensionSettings } from '../../extension/utilities/ExtensionSettings';
 import { BackendCheckout, backend_checkout, has_git } from '../git_fixture';
 
 
@@ -68,14 +69,20 @@ suite('Update of the local OBI backend (git pull)', function () {
   });
 
 
-  test('on start: only with obi.backend.autoUpdateLocal, and once per session', async () => {
+  test('on start: only with obi.backend.autoUpdateLocal (on by default), and once per session', async () => {
+    assert.strictEqual(vscode.workspace.getConfiguration('obi').inspect<boolean>('backend.autoUpdateLocal')?.defaultValue, true, 'on by default');
+    assert.strictEqual(ExtensionSettings.backend_auto_update_local(), true, 'not set: on');
+
     const before = head();
     repo.commit({ 'main.py': 'print("new")\n' });
 
+    await vscode.workspace.getConfiguration('obi').update('backend.autoUpdateLocal', false, vscode.ConfigurationTarget.Global);
     await BackendUpdate.update_local_on_start(repo.checkout);
     assert.strictEqual(head(), before, 'setting off: nothing happens');
 
+    await BackendUpdate.update_local_on_start(undefined);
     await vscode.workspace.getConfiguration('obi').update('backend.autoUpdateLocal', true, vscode.ConfigurationTarget.Global);
+    await BackendUpdate.update_local_on_start(undefined);
     await BackendUpdate.update_local_on_start(repo.checkout);
     const updated = head();
     assert.notStrictEqual(updated, before, 'updated');

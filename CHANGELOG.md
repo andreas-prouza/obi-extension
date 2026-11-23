@@ -1,3 +1,10 @@
+## [Unreleased]
+
+### Changes
+* **The local OBI backend is updated when VS Code starts by default:** `obi.backend.autoUpdateLocal` is now on, also for existing installations that never changed it. Set it to `false` to keep updating by hand ([docs](asserts/docs/configuration.md#updating-the-obi-backend))
+* **Local OBI too old for build packages:** the error has an **Update** button (`git pull` in `local-obi-dir`) and shows the resolved folder ([docs](asserts/docs/building.md#build-packages))
+
+
 ## [2.2.1]
 
 ### Changes

@@ -1271,7 +1271,7 @@
         },
         "obi.backend.autoUpdateLocal": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "scope": "machine",
           "description": "%obi.backend.autoUpdateLocal%"
         },

@@ -20,7 +20,7 @@ Also fixes: the *Update* button after a run of an older backend only pulled the 
 
 | Setting | Default | Effect |
 |---|---|---|
-| `obi.backend.autoUpdateLocal` | `false` | `git pull` in `local-obi-dir` once per session, when the project services start (`start_project_services`) |
+| `obi.backend.autoUpdateLocal` | `true` (Unreleased; before `false`) | `git pull` in `local-obi-dir` once per session, when the project services start (`start_project_services`). Without `local-obi-dir` the session isn't used up |
 | `obi.backend.autoUpdateRemote` | `false` | `git pull` in `remote-obi-dir`, once per session and IBM i (`user@host:port:dir`), before the first remote OBI command (`create` or `run`) |
 
 Scope `machine`: an update of a shared installation is a personal decision, so a committed `.vscode/settings.json` can't turn it on.
@@ -37,6 +37,8 @@ Scope `machine`: an update of a shared installation is a personal decision, so a
 ## *Update* button
 
 `BackendUpdate.update_now`: the local backend (if `local-obi-dir` is set) and the one on the IBM i, under the `OperationLock`, with a message for every result.
+
+The error *The local OBI is too old for build packages* (argparse of the local OBI rejects `--package`, so no `status.json` is written and `check_obi_response` can't offer it) has its own *Update* button: `update_now(local_dir, false)`, the local backend only.
 
 
 # Tests

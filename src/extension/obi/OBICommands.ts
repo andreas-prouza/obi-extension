@@ -581,9 +581,16 @@ export class OBICommands {
           });
         }
         catch (e: unknown) {
-          if (unknown_package_argument)
-            throw new Error(vscode.l10n.t('The local OBI is too old for build packages. Update it in {0} (e.g. git pull).', config.general['local-obi-dir'] ?? ''), { cause: e });
-          throw e;
+          if (!unknown_package_argument)
+            throw e;
+          // The old backend stopped before it wrote status.json, so check_obi_response can't offer the update
+          const local_obi_dir = OBITools.get_local_obi_dir();
+          show_error(
+            vscode.l10n.t('Show changes failed'),
+            new Error(vscode.l10n.t('The local OBI is too old for build packages. Update it in {0} (e.g. git pull).', local_obi_dir ?? ''), { cause: e }),
+            local_obi_dir ? [{ title: vscode.l10n.t('Update'), run: () => BackendUpdate.update_now(local_obi_dir, false).catch((err: unknown) => show_error(vscode.l10n.t('Updating the OBI backend in {0} failed', local_obi_dir), err)) }] : []
+          );
+          return false;
         }
 
         // The backend ends with exit code 0 also after an error (e.g. an invalid build package), which can leave the

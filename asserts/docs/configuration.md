@@ -357,7 +357,7 @@ These settings are VS Code settings (*File → Preferences → Settings*, search
 | `obi.log.maxFileSizeMB` | `5` | Maximum size of a log file; 3 files are kept per log (`combined.log`, `combined1.log`, …) |
 | `obi.buildHistory.maxBuilds` | `100` | Builds kept in the [build history](building.md#build-history-size); `0` = unlimited |
 | `obi.buildHistory.maxAgeDays` | `0` | Builds older than this many days are deleted from the build history; `0` = unlimited |
-| `obi.backend.autoUpdateLocal` | `false` | [Update the local OBI backend](#updating-the-obi-backend) when VS Code starts |
+| `obi.backend.autoUpdateLocal` | `true` | [Update the local OBI backend](#updating-the-obi-backend) when VS Code starts |
 | `obi.backend.autoUpdateRemote` | `false` | [Update the OBI backend on IBM i](#updating-the-obi-backend) once per VS Code session, before the first build |
 | `obi.buildPackages.baseBranch` | *(empty)* | Branch that [*Add sources changed on this branch*](building.md#build-packages) compares with, e.g. `main` or `origin/develop`. Empty: the default branch of `origin`, otherwise `main` or `master` |
 
@@ -369,12 +369,13 @@ The OBI backend is a git checkout (see [Getting started](getting-started.md#1-pr
 
 | Setting | When | Which backend |
 |---|---|---|
-| `obi.backend.autoUpdateLocal` | When VS Code starts | `local-obi-dir` |
+| `obi.backend.autoUpdateLocal` (on by default) | When VS Code starts | `local-obi-dir` |
 | `obi.backend.autoUpdateRemote` | Once per VS Code session, before the backend runs on IBM i for the first time (usually the first build) | `remote-obi-dir` on the IBM i of the active profile |
 
 * Only fast-forward updates: a checkout with own commits, or with local changes that conflict with the update, stays as it is, and the error is shown.
 * A message says when the backend was updated. If its `requirements.txt` changed, run the setup script of the backend again (e.g. `./setup.sh` on IBM i, `setup.bat` on Windows), so the `venv` gets the new Python packages.
 * If the update on IBM i fails (e.g. the IBM i has no internet access), the error is shown and the build goes on with the installed backend. Each IBM i is updated at most once per session, also if it failed.
+* If the local OBI is too old for a feature (e.g. build packages), the error has an **Update** button that updates the local backend.
 * While the local backend is updated, OBI is busy (status bar); cancel it from the status bar menu or the **OBI Build** view.
 * The backend on IBM i is often shared by the team: an update applies to everyone, and your user needs write access to its folder.
 

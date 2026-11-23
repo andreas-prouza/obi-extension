@@ -48,7 +48,7 @@ export class ExtensionSettings {
 
   /** git pull of the local OBI backend (local-obi-dir) when VS Code starts */
   public static backend_auto_update_local(): boolean {
-    return vscode.workspace.getConfiguration('obi').get<boolean>('backend.autoUpdateLocal', false);
+    return vscode.workspace.getConfiguration('obi').get<boolean>('backend.autoUpdateLocal', true);
   }
 
 

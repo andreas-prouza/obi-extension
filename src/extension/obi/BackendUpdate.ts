@@ -34,12 +34,12 @@ export class BackendUpdate {
   public static async update_local_on_start(dir: string | undefined): Promise<void> {
     if (BackendUpdate.local_started || !ExtensionSettings.backend_auto_update_local())
       return;
-    BackendUpdate.local_started = true;
-
+    // Without local-obi-dir the session isn't used up: the project may get one when its config becomes valid
     if (!dir) {
       logger.info('obi.backend.autoUpdateLocal is on, but no local-obi-dir is configured');
       return;
     }
+    BackendUpdate.local_started = true;
     if (!require_trust(vscode.l10n.t('Updating the OBI backend')))
       return;
 
@@ -64,8 +64,11 @@ export class BackendUpdate {
   }
 
 
-  /** Update button: the local backend (if configured) and the one on the IBM i, with a message for every result */
-  public static async update_now(local_dir: string | undefined): Promise<void> {
+  /**
+   * Update button: the local backend (if configured) and, with `include_remote`, the one on the IBM i,
+   * with a message for every result
+   */
+  public static async update_now(local_dir: string | undefined, include_remote: boolean = true): Promise<void> {
     if (!require_trust(vscode.l10n.t('Updating the OBI backend')))
       return;
 
@@ -73,7 +76,8 @@ export class BackendUpdate {
       await OperationLock.run(vscode.l10n.t('Updating the OBI backend'), async token => {
         if (local_dir)
           await BackendUpdate.update_local(local_dir, token, true);
-        await BackendUpdate.update_remote(token, true);
+        if (include_remote)
+          await BackendUpdate.update_remote(token, true);
       });
     }
     catch (e: unknown) {

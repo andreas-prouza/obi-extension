@@ -242,7 +242,7 @@ All commands are in the Command Palette too (*OBI: …*). Without a package sele
 * All sources of the package are built, also those whose hash didn't change, plus all objects depending on them.
 * A source that doesn't exist, or whose type isn't in *supported object types*, stops the build: nothing is built, and the message offers **Remove from package**.
 * The build summary shows the package next to the git branch, and the build history next to the time of the build. i-Releaser gets it with the build list (`package`).
-* With a [local OBI](#show-changes), the local OBI creates the build list (`main.py -a create --package <name>`). It needs an up-to-date OBI backend (backend version 5).
+* With a [local OBI](#show-changes), the local OBI creates the build list (`main.py -a create --package <name>`). It needs an up-to-date OBI backend (backend version 5). If the local OBI is older, the error offers **Update** (`git pull` in `local-obi-dir`).
 
 **Last build:** after a build of a package, the package shows its result and time: ✓ all sources built, ✗ a source failed, ○ not all sources were built (cancelled); the package icon has the colour of the result. The tooltip says how many sources failed and links to the build summary. A build summary opened from the history and built again counts too, unless a newer build of the package exists.
 The last build is personal (your builds on your IBM i): it is stored in `.obi/cache/build-packages-last-build.json`, not in the package file. Once the build was deleted from the [build history](#build-history-size), the result is still shown, but without a build summary.
