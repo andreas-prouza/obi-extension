@@ -31,6 +31,14 @@
         {{ field('connection|ssh-compression', global_stuff['get_text']('Compress the SSH connection'), kind='check', checked=(conn['ssh-compression'] !== false and conn['ssh-compression'] !== 'false')) }}
       </div>
 
+      <div class="connection-test">
+        <div class="connection-test-row">
+          <button type="button" class="btn secondary test_connection" data-target="{{ class_prefix }}"><span class="codicon codicon-plug"></span>{{ global_stuff['get_text']('Test connection') | safe }}</button>
+          <span class="obi-muted">{{ global_stuff['get_text']('Uses the saved configuration of the active profile. Nothing is changed on the IBM i.') | safe }}</span>
+        </div>
+        <ul class="connection-test-results" id="{{ class_prefix }}_connection_test" aria-live="polite" hidden></ul>
+      </div>
+
       {% if class_prefix == 'user' %}
       <div class="setting-grid">
         {{ field('connection|ssh-user', global_stuff['get_text']('User'), value=conn['ssh-user'], required=true, overridable=false) }}

@@ -86,4 +86,42 @@ suite('SystemCmdExecution', () => {
       fs.rmSync(dir, { recursive: true, force: true });
     }
   });
+
+
+  test('all output arrives before the promise resolves, also a last line without a line break', async function () {
+    this.timeout(30000);
+    // Much output right before the end: 'exit' can come before the last data
+    const script = 'for (let i = 0; i < 2000; i++) process.stdout.write("line " + i + "\\n"); process.stdout.write("last")';
+    for (let run = 0; run < 20; run++) {
+      const lines: string[] = [];
+      await SystemCmdExecution.run_system_cmd(cwd, 'node', ['-e', script], 'test-last-line', { on_line: (line, stream) => { if (stream === 'stdout') lines.push(line); } });
+      assert.strictEqual(lines.length, 2001, `run ${run}`);
+      assert.strictEqual(lines.at(-1), 'last', `run ${run}`);
+    }
+  });
+
+
+  test('a process that keeps the output open does not stop the promise; later output is not passed on', async function () {
+    this.timeout(10000);
+    const wait = SystemCmdExecution.CLOSE_AFTER_EXIT_MS;
+    SystemCmdExecution.CLOSE_AFTER_EXIT_MS = 300;
+    const pid_file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'obi-cmd-')), 'pid');
+    // The grandchild inherits stdout and writes into it after the program ended
+    const grandchild_script = `require('fs').writeFileSync(${JSON.stringify(pid_file)}, String(process.pid)); setTimeout(() => console.log('late'), 1000); setInterval(()=>{}, 1000)`;
+    const child_script = `require('child_process').spawn(process.execPath, ['-e', ${JSON.stringify(grandchild_script)}], { stdio: 'inherit' }); setTimeout(() => { console.log('done'); process.exit(0); }, 200)`;
+    const lines: string[] = [];
+    try {
+      const started = Date.now();
+      await SystemCmdExecution.run_system_cmd(cwd, 'node', ['-e', child_script], 'test-open-output', { on_line: line => lines.push(line) });
+      assert.ok(Date.now() - started < 3000, `resolved after ${Date.now() - started} ms`);
+      assert.deepStrictEqual(lines, ['done']);
+      await sleep(1200);
+      assert.deepStrictEqual(lines, ['done'], 'nothing after the promise resolved');
+    }
+    finally {
+      SystemCmdExecution.CLOSE_AFTER_EXIT_MS = wait;
+      if (fs.existsSync(pid_file))
+        try { process.kill(Number(fs.readFileSync(pid_file, 'utf8'))); } catch { /* already gone */ }
+    }
+  });
 });

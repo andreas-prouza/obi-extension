@@ -5,10 +5,6 @@ import { NodeSSH } from 'node-ssh';
 import { SSH_Tasks } from '../../extension/utilities/SSH_Tasks';
 
 
-// bugs.md #9: contributed in package.json, but never registered. Implement them or remove them from package.json.
-const KNOWN_UNREGISTERED = ['obi.showErrors', 'obi.show.tools', 'obi.get-remote-compiled-object-list'];
-
-
 suite('Extension registration', () => {
 
 	teardown(() => sinon.restore());
@@ -23,8 +19,12 @@ suite('Extension registration', () => {
 		const registered = new Set(await vscode.commands.getCommands(true));
 		const contributed: string[] = extension.packageJSON.contributes.commands.map((c: { command: string }) => c.command);
 
-		assert.deepStrictEqual(contributed.filter(id => !registered.has(id) && !KNOWN_UNREGISTERED.includes(id)), []);
-		assert.deepStrictEqual(KNOWN_UNREGISTERED.filter(id => registered.has(id)), [], 'registered now: remove from KNOWN_UNREGISTERED');
+		assert.deepStrictEqual(contributed.filter(id => !registered.has(id)), [], 'contributed, but not registered (bugs.md #9)');
+
+		// Menus and the Command Palette name contributed commands only (also for its `when`: on a command VS Code ignores it)
+		const menus = extension.packageJSON.contributes.menus as Record<string, { command?: string }[]>;
+		const named = Object.values(menus).flat().map(item => item.command).filter((id): id is string => typeof id === 'string');
+		assert.deepStrictEqual(named.filter(id => !contributed.includes(id)), [], 'menu entries of unknown commands');
 	});
 
 

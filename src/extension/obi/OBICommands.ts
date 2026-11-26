@@ -1,7 +1,5 @@
 import * as vscode from 'vscode';
 
-import { BuildSummary } from '../../webview/show_changes/BuildSummary';
-import { OBIController } from '../../webview/controller/OBIController';
 import { OBITools } from '../utilities/OBITools';
 import { Workspace } from '../utilities/Workspace';
 
@@ -14,7 +12,8 @@ import { Constants } from '../../shared/Constants';
 import { logger } from '../utilities/Logger';
 import { SystemCmdExecution } from '../utilities/SystemCmdExecution';
 import { Uri } from 'vscode';
-import { BuildHistoryProvider } from '../../webview/build_history/BuildHistoryProvider';
+import { BuildViews } from './BuildViews';
+import { history_dir_name } from '../../shared/HistoryTimestamp';
 import { sh_quote, assert_valid_source_path } from '../../shared/ShellQuote';
 import { UserCancelledError, get_error_message } from '../../shared/Errors';
 import { OperationLock } from '../utilities/OperationLock';
@@ -40,6 +39,13 @@ import { PackageLastBuilds } from './PackageLastBuilds';
 export class OBICommands {
 
   // Concurrency: user-facing entry points run inside OperationLock.run(...); the do_* functions don't lock.
+
+  /** The views (src/webview), registered by extension.ts */
+  private static views: BuildViews | undefined;
+
+  public static register_views(views: BuildViews): void {
+    OBICommands.views = views;
+  }
 
 
   public static async run_build_process(sources?: string[], generate_compile_list?: boolean): Promise<string | undefined> {
@@ -328,14 +334,17 @@ export class OBICommands {
 
 
 
-  /** Stores the build in the build history: compile list, config without secret* variables (bugs.md #1) and .obi/tmp */
+  /**
+   * Stores the build in the build history: compile list (with the user profile of the build, '' = default),
+   * config without secret* variables (bugs.md #1) and .obi/tmp
+   */
   public static write_build_history(ws: string, compile_list: { timestamp?: string }, config: AppConfig): string {
     const timestamp: string = compile_list.timestamp || new Date().toISOString();
 
     // Windows compatibility for directory name
-    const historyDirName = BuildHistoryProvider.date2escaped_date(timestamp);
+    const historyDirName = history_dir_name(timestamp);
     const historyDir = path.join(ws, Constants.BUILD_HISTORY_DIR, historyDirName);
-    OBITools.write_compile_list(path.join(historyDir, 'compile-list.json'), compile_list);
+    OBITools.write_compile_list(path.join(historyDir, 'compile-list.json'), { ...compile_list, profile: Workspace.get_current_profile() ?? '' });
     DirTool.write_json(path.join(historyDir, Constants.BUILD_HISTORY_CONFIG_FILE), config_without_secrets(config));
     DirTool.copy_dir(path.join(ws, Constants.OBI_TMP_DIR), historyDir);
     // Last build of its build package (status and link to this build summary in the Build packages view)
@@ -383,7 +392,7 @@ export class OBICommands {
       const compile_list: any = OBITools.get_compile_list(ws_uri) || {};
       const historyDirName = OBICommands.write_build_history(ws, compile_list, config);
       // In the background: it may ask once before the first deletion
-      BuildHistoryProvider.apply_retention(historyDirName).catch((e: unknown) => logger.warn(`Build history retention failed: ${e}`));
+      OBICommands.views?.apply_history_retention(historyDirName).catch((e: unknown) => logger.warn(`Build history retention failed: ${e}`));
 
       const sources: source.SourceCompileList[] = OBITools.get_sources_info_from_compile_list();
       const source_hashes: source.ISource = OBITools.get_source_hash_list(Workspace.get_workspace()) || {};
@@ -446,7 +455,7 @@ export class OBICommands {
     const source = OBICommands.get_current_active_source();
 
     if (!source)
-      return OBIController.run_finished('run_build');
+      return OBICommands.views?.run_finished('run_build');
 
     OBICommands.run_build(context, single_source_scope(source));
   }
@@ -461,7 +470,7 @@ export class OBICommands {
         await OBICommands.do_rerun_build([], {});
     });
 
-    OBIController.run_finished('run_build');
+    OBICommands.views?.run_finished('run_build');
   }
 
 
@@ -471,7 +480,7 @@ export class OBICommands {
   public static async rerun_build(ignore_sources: string[], ignore_sources_cmd: Record<string, string[]>) {
 
     await OperationLock.run('Run build', () => OBICommands.do_rerun_build(ignore_sources, ignore_sources_cmd));
-    OBIController.run_finished('run_build');
+    OBICommands.views?.run_finished('run_build');
   }
 
 
@@ -481,7 +490,7 @@ export class OBICommands {
 
     try {
 
-      OBITools.update_compile_list(ignore_sources, ignore_sources_cmd, BuildSummary.get_current_compile_list_name());
+      OBITools.update_compile_list(ignore_sources, ignore_sources_cmd, OBICommands.views?.shown_compile_list() ?? AppConfig.get_app_config().general['compile-list']);
 
       const sources: string[] = OBITools.get_sources_2_build_from_compile_list(true);
       let history_dir_name: string | undefined;
@@ -492,11 +501,11 @@ export class OBICommands {
         vscode.window.showInformationMessage(vscode.l10n.t('No sources to build'));
       }
 
-      await BuildSummary.show_current_results();
+      await OBICommands.views?.show_current_results();
       if (history_dir_name) {
-        await BuildHistoryProvider.reveal_build(history_dir_name);
+        await OBICommands.views?.reveal_history_build(history_dir_name);
       }
-      OBIController.update_build_summary_timestamp();
+      OBICommands.views?.last_build_changed();
     }
     catch (e: unknown) {
       show_error(vscode.l10n.t('Build failed'), e);
@@ -509,7 +518,7 @@ export class OBICommands {
     const source = OBICommands.get_current_active_source();
 
     if (!source) {
-      OBIController.run_finished('show_changes');
+      OBICommands.views?.run_finished('show_changes');
       return false;
     }
 
@@ -523,8 +532,8 @@ export class OBICommands {
 
     const is_success = await OperationLock.run('Preview build', () => OBICommands.do_show_changes(context, scope));
 
-    OBIController.run_finished('show_changes');
-    OBIController.update_build_summary_timestamp();
+    OBICommands.views?.run_finished('show_changes');
+    OBICommands.views?.last_build_changed();
 
     return is_success ?? false;
   }
@@ -594,7 +603,7 @@ export class OBICommands {
         }
 
         // The backend ends with exit code 0 also after an error (e.g. an invalid build package), which can leave the
-        // previous build list in place: don't show or build it. OBIController.check_obi_response shows the message.
+        // previous build list in place: don't show or build it. The OBI Build view shows the message (OBIController.check_obi_response).
         // On success there is none: create deletes the build output
         const status_file = path.join(Workspace.get_workspace(), Constants.OBI_STATUS_FILE);
         const status = DirTool.file_exists(status_file) ? DirTool.get_json(status_file, false) : undefined;
@@ -610,7 +619,7 @@ export class OBICommands {
         }
       }
 
-      BuildSummary.render(context.extensionUri, Workspace.get_workspace_uri());
+      OBICommands.views?.show_build_summary();
       is_success = true;
     }
     catch (error: unknown) {
@@ -731,8 +740,8 @@ export class OBICommands {
           message: vscode.l10n.t('Update views')
         });
 
-        BuildSummary.update();
-        OBIController.update_build_summary_timestamp();
+        await OBICommands.views?.update_build_summary();
+        OBICommands.views?.last_build_changed();
       });
 
     vscode.window.showInformationMessage(vscode.l10n.t('Build results retrieved'));

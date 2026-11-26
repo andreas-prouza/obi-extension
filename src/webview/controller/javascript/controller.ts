@@ -111,6 +111,7 @@ function set_running(label: string | undefined) {
 function change_profile(event: Event) {
   const value = (event.target as HTMLSelectElement).value || "";
   updateState({ selected_profile: value });
+  enable_profile_delete(value);
   post({ command: "change_profile", profile: value });
 }
 
@@ -202,6 +203,15 @@ function set_current_profile(profile_alias: string | undefined) {
   if (drp_use_profile)
     drp_use_profile.value = alias;
   updateState({ selected_profile: alias });
+  enable_profile_delete(alias);
+}
+
+
+/** The default profile ('') can't be deleted */
+function enable_profile_delete(profile_alias: string) {
+  const button = document.getElementById("btn_delete_current_profile") as HTMLButtonElement | null;
+  if (button)
+    button.disabled = profile_alias === '';
 }
 
 

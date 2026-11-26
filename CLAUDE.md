@@ -33,7 +33,7 @@ npm run package:vsix
 
 ## Architecture
 
-* **Layers**: `src/shared/` is pure code and imports nothing from `extension/` or `webview/`; `src/extension/` is the logic (config, SSH, build, files); `src/webview/` the panels and tree views; [extension.ts](src/extension.ts) and [file_callbacks.ts](src/file_callbacks.ts) only wire them together. `check:repo` counts import cycles against a baseline (`MODULES_IN_CYCLES`) that may only go down. Logic without a `vscode` import can be unit-tested, so put it there.
+* **Layers**: `src/shared/` is pure code and imports nothing from `extension/` or `webview/` (and `vscode` only as `import type`); `src/extension/` is the logic (config, SSH, build, files) and imports nothing from `webview/`; `src/webview/` the panels and tree views; [extension.ts](src/extension.ts) and [file_callbacks.ts](src/file_callbacks.ts) only wire them together. Where logic must update a view, extension.ts registers callbacks (e.g. `OBICommands.register_views`, `BuildViews`). `check:repo` counts import cycles against a baseline (`MODULES_IN_CYCLES`) that may only go down. Logic without a `vscode` import can be unit-tested, so put it there.
 * **Bundles** ([esbuild.js](esbuild.js)): `out/extension.js` (Node, CJS) and one ESM page script per `src/webview/**/javascript/*.ts`. Page scripts run inside the webview; `src/webview/tools/javascript` holds what they share.
 * **Webview pages**: Nunjucks templates in `asserts/templates` (`render_template`, autoescape), `@vscode/webview-ui-toolkit` components, strict CSP via `tools/csp.html` (nonce, no inline scripts or `on…=` handlers). Every message from a page is validated against the tables in `src/shared/messages` (`parse_message`, `MessageGuard`); page scripts send them with `typed_post`.
 * **OBI project** in the workspace folder (`Workspace`, not `workspaceFolders[0]`): `.obi/etc/app-config.toml` (project, committed), `.obi/etc/.user-app-config[-<profile>].toml` (user, local; active profile in `workspace-settings.json`), `source-config.toml`, extended source processing (ESP) configs, `dependency.json`, … The template for *Initialize* is `obi-media/`.
@@ -52,6 +52,6 @@ npm run package:vsix
 - Every new command/setting must be added to `package.json`, with `%key%` texts in `package.nls.json` and `package.nls.de.json`.
 - Texts shown to users go through `vscode.l10n.t` (templates: `global_stuff.get_text`) and need entries in `l10n/bundle.l10n.json` and `l10n/bundle.l10n.de.json`.
 - Values for the remote shell are quoted with `sh_quote` (`src/shared/ShellQuote.ts`). No secrets in logs or files; log with `logger`, not `console.log`.
-- `check:repo` enforces the command registration, `logger`, `Workspace`, CSP include in page templates, the l10n entries, pinned dependency ranges and the import-cycle baseline.
+- `check:repo` enforces the command registration, `logger`, `Workspace`, the layers, CSP include in page templates, the l10n entries, pinned dependency ranges and the import-cycle baseline.
 - Saving from the config pages rewrites the whole TOML file (comments are lost).
 - Documentation: user docs in `asserts/docs`, every user-visible change in [CHANGELOG.md](CHANGELOG.md) under `[Unreleased]`, specs in `docs/features` / `docs/bugfix` with status `draft`, `ready` or `finished`.

@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { history_dir_name, parse_history_dir, local_date_label } from '../../webview/build_history/HistoryTimestamp';
+import { history_dir_name, parse_history_dir, local_date_label } from '../../shared/HistoryTimestamp';
 
 // Time zone dependent expectations: run with a fixed zone (Europe/Vienna: UTC+2 in summer, +1 in winter)
 const ORIGINAL_TZ = process.env.TZ;

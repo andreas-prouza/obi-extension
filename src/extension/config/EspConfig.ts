@@ -28,7 +28,7 @@ export class ExtendedSourceProcessing {
     use_regex: boolean = false;
     allow_multiple_matches: boolean = true;
     
-    // Allows flexible conditions like {"SOURCE_FILE_NAME": ["*.pgm"]}
+    // Name: a variable of the source. A string is compared with its value, a list with the source name: {"SOURCE": ["mylib/*"]}
     conditions: Record<string, any> = {}; 
     
     steps: Step[] = [];
@@ -50,19 +50,31 @@ export class ExtendedSourceProcessingList {
             file_path = ExtendedSourceProcessingList.get_current_profile_config_name() || Constants.EXTENDED_SOURCE_PROCESS_CONFIG_USER;
         }
         this.file_path = file_path;
-        const toml_data = data || ExtendedSourceProcessingList.read_blocks(file_path);
-        this.extended_source_processing = toml_data.map((esp: any) => ExtendedSourceProcessingList.convert_dict_to_ESP(esp));
+        const file_data = data ? { has_content: data.length > 0, blocks: data } : ExtendedSourceProcessingList.read_file(file_path);
+        this.has_content = file_data.has_content;
+        this.extended_source_processing = file_data.blocks.map((esp: any) => ExtendedSourceProcessingList.convert_dict_to_ESP(esp));
     }
 
 
-    private static readonly _cache = new Map<string, CachedFiles<unknown[]>>();
+    /**
+     * The file has any content (as in the OBI backend: a user file with content replaces the project file, even
+     * with an empty list of rules). A missing, empty or invalid file has none.
+     */
+    has_content: boolean = false;
+
+
+    private static readonly _cache = new Map<string, CachedFiles<{ has_content: boolean; blocks: unknown[] }>>();
 
     /** The blocks of an ESP file, read again only after a change */
-    private static read_blocks(file_path: string): any[] {
+    private static read_file(file_path: string): { has_content: boolean; blocks: any[] } {
         const file = path.join(Workspace.get_workspace(), file_path);
         let cache = ExtendedSourceProcessingList._cache.get(file);
         if (!cache) {
-            cache = new CachedFiles(() => [file], files => DirTool.get_toml(files[0])?.extended_source_processing || []);
+            cache = new CachedFiles(() => [file], files => {
+                const toml = DirTool.file_exists(files[0]) ? DirTool.get_toml(files[0]) : undefined;
+                const blocks = toml?.extended_source_processing;
+                return { has_content: typeof toml === 'object' && toml !== null && Object.keys(toml).length > 0, blocks: Array.isArray(blocks) ? blocks : [] };
+            });
             ExtendedSourceProcessingList._cache.set(file, cache);
         }
         // They become editable objects: a copy keeps the cached data unchanged
@@ -78,6 +90,12 @@ export class ExtendedSourceProcessingList {
         esp.conditions = dict.conditions || {};
         esp.steps = (dict.steps || []).map((step: any) => {
             const stepObj = new Step();
+            // A plain name ("global.cmds.x"): only this step, as in the OBI backend
+            if (typeof step === 'string') {
+                stepObj.step = step;
+                stepObj.add_default_steps = false;
+                return stepObj;
+            }
             stepObj.cmd = typeof step.cmd === 'string' && step.cmd.length > 0 ? step.cmd : undefined;
             // Default as in the OBI backend: true for a step, false for a raw cmd
             stepObj.add_default_steps = step.add_default_steps ?? !stepObj.cmd;

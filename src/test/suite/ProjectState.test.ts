@@ -1,9 +1,16 @@
 import assert from 'assert';
+import * as fs from 'fs';
+import * as path from 'path';
 import * as sinon from 'sinon';
 import * as vscode from 'vscode';
 import { ProjectState } from '../../extension/ProjectState';
 import { OBITools } from '../../extension/utilities/OBITools';
 import { AppConfig } from '../../extension/config/AppConfig';
+import { Constants } from '../../shared/Constants';
+
+
+interface MenuItem { submenu?: string; when?: string }
+const manifest = JSON.parse(fs.readFileSync(path.join(Constants.EXTENSION_ROOT, 'package.json'), 'utf8')) as { contributes: { menus: Record<string, MenuItem[]> } };
 
 
 suite('Project state without window reloads', () => {
@@ -14,6 +21,7 @@ suite('Project state without window reloads', () => {
   let contains: sinon.SinonStub;
   let self_check: sinon.SinonStub;
   let error: sinon.SinonStub;
+  let app_config: sinon.SinonStub;
 
   setup(() => {
     contexts = new Map();
@@ -28,7 +36,7 @@ suite('Project state without window reloads', () => {
     contains = sinon.stub(OBITools, 'contains_obi_project');
     self_check = sinon.stub(OBITools, 'self_check');
     sinon.stub(OBITools, 'without_local_obi').returns(true);
-    sinon.stub(AppConfig, 'get_app_config').returns({ attributes_missing: () => false } as unknown as AppConfig);
+    app_config = sinon.stub(AppConfig, 'get_app_config').returns({ attributes_missing: () => false, general: { 'supported-object-types': ['pgm', 'file'] } } as unknown as AppConfig);
     error = sinon.stub(vscode.window, 'showErrorMessage').resolves(undefined);
     found = sinon.spy();
     valid = sinon.spy();
@@ -65,6 +73,27 @@ suite('Project state without window reloads', () => {
     assert.strictEqual(contexts.get('obi.run_native'), true);
     assert.ok(found.calledOnce && valid.calledOnce);
     assert.ok(!(vscode.commands.executeCommand as sinon.SinonStub).getCalls().some(call => call.args[0] === 'workbench.action.reloadWindow'));
+  });
+
+
+  test('the submenu OBI only for sources of a supported object type, also while the config is invalid', async () => {
+    contains.returns(true);
+    await ProjectState.update();
+    assert.deepStrictEqual(contexts.get('obi.supported-object-extensions'), ['.pgm', '.file']);
+
+    app_config.returns({ attributes_missing: () => false, general: { 'supported-object-types': ['pgm', 'cpy'] } } as unknown as AppConfig);
+    await ProjectState.update();
+    assert.deepStrictEqual(contexts.get('obi.supported-object-extensions'), ['.pgm', '.cpy'], 'a changed config is taken over');
+
+    self_check.throws(new Error('invalid'));
+    app_config.throws(new Error('unreadable TOML'));
+    await ProjectState.update();
+    assert.deepStrictEqual(contexts.get('obi.supported-object-extensions'), ['.pgm', '.file', '.srvpgm', '.module', '.cpy', '.obj'], 'the defaults');
+
+    for (const menu of ['explorer/context', 'editor/title/context']) {
+      const item = manifest.contributes.menus[menu].find(entry => entry.submenu === 'obi.source');
+      assert.ok(item?.when?.includes('resourceExtname in obi.supported-object-extensions'), menu);
+    }
   });
 
 

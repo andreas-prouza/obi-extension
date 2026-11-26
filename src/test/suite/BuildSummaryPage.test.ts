@@ -8,6 +8,9 @@ import { DependencyList } from '../../extension/obi/Dependency';
 import { DirTool } from '../../extension/utilities/DirTool';
 import { OBITools } from '../../extension/utilities/OBITools';
 import { reset_workspace } from './workspace_fixture';
+import { Workspace } from '../../extension/utilities/Workspace';
+import * as path from 'path';
+import * as fse from 'fs-extra';
 
 
 const fake_webview = { asWebviewUri: (uri: vscode.Uri) => uri, cspSource: 'vscode-resource:' } as unknown as vscode.Webview;
@@ -153,5 +156,33 @@ suite('Build summary page', () => {
     const html = render();
     assert.match(html, /<p id="no_compile_list" class="page-empty">/);
     assert.ok(!html.includes('id="run_build"'));
+  });
+
+
+  test('the deprecated toolkit is only loaded for a custom template that uses its components', async () => {
+    sinon.stub(BuildSummary, 'get_compile_list').returns({ timestamp: '2026-11-15T06:30:12.433Z', compiles: [] });
+    const file = path.join(Workspace.get_workspace(), Constants.VSCODE_CUSTOM_BUILD_LIST_TEMPLATE);
+    const toolkit = /<script type="module" nonce="[^"]+" src="[^"]*custom_toolkit\.js"><\/script>/;
+    try {
+      assert.ok(!toolkit.test(render()) && !render().includes('custom-content'), 'no template');
+
+      await fse.outputFile(file, '<p id="my_plain">plain</p>');
+      let html = render();
+      assert.ok(html.includes('<p id="my_plain">plain</p>'));
+      assert.ok(!toolkit.test(html), 'plain HTML: no toolkit');
+      assert.match(html, /show_changes\.js/);
+
+      await fse.outputFile(file, '<vscode-button id="my_button">Go</vscode-button>');
+      html = render();
+      assert.ok(html.includes('<vscode-button id="my_button">Go</vscode-button>'));
+      assert.match(html, toolkit);
+
+      sinon.stub(vscode.workspace, 'isTrusted').value(false);
+      html = render();
+      assert.ok(!html.includes('my_button') && !toolkit.test(html), 'untrusted workspace: no template');
+    }
+    finally {
+      await fse.remove(file);
+    }
   });
 });

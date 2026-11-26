@@ -7,7 +7,7 @@ import * as path from 'path';
 import { source_status } from '../../shared/BuildStatus';
 import { is_valid_package_name } from '../../shared/BuildPackage';
 import { write_file_atomic } from '../utilities/AtomicFile';
-import { parse_history_dir } from '../../webview/build_history/HistoryTimestamp';
+import { parse_history_dir } from '../../shared/HistoryTimestamp';
 
 
 export const PACKAGE_LAST_BUILDS_FILE = '.obi/cache/build-packages-last-build.json';

@@ -24,7 +24,7 @@ suite('Status bar item', () => {
     // The activated extension has registered the menu command already
     sinon.stub(vscode.commands, 'registerCommand').returns({ dispose: () => undefined });
     context = fake_context();
-    StatusBar.init(context);
+    StatusBar.init(context, () => undefined);
   });
 
   teardown(() => {

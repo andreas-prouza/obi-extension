@@ -44,9 +44,46 @@ function check_command_registration() {
 }
 
 
+// Layers (CLAUDE.md → Architecture): src/shared is pure code (no extension/, webview/, no runtime import of vscode),
+// src/extension imports nothing from src/webview (extension.ts wires them together, e.g. OBICommands.register_views)
+function check_layers() {
+  const layer_of = file => path.relative(SRC, file).split(path.sep)[0];
+  for (const file of ts_files(SRC)) {
+    const layer = layer_of(file);
+    if (layer !== 'shared' && layer !== 'extension')
+      continue;
+    const code = fs.readFileSync(file, 'utf8');
+    for (const match of code.matchAll(/^\s*(?:import|export)\s+(type\s+)?(?:[^;'"]*?\sfrom\s+)?['"]([^'"]+)['"]/gm)) {
+      const [, is_type, target] = match;
+      const line = code.slice(0, match.index).split('\n').length;
+      const where = `${path.relative(ROOT, file)}:${line}`;
+      if (layer === 'shared' && target === 'vscode' && !is_type)
+        findings.push(`${where}: src/shared must not import vscode (pure code, unit-tested in plain Node)`);
+      if (!target.startsWith('.'))
+        continue;
+      const target_layer = layer_of(path.resolve(path.dirname(file), target));
+      if (layer === 'shared' && (target_layer === 'extension' || target_layer === 'webview'))
+        findings.push(`${where}: src/shared must not import from src/${target_layer}`);
+      if (layer === 'extension' && target_layer === 'webview')
+        findings.push(`${where}: src/extension must not import from src/webview (register a callback in extension.ts instead)`);
+    }
+  }
+}
+
+
+// VS Code ignores "when" on contributes.commands: the condition belongs to menus.commandPalette (bugs.md #10)
+function check_command_contributions() {
+  const contributes = read_json('package.json').contributes ?? {};
+  for (const command of contributes.commands ?? []) {
+    if ('when' in command)
+      findings.push(`package.json: contributes.commands ${command.command} has "when", which VS Code ignores there; put it into contributes.menus.commandPalette`);
+  }
+}
+
+
 // Dependencies must not float: "latest" or "*" can resolve to a different (or compromised) version on every install
 // Import cycles make the load order of modules fragile. The number of modules in cycles may only go down.
-const MODULES_IN_CYCLES = 15;
+const MODULES_IN_CYCLES = 8;
 
 function check_import_cycles() {
   const graph = new Map();
@@ -207,6 +244,8 @@ function check_l10n() {
 check_command_registration();
 check_templates();
 check_l10n();
+check_layers();
+check_command_contributions();
 check_import_cycles();
 check_pinned_dependencies();
 check_nls_keys();

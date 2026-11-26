@@ -73,21 +73,22 @@ export class HealthyWatchdog {
   }
 
 
-  public static async recreate_deleted_folder() {
+  /** Creates the missing project folders; resolves when they exist (the callbacks run after it). One failure doesn't stop the others. */
+  public static async recreate_deleted_folder(): Promise<void> {
 
     const ws_uri = Workspace.get_workspace_uri();
 
-    Constants.NEEDED_LIST_OF_PATH.forEach(path_name => {
+    for (const path_name of Constants.NEEDED_LIST_OF_PATH) {
       const full_path = path.join(ws_uri.fsPath, path_name);
-      if (!DirTool.dir_exists(full_path)) {
-        fs.mkdir(full_path, { recursive: true }, (err) => {
-          if (err) {
-            show_error(vscode.l10n.t('Creating the folder {0} failed', path_name), err);
-            return;
-          }
-        });
+      if (DirTool.dir_exists(full_path))
+        continue;
+      try {
+        await fs.promises.mkdir(full_path, { recursive: true });
       }
-    })
+      catch (err: unknown) {
+        show_error(vscode.l10n.t('Creating the folder {0} failed', path_name), err);
+      }
+    }
   }
 
 

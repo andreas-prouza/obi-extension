@@ -17,6 +17,8 @@ import { OBICommands } from '../../extension/obi/OBICommands';
 import { BackendUpdate } from '../../extension/obi/BackendUpdate';
 import { render_template } from '../Templates';
 import { annotate_build_list } from '../../shared/BuildListView';
+import { delete_current_profile } from '../../extension/config/ProfileDelete';
+import { show_error } from '../../extension/utilities/Notify';
 
 
 
@@ -302,15 +304,13 @@ export class OBIController implements vscode.WebviewViewProvider {
           vscode.commands.executeCommand('obi.open_build_summary');
           break;
 
-        case 'delete_current_profile': {
-          const current_profile = AppConfig.get_current_profile_app_config_file();
-          let ws = Workspace.get_workspace_settings();
-          ws.current_profile = '';
-          Workspace.change_profile('');
-          DirTool.delete_file(path.join(Workspace.get_workspace(), current_profile));
-          OBIController.update_current_profile();
+        case 'delete_current_profile':
+          if (!OBITools.ext_context)
+            break;
+          delete_current_profile(OBITools.ext_context)
+            .then(deleted => { if (deleted) OBIController.update_current_profile(); })
+            .catch((e: unknown) => show_error(vscode.l10n.t('Deleting the profile failed'), e));
           break;
-        }
       }
   }
 

@@ -23,7 +23,8 @@
   <div class="setting">
     <div class="setting-label"><label for="{{ class_prefix }}|esp|{{ loop.index0 }}|conditions">{{ global_stuff['get_text']('Conditions (JSON or Dict String)') | safe }}</label></div>
     <textarea class="obi-input mono" id="{{ class_prefix }}|esp|{{ loop.index0 }}|conditions" rows="3"
-      placeholder='e.g., {"SOURCE_FILE_NAME": ["all_*.pgm"]}'>{{ esp.conditions | dump(2) if esp.conditions else '' }}</textarea>
+      placeholder='e.g., {"SOURCE": ["mylib/*.pgm"], "OBJ_NAME": "ord*"}'>{{ esp.conditions | dump(2) if esp.conditions else '' }}</textarea>
+    <div class="setting-desc">{{ global_stuff['get_text']('Name: a variable of the source. A text is compared with the value of the variable, a list with the source name (e.g. mylib/qrpglesrc/order.rpgle.pgm). All conditions have to match.') | safe }}</div>
   </div>
 
   <div class="setting-label esp-steps-label">{{ global_stuff['get_text']('List of steps and its properties') | safe }}</div>

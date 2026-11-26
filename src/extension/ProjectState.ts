@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { OBITools } from './utilities/OBITools';
-import { AppConfig } from './config/AppConfig';
+import { AppConfig, ConfigGeneral } from './config/AppConfig';
 import { Constants } from '../shared/Constants';
 import { logger } from './utilities/Logger';
 import { OPEN_CONFIGURATION, show_error } from './utilities/Notify';
@@ -18,7 +18,7 @@ export interface ProjectHooks {
 
 
 /**
- * State of the OBI project in this window: the context keys obi.contains_obi_project and obi.valid-config,
+ * State of the OBI project in this window: the context keys obi.contains_obi_project, obi.valid-config and obi.supported-object-extensions,
  * and what is registered and started. Changes of the configuration update it in place, without a window reload.
  */
 export class ProjectState {
@@ -69,6 +69,21 @@ export class ProjectState {
   }
 
 
+  /** `supported-object-types` as file extensions (`.pgm`); the defaults while the configuration can't be read */
+  public static supported_object_extensions(): string[] {
+    let types: string[] | undefined;
+    try {
+      types = AppConfig.get_app_config().general['supported-object-types'];
+    }
+    catch (e: unknown) {
+      logger.debug(`supported-object-types not readable, using the defaults: ${get_error_message(e)}`);
+    }
+    if (!types || types.length === 0)
+      types = new ConfigGeneral()['supported-object-types'];
+    return types.map(type => `.${type}`);
+  }
+
+
   private static async do_update(): Promise<void> {
     const context = ProjectState.context;
     const hooks = ProjectState.hooks;
@@ -81,6 +96,9 @@ export class ProjectState {
       await vscode.commands.executeCommand('setContext', 'obi.valid-config', false);
       return;
     }
+
+    // The submenu OBI of the Explorer and the editor tab only for sources OBI handles (package.json: `resourceExtname in …`)
+    await vscode.commands.executeCommand('setContext', 'obi.supported-object-extensions', ProjectState.supported_object_extensions());
 
     if (!ProjectState.found) {
       ProjectState.found = true;

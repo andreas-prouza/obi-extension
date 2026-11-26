@@ -54,11 +54,26 @@ export class SystemCmdExecution {
 
         return new Promise<void>((resolve, reject) => {
 
+            const lines = { stdout: new LineSplitter(), stderr: new LineSplitter() };
             let settled = false;
+            let exit_timer: NodeJS.Timeout | undefined;
+            const subscription = options.token?.onCancellationRequested(() => SystemCmdExecution.abort_system_cmd(id));
+
+            // Output after the promise settled is not passed on: callers read their lines after the await
+            const emit = (stream: 'stdout' | 'stderr', line: string) => {
+                if (!settled)
+                    options.on_line?.(line, stream);
+            };
+
             const finish = (error?: Error) => {
                 if (settled)
                     return;
+                // The last line without a line break, before the caller continues
+                lines.stdout.flush().forEach(line => emit('stdout', line));
+                lines.stderr.flush().forEach(line => emit('stderr', line));
                 settled = true;
+                clearTimeout(exit_timer);
+                subscription?.dispose();
                 delete SystemCmdExecution.processes[id];
                 if (SystemCmdExecution.aborted.delete(id)) {
                     logger.info(`${id} | cancelled | cmd: '${cmd}'`);
@@ -74,8 +89,9 @@ export class SystemCmdExecution {
                 resolve();
             };
 
-            const lines = { stdout: new LineSplitter(), stderr: new LineSplitter() };
-            const emit = (stream: 'stdout' | 'stderr', line: string) => options.on_line?.(line, stream);
+            const finish_with = (code: number | null, signal: NodeJS.Signals | null) => code === 0
+                ? finish()
+                : finish(new SystemCmdError(`System command failed: ${id} | exit-code: ${code} | signal: ${signal} | cmd: '${cmd}'`, code, signal));
 
             child.stdout?.on('data', (data) => {
                 logger.debug(`${id} | stdout: ${data}`);
@@ -87,23 +103,26 @@ export class SystemCmdExecution {
                 lines.stderr.push(String(data)).forEach(line => emit('stderr', line));
             });
 
-            const subscription = options.token?.onCancellationRequested(() => SystemCmdExecution.abort_system_cmd(id));
-            child.on('close', () => {
-                lines.stdout.flush().forEach(line => emit('stdout', line));
-                lines.stderr.flush().forEach(line => emit('stderr', line));
-                subscription?.dispose();
-            });
-
+            // 'exit' can come before the last output: settle on 'close', when stdout and stderr are read completely
+            child.on('close', (code, signal) => finish_with(code, signal));
+            // A process started by the program (own process group) may keep the pipes open: don't wait for it forever
             child.on('exit', (code, signal) => {
-                if (code === 0)
-                    return finish();
-                finish(new SystemCmdError(`System command failed: ${id} | exit-code: ${code} | signal: ${signal} | cmd: '${cmd}'`, code, signal));
+                exit_timer = setTimeout(() => {
+                    logger.debug(`${id} | output still open ${SystemCmdExecution.CLOSE_AFTER_EXIT_MS} ms after the exit`);
+                    finish_with(code, signal);
+                    child.stdout?.destroy();
+                    child.stderr?.destroy();
+                }, SystemCmdExecution.CLOSE_AFTER_EXIT_MS);
             });
             child.on('error', (err) => {
                 finish(new SystemCmdError(`System command could not be started: ${id} | error: ${err.message} | cmd: '${cmd}'`, null, null));
             });
         });
     }
+
+
+    /** How long to wait for the end of the output after the program ended */
+    static CLOSE_AFTER_EXIT_MS = 2000;
 
 
     /** Stops a running command including all processes it started. */
@@ -115,7 +134,7 @@ export class SystemCmdExecution {
         SystemCmdExecution.aborted.add(id);
         try {
             if (process.platform === 'win32')
-                spawn('taskkill', ['/pid', String(child.pid), '/T', '/F']);
+                spawn('taskkill', ['/pid', String(child.pid), '/T', '/F']).on('error', e => logger.warn(`Could not stop ${id} (taskkill): ${e.message}`));
             else
                 process.kill(-child.pid, 'SIGTERM');   // negative pid: the whole process group
         }

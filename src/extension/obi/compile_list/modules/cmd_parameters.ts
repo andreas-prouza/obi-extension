@@ -57,11 +57,15 @@ export function replaceCmdParameters(cmd: string, variable_dict: Record<string, 
 
 
 
-/** Removes optional keywords whose variable is not set (see OPTIONAL_CMD_KEYWORDS). */
+// No description: TEXT('') is removed, so the command's default text applies (*SRCMBRTXT, *SAME for CHGPF), as in the backend
+const EMPTY_TEXT = /\s*\bTEXT\(''\)/gi;
+
+
+/** Removes optional keywords whose variable is not set (see OPTIONAL_CMD_KEYWORDS), and an empty TEXT(''). */
 export function removeUnresolvedCmdParameters(cmd: string): string {
   for (const pattern of OPTIONAL_KEYWORD_PATTERNS)
     cmd = cmd.replace(pattern, '');
-  return cmd;
+  return cmd.replace(EMPTY_TEXT, '');
 }
 
 

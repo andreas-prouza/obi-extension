@@ -26,7 +26,7 @@ use_regex = false
 allow_multiple_matches = true
 
 [extended_source_processing.conditions]
-SOURCE_FILE_NAMES = [ "*.sqlrpgle.srvpgm" ]
+SOURCE = [ "*.sqlrpgle.srvpgm" ]
 
 [[extended_source_processing.steps]]
 add_default_steps = true

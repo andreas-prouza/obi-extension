@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -51,199 +51,163 @@
         "icon": "$(clear-all)"
       },
       {
-        "command": "obi.showErrors",
-        "title": "%obi.showErrors%",
-        "icon": "$(check-all)",
-        "when": "obi.contains_obi_project && obi.valid-config"
-      },
-      {
         "command": "obi.show_changes",
         "title": "%obi.show_changes%",
         "icon": "$(loaded-scripts-view-icon)",
-        "when": "obi.contains_obi_project && obi.valid-config",
         "enablement": "!obi.busy"
       },
       {
         "command": "obi.show_single_changes",
         "title": "%obi.show_single_changes%",
         "icon": "$(loaded-scripts-view-icon)",
-        "when": "obi.contains_obi_project && obi.valid-config",
         "enablement": "!obi.busy"
       },
       {
         "command": "obi.run_build",
         "title": "%obi.run_build%",
         "icon": "$(run-all)",
-        "when": "obi.contains_obi_project && obi.valid-config",
         "enablement": "!obi.busy"
       },
       {
         "command": "obi.run_single_build",
         "title": "%obi.run_single_build%",
         "icon": "$(run)",
-        "when": "obi.contains_obi_project && obi.valid-config",
         "enablement": "!obi.busy"
       },
       {
         "command": "obi.add-source-to-build-summary",
         "title": "%obi.add-source-to-build-summary%",
         "icon": "$(add)",
-        "when": "obi.contains_obi_project && obi.valid-config",
         "enablement": "!obi.busy"
       },
       {
         "command": "obi.source-filter.update",
         "title": "%obi.source-filter.update%",
-        "icon": "$(refresh)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(refresh)"
       },
       {
         "command": "obi.source-filter.add",
         "title": "%obi.source-filter.add%",
-        "icon": "$(add)",
-        "when": "obi.contains_obi_project && obi.valid-config"
-      },
-      {
-        "command": "obi.get-remote-compiled-object-list",
-        "title": "%obi.get-remote-compiled-object-list%",
-        "icon": "$(arrow-circle-down)",
-        "when": "obi.contains_obi_project && obi.valid-config && false"
+        "icon": "$(add)"
       },
       {
         "command": "obi.copy-profile-config",
         "title": "%obi.copy-profile-config%",
-        "icon": "$(person-add)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(person-add)"
       },
       {
         "command": "obi.reset-compiled-object-list",
         "title": "%obi.reset-compiled-object-list%",
         "icon": "$(extensions)",
-        "when": "obi.contains_obi_project && obi.valid-config",
         "enablement": "!obi.busy"
       },
       {
         "command": "obi.get-remote-build-results",
         "title": "%obi.get-remote-build-results%",
         "icon": "$(arrow-down)",
-        "when": "obi.contains_obi_project && obi.valid-config && false",
         "enablement": "!obi.busy"
       },
       {
         "command": "obi.controller.config",
         "title": "%obi.controller.config%",
-        "icon": "$(settings-gear)",
-        "when": "obi.contains_obi_project"
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "obi.test-connection",
+        "title": "%obi.test-connection%",
+        "icon": "$(plug)"
       },
       {
         "command": "obi.controller.dependency-list",
         "title": "%obi.controller.dependency-list%",
-        "icon": "$(outline-view-icon)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(outline-view-icon)"
       },
       {
         "command": "obi.source.edit-compile-config",
         "title": "%obi.source.edit-compile-config%",
         "category": "OBI",
-        "icon": "$(settings-gear)",
-        "when": "obi.contains_obi_project"
+        "icon": "$(settings-gear)"
       },
       {
         "command": "obi.transfer-all",
         "title": "%obi.transfer-all%",
         "icon": "$(cloud-upload)",
-        "when": "obi.contains_obi_project && obi.valid-config",
         "enablement": "!obi.busy"
       },
       {
         "command": "obi.source-filter.show-view",
         "title": "%obi.source-filter.show-view%",
-        "icon": "$(preview)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(preview)"
       },
       {
         "command": "obi.source-filter.edit-config",
         "title": "%obi.source-filter.edit-config%",
-        "icon": "$(settings-gear)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(settings-gear)"
       },
       {
         "command": "obi.source-filter.delete-config",
         "title": "%obi.source-filter.delete-config%",
-        "icon": "$(trash)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(trash)"
       },
       {
         "command": "obi.source-filter.view-source-infos",
         "title": "%obi.source-filter.view-source-infos%",
-        "icon": "$(preview)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(preview)"
       },
       {
         "command": "obi.source-filter.maintain-source-infos",
         "title": "%obi.source-filter.maintain-source-infos%",
-        "icon": "$(settings-gear)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(settings-gear)"
       },
       {
         "command": "obi.source-filter.add-source-file",
         "title": "%obi.source-filter.add-source-file%",
-        "icon": "$(add)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(add)"
       },
       {
         "command": "obi.source-filter.add-source-member",
         "title": "%obi.source-filter.add-source-member%",
-        "icon": "$(add)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(add)"
       },
       {
         "command": "obi.source-filter.change-source-description",
         "title": "%obi.source-filter.change-source-description%",
         "category": "OBI",
-        "icon": "$(preview)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(preview)"
       },
       {
         "command": "obi.source-filter.rename-source-member",
-        "title": "%obi.source-filter.rename-source-member%",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "title": "%obi.source-filter.rename-source-member%"
       },
       {
         "command": "obi.source-filter.delete-source-member",
-        "title": "%obi.source-filter.delete-source-member%",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "title": "%obi.source-filter.delete-source-member%"
       },
       {
         "command": "obi.source.maintain-source-dependency",
         "title": "%obi.source.maintain-source-dependency%",
         "category": "OBI",
-        "icon": "$(combine)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(combine)"
       },
       {
         "command": "obi.source.store-hash",
         "title": "%obi.source.store-hash%",
-        "category": "OBI",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "category": "OBI"
       },
       {
         "command": "obi.source.remove-hash",
         "title": "%obi.source.remove-hash%",
-        "category": "OBI",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "category": "OBI"
       },
       {
         "command": "obi.deployment.maintain",
         "title": "%obi.deployment.maintain%",
-        "icon": "$(rocket)",
-        "when": "obi.contains_obi_project"
+        "icon": "$(rocket)"
       },
       {
         "command": "obi.deployment.open-web-app",
         "title": "%obi.deployment.open-web-app%",
-        "icon": "$(globe)",
-        "when": "obi.contains_obi_project"
+        "icon": "$(globe)"
       },
       {
         "command": "obi.deployment.refresh",
@@ -353,11 +317,6 @@
         "icon": "$(search)"
       },
       {
-        "command": "obi.show.tools",
-        "category": "OBI",
-        "title": "%obi.show.tools%"
-      },
-      {
         "command": "obi.ssh.forget-host-key",
         "title": "%obi.ssh.forget-host-key%"
       },
@@ -378,78 +337,67 @@
         "command": "obi.build-package.refresh",
         "title": "%obi.build-package.refresh%",
         "category": "OBI",
-        "icon": "$(refresh)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(refresh)"
       },
       {
         "command": "obi.build-package.create",
         "title": "%obi.build-package.create%",
         "category": "OBI",
-        "icon": "$(add)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(add)"
       },
       {
         "command": "obi.build-package.add-sources",
         "title": "%obi.build-package.add-sources%",
         "category": "OBI",
-        "icon": "$(add)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(add)"
       },
       {
         "command": "obi.build-package.add-changed-sources",
         "title": "%obi.build-package.add-changed-sources%",
         "category": "OBI",
-        "icon": "$(diff-added)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(diff-added)"
       },
       {
         "command": "obi.build-package.add-to-package",
         "title": "%obi.build-package.add-to-package%",
         "category": "OBI",
-        "icon": "$(package)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(package)"
       },
       {
         "command": "obi.build-package.remove-sources",
         "title": "%obi.build-package.remove-sources%",
         "category": "OBI",
-        "icon": "$(remove)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(remove)"
       },
       {
         "command": "obi.build-package.rename",
         "title": "%obi.build-package.rename%",
         "category": "OBI",
-        "icon": "$(edit)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(edit)"
       },
       {
         "command": "obi.build-package.edit-description",
         "title": "%obi.build-package.edit-description%",
         "category": "OBI",
-        "icon": "$(note)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(note)"
       },
       {
         "command": "obi.build-package.open-file",
         "title": "%obi.build-package.open-file%",
         "category": "OBI",
-        "icon": "$(json)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(json)"
       },
       {
         "command": "obi.build-package.delete",
         "title": "%obi.build-package.delete%",
         "category": "OBI",
-        "icon": "$(trash)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(trash)"
       },
       {
         "command": "obi.build-package.show-build-list",
         "title": "%obi.build-package.show-build-list%",
         "category": "OBI",
         "icon": "$(list-flat)",
-        "when": "obi.contains_obi_project && obi.valid-config",
         "enablement": "!obi.busy"
       },
       {
@@ -457,85 +405,73 @@
         "title": "%obi.build-package.run-build%",
         "category": "OBI",
         "icon": "$(play)",
-        "when": "obi.contains_obi_project && obi.valid-config",
         "enablement": "!obi.busy"
       },
       {
         "command": "obi.build-package.add-branch-changes",
         "title": "%obi.build-package.add-branch-changes%",
         "category": "OBI",
-        "icon": "$(git-compare)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(git-compare)"
       },
       {
         "command": "obi.build-package.archive",
         "title": "%obi.build-package.archive%",
         "category": "OBI",
-        "icon": "$(archive)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(archive)"
       },
       {
         "command": "obi.build-package.unarchive",
         "title": "%obi.build-package.unarchive%",
         "category": "OBI",
-        "icon": "$(discard)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(discard)"
       },
       {
         "command": "obi.build-package.filter",
         "title": "%obi.build-package.filter%",
         "category": "OBI",
-        "icon": "$(filter)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(filter)"
       },
       {
         "command": "obi.build-package.clear-filter",
         "title": "%obi.build-package.clear-filter%",
         "category": "OBI",
-        "icon": "$(filter-filled)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(filter-filled)"
       },
       {
         "command": "obi.build-package.show-archived",
         "title": "%obi.build-package.show-archived%",
         "category": "OBI",
-        "icon": "$(archive)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(archive)"
       },
       {
         "command": "obi.build-package.hide-archived",
         "title": "%obi.build-package.hide-archived%",
         "category": "OBI",
-        "icon": "$(eye-closed)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(eye-closed)"
       },
       {
         "command": "obi.build-package.show-builds",
         "title": "%obi.build-package.show-builds%",
         "category": "OBI",
-        "icon": "$(history)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(history)"
       },
       {
         "command": "obi.build-history.filter-package",
         "title": "%obi.build-history.filter-package%",
         "category": "OBI",
-        "icon": "$(package)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(package)"
       },
       {
         "command": "obi.build-package.open-last-build",
         "title": "%obi.build-package.open-last-build%",
         "category": "OBI",
-        "icon": "$(go-to-file)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(go-to-file)"
       },
       {
         "command": "obi.build-package.add-build-sources",
         "title": "%obi.build-package.add-build-sources%",
         "category": "OBI",
-        "icon": "$(package)",
-        "when": "obi.contains_obi_project && obi.valid-config"
+        "icon": "$(package)"
       }
     ],
     "submenus": [
@@ -717,14 +653,14 @@
       "editor/title/context": [
         {
           "submenu": "obi.source",
-          "when": "obi.contains_obi_project",
+          "when": "obi.contains_obi_project && resourceExtname in obi.supported-object-extensions",
           "group": "7_obi"
         }
       ],
       "explorer/context": [
         {
           "submenu": "obi.source",
-          "when": "obi.contains_obi_project && !explorerResourceIsFolder",
+          "when": "obi.contains_obi_project && !explorerResourceIsFolder && resourceExtname in obi.supported-object-extensions",
           "group": "7_obi"
         }
       ],
@@ -1113,6 +1049,118 @@
         {
           "command": "obi.build-package.add-build-sources",
           "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.show_changes",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.show_single_changes",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.run_build",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.run_single_build",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.add-source-to-build-summary",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.source-filter.update",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.source-filter.add",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.copy-profile-config",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.reset-compiled-object-list",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.get-remote-build-results",
+          "when": "obi.contains_obi_project && obi.valid-config && false"
+        },
+        {
+          "command": "obi.controller.config",
+          "when": "obi.contains_obi_project"
+        },
+        {
+          "command": "obi.controller.dependency-list",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.source.edit-compile-config",
+          "when": "obi.contains_obi_project"
+        },
+        {
+          "command": "obi.transfer-all",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.source-filter.show-view",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.source-filter.edit-config",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.source-filter.delete-config",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.source-filter.view-source-infos",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.source-filter.maintain-source-infos",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.source-filter.add-source-file",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.source-filter.add-source-member",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.source-filter.change-source-description",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.source-filter.rename-source-member",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.source-filter.delete-source-member",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.source.maintain-source-dependency",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.source.store-hash",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.source.remove-hash",
+          "when": "obi.contains_obi_project && obi.valid-config"
+        },
+        {
+          "command": "obi.test-connection",
+          "when": "obi.contains_obi_project"
         }
       ],
       "timeline/item/context": [
@@ -1167,12 +1215,6 @@
           "id": "obi.build-history",
           "name": "%view.obi.build-history%",
           "when": "obi.contains_obi_project && obi.valid-config"
-        },
-        {
-          "type": "webview",
-          "id": "obi.quick-settings",
-          "name": "%Quick settings%",
-          "when": "false && obi.contains_obi_project && obi.valid-config"
         },
         {
           "type": "tree",
@@ -1408,7 +1450,7 @@
     "test:unit": "npm run compile-tests && mocha --ui tdd \"out-test/test/unit/**/*.test.js\"",
     "test:coverage": "npm run pretest && node -e \"require('fs').rmSync('coverage',{recursive:true,force:true})\" && node ./out-test/test/runTest.js --coverage && c8 report",
     "lint": "eslint src/",
-    "lint:ci": "eslint src/ --max-warnings 231",
+    "lint:ci": "eslint src/ --max-warnings 221",
     "check:repo": "node scripts/check-repo.js",
     "postinstall": "node -e \"require('fs').rmSync('node_modules/ssh2/test',{recursive:true,force:true})\""
   },

@@ -66,6 +66,29 @@ suite('Build history config snapshot', () => {
   });
 
 
+  test('a history entry keeps the profile it was built with, the current build list shows the active one', () => {
+    const ws = Workspace.get_workspace();
+    const profile = sinon.stub(Workspace, 'get_current_profile').returns('dev');
+    const dir_name = OBICommands.write_build_history(ws, { ...compile_list }, config_for('builder', 'ibmi.example'));
+    const history_list = JSON.parse(fs.readFileSync(path.join(ws, Constants.BUILD_HISTORY_DIR, dir_name, 'compile-list.json'), 'utf8'));
+    assert.strictEqual(history_list.profile, 'dev');
+
+    const profile_of_page = () => {
+      const html: string = BuildSummary['generate_html'](vscode.Uri.file(Constants.EXTENSION_ROOT), fake_webview);
+      return /id="build_profile"[^>]*>.*?<\/span>([^<]*)<\/span>/.exec(html)?.[1];
+    };
+    profile.returns(undefined);
+    BuildSummary['_current_compile_output_folder'] = path.join(Constants.BUILD_HISTORY_DIR, dir_name);
+    assert.strictEqual(profile_of_page(), 'dev');
+
+    BuildSummary['_current_compile_output_folder'] = undefined;
+    const live_file = path.join(ws, AppConfig.get_app_config().general['compile-list']);
+    fs.mkdirSync(path.dirname(live_file), { recursive: true });
+    fs.writeFileSync(live_file, JSON.stringify(compile_list));
+    assert.strictEqual(profile_of_page(), 'default');
+  });
+
+
   test('older history entries with the config in the compile list still show their host', () => {
     const dir = path.join(Constants.BUILD_HISTORY_DIR, 'old-build');
     fs.mkdirSync(path.join(Workspace.get_workspace(), dir), { recursive: true });
@@ -75,5 +98,6 @@ suite('Build history config snapshot', () => {
 
     const html: string = BuildSummary['generate_html'](vscode.Uri.file(Constants.EXTENSION_ROOT), fake_webview);
     assert.ok(html.includes('olduser@old.host'));
+    assert.ok(!html.includes('id="build_profile"'), 'unknown profile of an older entry');
   });
 });

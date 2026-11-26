@@ -103,7 +103,7 @@ export class LocalSourceList {
         LocalSourceList.source_info_loading_promise = (async () => {
             try {
                 const config = AppConfig.get_app_config();
-                const infos = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['source-infos'] || '.obi/etc/source-infos.json'));
+                const infos = DirTool.get_json(path.join(Workspace.get_workspace(), config.general['source-infos'] || Constants.SOURCE_INFOS));
                 // Older versions created the file as '[]'; an array would silently drop all descriptions on save
                 LocalSourceList.source_info_list = infos && typeof infos === 'object' && !Array.isArray(infos) ? infos : {};
                 // Without the inventory (not loaded yet) one check per entry
@@ -180,6 +180,24 @@ export class LocalSourceList {
 
 
 
+  /**
+   * Removes a deleted source from source-infos.json. Works on the file, not on the cache: the cache leaves out
+   * sources whose file is missing, so after the delete it may not know the source any more.
+   * Throws ConfigFileError if the file isn't valid JSON (nothing written).
+   */
+  public static remove_source_info(source: string): void {
+    const config: AppConfig = AppConfig.get_app_config();
+    const file = path.join(Workspace.get_workspace(), config.general['source-infos'] || Constants.SOURCE_INFOS);
+    const infos = DirTool.read_json_strict<ISourceInfos>(file);
+    if (infos && typeof infos === 'object' && !Array.isArray(infos) && source in infos) {
+      delete infos[source];
+      DirTool.update_json(file, infos);
+    }
+    if (LocalSourceList.source_info_list)
+      delete LocalSourceList.source_info_list[source];
+  }
+
+
   public static async update_source_infos(source_path: string, source_member: string, description: string|undefined): Promise<void> {
 
     const config: AppConfig = AppConfig.get_app_config();
@@ -204,7 +222,7 @@ export class LocalSourceList {
       }
     }
 
-    DirTool.update_json(path.join(Workspace.get_workspace(), config.general['source-infos'] || '.obi/etc/source-infos.json'), source_infos);
+    DirTool.update_json(path.join(Workspace.get_workspace(), config.general['source-infos'] || Constants.SOURCE_INFOS), source_infos);
 
     return;
   }

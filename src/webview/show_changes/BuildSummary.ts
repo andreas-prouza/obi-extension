@@ -27,7 +27,7 @@ import { CUSTOM_DATA_KEY, DeploymentRecord, IReleaserError, deployment_data, is_
 import { StageActions, StatusKind, deployment_overview, is_waiting, status_kind } from '../../shared/IReleaserDeployments';
 import { annotate_build_list } from '../../shared/BuildListView';
 import { DeploymentWatcher } from '../deployment/DeploymentWatcher';
-import { history_dir_name } from '../build_history/HistoryTimestamp';
+import { history_dir_name } from '../../shared/HistoryTimestamp';
 import { UserCancelledError } from '../../shared/Errors';
 import { require_trust } from '../../extension/utilities/Trust';
 import { show_error } from '../../extension/utilities/Notify';
@@ -43,6 +43,8 @@ export class BuildSummary {
   private static _current_compile_output_folder: string | undefined;
   /** i-Releaser deployment of the displayed build list, followed by DeploymentWatcher */
   private static _shown_deployment: { base: string; id: string } | undefined;
+  /** The page shows the deployment card (rendered with the last full page) */
+  private static _card_shown = false;
   /** Log and run of a stage: the i-Releaser view (extension.ts) */
   private static stage_actions: StageActions | undefined;
 
@@ -66,11 +68,11 @@ export class BuildSummary {
     // the panel or when the panel is closed programmatically)
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
-    // New status of the displayed deployment
+    // New status of the displayed deployment: only its card is rendered again
     DeploymentWatcher.on_changed(changed => {
       const shown = BuildSummary._shown_deployment;
       if (shown && shown.base === changed.base && shown.id === changed.id)
-        BuildSummary.update();
+        BuildSummary.update_deployment();
     }, null, this._disposables);
   }
 
@@ -682,6 +684,54 @@ export class BuildSummary {
 
 
 
+  /**
+   * User profile that goes with the shown config: the active one for the current build list,
+   * the one stored with a history entry (none for older entries)
+   */
+  private static build_profile(compile_list: unknown): string | undefined {
+    const profile = BuildSummary._current_compile_output_folder
+      ? (is_object(compile_list) ? compile_list['profile'] : undefined)
+      : (Workspace.get_current_profile() ?? '');
+    if (typeof profile !== 'string')
+      return undefined;
+    return profile === '' ? 'default' : profile;
+  }
+
+
+
+  /** The deployment for the page: link, and its status as far as DeploymentWatcher knows it (`watched`: the card is shown) */
+  private static deployment_model(base: string, id: number | string) {
+    return { id: String(id), link: show_details_url(base, id), ...BuildSummary.deployment_status(base, id) };
+  }
+
+
+
+  /**
+   * A new status of the shown deployment: only the card is rendered and sent to the page (deployment_card), not the
+   * whole page with the build list. If the card appears or disappears, the whole page is rendered.
+   */
+  public static async update_deployment(): Promise<void> {
+    const panel = BuildSummary.currentPanel;
+    const shown = BuildSummary._shown_deployment;
+    if (!panel)
+      return;
+    const deployment = shown ? BuildSummary.deployment_model(shown.base, shown.id) : undefined;
+    if ((deployment?.watched === true) !== BuildSummary._card_shown) {
+      await BuildSummary.update();
+      return;
+    }
+    if (!deployment?.watched)
+      return;
+    const webview = panel._panel.webview;
+    const html = render_template('show_changes/deployment_card.html', {
+      global_stuff: OBITools.get_global_stuff(webview, BuildSummary._extensionUri),
+      i_releaser: { deployment }
+    });
+    await webview.postMessage({ command: 'deployment_card', html });
+  }
+
+
+
   /** Status of a deployment for the page, as far as DeploymentWatcher knows it */
   private static deployment_status(base: string, id: number | string) {
     const info = DeploymentWatcher.info(base, id);
@@ -754,13 +804,32 @@ export class BuildSummary {
 
 
 
+  /**
+   * The custom template of the workspace, if there is one. It is code (Nunjucks can run JavaScript): only in a
+   * trusted workspace. `uses_toolkit`: it contains components of the deprecated webview toolkit (<vscode-…>).
+   */
+  public static custom_template(workspace: string): { uses_toolkit: boolean } | undefined {
+    if (!vscode.workspace.isTrusted)
+      return undefined;
+    const file = path.join(workspace, Constants.VSCODE_CUSTOM_BUILD_LIST_TEMPLATE);
+    const content = DirTool.file_exists(file) ? DirTool.get_file_content(file) : undefined;
+    if (content === undefined)
+      return undefined;
+    const uses_toolkit = /<vscode-[a-z]/i.test(content);
+    if (uses_toolkit)
+      logger.debug(`${Constants.VSCODE_CUSTOM_BUILD_LIST_TEMPLATE} uses components of the deprecated webview toolkit (<vscode-…>)`);
+    return { uses_toolkit };
+  }
+
+
+
   private static generate_html(extensionUri: vscode.Uri, webview: vscode.Webview): string {
 
     const ws: vscode.Uri = Workspace.get_workspace_uri();
     const config = AppConfig.get_app_config();
 
-    // The custom template of the workspace is code (Nunjucks can run JavaScript): only in a trusted workspace
-    const custom_dir = vscode.workspace.isTrusted ? path.join(ws.fsPath, path.dirname(Constants.VSCODE_CUSTOM_BUILD_LIST_TEMPLATE)) : undefined;
+    const custom = BuildSummary.custom_template(ws.fsPath);
+    const custom_dir = custom ? path.join(ws.fsPath, path.dirname(Constants.VSCODE_CUSTOM_BUILD_LIST_TEMPLATE)) : undefined;
 
     const compile_list = BuildSummary.get_compile_list();
 
@@ -776,13 +845,8 @@ export class BuildSummary {
     // i-Releaser of deployment.toml: button to start a workflow, link to the deployment started for this build list
     const i_releaser_url = DeploymentConfig.i_releaser_url();
     const deployment = i_releaser_url ? deployment_of(compile_list) : undefined;
-    const i_releaser = i_releaser_url ? {
-      deployment: deployment ? {
-        id: String(deployment.id),
-        link: show_details_url(i_releaser_url, deployment.id),
-        ...BuildSummary.deployment_status(i_releaser_url, deployment.id)
-      } : undefined
-    } : undefined;
+    const i_releaser = i_releaser_url ? { deployment: deployment ? BuildSummary.deployment_model(i_releaser_url, deployment.id) : undefined } : undefined;
+    BuildSummary._card_shown = i_releaser?.deployment?.watched === true;
 
     let created_timestamp = 'Unsupported timestamp';
     if (compile_list && compile_list['timestamp']) {
@@ -795,6 +859,8 @@ export class BuildSummary {
       {
       global_stuff: OBITools.get_global_stuff(webview, extensionUri),
       main_java_script: getUri(webview, extensionUri, ["out", "webview", "show_changes.js"]),
+      // Deprecated toolkit components (<vscode-button>, …): only for a custom template that uses them
+      toolkit_java_script: custom?.uses_toolkit ? getUri(webview, extensionUri, ["out", "webview", "custom_toolkit.js"]) : undefined,
       //filex: encodeURIComponent(JSON.stringify(fileUri)),
       object_list: BuildSummary.get_object_list(ws),
       compile_list: compile_list,
@@ -806,6 +872,7 @@ export class BuildSummary {
       log_file_uri: DirTool.get_encoded_file_URI(Constants.OBI_LOG_FILE),
       is_compile_list_completed: OBITools.is_compile_list_completed(compile_list),
       compile_app_config: BuildSummary.build_config() ?? config,
+      profile: BuildSummary.build_profile(compile_list),
       app_config: config,
       custom_build_list_template: custom_dir ? path.basename(Constants.VSCODE_CUSTOM_BUILD_LIST_TEMPLATE) : undefined,
       i_releaser: i_releaser
@@ -948,6 +1015,7 @@ export class BuildSummary {
   public dispose() {
     BuildSummary.currentPanel = undefined;
     BuildSummary._shown_deployment = undefined;
+    BuildSummary._card_shown = false;
     DeploymentWatcher.show(undefined);
 
     // Dispose of the current webview panel

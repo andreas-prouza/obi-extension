@@ -153,7 +153,7 @@ export class SourceInfos {
 
   private static save_infos(sources: source.ISourceInfos) {
 
-    const json_file: string = path.join(Workspace.get_workspace(), AppConfig.get_app_config().general['source-infos']||'.obi/etc/source-infos.json');
+    const json_file: string = path.join(Workspace.get_workspace(), AppConfig.get_app_config().general['source-infos'] || Constants.SOURCE_INFOS);
     const current = DirTool.read_json_strict<source.ISourceInfos>(json_file);
     // Older versions created the file as '[]': string keys on an array are dropped by JSON.stringify
     const source_infos: source.ISourceInfos = current && !Array.isArray(current) ? current : {};

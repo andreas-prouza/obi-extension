@@ -47,6 +47,10 @@ function main() {
 
   document.getElementById("save_config")?.addEventListener("click", save_configs);
 
+  // Test connection: one button per tab, the result below the button that was clicked
+  for (const button of document.querySelectorAll<HTMLButtonElement>('.test_connection'))
+    button.addEventListener("click", () => test_connection(button.dataset.target ?? ''));
+
   document.getElementById("delete_ssh_password")?.addEventListener("click", () => {
     post({
       command: "delete_ssh_password",
@@ -1055,7 +1059,49 @@ function receive_message(e: MessageEvent) {
     case 'finished_saving_config':
       showAlert(page_text('obi_text_reloaded', 'Configuration reloaded.'), 'success');
       break;
+
+    case 'connection_test_result':
+      show_connection_test(e.data.results);
+      break;
   }
+}
+
+
+/** Result list of the tab whose button started the test */
+let connection_test_target = '';
+
+function test_connection(target: string) {
+  connection_test_target = target;
+  for (const button of document.querySelectorAll<HTMLButtonElement>('.test_connection'))
+    button.disabled = true;
+  show_connection_test([{ state: 'running', text: page_text('obi_text_testing', 'Testing the connection…') }]);
+  post({ command: 'test_connection', panel: panel, panel_tab: panel_tab });
+}
+
+
+const CHECK_ICONS: Record<string, string> = { ok: 'pass', warning: 'warning', error: 'error', running: 'loading codicon-modifier-spin' };
+
+/** Shows the results (texts from the extension, inserted as text); an empty list hides it and ends the test */
+function show_connection_test(results: unknown) {
+  const list = document.getElementById(`${connection_test_target}_connection_test`);
+  const items = Array.isArray(results) ? results.filter((r): r is { state: string; text: string } => typeof r?.state === 'string' && typeof r?.text === 'string') : [];
+  const running = items.length === 1 && items[0].state === 'running';
+  if (!running)
+    for (const button of document.querySelectorAll<HTMLButtonElement>('.test_connection'))
+      button.disabled = false;
+  if (!list)
+    return;
+  list.replaceChildren(...items.map(result => {
+    const item = document.createElement('li');
+    item.className = CHECK_ICONS[result.state] ? result.state : 'error';
+    const icon = document.createElement('span');
+    icon.className = `codicon codicon-${CHECK_ICONS[result.state] ?? 'error'}`;
+    const text = document.createElement('span');
+    text.textContent = result.text;
+    item.append(icon, text);
+    return item;
+  }));
+  list.hidden = items.length === 0;
 }
 
 

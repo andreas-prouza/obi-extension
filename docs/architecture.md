@@ -18,7 +18,7 @@ Rules for the OBI extension. [CONTRIBUTING.md](../CONTRIBUTING.md) has the setup
 * `src/extension/` is the logic (config, SSH, build, files), `src/webview/` the pages and views.
 * `src/extension.ts` and `src/file_callbacks.ts` only wire them together.
 * TypeScript strict mode, no new `any`. Logic that doesn't need VS Code goes into a module without a `vscode` import, so it can be unit-tested.
-* `npm run check:repo` counts the modules in import cycles. The baseline may only go down ([module-structure.md](features/module-structure.md)).
+* `npm run check:repo` counts the modules in import cycles. The baseline may only go down ([module-structure.md](features/module-structure.md)). It also checks the layers: `src/shared` imports nothing from `src/extension` or `src/webview` (and `vscode` only as a type), `src/extension` nothing from `src/webview` ([layer-imports.md](features/layer-imports.md)).
 
 
 # NPM
@@ -45,7 +45,7 @@ Every package that was checked against the criteria, with the values at the time
 | `bootstrap-table` 1.23.2 | wenzhixin/bootstrap-table | 11,808 | 4,337 | 2026-10-23 | ✅ | tables of the webviews |
 | `tom-select` 2.4.3 | orchidjs/tom-select | 2,238 | 175 | 2026-10-23 | ✅ | source selection with search |
 | `@vscode/codicons` | microsoft/vscode-codicons | 1,173 | 214 | 2026-10-23 | ✅ | icons of the webviews |
-| `@vscode/webview-ui-toolkit` 1.4.0 | microsoft/vscode-webview-ui-toolkit | 2,108 | 159 | 2026-10-23 | ⚠️ archived (since 2024) | all webviews (`vscode-button`, `vscode-text-field`, …). Replacement: [dependency-hygiene.md](features/dependency-hygiene.md#4-replace-the-deprecated-webview-toolkit) |
+| `@vscode/webview-ui-toolkit` 1.4.0 | microsoft/vscode-webview-ui-toolkit | 2,108 | 159 | 2026-10-23 | ⚠️ archived (since 2024) | only custom build summary templates that use its components (`out/webview/custom_toolkit.js`, loaded only then); deprecated for them. Replacement: [dependency-hygiene.md](features/dependency-hygiene.md#4-replace-the-deprecated-webview-toolkit) |
 | `@vscode-elements/elements` 2.5.1 | vscode-elements/elements | 458 | 47 | 2026-10-23 | ✅ (candidate) | replacement for the webview UI toolkit, not migrated yet |
 | `node-ssh` 13 | steelbrain/node-ssh | 1,007 | 94 | 2026-10-24 | ✅ | SSH and SFTP to the IBM i |
 | `ssh2` (via node-ssh) | mscdex/ssh2 | 5,825 | 737 | 2026-10-24 | ✅ | bundled into the extension |

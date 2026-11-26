@@ -7,7 +7,7 @@ import { logger } from '../../extension/utilities/Logger';
 import * as source from '../../shared/Source';
 import { Workspace } from '../../extension/utilities/Workspace';
 import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
-import { history_dir_name, local_date_label, parse_history_dir } from './HistoryTimestamp';
+import { history_dir_name, local_date_label, parse_history_dir } from '../../shared/HistoryTimestamp';
 import { register_command } from '../../extension/utilities/Registration';
 import { folder_size, format_size, select_expired } from './HistoryRetention';
 import { ExtensionSettings } from '../../extension/utilities/ExtensionSettings';

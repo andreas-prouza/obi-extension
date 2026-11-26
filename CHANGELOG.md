@@ -1,3 +1,32 @@
+## [2.2.4]
+
+### Changes
+* **Test connection** in the connection settings of the configuration page, and the command *OBI: Test connection*: checks login and host key, the home directory with `.bashrc` and `PATH`, the project folder and the OBI backend on the IBM i (venv Python 3.12 or newer, backend version), without a build and without changing anything ([docs](asserts/docs/ssh.md#test-connection))
+* **The Command Palette only offers the OBI commands that fit the workspace**: commands for an OBI project appear only in a folder with an OBI project and a valid configuration. Before, the conditions were in the wrong place in `package.json` and had no effect. *OBI: Show Errors*, *OBI: Show tools* and *OBI: Get remote compiled object list* are removed: they did nothing ("command not found")
+* **Build summary: a new status of the i-Releaser deployment only updates the deployment card**, not the whole page. Before, every status event rendered and reloaded the page with the whole build list ([docs](asserts/docs/building.md#i-releaser-deployment))
+* **The build summary loads faster: the old webview toolkit is only loaded for a custom build summary template that uses its components** (`<vscode-button>`, …). Its script is 7.9 KB instead of 382 KB. The toolkit components in custom templates are **deprecated** and will be removed in a later version; use plain HTML elements ([docs](asserts/docs/configuration.md#custom-build-summary-template))
+* **The submenu *OBI* in the context menu of the explorer and the editor tab is only shown for sources of a supported object type** (last file extension in `supported-object-types`, e.g. `.pgm`, `.file`). Before, it was offered for every file of the project, e.g. `README.md` or `app-config.toml` ([docs](asserts/docs/sources.md#source-actions))
+* **The build summary shows the user profile** next to user and host: the active profile, for a build from the history the profile it was built with (stored as `profile` in its `compile-list.json`; not shown for older history entries) ([docs](asserts/docs/building.md#build-summary))
+
+### Bugfixes
+* ***Preview build* computes the variables and steps of a source like the OBI backend** ([docs](asserts/docs/configuration.md#variables)):
+  * `$(SOURCE_DESCRIPTION)` and `$(OBJ_TEXT)` are available (they were left unresolved in the preview), and `TEXT('')` is removed without a description
+  * `$(OBJ_NAME)` keeps the dots of the name (`a.b.rpgle.pgm` → `a.b`, before `a`); `$(SRC_ATTR)` and `$(SRC_TYPE)` are in lower case
+  * `[global.steps]`: a key with the source name or a pattern (`"mylib/*"`) applies; a key `pgm` no longer applies to `x.rpgle.pgm`, only to `x.pgm`. The language settings of `x.pgm` are found again
+* **A project without the folder `.obi/source-list` gets the source filter *All sources* again** when the folder is created. Before, the folder was created empty. An existing folder is left alone, so a deleted filter doesn't come back. Without `source-infos` in the configuration, `source-infos.json` is created in `.obi/etc` (where it is read), no longer in the project folder
+* **Deleting a source in the Source filters tree asks first and moves the file to the trash.** Before, it was deleted at once. The question names the build packages that contain the source and the sources that use it. The source is also removed from `source-config.toml`, `dependency.json`, `object-builds.json`, the build packages and `source-infos.json`, as a rename already updates them ([docs](asserts/docs/sources.md#create-rename-and-delete-sources))
+* **A host or user typed in at the prompt is only asked for once.** Before, if `remote-host` or `ssh-user` wasn't in the configuration, every SSH call opened a new connection and asked for them again. Now they are kept until VS Code is closed, another profile is selected or the connection fails. With `ssh-user` in the configuration, the backend update no longer asks for the user before the first connection ([docs](asserts/docs/ssh.md))
+* ***Preview build* applies extended source processing rules like the OBI backend.** Before, it only knew the condition name `SOURCE_FILE_NAMES`, which the backend doesn't know, so rules created on the configuration page (`SOURCE_FILE_NAME`) and most hand-written ones never matched in the preview ([docs](asserts/docs/configuration.md#extended-source-processing)):
+  * Any variable can be a condition; a text is compared with its value, a list with the source name
+  * Patterns match the whole value, and `*` also matches `/` (`all_*.pgm` matches `all_lib/qrpglesrc/x.rpgle.pgm`)
+  * The user file of the active profile replaces the project file instead of being added to it
+  * A step given only by name (`steps = ["global.cmds.x"]`) is used again (without default steps)
+  * An invalid regular expression gives an error naming the condition and the expression
+
+  Rules with the old name `SOURCE_FILE_NAMES` no longer match in the preview either (they never did in the backend). Use any other name, e.g. `SOURCE`. Rules with `use_script` or `use_shell` are still checked by their conditions only.
+* **Deleting a profile asks first, and the default profile can no longer be deleted.** Before, one click on 🗑 deleted the file of the active profile without a question, also `.user-app-config.toml` of the default profile. Now the profile's user extended source processing file and its stored password and key passphrase are removed with it ([docs](asserts/docs/configuration.md#profiles))
+
+
 ## [2.2.3]
 
 ### Changes

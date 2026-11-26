@@ -10,6 +10,8 @@ export interface BuildListContext {
   readonly source_configs: Readonly<Record<string, unknown>>;
   /** Result of getSourceProperties per source (frozen: callers copy before adding values) */
   readonly properties: Map<string, Readonly<Record<string, unknown>>>;
+  /** source-infos.json, read when the first source needs it */
+  source_infos?: Readonly<Record<string, unknown>>;
 }
 
 

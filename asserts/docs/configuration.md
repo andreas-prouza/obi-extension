@@ -114,7 +114,7 @@ VS Code checks `dependency.json`, `source-infos.json`, the files in `source-list
 
 ## Connection
 
-Section `[connection]`.
+Section `[connection]`. **Test connection** below the settings checks login, home directory, project folder and the OBI backend on the IBM i ([SSH setup](ssh.md#test-connection)).
 
 | Key | Mandatory | Description |
 |---|---|---|
@@ -221,7 +221,7 @@ Build commands are shell commands executed in PASE (bash) in the remote project 
                    "global.compile-cmds.bnddir-rmv", "global.compile-cmds.srvpgm-crt", "global.compile-cmds.bnddir-add" ]
 ```
 
-* The step key is matched against the end of the source name (`order.rpgle.pgm` → `rpgle.pgm`); as fallback the last extension (`pgm`) is used.
+* Which key applies, as in the OBI backend: a key that is the source name (`"mylib/qrpglesrc/order.rpgle.pgm"`), else the first key that matches the source name as a pattern (`"mylib/*"`; `*` also matches `/`), else the type of the source: its last two extensions (`order.rpgle.pgm` → `rpgle.pgm`, `x.pgm` → `pgm`).
 * Steps under `"*ALL"` run first for every source.
 * A step references a command by its path. Keys containing dots must be quoted: `global.compile-cmds."rpgle.pgm"`.
 * Inside a command, `%global.cmds.xyz%` inserts another command.
@@ -241,9 +241,11 @@ Use `$(NAME)` in commands. Variables are resolved recursively.
 | `$(SOURCE)` | `mylib/qrpglesrc/order.rpgle.pgm` (relative to the source directory) |
 | `$(SOURCE_FILE_NAME)` | `src/mylib/qrpglesrc/order.rpgle.pgm` (relative to the project folder) |
 | `$(SOURCE_BASE_FILE_NAME)` | `order.rpgle.pgm` |
-| `$(OBJ_NAME)` | `order` |
-| `$(SRC_ATTR)` | `rpgle` |
-| `$(SRC_TYPE)` | `pgm` |
+| `$(OBJ_NAME)` | `order` (the file name without its last two extensions: `a.b.rpgle.pgm` → `a.b`) |
+| `$(SRC_ATTR)` | `rpgle` (lower case) |
+| `$(SRC_TYPE)` | `pgm` (lower case) |
+| `$(SOURCE_DESCRIPTION)` | the description of the source ([source descriptions](sources.md#source-descriptions)), at most 50 characters |
+| `$(OBJ_TEXT)` | the description escaped for `cl -v "... TEXT('$(OBJ_TEXT)')"`. Without a description, `TEXT('')` is removed from the command, so the default text applies |
 | `$(TARGET_LIB)` | see [Target library](#target-library) |
 | `$(TARGET_LIB_ORIG)` | the target library before `TARGET_LIB_MAPPING` |
 | `$(SET_LIBL)` | commands to set the library list from `LIBL` |
@@ -274,7 +276,7 @@ A profile is a separate user configuration, e.g. to build into a different libra
 * Files: `.obi/etc/.user-app-config.toml` (default profile) and `.obi/etc/.user-app-config-<name>.toml`
 * Select the profile in **Using profile** in the OBI Build view.
 * ➕ copies the current profile into a new one and activates it.
-* 🗑 deletes the current profile and switches back to the default one.
+* 🗑 deletes the current profile after a confirmation and switches back to the default one. It deletes the profile's user configuration and user extended source processing file, and removes its stored password and key passphrase. The default profile can't be deleted.
 
 Per profile: all user settings, the stored SSH password and the user's extended source processing rules.
 
@@ -304,6 +306,10 @@ steps = [ "global.cmds.chg-src-ccsid", "source-cmds.my-cmd", "global.compile-cmd
 
 The section **Extended compile** (`extended-source-processing-config.toml` and the user variant) defines rules that select build steps and properties for groups of sources (e.g. by source name pattern) instead of single sources.
 For now, prefer [steps per source type](#commands-and-steps) and [per-source build settings](#per-source-build-settings).
+
+The rules of the user file (of the active profile) replace those of the project file as soon as the user file has any content; the files are not merged.
+
+**Conditions** (JSON, e.g. `{"SOURCE": ["mylib/*.pgm"], "OBJ_NAME": "ord*"}`): the name is a [variable](#variables) of the source. A text is compared with the value of the variable, a **list with the source name** (e.g. `mylib/qrpglesrc/order.rpgle.pgm`, without the source folder), whatever the name is. Patterns have to match completely (`*` also matches `/`, `?`, `[abc]`, `[!abc]`; case matters); with *Use Regex* a regular expression only has to be found. All conditions have to match; an unknown name never matches. *Preview build* and the OBI backend use the same rules.
 
 Each step of a rule has *either* a **Step** (e.g. `global.cmds.chg-src-ccsid`) *or* a **Command** (e.g. `cl -v "CALL $(TARGET_LIB)/AFTER"`); a command wins and runs once. *Add default steps* adds the steps of the source type after it, with the same properties: on by default for a step, off for a command. Details: [Extended source processing](https://github.com/andreas-prouza/obi/blob/main/docs/extended-source-processing.md) of the OBI backend.
 
@@ -335,6 +341,8 @@ To store data in the build list (and therefore in the build history), send it to
 ```
 
 The data is stored as `custom_data.<type>` in `compile-list.json`.
+
+Use plain HTML elements. The components of the old webview toolkit (`<vscode-button>`, `<vscode-text-field>`, …) still work in the template, but they are **deprecated** and will be removed in a later version: the toolkit is no longer developed. The build summary only loads it if the template contains such a component.
 
 The build summary has a Content-Security-Policy: scripts in the template only run with `nonce="{{ global_stuff['nonce'] }}"` (as above). Inline event handlers such as `onclick="…"` and scripts from other sites are blocked; use `addEventListener`. The page can't connect to any server either: to start an i-Releaser deployment, use the built-in [Start i-Releaser workflow](building.md#i-releaser-deployment).
 

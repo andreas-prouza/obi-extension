@@ -6,7 +6,6 @@ import { DirTool } from './utilities/DirTool';
 import { register_command } from './utilities/Registration';
 import { show_log } from './utilities/Logger';
 import { LastBuild, StatusState, render_status, summarize_build } from './utilities/StatusText';
-import { OBICommands } from './obi/OBICommands';
 import { ExtensionSettings } from './utilities/ExtensionSettings';
 
 
@@ -28,8 +27,13 @@ export class StatusBar {
   private static cancelled_until = 0;
 
 
-  public static init(context: vscode.ExtensionContext): void {
+  /** Stops the running operation (OBICommands.cancel_running; passed in by extension.ts, not imported: import cycle) */
+  private static cancel_running: () => void = () => undefined;
+
+
+  public static init(context: vscode.ExtensionContext, cancel_running: () => void): void {
     StatusBar.context = context;
+    StatusBar.cancel_running = cancel_running;
     const item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 50);
     item.command = 'obi.status-bar.menu';
     item.name = 'OBI';
@@ -128,7 +132,7 @@ export class StatusBar {
       { label: `$(person) ${vscode.l10n.t('Switch profile…')}`, run: () => StatusBar.switch_profile() },
     );
     if (OperationLock.running)
-      items.push({ label: `$(debug-stop) ${vscode.l10n.t('Cancel running operation')}`, description: OperationLock.running, run: () => OBICommands.cancel_running() });
+      items.push({ label: `$(debug-stop) ${vscode.l10n.t('Cancel running operation')}`, description: OperationLock.running, run: () => StatusBar.cancel_running() });
     items.push(
       { label: `$(list-flat) ${vscode.l10n.t('Show build output')}`, run: command('obi.build.show-output') },
       { label: `$(output) ${vscode.l10n.t('Show log')}`, run: show_log },

@@ -27,6 +27,7 @@ Severity: 🔴 high (data loss / security / feature unusable), 🟠 medium (wron
 * **Current:** `fs.unlinkSync` without a confirmation dialog. Entries in `dependency.json`, `source-config.toml`, `object-builds.json` and `source-infos.json` remain.
 * **Expected:** modal confirmation; clean up entries (like the rename sync does in `sync_renamed_source_member`).
 * **Docs:** [sources.md](../asserts/docs/sources.md#create-rename-and-delete-sources) warns about it.
+* **Status:** ✅ fixed (Unreleased): modal confirmation, trash, source removed from all project files and build packages ([bugfix/source-delete.md](bugfix/source-delete.md))
 
 ## 3. 🟠 Delete source filter and delete build history date have no confirmation
 * **Where:** `obi.source-filter.delete-config` in [SourceListProvider.ts](../src/webview/source_list/SourceListProvider.ts), `obi.build-history.delete-date` in [BuildHistoryProvider.ts:521](../src/webview/build_history/BuildHistoryProvider.ts#L521)
@@ -43,6 +44,7 @@ Severity: 🔴 high (data loss / security / feature unusable), 🟠 medium (wron
 * **Where:** [OBIController.ts:251-257](../src/webview/controller/OBIController.ts#L251-L257)
 * **Current:** the delete button deletes the file of the current profile, also if the default profile is active.
 * **Expected:** disable delete for the default profile (or ask for confirmation).
+* **Status:** ✅ fixed (Unreleased): button disabled for the default profile, modal confirmation, profile ESP file and secrets removed too ([bugfix/profile-delete.md](bugfix/profile-delete.md))
 
 
 # Broken features
@@ -60,6 +62,7 @@ Severity: 🔴 high (data loss / security / feature unusable), 🟠 medium (wron
   The `TARGET_LIB` condition passes an array to `minimatch` (probably throws, needs verification).
 * **Expected:** align condition names; handle arrays.
 * **Docs:** [configuration.md → Extended source processing](../asserts/docs/configuration.md#extended-source-processing) is only a placeholder; document fully after the fix.
+* **Status:** ✅ fixed (Unreleased): the build list port matches conditions as the OBI backend does (any variable; a text with its value, a list with the source name; `fnmatch`), user file replaces the project file, conditions documented ([bugfix/esp-conditions.md](bugfix/esp-conditions.md))
 
 ## 8. 🟠 Extended source processing flags cannot be disabled
 * **Where:** [EspConfig.ts:56](../src/extension/config/EspConfig.ts#L56), [EspConfig.ts:60](../src/extension/config/EspConfig.ts#L60)
@@ -70,12 +73,13 @@ Severity: 🔴 high (data loss / security / feature unusable), 🟠 medium (wron
 * **Where:** [package.json](../package.json), [extension.ts:137-142](../src/extension.ts#L137-L142)
 * **Current:** `obi.showErrors`, `obi.show.tools` and `obi.get-remote-compiled-object-list` appear in the Command Palette but fail with "command not found". (`obi.deployment.maintain` is registered again, for the i-Releaser deployment in the build summary.)
 * **Expected:** register them or remove them from `package.json`.
-* **Status:** open (decision needed). A test now checks that every contributed command is registered; these four are listed there as known exceptions (`src/test/suite/extension.test.ts`).
+* **Status:** ✅ fixed (Unreleased): the three commands are removed from `package.json`; the test has no exceptions any more ([features/manifest-cleanup.md](features/manifest-cleanup.md))
 
 ## 10. 🟠 `when` on `contributes.commands` has no effect
 * **Where:** [package.json](../package.json) (`"when": "... && false"`, `"1==2 && ..."`)
 * **Current:** `when` is not a valid property for command contributions. Hidden commands are visible in the Command Palette.
 * **Expected:** use `menus.commandPalette` with `when` conditions.
+* **Status:** ✅ fixed (Unreleased): all conditions moved to `menus.commandPalette`; `check:repo` refuses `when` on commands ([features/manifest-cleanup.md](features/manifest-cleanup.md))
 
 ## 11. 🟠 `obi.open.file` cannot open files
 * **Where:** [extension.ts:113-122](../src/extension.ts#L113-L122)

@@ -1,5 +1,6 @@
 import assert from 'assert';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import * as sinon from 'sinon';
 import * as vscode from 'vscode';
@@ -170,6 +171,36 @@ suite('Config cache and file watcher callbacks', () => {
     }
     finally {
       watchers.forEach(watcher => watcher.dispose());
+    }
+  });
+
+
+  test('deleted project folders exist again when recreate_deleted_folder resolves; one failure does not stop the others', async () => {
+    // A folder of its own: the watchdog of the running extension watches the test workspace
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'obi-folders-'));
+    sinon.stub(Workspace, 'get_workspace_uri').returns(vscode.Uri.file(root));
+    const error = sinon.stub(vscode.window, 'showErrorMessage').resolves(undefined);
+    try {
+      await HealthyWatchdog.recreate_deleted_folder();
+      for (const folder of Constants.NEEDED_LIST_OF_PATH)
+        assert.ok(fs.statSync(path.join(root, folder)).isDirectory(), folder);
+
+      // A file in the way of a folder in the middle of the list: its error is shown, the folders after it are still created
+      const blocked = Constants.BUILD_OUTPUT_DIR;
+      const after = Constants.NEEDED_LIST_OF_PATH.slice(Constants.NEEDED_LIST_OF_PATH.indexOf(blocked) + 1);
+      assert.ok(after.length > 0);
+      for (const folder of [blocked, ...after])
+        fs.rmSync(path.join(root, folder), { recursive: true, force: true });
+      fs.writeFileSync(path.join(root, blocked), 'not a folder');
+
+      await HealthyWatchdog.recreate_deleted_folder();
+      assert.ok(error.calledOnce);
+      assert.match(String(error.firstCall.args[0]), new RegExp(`Creating the folder ${blocked} failed`));
+      for (const folder of after)
+        assert.ok(fs.statSync(path.join(root, folder)).isDirectory(), folder);
+    }
+    finally {
+      fs.rmSync(root, { recursive: true, force: true });
     }
   });
 });

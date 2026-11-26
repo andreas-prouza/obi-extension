@@ -10,7 +10,7 @@ import { require_trust } from '../../extension/utilities/Trust';
 import { show_error } from '../../extension/utilities/Notify';
 import { Workspace } from '../../extension/utilities/Workspace';
 import { BuildIndex } from '../build_history/BuildIndex';
-import { local_date_label } from '../build_history/HistoryTimestamp';
+import { local_date_label } from '../../shared/HistoryTimestamp';
 import { DeploymentConfig } from './DeploymentConfig';
 import { DeploymentWatcher } from './DeploymentWatcher';
 

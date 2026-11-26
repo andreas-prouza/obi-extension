@@ -12,7 +12,7 @@ import { CompileDiagnostics } from '../../extension/source/CompileDiagnostics';
 import { BuildHistoryProvider } from '../build_history/BuildHistoryProvider';
 import { BuildIndex } from '../build_history/BuildIndex';
 import { BuildEntry, FolderBuild, SourceResult, builds_below_folder, builds_for_source, item_id, page, parse_item_id } from '../build_history/HistoryIndex';
-import { local_date_label } from '../build_history/HistoryTimestamp';
+import { local_date_label } from '../../shared/HistoryTimestamp';
 import { ObiTimeline, ObiTimelineItem, ObiTimelineOptions, ObiTimelineProvider, ObiWorkspaceTimelineProvider, TIMELINE_MIN_VERSION, TimelineApi, timeline_api } from './TimelineApi';
 
 

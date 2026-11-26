@@ -17,6 +17,9 @@ import { ProjectState } from '../../extension/ProjectState';
 import { show_error } from '../../extension/utilities/Notify';
 import { render_template } from '../Templates';
 import { delete_paths, set_paths } from '../../shared/DictTools';
+import { ssh_secret_key } from '../../shared/Profile';
+import { CheckResult, test_connection } from '../../extension/utilities/ConnectionTest';
+import { UserCancelledError } from '../../shared/Errors';
 
 
 /** Tables of app-config.toml whose values the user config can override */
@@ -193,6 +196,10 @@ export class OBIConfiguration {
         OBIConfiguration._context.secrets.store(OBIConfiguration.get_password_key(), message.password);
         break;
 
+      case "test_connection":
+        OBIConfiguration.run_connection_test();
+        break;
+
       case "delete_ssh_password":
         OBIConfiguration._context.secrets.delete(OBIConfiguration.get_password_key()).then(() => OBIConfiguration.update());
         break;
@@ -297,7 +304,7 @@ export class OBIConfiguration {
 
       case "add_esp_block": {
         const esp_block = new ExtendedSourceProcessing();
-        esp_block.conditions = {"SOURCE_FILE_NAME": ["*"], "TARGET_LIB": ["*"]};
+        esp_block.conditions = {"SOURCE": ["*"]};
         esp_block.steps = [{add_default_steps: true, properties: {"TARGET_LIB": "PROUZALIB", "JOB_CCSID": "1141"}}];
         const esp_config = new ExtendedSourceProcessingList(message.user_project == 'user');
         esp_config.add_new_esp_block(esp_block);
@@ -360,10 +367,23 @@ export class OBIConfiguration {
 
 
   /** SecretStorage key of the SSH password of the current profile, host and user (same key as in SSH_Tasks.connect). */
+  /** Test connection button: the results go to the page (an empty list after a cancelled prompt) */
+  private static async run_connection_test(): Promise<void> {
+    let results: CheckResult[] = [];
+    try {
+      results = await test_connection();
+    }
+    catch (e: unknown) {
+      if (!(e instanceof UserCancelledError))
+        show_error(vscode.l10n.t('Test connection failed'), e);
+    }
+    await OBIConfiguration.currentPanel?._panel.webview.postMessage({ command: 'connection_test_result', results });
+  }
+
+
   private static get_password_key(): string {
     const config = AppConfig.get_app_config();
-    const current_profile = Workspace.get_current_profile() || 'default';
-    return `obi|${current_profile}|${config.connection['remote-host']}|${config.connection['ssh-user']}`;
+    return ssh_secret_key(Workspace.get_current_profile() ?? '', config.connection['remote-host'], config.connection['ssh-user']);
   }
 
 

@@ -157,6 +157,36 @@ export class BuildPackageStore {
   }
 
 
+  /** Names of the packages that contain `source` (packages that can't be read are left out) */
+  public names_with_source(source: string): string[] {
+    return this.names().filter(name => {
+      try {
+        return this.get(name).sources.includes(source);
+      }
+      catch {
+        return false;
+      }
+    });
+  }
+
+
+  /** Removes a (deleted) source from all packages; like rename_source_everywhere for the result */
+  public remove_source_everywhere(source: string): { changed: string[]; errors: string[] } {
+    const changed: string[] = [];
+    const errors: string[] = [];
+    for (const name of this.names()) {
+      try {
+        if (this.remove_sources(name, [source]).length > 0)
+          changed.push(name);
+      }
+      catch (e) {
+        errors.push(`${name}: ${get_error_message(e)}`);
+      }
+    }
+    return { changed, errors };
+  }
+
+
   /**
    * Renames a source in all packages that contain it; the others are not written. Packages whose file can't be
    * read are left unchanged and reported in `errors`.

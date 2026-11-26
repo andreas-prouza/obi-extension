@@ -26,6 +26,7 @@ export const CONFIGURATION_REQUESTS = {
   add_source_config: { ...ui, source: is_source_name },
   delete_source_config: { ...ui, source: is_source_name },
   reload: { ...ui },
+  test_connection: { ...ui },
   add_esp_block: { ...ui, user_project: target },
   add_esp_step: { ...ui, user_project: target, index: is_index },
   delete_esp_block: { ...ui, user_project: target, index: is_index },

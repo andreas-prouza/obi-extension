@@ -66,6 +66,13 @@ suite('Command parameters', () => {
   });
 
 
+  test('an empty TEXT(\'\') is removed (the default text applies), a description stays', () => {
+    const cmd = `cl -v "CRTBNDRPG PGM(LIB/X) TEXT('$(OBJ_TEXT)') REPLACE(*YES)"`;
+    assert.strictEqual(replaceCmdParameters(cmd, { OBJ_TEXT: '' }), `cl -v "CRTBNDRPG PGM(LIB/X) REPLACE(*YES)"`);
+    assert.strictEqual(replaceCmdParameters(cmd, { OBJ_TEXT: "Order''s" }), `cl -v "CRTBNDRPG PGM(LIB/X) TEXT('Order''s') REPLACE(*YES)"`);
+  });
+
+
   test('find_unresolved_placeholders reports OBI variables only', () => {
     assert.deepStrictEqual(find_unresolved_placeholders('cd $(pwd) && X($(TARGET_LIBB)) $(echo x)'), ['TARGET_LIBB']);
   });

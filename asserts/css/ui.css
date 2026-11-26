@@ -171,6 +171,8 @@ body.obi-page {
 .status-pill.failed, .status-pill.error, .status-pill.ir-failed { --pill: var(--vscode-testing-iconFailed, #f14c4c); }
 .status-pill.in_process, .status-pill.ir-running { --pill: var(--vscode-charts-blue, #3794ff); }
 .status-pill.ir-ready { --pill: var(--vscode-textLink-foreground, #4daafc); }
+/* User profile of the build summary: not a status, so a colour of its own */
+.status-pill.profile { --pill: var(--vscode-charts-purple, #b180d7); }
 
 
 /* i-Releaser deployment of the build summary: card with the stages as a stepper */
@@ -1762,3 +1764,38 @@ textarea.obi-input {
 .obi-bt .source_description {
   min-width: 360px;
 }
+
+
+/* Test connection (configuration page) */
+.connection-test {
+  margin: 14px 0 0 12px;
+}
+
+.connection-test-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.connection-test-results {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+
+.connection-test-results li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 3px 0;
+}
+
+.connection-test-results .codicon {
+  flex: none;
+  margin-top: 1px;
+}
+
+.connection-test-results .ok .codicon { color: var(--obi-passed); }
+.connection-test-results .warning .codicon { color: var(--vscode-editorWarning-foreground, #cca700); }
+.connection-test-results .error .codicon { color: var(--obi-failed); }

@@ -113,6 +113,32 @@ export class DependencyList {
   }
 
 
+  /** Sources whose dependencies contain `source` */
+  public static async dependents_of(source: string): Promise<string[]> {
+    const dependency_list: Dependencies = await DependencyList.get_dependencies();
+    return Object.entries(dependency_list).filter(([, dependencies]) => dependencies.includes(source)).map(([dependent]) => dependent);
+  }
+
+
+  /** A deleted source: its own entry and every reference to it are removed. Not written if it isn't in the list. */
+  public static async remove_source(source: string): Promise<void> {
+    const dependency_list: Dependencies = await DependencyList.get_dependencies();
+    let changed = false;
+    const updated: Dependencies = {};
+    for (const [next_source, dependencies] of Object.entries(dependency_list)) {
+      if (next_source === source) {
+        changed = true;
+        continue;
+      }
+      const remaining = dependencies.filter(dependency => dependency !== source);
+      changed ||= remaining.length !== dependencies.length;
+      updated[next_source] = remaining;
+    }
+    if (changed)
+      DependencyList.save_dependency_list(updated);
+  }
+
+
   public static async rename_source(old_source: string, new_source: string): Promise<void> {
     if (old_source === new_source) {
       return;

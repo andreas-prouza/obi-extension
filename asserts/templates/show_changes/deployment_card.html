@@ -1,0 +1,46 @@
+{# The i-Releaser deployment card. Also rendered alone: status changes replace #i_releaser_status (BuildSummary.update_deployment) #}
+    {% if i_releaser and i_releaser.deployment and i_releaser.deployment.watched %}
+    {% set dep = i_releaser.deployment %}
+    <div id="i_releaser_status" class="ir-card">
+      <div class="ir-head">
+        <span class="codicon codicon-rocket"></span>
+        <span class="ir-title">{{ global_stuff['get_text']('i-Releaser deployment') | safe }} {{ dep.id }}</span>
+        {% if dep.state %}
+        <span class="ir-meta">{{ dep.state.workflow or '' }}{% if dep.state.workflow and dep.state.version %} · {% endif %}{% if dep.state.version %}{{ global_stuff['get_text']('version') | safe }} {{ dep.state.version }}{% endif %}</span>
+        <span class="status-pill ir-{{ dep.state.kind }}"><span class="codicon codicon-{{ dep.state.icon }}"></span>{{ dep.state.status }}</span>
+        {% endif %}
+        <span class="ir-spacer"></span>
+        {% if dep.checked %}<span class="ir-meta">{{ global_stuff['get_text']('updated') | safe }} {{ dep.checked }}</span>{% endif %}
+        <a id="i_releaser_deployment" class="ir-open" href="{{ dep.link }}"><span class="codicon codicon-link-external"></span>{{ global_stuff['get_text']('Open in i-Releaser') | safe }}</a>
+      </div>
+      {% if dep.state %}
+        {% if dep.state.total %}
+        <div class="ir-progress" title="{{ dep.state.done }} / {{ dep.state.total }}"><div class="ir-progress-bar" style="width: {{ dep.state.percent }}%"></div></div>
+        <ol id="i_releaser_stages" class="ir-stages">
+          {% for stage in dep.state.stages %}
+          <li class="ir-stage ir-{{ stage.kind }}{% if not loop.first and dep.state.stages[loop.index0 - 1].kind == 'finished' %} ir-after-finished{% endif %}" data-stage-id="{{ stage.id }}">
+            <span class="ir-dot">{% if stage.step_icon %}<span class="codicon codicon-{{ stage.step_icon }}"></span>{% else %}{{ stage.number }}{% endif %}</span>
+            <span class="ir-name">{{ stage.name }}</span>
+            <span class="ir-state">{{ stage.state_text }}</span>
+          </li>
+          {% endfor %}
+        </ol>
+        {% endif %}
+        {% if dep.state.attention %}
+        {% set att = dep.state.attention %}
+        <div id="i_releaser_attention" class="ir-attention ir-{{ att.kind }}">
+          <span class="codicon codicon-{{ 'error' if att.kind == 'failed' else 'play-circle' }}"></span>
+          <span class="ir-attention-text">{{ att.text }}{% if att.hint %}<br><span class="ir-meta">{{ att.hint }}</span>{% endif %}</span>
+          <span class="ir-spacer"></span>
+          {% if att.show_log %}<button type="button" class="ir-action btn secondary" data-action="show_log" data-stage-id="{{ att.stage_id }}"><span class="codicon codicon-output"></span>{{ global_stuff['get_text']('Show log') | safe }}</button>{% endif %}
+          {% if att.kind == 'failed' and att.continue %}<button type="button" class="ir-action btn secondary" data-action="continue" data-stage-id="{{ att.stage_id }}"><span class="codicon codicon-debug-continue"></span>{{ global_stuff['get_text']('Continue') | safe }}</button>{% endif %}
+          {% if att.run_all %}<button type="button" class="ir-action btn" data-action="run_all" data-stage-id="{{ att.stage_id }}"><span class="codicon codicon-debug-restart"></span>{{ global_stuff['get_text']('Run stage again') | safe }}</button>{% endif %}
+          {% if att.kind == 'ready' and att.continue %}<button type="button" class="ir-action btn" data-action="continue" data-stage-id="{{ att.stage_id }}"><span class="codicon codicon-play"></span>{{ global_stuff['get_text']('Run stage') | safe }}</button>{% endif %}
+        </div>
+        {% endif %}
+      {% elif not dep.error %}
+        <div class="ir-loading"><span class="codicon codicon-loading codicon-modifier-spin"></span> {{ global_stuff['get_text']('Loading the deployment status…') | safe }}</div>
+      {% endif %}
+      {% if dep.error %}<div class="i-releaser-error"><span class="codicon codicon-warning"></span> {{ dep.error }}</div>{% endif %}
+    </div>
+    {% endif %}

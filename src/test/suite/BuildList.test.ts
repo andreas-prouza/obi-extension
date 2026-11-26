@@ -10,8 +10,10 @@ import { OBITools } from '../../extension/utilities/OBITools';
 import { Constants } from '../../shared/Constants';
 import { DependencyList } from '../../extension/obi/Dependency';
 import { reset_workspace } from './workspace_fixture';
-import { getSteps } from '../../extension/obi/compile_list/modules/app_config_tools';
+import { getActiveExtendedSourcesConfig, getSteps } from '../../extension/obi/compile_list/modules/app_config_tools';
 import { getSourceProperties } from '../../extension/obi/compile_list/modules/properties';
+import { create_build_list_context } from '../../extension/obi/compile_list/modules/context';
+import * as sinon from 'sinon';
 import { ExtendedSourceProcessingList } from '../../extension/config/EspConfig';
 
 
@@ -92,7 +94,7 @@ suite('Changed sources are detected with one hash run', () => {
 
 
   test('extended source processing can be switched off (USE_ESP = false), as in the Python OBI', () => {
-    const esp = { extended_source_processing: [{ conditions: { SOURCE_FILE_NAMES: ['*.pgm'] }, use_regex: false, steps: [{ step: 'global.cmds.esp-step', add_default_steps: false }] }] };
+    const esp = { extended_source_processing: [{ conditions: { SOURCE: ['*.pgm'] }, use_regex: false, steps: [{ step: 'global.cmds.esp-step', add_default_steps: false }] }] };
     const general = AppConfig.get_app_config().general;
     const config = (use_esp?: boolean) => ({ general, global: { settings: { general: use_esp === undefined ? {} : { USE_ESP: use_esp } }, steps: { 'rpgle.pgm': ['global.cmds.normal'] } } });
     const source = 'prouzalib/qrpglesrc/hello.rpgle.pgm';
@@ -100,6 +102,76 @@ suite('Changed sources are detected with one hash run', () => {
     assert.deepStrictEqual(getSteps(source, config(), esp), [{ step: 'global.cmds.esp-step', add_default_steps: false }], 'on by default');
     assert.deepStrictEqual(getSteps(source, config(true), esp), [{ step: 'global.cmds.esp-step', add_default_steps: false }]);
     assert.deepStrictEqual(getSteps(source, config(false), esp), ['global.cmds.normal']);
+  });
+
+
+  test('the user ESP file replaces the project file when it has content, as in the OBI backend', async () => {
+    const ws = Workspace.get_workspace();
+    const rule = (step: string) => `[[extended_source_processing]]\nuse_regex = false\nsteps = ["${step}"]\n[extended_source_processing.conditions]\nSOURCE = ["*"]\n`;
+    const steps = () => getActiveExtendedSourcesConfig().extended_source_processing.map((esp: { steps: { step?: string }[] }) => esp.steps[0].step);
+    await fse.outputFile(path.join(ws, Constants.EXTENDED_SOURCE_PROCESS_CONFIG), rule('global.cmds.project'));
+
+    assert.deepStrictEqual(steps(), ['global.cmds.project'], 'no user file');
+    // A plain step name: only this step, no default steps
+    const config = { general: AppConfig.get_app_config().general, global: { settings: { general: {} }, steps: { 'rpgle.pgm': ['global.cmds.normal'] } } };
+    const built = getSteps('prouzalib/qrpglesrc/hello.rpgle.pgm', config, getActiveExtendedSourcesConfig()) as { step?: string }[];
+    assert.deepStrictEqual(built.map(step => step.step), ['global.cmds.project']);
+
+    await fse.outputFile(path.join(ws, Constants.EXTENDED_SOURCE_PROCESS_CONFIG_USER), '# only a comment\n');
+    assert.deepStrictEqual(steps(), ['global.cmds.project'], 'an empty user file');
+
+    await fse.outputFile(path.join(ws, Constants.EXTENDED_SOURCE_PROCESS_CONFIG_USER), rule('global.cmds.user'));
+    assert.deepStrictEqual(steps(), ['global.cmds.user'], 'not merged');
+
+    await fse.outputFile(path.join(ws, Constants.EXTENDED_SOURCE_PROCESS_CONFIG_USER), 'extended_source_processing = []\n');
+    assert.deepStrictEqual(steps(), [], 'a user file without rules still replaces the project rules');
+  });
+
+
+  test('ESP rules of the project form match: a list is compared with the source name, the variable name does not matter', () => {
+    const general = AppConfig.get_app_config().general;
+    const config = { general, global: { settings: { general: {} }, steps: { 'rpgle.pgm': ['global.cmds.normal'] } } };
+    const esp = (conditions: object) => ({ extended_source_processing: [{ conditions, use_regex: false, steps: ['global.cmds.esp'] }] });
+    const source = 'prouzalib/qrpglesrc/hello.rpgle.pgm';
+
+    assert.deepStrictEqual(getSteps(source, config, esp({ SOURCE_FILE_NAME: ['prouza*.pgm'] })), ['global.cmds.esp']);
+    assert.deepStrictEqual(getSteps(source, config, esp({ SOURCE_FILE_NAME: ['prouzalib/*.pgm'] })), ['global.cmds.esp'], '* also matches /');
+    assert.deepStrictEqual(getSteps(source, config, esp({ SOURCE_FILE_NAME: ['other*.pgm'] })), ['global.cmds.normal']);
+    assert.deepStrictEqual(getSteps(source, config, esp({ OBJ_NAME: 'hel*', SRC_TYPE: 'pgm' })), ['global.cmds.esp'], 'a text: the value of the variable');
+    assert.deepStrictEqual(getSteps(source, config, esp({ SOURCE_FILE_NAMES: ['*'] })), ['global.cmds.normal'], 'unknown name');
+  });
+
+
+  test('steps per source: the source name, then a pattern, then the type, as in the OBI backend', () => {
+    const general = AppConfig.get_app_config().general;
+    const config = (steps: Record<string, string[]>) => ({ general, global: { settings: { general: {} }, steps } });
+    const hello = 'prouzalib/qrpglesrc/hello.rpgle.pgm';
+
+    assert.deepStrictEqual(getSteps(hello, config({ 'rpgle.pgm': ['type'] }), {}), ['type']);
+    assert.deepStrictEqual(getSteps(hello, config({ 'rpgle.pgm': ['type'], 'prouzalib/*': ['pattern'] }), {}), ['pattern']);
+    assert.deepStrictEqual(getSteps(hello, config({ 'prouzalib/*': ['pattern'], [hello]: ['source'] }), {}), ['source']);
+    assert.deepStrictEqual(getSteps(hello, config({ 'pgm': ['pgm'] }), {}), [], 'pgm is the type of x.pgm, not of x.rpgle.pgm');
+    assert.deepStrictEqual(getSteps('prouzalib/qclsrc/x.pgm', config({ 'pgm': ['pgm'] }), {}), ['pgm']);
+  });
+
+
+  test('SOURCE_DESCRIPTION and OBJ_TEXT come from source-infos.json, read once per build list', () => {
+    const hello = 'prouzalib/qrpglesrc/hello.rpgle.pgm';
+    const user = 'prouzalib/qrpglesrc/user.rpgle.pgm';
+    const infos_file = path.join(Workspace.get_workspace(), AppConfig.get_app_config().general['source-infos'] ?? Constants.SOURCE_INFOS);
+    DirTool.write_json(infos_file, { [hello]: { description: `  Kunde's "Liste" $1  ` } });
+    const reads = sinon.spy(DirTool, 'get_json');
+    try {
+      const ctx = create_build_list_context();
+      const properties = getSourceProperties(AppConfig.get_app_config(), hello, ctx);
+      assert.strictEqual(properties.SOURCE_DESCRIPTION, `Kunde's "Liste" $1`);
+      assert.strictEqual(properties.OBJ_TEXT, `Kunde''s \\"Liste\\" \\$1`);
+      assert.strictEqual(getSourceProperties(AppConfig.get_app_config(), user, ctx).SOURCE_DESCRIPTION, '');
+      assert.strictEqual(reads.getCalls().filter(call => call.args[0] === infos_file).length, 1);
+    }
+    finally {
+      reads.restore();
+    }
   });
 
 

@@ -6,6 +6,7 @@ import { OBIController } from '../../webview/controller/OBIController';
 import { OperationLock } from '../../extension/utilities/OperationLock';
 import { AppConfig } from '../../extension/config/AppConfig';
 import { OBITools } from '../../extension/utilities/OBITools';
+import { Workspace } from '../../extension/utilities/Workspace';
 
 
 /** Minimal WebviewView stand-in that records message listeners. */
@@ -64,6 +65,19 @@ suite('OBI Build view', () => {
     assert.ok(!/<vscode-/.test(webview.html));
     assert.match(webview.html, /<button type="button" class="seg-option" role="radio" data-value="single" aria-checked="true"/);
     assert.match(webview.html, /<select id="drp_use_profile" class="obi-select"/);
+  });
+
+
+  test('the delete button is disabled for the default profile only', () => {
+    const settings = sinon.stub(Workspace, 'get_workspace_settings').returns({});
+    const html_with = () => {
+      const { view, webview } = fake_view();
+      new OBIController(vscode.Uri.file(Constants.EXTENSION_ROOT)).resolveWebviewView(view, {} as vscode.WebviewViewResolveContext, {} as vscode.CancellationToken);
+      return webview.html;
+    };
+    assert.match(html_with(), /id="btn_delete_current_profile" disabled/);
+    settings.returns({ current_profile: 'dev' });
+    assert.match(html_with(), /id="btn_delete_current_profile" title=/);
   });
 
 

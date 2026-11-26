@@ -12,6 +12,18 @@ export function is_safe_profile_alias(alias: string): boolean {
 }
 
 
+/** Key of the stored SSH password of a profile ('' = default), host and user; `|passphrase` is appended for the key passphrase */
+export function ssh_secret_key(profile_alias: string, host: string | undefined, user: string | undefined): string {
+  return `obi|${profile_alias || 'default'}|${host ?? ''}|${user ?? ''}`;
+}
+
+
+/** workspaceState key of "Never for this profile" */
+export function never_save_key(profile_alias: string, kind: 'password' | 'passphrase'): string {
+  return `obi.ssh.never-save-${kind}|${profile_alias || 'default'}`;
+}
+
+
 /** Error text for the input box, or undefined if `value` is a valid new profile name. */
 export function validate_new_profile_name(value: string, existing_aliases: string[]): string | undefined {
   if (!NEW_PROFILE_PATTERN.test(value))

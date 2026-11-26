@@ -382,6 +382,55 @@ suite('i-Releaser deployment from the build summary', () => {
   });
 
 
+  test('status changes only replace the deployment card, not the whole page (improvements v2.2.3 D2)', async () => {
+    const ir = await i_releaser_status([[11, 'START', 'finished'], [12, 'TEST', 'in process'], [13, 'PROD', 'new']]);
+    const original_panel = BuildSummary.currentPanel;
+    const pages: string[] = [];
+    const posted: { command?: string; html?: string }[] = [];
+    try {
+      await deployment_toml(`[i-releaser]\nurl = "${ir.url}"\n`);
+      await DeploymentConfig.store_auth_token(ir.url, 'TOKEN-1');
+      sinon.stub(BuildSummary, 'get_compile_list').callsFake(() => completed_list({ 'i-releaser': { id: 123, workflow: 'wf' } }));
+      sinon.stub(vscode.window, 'showErrorMessage').resolves(undefined);
+      sinon.stub(vscode.window, 'showInformationMessage').resolves(undefined);
+      const webview = {
+        ...fake_webview,
+        set html(value: string) { pages.push(value); },
+        postMessage: async (message: { command?: string; html?: string }) => { posted.push(message); return true; }
+      };
+      BuildSummary.currentPanel = { _panel: { webview } } as unknown as BuildSummary;
+      BuildSummary['_extensionUri'] = vscode.Uri.file(Constants.EXTENSION_ROOT);
+
+      await BuildSummary.update();   // the whole page, with the card: watching starts
+      assert.strictEqual(pages.length, 1);
+      assert.match(pages[0], /id="i_releaser_status"/);
+      await until(() => DeploymentWatcher.info(ir.url, 123)?.state?.stages[1].status === 'in process', 'first read');
+
+      ir.stages = [[11, 'START', 'finished'], [12, 'TEST', 'failed'], [13, 'PROD', 'new']];
+      ir.status = 'failed';
+      ir.push();
+      await until(() => DeploymentWatcher.info(ir.url, 123)?.state?.stages[1].status === 'failed', 'failed stage read');
+      // What the listener of the panel (constructor) calls for the shown deployment
+      await BuildSummary.update_deployment();
+      assert.ok(posted.some(message => message.command === 'deployment_card' && message.html?.includes('ir-stage ir-failed')), 'card with the failed stage');
+      const card = posted.filter(message => message.command === 'deployment_card').at(-1)?.html ?? '';
+      assert.ok(card.trim().startsWith('<div id="i_releaser_status" class="ir-card">') && card.trim().endsWith('</div>'), 'only the card');
+      assert.deepStrictEqual(stages_of(card)[1], 'ir-stage ir-failed ir-after-finished|close|TEST|failed');
+      assert.ok(!card.includes('build-list'), 'not the build list');
+      assert.strictEqual(pages.length, 1, 'no new page');
+
+      // The card disappears (e.g. not watched any more): the whole page
+      BuildSummary['_card_shown'] = false;
+      await BuildSummary.update_deployment();
+      assert.strictEqual(pages.length, 2);
+    }
+    finally {
+      BuildSummary.currentPanel = original_panel;
+      await ir.close();
+    }
+  });
+
+
   test('status: a failed stage shows its step and the buttons; run-stages and a ready stage', async () => {
     const steps = [{ id: 31, sequence: 1, cmd: 'CALL PGM(LIST)', status: 'failed', processing_step: 'list objects', run_history: [{ id: 99 }] }];
     const ir = await i_releaser_status([[11, 'START', 'finished'], [12, 'Create object list', 'failed', steps], [13, 'DEPLOY', 'new']]);

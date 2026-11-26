@@ -32,6 +32,8 @@
               "OBJ_NAME": "orders",
               "SRC_ATTR": "sqltable",
               "SRC_TYPE": "file",
+              "SOURCE_DESCRIPTION": "",
+              "OBJ_TEXT": "",
               "SET_LIBL": "liblist -a 'prouzalib' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null"
             }
           },
@@ -58,6 +60,8 @@
               "OBJ_NAME": "cust",
               "SRC_ATTR": "pf",
               "SRC_TYPE": "file",
+              "SOURCE_DESCRIPTION": "",
+              "OBJ_TEXT": "",
               "SET_LIBL": "liblist -a 'QGPL' 2> /dev/null",
               "LIBL": "QGPL"
             }
@@ -80,6 +84,8 @@
               "OBJ_NAME": "defs",
               "SRC_ATTR": "rpgle",
               "SRC_TYPE": "cpy",
+              "SOURCE_DESCRIPTION": "",
+              "OBJ_TEXT": "",
               "SET_LIBL": "liblist -a 'prouzalib' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null"
             }
           },
@@ -106,6 +112,8 @@
               "OBJ_NAME": "test4",
               "SRC_ATTR": "rpgle",
               "SRC_TYPE": "pgm",
+              "SOURCE_DESCRIPTION": "",
+              "OBJ_TEXT": "",
               "SET_LIBL": "liblist -a 'prouzat1' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null",
               "ACTGRP": "TESTACT"
             }
@@ -168,6 +176,8 @@
               "OBJ_NAME": "srv",
               "SRC_ATTR": "sqlrpgle",
               "SRC_TYPE": "srvpgm",
+              "SOURCE_DESCRIPTION": "",
+              "OBJ_TEXT": "",
               "SET_LIBL": "liblist -a 'prouzalib' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null",
               "RPGPPOPT": "*LVL2",
               "DBGVIEW": "*SOURCE"
@@ -201,6 +211,8 @@
               "OBJ_NAME": "hello",
               "SRC_ATTR": "rpgle",
               "SRC_TYPE": "pgm",
+              "SOURCE_DESCRIPTION": "",
+              "OBJ_TEXT": "",
               "SET_LIBL": "liblist -a 'prouzalib' 2> /dev/null; liblist -a 'QGPL' 2> /dev/null"
             }
           }

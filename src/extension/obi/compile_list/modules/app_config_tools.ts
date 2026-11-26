@@ -1,19 +1,21 @@
-import * as path from 'path';
-import { minimatch } from "minimatch";
+import { fnmatch, match_conditions } from '../../../../shared/EspConditions';
+import { source_type } from '../../../../shared/SourceName';
+import { logger } from '../../../utilities/Logger';
 import { getSourceProperties } from './properties';
 import { ExtendedSourceProcessingList } from '../../../config/EspConfig';
 import { BuildListContext } from './context';
 
-// Combines the project-level ESP config with the active user/profile ESP config,
-// mirroring how they are both applied in src/webview/controller/OBIConfiguration.ts.
+/**
+ * The ESP rules used for the build list, as in the OBI backend (get_extended_steps): the user file of the active
+ * profile if it has any content, otherwise the project file. The files are not merged.
+ */
 export function getActiveExtendedSourcesConfig(): any {
-  const project_config = new ExtendedSourceProcessingList();
   const user_config = new ExtendedSourceProcessingList(true);
+  const config = user_config.has_content ? user_config : new ExtendedSourceProcessingList();
   return {
-    extended_source_processing: [
-      ...(project_config.extended_source_processing || []),
-      ...(user_config.extended_source_processing || [])
-    ]
+    extended_source_processing: config.extended_source_processing || [],
+    // Condition names already reported as unknown: once per build list, not once per source
+    unknown_conditions: new Set<string>()
   };
 }
 
@@ -33,17 +35,19 @@ export function getSteps(source: string, appConfig: any, extended_sources_config
 
 
 
+/**
+ * Steps of [global.steps] for a source, as in the backend (get_global_steps): a key that is the source name,
+ * else the first key that matches it as a pattern (fnmatch, e.g. "mylib/*"), else the key of its type ("rpgle.pgm").
+ */
 function getGlobalSteps(source: string, appConfig: any): Array<string | object> {
-  if (appConfig.global?.steps) {
-    for (const extensionStep in appConfig.global.steps) {
-      if (source.endsWith(`.${extensionStep}`)) {
-        return appConfig.global.steps[extensionStep];
-      }
-    }
+  const steps: Record<string, Array<string | object>> = appConfig.global?.steps ?? {};
+  if (Object.prototype.hasOwnProperty.call(steps, source))
+    return steps[source];
+  for (const key of Object.keys(steps)) {
+    if (fnmatch(source, key))
+      return steps[key];
   }
-
-  const fileExtensions = path.extname(source).slice(1);
-  return appConfig.global?.steps?.[fileExtensions] || [];
+  return steps[source_type(source)] || [];
 }
 
 
@@ -63,7 +67,7 @@ function getExtendedSteps(source: string, appConfig: any, extended_sources_confi
   let allowMultipleMatches = true;
 
   for (const sourceConfigEntry of extended_sources_config.extended_source_processing) {
-    if (matchSourceConditions(sourceConfigEntry, source, sourceProperties)) {
+    if (matchSourceConditions(sourceConfigEntry, source, sourceProperties, extended_sources_config.unknown_conditions)) {
       if (!allowMultipleMatches && resultSteps.length > 0) {
         throw new Error(`Multiple extended source processing entries found for ${source}`);
       }
@@ -119,55 +123,12 @@ function getStepsFromCurrentEsp(
   return newSteps;
 }
 
-function matchSourceConditions(sourceConfigEntry: any, source: string, sourceProperties: any): boolean {
-  const conditions = sourceConfigEntry.conditions || {};
-  if (Object.keys(conditions).length === 0) {
-    return true;
-  }
-
-  for (const conditionName in conditions) {
-    const conditionValue = conditions[conditionName];
-    switch (conditionName) {
-      case 'SOURCE_FILE_NAMES':
-        if (!matchConditionSourceFileNames(source, conditionValue, sourceConfigEntry)) {
-          return false;
-        }
-        break;
-      case 'TARGET_LIB':
-        if (!matchConditionTargetLib(sourceProperties.TARGET_LIB, conditionValue, sourceConfigEntry)) {
-          return false;
-        }
-        break;
-      default:
-        return false;
-    }
-  }
-  return true;
-}
-
-function matchConditionSourceFileNames(source: string, conditionValues: string[], sourceConfigEntry: any): boolean {
-  for (const conditionValue of conditionValues) {
-    if (sourceConfigEntry.use_regex) {
-      if (new RegExp(conditionValue).test(source)) {
-        return true;
-      }
-    } else if (fnmatch(source, conditionValue)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function matchConditionTargetLib(targetLib: string, conditionValue: string, sourceConfigEntry: any): boolean {
-  if (sourceConfigEntry.use_regex) {
-    return new RegExp(conditionValue).test(targetLib);
-  }
-  return fnmatch(targetLib, conditionValue);
-}
-
-
-function fnmatch(source: string, conditionValue: string): boolean {
-  // Use minimatch for glob pattern matching
-  return minimatch(source, conditionValue, { matchBase: true });
+function matchSourceConditions(sourceConfigEntry: any, source: string, sourceProperties: any, reported?: Set<string>): boolean {
+  return match_conditions(sourceConfigEntry.conditions, Boolean(sourceConfigEntry.use_regex), source, sourceProperties, name => {
+    if (reported?.has(name))
+      return;
+    reported?.add(name);
+    logger.warn(`Extended source processing: unknown condition name ${name} (no variable of that name, e.g. for ${source}): the rule doesn't match`);
+  });
 }
 

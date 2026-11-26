@@ -11,12 +11,12 @@ import * as source from '../../shared/Source';
 import { Workspace } from './Workspace';
 import * as fs from 'fs';
 import { logger } from './Logger';
-import { OBICommands } from '../../extension/obi/OBICommands';
 import { template_text } from './TemplateTexts';
 import { OperationLock } from './OperationLock';
 import { createBuildList } from '../../extension/obi/compile_list/createBuildList';
 import { ALL_CHANGES, BuildScope } from '../obi/compile_list/BuildScope';
-import { compare_hashes, compute_source_hashes } from '../../extension/obi/compile_list/modules/source_hashes';
+import { compare_hashes } from '../../extension/obi/compile_list/modules/source_hashes';
+import { CurrentSourceHashes } from './CurrentSourceHashes';
 import { Dependencies, DependencyList } from '../obi/Dependency';
 import { GitInfo } from './GitInfo';
 import { is_home_like_remote_base_dir } from './RemotePathGuard';
@@ -24,7 +24,6 @@ import { migrate_project, replace_with_shipped } from '../obi/ProjectMigration';
 import { write_initial_gitignore } from '../obi/GitignoreCheck';
 import { UserCancelledError, get_error_message } from '../../shared/Errors';
 import { show_error } from './Notify';
-import { ProjectState } from '../ProjectState';
 
 
 
@@ -36,14 +35,9 @@ export class OBITools {
   private static _dependency_list: { ['source']: string[] }|undefined = undefined;
   private static _last_loading_time: number = 0;
 
-  /** Set by the cancel button of the OBI Build view; checked between files while hashing */
-  private static hashing_cancelled: boolean = false;
-
-
-
-
+  /** Cancel button of the OBI Build view: stops a running source hashing (see CurrentSourceHashes) */
   public static cancel_source_hashing(): void {
-    OBITools.hashing_cancelled = true;
+    CurrentSourceHashes.cancel();
   }
 
 
@@ -100,26 +94,19 @@ export class OBITools {
     if (!DirTool.dir_exists(path.join(ws, '.obi', 'log'))) {
       fs.mkdirSync(path.join(ws, '.obi', 'log'), { recursive: true });
     }
+    // A new filter folder gets the filter "All sources". An existing (also empty) one is left alone:
+    // this runs on every config change and must not bring back a deleted filter.
     if (!DirTool.dir_exists(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME))) {
       fs.mkdirSync(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME), { recursive: true });
+      fs.copyFileSync(path.join(ext_ws, Constants.SOURCE_FILTER_FOLDER_NAME, 'All sources.json'), path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME, 'All sources.json'));
     }
     if (!DirTool.dir_exists(path.join(ws, '.obi', 'tmp'))) {
       fs.mkdirSync(path.join(ws, '.obi', 'tmp'), { recursive: true });
     }
-    // All three files are JSON objects (source → …)
-    if (!DirTool.file_exists(path.join(ws, config.general['source-infos'] || 'source-infos.json'))) {
-      DirTool.write_file(path.join(ws, config.general['source-infos'] || 'source-infos.json'), '{}');
-    }
-    if (!DirTool.file_exists(path.join(ws, config.general['dependency-list'] || 'dependency.json'))) {
-      DirTool.write_file(path.join(ws, config.general['dependency-list'] || 'dependency.json'), '{}');
-    }
-    if (!DirTool.file_exists(path.join(ws, config.general['compiled-object-list'] || 'object-build.json'))) {
-      DirTool.write_file(path.join(ws, config.general['compiled-object-list'] || 'object-build.json'), '{}');
-    }
-
-    if (!DirTool.dir_exists(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME))) {
-      fs.mkdirSync(path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME), { recursive: true });
-      fs.copyFileSync(path.join(ext_ws, Constants.SOURCE_FILTER_FOLDER_NAME, 'All sources.json'), path.join(ws, Constants.SOURCE_FILTER_FOLDER_NAME, 'All sources.json'));
+    // All three files are JSON objects (source → …); the defaults are the ones the readers use
+    for (const file of [config.general['source-infos'] || Constants.SOURCE_INFOS, config.general['dependency-list'] || Constants.DEPENDENCY_LIST, config.general['compiled-object-list'] || Constants.COMPILED_OBJECT_LIST]) {
+      if (!DirTool.file_exists(path.join(ws, file)))
+        DirTool.write_file(path.join(ws, file), '{}');
     }
 
     if (!DirTool.file_exists(path.join(ws, '.obi', 'etc', 'logger_config.py'))) {
@@ -350,39 +337,29 @@ export class OBITools {
 
 
 
-  public static async initialize_folder(): Promise<void> {
+  /** Copies the project template (obi-media) into the workspace, without overwriting files. Returns whether it worked. */
+  public static async initialize_folder(): Promise<boolean> {
 
     if (!vscode.workspace.workspaceFolders || !OBITools.ext_context) {
       vscode.window.showErrorMessage(vscode.l10n.t('No workspace is opened!'));
-      return;
+      return false;
     }
 
     const ws = Workspace.get_workspace();
     const template_ws = path.join(OBITools.ext_context.asAbsolutePath('.'), 'obi-media');
 
-    let copies: Promise<void>[] = [];
-
-    const tmpDirs = await fs.promises.readdir(template_ws, { withFileTypes: true });
-    for (const dirent of tmpDirs) {
-      const srcDir = path.join(template_ws, dirent.name);
-      const destDir = path.join(ws, dirent.name);
-      copies.push(fs.promises.cp(srcDir, destDir, {
-        recursive: true,
-        force: false,         // don't overwrite existing files
-        errorOnExist: false,  // don't throw if file exists
-      }));
-    }
-
-    Promise.all(copies).then(async () => {
+    try {
+      const tmpDirs = await fs.promises.readdir(template_ws, { withFileTypes: true });
+      // Don't overwrite existing files, and don't throw if a file exists
+      await Promise.all(tmpDirs.map(dirent => fs.promises.cp(path.join(template_ws, dirent.name), path.join(ws, dirent.name), { recursive: true, force: false, errorOnExist: false })));
       write_initial_gitignore(ws);
-      vscode.window.showInformationMessage(vscode.l10n.t('{0} files copied', copies.length));
-      // The OBI views and commands appear without reloading the window
-      await ProjectState.update();
-    })
-      .catch((reason: unknown) => {
-        show_error(vscode.l10n.t('Copying the project template failed'), reason);
-      });
-
+      vscode.window.showInformationMessage(vscode.l10n.t('{0} files copied', tmpDirs.length));
+      return true;
+    }
+    catch (reason: unknown) {
+      show_error(vscode.l10n.t('Copying the project template failed'), reason);
+      return false;
+    }
   }
 
 
@@ -695,25 +672,9 @@ export class OBITools {
 
 
 
-  /**
-   * MD5 of every source ('/'-separated path relative to the source folder → hash). Unchanged files are taken
-   * from the cache (.obi/cache/source-hashes.json); use_cache = false hashes every file.
-   */
+  /** See CurrentSourceHashes.retrieve */
   public static async retrieve_current_source_hashes(use_cache: boolean = true): Promise<Record<string, string>> {
-
-    const config = AppConfig.get_app_config();
-    const started = performance.now();
-    OBITools.hashing_cancelled = false;
-
-    const hashes = await compute_source_hashes(DirTool.get_local_source_dir(), config.general['supported-object-types'] || ['pgm', 'file', 'srvpgm'], {
-      concurrency: config.general['max-threads'] || 20,
-      cache_file: path.join(Workspace.get_workspace(), Constants.SOURCE_HASH_CACHE_FILE),
-      use_cache: use_cache,
-      is_cancelled: () => OBITools.hashing_cancelled || OperationLock.token.isCancellationRequested
-    });
-
-    logger.info(`${Object.keys(hashes).length} source hashes in ${((performance.now() - started) / 1000).toFixed(2)} seconds`);
-    return hashes;
+    return CurrentSourceHashes.retrieve(use_cache);
   }
 
 

@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import { Constants } from '../../shared/Constants';
 import { Workspace } from '../../extension/utilities/Workspace';
 import { BuildHistoryItem, BuildHistoryProvider } from '../../webview/build_history/BuildHistoryProvider';
-import { local_date_label, parse_history_dir } from '../../webview/build_history/HistoryTimestamp';
+import { local_date_label, parse_history_dir } from '../../shared/HistoryTimestamp';
 import { reset_workspace } from './workspace_fixture';
 
 

@@ -45,7 +45,7 @@
         {% endfor %}
       </select>
       <button type="button" class="icon-btn" id="btn_copy_profile" title="{{ global_stuff['get_text']('Copy selected profile') | safe }}" aria-label="{{ global_stuff['get_text']('Copy selected profile') | safe }}"><span class="codicon codicon-add"></span></button>
-      <button type="button" class="icon-btn" id="btn_delete_current_profile" title="{{ global_stuff['get_text']('Delete selected profile') | safe }}" aria-label="{{ global_stuff['get_text']('Delete selected profile') | safe }}"><span class="codicon codicon-trash"></span></button>
+      <button type="button" class="icon-btn" id="btn_delete_current_profile"{% if not (global_stuff['workspace_settings'] and global_stuff['workspace_settings']['current_profile']) %} disabled{% endif %} title="{{ global_stuff['get_text']('Delete selected profile') | safe }}" aria-label="{{ global_stuff['get_text']('Delete selected profile') | safe }}"><span class="codicon codicon-trash"></span></button>
     </div>
 
     <!-- Last build: filled by update_build_summary_timestamp -->

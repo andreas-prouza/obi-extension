@@ -19,7 +19,6 @@ import { DeploymentWatcher } from './webview/deployment/DeploymentWatcher';
 import { DeploymentsView } from './webview/deployment/DeploymentsView';
 import { OBISourceDependency } from './webview/controller/OBISourceDependency';
 import { LocalSourceList } from './extension/utilities/LocalSourceList';
-import { QuickSettings } from './webview/quick_settings/QuickSettings';
 import { BuildHistoryProvider } from './webview/build_history/BuildHistoryProvider';
 import { BuildTimeline } from './webview/timeline/BuildTimeline';
 import { sourceQuickSearch } from './source-quick-search';
@@ -34,7 +33,8 @@ import { HostKeyStore } from './extension/utilities/HostKeyStore';
 import { BuildOutput } from './extension/utilities/BuildOutput';
 import { add_log_files, register_output_channel, set_secret_values } from './extension/utilities/Logger';
 import { secret_values } from './shared/Redact';
-import { OPEN_CONFIGURATION, show_error } from './extension/utilities/Notify';
+import { show_error } from './extension/utilities/Notify';
+import { show_connection_test } from './extension/utilities/ConnectionTest';
 import { remove_secrets_from_history } from './extension/obi/HistorySecrets';
 import { ProjectState } from './extension/ProjectState';
 import { BackendUpdate } from './extension/obi/BackendUpdate';
@@ -42,6 +42,10 @@ import { FILE_CALLBACKS } from './file_callbacks';
 import { BuildPackagesProvider } from './webview/build_packages/BuildPackagesProvider';
 import { BuildPackageCommands } from './webview/build_packages/BuildPackageCommands';
 
+
+
+/** globalState: the config tab state of older versions was removed from the keychain */
+const LEGACY_UI_SECRETS_REMOVED = 'obi.legacy-ui-secrets-removed';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -58,9 +62,12 @@ export function activate(context: vscode.ExtensionContext) {
 	SSH_Tasks.context = context;
 	OBITools.ext_context = context;
 
-	// Older versions kept the selected config tab in the OS keychain; it's in workspaceState now
-	context.secrets.delete('obi|config|panel');
-	context.secrets.delete('obi|config|panel_tab');
+	// Older versions kept the selected config tab in the OS keychain; it's in workspaceState now. Removed once.
+	if (!context.globalState.get<boolean>(LEGACY_UI_SECRETS_REMOVED)) {
+		Promise.all(['obi|config|panel', 'obi|config|panel_tab'].map(key => context.secrets.delete(key)))
+			.then(() => context.globalState.update(LEGACY_UI_SECRETS_REMOVED, true))
+			.catch((e: unknown) => logger.warn(`Removing old UI state from the keychain failed: ${e}`));
+	}
 
 
 
@@ -68,7 +75,11 @@ export function activate(context: vscode.ExtensionContext) {
 	register_command(context, 'obi.ssh.forget-host-key', () => HostKeyStore.forget(context.globalState));
 	BuildOutput.register(context);
 	// Also without a project: this creates it
-	register_command(context, 'obi.initialize-folder', () => OBITools.initialize_folder());
+	// The OBI views and commands appear without reloading the window
+	register_command(context, 'obi.initialize-folder', async () => {
+		if (await OBITools.initialize_folder())
+			await ProjectState.update();
+	});
 
 	// Without a project: VS Code's welcome content (open a folder, initialize)
 	register_welcome_view(context, WELCOME_VIEW);
@@ -76,6 +87,18 @@ export function activate(context: vscode.ExtensionContext) {
 	// Sets obi.contains_obi_project / obi.valid-config, and registers and starts the rest when a project is found
 	// and its configuration is valid; config changes and Initialize update it without reloading the window
 	ProjectState.init(context, { on_project_found: register_project_features, on_valid: start_project_services });
+
+	// The build commands show their results in the views: src/extension imports nothing from src/webview
+	OBICommands.register_views({
+		run_finished: process => OBIController.run_finished(process),
+		last_build_changed: () => OBIController.update_build_summary_timestamp(),
+		show_build_summary: () => BuildSummary.render(context.extensionUri, Workspace.get_workspace_uri()),
+		update_build_summary: () => BuildSummary.update(),
+		show_current_results: () => BuildSummary.show_current_results(),
+		shown_compile_list: () => BuildSummary.get_current_compile_list_name(),
+		apply_history_retention: keep => BuildHistoryProvider.apply_retention(keep),
+		reveal_history_build: history_dir_name => BuildHistoryProvider.reveal_build(history_dir_name),
+	});
 	ProjectState.update().catch((e: unknown) => show_error(vscode.l10n.t('OBI could not be started'), e));
 }
 
@@ -103,6 +126,8 @@ function register_project_features(context: vscode.ExtensionContext): void {
 	register_command(context, 'obi.controller.config', () => {
 		OBIConfiguration.render(context, context.extensionUri)
 	})
+	// Also with an incomplete configuration: it says what is missing on the IBM i
+	register_command(context, 'obi.test-connection', () => show_connection_test());
 	context.subscriptions.push(Workspace.on_did_change_profile(() => OBIConfiguration.update()));
 
 	try {
@@ -224,11 +249,6 @@ function register_project_features(context: vscode.ExtensionContext): void {
 			webviewOptions: { retainContextWhenHidden: true }
 		}),
 		obi_controller_provider.register_editor_listener()
-	);
-
-	const quick_settings = new QuickSettings(context.extensionUri);
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(QuickSettings.viewType, quick_settings)
 	);
 
 	// Register Build History Tree View
@@ -365,7 +385,7 @@ function register_project_features(context: vscode.ExtensionContext): void {
 function start_project_services(context: vscode.ExtensionContext): void {
 	HealthyWatchdog.set_healthy_watchdog(context, FILE_CALLBACKS);
 	CompileDiagnostics.init(context);
-	StatusBar.init(context);
+	StatusBar.init(context, () => OBICommands.cancel_running());
 	BuildHistoryProvider.apply_retention().catch((e: unknown) => logger.warn(`Build history retention failed: ${e}`));
 	LocalSourceList.load_source_list();
 	// Setting obi.backend.autoUpdateLocal: git pull of the local OBI backend, once per session

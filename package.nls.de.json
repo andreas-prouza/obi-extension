@@ -6,7 +6,6 @@
   "obi.add-source-to-build-summary": "OBI: Quelle zur Build-Zusammenfassung hinzufügen",
   "obi.source-filter.update": "OBI: Source Filter aktualisieren",
   "obi.source-filter.add": "OBI: Source Filter erstellen",
-  "obi.get-remote-compiled-object-list": "OBI: Liste erstellter Objekte von IBM i holen",
   "obi.reset-compiled-object-list": "OBI: Liste erstellter Objekte neu erstellen",
   "obi.controller.config": "OBI: Konfiguration",
   "obi.controller.dependency-list": "OBI: Abhängigkeits-Liste",
@@ -48,9 +47,7 @@
   "deployment": "Deployment",
   "Source filters": "Source Filters",
   "Invalid config": "Konfig ungültig",
-  "Quick settings": "Schnelleinstellungen",
   "obi.clearDiagnostics": "OBI: Diagnosen löschen",
-  "obi.showErrors": "OBI: Fehler anzeigen",
   "obi.build-history.update": "Build-Historie aktualisieren",
   "obi.build-history.search": "Build-Historie nach Source filtern",
   "obi.build-history.switch-to-source-view": "Zur Ansicht nach Sourcen wechseln",
@@ -63,7 +60,6 @@
   "obi.timeline.delete-build": "Build löschen",
   "obi.open.file": "OBI: Datei nach Namen öffnen",
   "obi.source-quick-search": "OBI: Source Schnellsuche",
-  "obi.show.tools": "OBI: Werkzeuge anzeigen",
   "view.obi.controller": "OBI Build",
   "view.obi.build-history": "Build-Historie",
   "view.obi-bar": "Object Builder for i",
@@ -122,5 +118,6 @@
   "obi.build-history.filter-package": "Build-Historie nach Build-Paket filtern",
   "obi.buildPackages.baseBranch": "Branch, mit dem *Auf diesem Branch geänderte Sourcen zum Build-Paket hinzufügen* den aktuellen Branch vergleicht, z. B. `main` oder `origin/develop`. Leer: der Standard-Branch von `origin`, sonst `main` oder `master`.",
   "obi.build-package.open-last-build": "Build-Zusammenfassung des letzten Builds des Build-Pakets öffnen",
-  "obi.build-package.add-build-sources": "Sourcen des Builds zum Build-Paket hinzufügen…"
+  "obi.build-package.add-build-sources": "Sourcen des Builds zum Build-Paket hinzufügen…",
+  "obi.test-connection": "OBI: Verbindung testen"
 }

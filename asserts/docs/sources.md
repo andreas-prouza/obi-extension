@@ -99,7 +99,7 @@ In the Source filters tree:
 * On a **source file**: **Add source member** creates an empty source and opens it. The name must end with a supported type, e.g. `new.rpgle.pgm`.
 * On a **member** (context menu):
   * **Rename**: renames the file
-  * **Delete**: deletes the file **immediately, without confirmation**. Entries in the dependency list, source settings and descriptions are not removed.
+  * **Delete**: asks first, then moves the file to the trash (if there is none, e.g. in some remote windows, OBI asks again before deleting it for good). The question names the build packages that contain the source and the sources that use it. The source is removed from `source-config.toml`, `dependency.json` (its own dependencies and the references of other sources), `object-builds.json`, the build packages and `source-infos.json`. Deleting a file in the VS Code Explorer doesn't do this.
 
 **Renames keep the configuration in sync.** When you rename a source file in the Source filters tree or in the VS Code Explorer, OBI updates the source name in:
 
@@ -113,7 +113,7 @@ This works for renaming single source files. Renaming a library or source file f
 
 ## Source actions
 
-In the context menu of a member in the tree, of a file in the explorer and of an editor tab, all in the submenu **OBI** (the first three also as icons on a member in the tree; in the Command Palette with the prefix *OBI:*, for the active editor):
+In the context menu of a member in the tree, of a file in the explorer and of an editor tab, all in the submenu **OBI** (the first three also as icons on a member in the tree; in the Command Palette with the prefix *OBI:*, for the active editor). In the explorer and on an editor tab, the submenu is only shown for files whose last extension is one of the `supported-object-types` (e.g. `order.rpgle.pgm`, see [Configuration](configuration.md)):
 
 | Action | Description |
 |---|---|

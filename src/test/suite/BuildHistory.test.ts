@@ -4,7 +4,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { BuildHistoryProvider, BuildHistoryItem } from '../../webview/build_history/BuildHistoryProvider';
 import { Constants } from '../../shared/Constants';
-import { history_dir_name, local_date_label, parse_history_dir } from '../../webview/build_history/HistoryTimestamp';
+import { history_dir_name, local_date_label, parse_history_dir } from '../../shared/HistoryTimestamp';
 
 
 /** Workspace-like folder with build history entries for the given compile-list timestamps. */

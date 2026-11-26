@@ -3,7 +3,7 @@
 
 import { SourceStatus, is_failed, source_status } from '../../shared/BuildStatus';
 import { deployment_of } from '../../shared/IReleaser';
-import { parse_history_dir } from './HistoryTimestamp';
+import { parse_history_dir } from '../../shared/HistoryTimestamp';
 
 
 export interface CmdResult {

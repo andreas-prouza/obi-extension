@@ -7,10 +7,10 @@ import { orderBuilds, take_unresolved_report } from './modules/build_cmds';
 import { logger } from '../../utilities/Logger';
 import { DirTool } from '../../utilities/DirTool';
 import { AppConfig } from '../../config/AppConfig';
+import { CurrentSourceHashes } from '../../utilities/CurrentSourceHashes';
 import { Workspace } from '../../utilities/Workspace';
 import { DependencyList } from '../Dependency';
 import { GitInfo } from '../../utilities/GitInfo';
-import { OBITools } from '../../utilities/OBITools';
 import { Constants } from '../../../shared/Constants';
 import { ALL_CHANGES, BuildScope, ChangedSources, classify_forced_sources } from './BuildScope';
 
@@ -49,7 +49,7 @@ export async function createBuildList(scope: BuildScope = ALL_CHANGES, changed?:
   } else if (changed) {
     changedSourcesList = changed;
   } else {
-    const hashes = await OBITools.retrieve_current_source_hashes();
+    const hashes = await CurrentSourceHashes.retrieve();
     changedSourcesList = compare_hashes(hashes, built);
   }
 

@@ -19,6 +19,7 @@ import { auth_methods, classify_login_error, compression_reporter, expand_local_
 import { DirTool } from './DirTool';
 import * as os from 'os';
 import { DownloadPlan, run_limited, ssh_concurrency } from '../obi/ResultDownload';
+import { never_save_key, ssh_secret_key } from '../../shared/Profile';
 
 
 
@@ -61,23 +62,45 @@ export class SSH_Tasks {
   private static ssh = new NodeSSH();
   public static context: vscode.ExtensionContext;
 
+  /** User and host of the connection being opened or open */
   private static ssh_user: string | undefined = undefined;
   private static host: string | undefined = undefined;
+  /** Host and user entered in a prompt (not in the config): kept for the session while this profile is active */
+  private static prompted: { profile: string; host?: string; user?: string } = { profile: '' };
   private static port: number = Constants.SSH_PORT;
   /** Target and compression of the open connection */
   private static connected: { host: string; port: number; username: string; compression: boolean } | undefined = undefined;
-  private static connectionPromise: Promise<boolean> | undefined = undefined;
+  private static connectionPromise: Promise<void> | undefined = undefined;
   private static remote_home: string | undefined = undefined;
 
 
-  public static async get_ssh_user(): Promise<string> {
-    if (SSH_Tasks.ssh_user)
-      return SSH_Tasks.ssh_user;
+  /** The prompted values of the active profile (those of another profile are forgotten) */
+  private static prompted_values(): { profile: string; host?: string; user?: string } {
+    const profile = Workspace.get_current_profile() ?? '';
+    if (SSH_Tasks.prompted.profile !== profile)
+      SSH_Tasks.prompted = { profile };
+    return SSH_Tasks.prompted;
+  }
 
-    const user = await vscode.window.showInputBox({ title: vscode.l10n.t('Enter your user for {0}', SSH_Tasks.host ?? ''), placeHolder: "usrprf", ignoreFocusOut: true });
+
+  /** Host and user to connect to: the config of the active profile, otherwise what was entered in this session */
+  private static target(): { host?: string; user?: string } {
+    const connection = AppConfig.get_app_config().connection;
+    const prompted = SSH_Tasks.prompted_values();
+    return { host: connection['remote-host'] || prompted.host, user: connection['ssh-user'] || prompted.user };
+  }
+
+
+  /** The SSH user: from the config, entered before in this session, or asked for now */
+  public static async get_ssh_user(): Promise<string> {
+    const known = SSH_Tasks.target().user;
+    if (known)
+      return known;
+
+    const user = await vscode.window.showInputBox({ title: vscode.l10n.t('Enter your user for {0}', SSH_Tasks.target().host ?? ''), placeHolder: "usrprf", ignoreFocusOut: true });
     if (!user)
       throw new UserCancelledError('Cancelled by user: no user provided');
-    SSH_Tasks.ssh_user = user;
+    SSH_Tasks.prompted_values().user = user;
     SSH_Tasks.offer_save_to_profile('ssh-user', user);
     return user;
   }
@@ -136,10 +159,12 @@ export class SSH_Tasks {
   }
 
 
-  /** Closes the SSH connection (on deactivate) */
+  /** Closes the SSH connection and ends the session (on deactivate): prompted host and user are forgotten */
   public static disconnect(): void {
     if (SSH_Tasks.ssh.isConnected())
       SSH_Tasks.ssh.dispose();
+    SSH_Tasks.connected = undefined;
+    SSH_Tasks.prompted = { profile: '' };
     SSH_Tasks.reset_connection_state();
   }
 
@@ -247,27 +272,24 @@ export class SSH_Tasks {
   private static is_connection_valid(): boolean {
     const config = AppConfig.get_app_config();
     const connected = SSH_Tasks.connected;
-    return this.ssh.isConnected() && connected?.username === config.connection['ssh-user'] && connected?.host === config.connection['remote-host']
+    const target = SSH_Tasks.target();
+    return this.ssh.isConnected() && connected?.username === target.user && connected?.host === target.host
       && connected?.port === ssh_port(config.connection['ssh-port'])
       && connected?.compression === ssh_compression(config.connection['ssh-compression']);
   }
 
 
 
-  public static async connect(callback?: Function) {
+  /** Opens the connection unless the open one fits the config (and the host and user entered in this session) */
+  public static async connect(): Promise<void> {
 
-    const config = AppConfig.get_app_config();;
-
-    if (this.is_connection_valid()) {
-      if (callback) return await callback();
+    if (this.is_connection_valid())
       return;
-    }
 
     // If a connection is ALREADY in progress, wait for that one
     if (this.connectionPromise) {
       logger.info("Connection already in progress, awaiting existing attempt...");
       await this.connectionPromise;
-      if (callback) return await callback();
       return;
     }
 
@@ -275,8 +297,7 @@ export class SSH_Tasks {
     this.connectionPromise = (async () => {
       try {
         const config = AppConfig.get_app_config();
-        SSH_Tasks.host = config.connection['remote-host'];
-        SSH_Tasks.ssh_user = config.connection['ssh-user'];
+        SSH_Tasks.host = SSH_Tasks.target().host;
         SSH_Tasks.port = ssh_port(config.connection['ssh-port']);
         const ssh_key = config.connection['ssh-key'] ? expand_local_path(config.connection['ssh-key'], process.env, os.homedir()) : undefined;
         const agent = ssh_agent(config.connection['ssh-agent'], process.platform, process.env);
@@ -288,12 +309,13 @@ export class SSH_Tasks {
           SSH_Tasks.host = await vscode.window.showInputBox({ title: vscode.l10n.t('Enter an IBM i hostname/IP'), placeHolder: "my-ibm-i", ignoreFocusOut: true });
           if (! SSH_Tasks.host)
             throw new UserCancelledError('Cancelled by user: no host provided');
+          SSH_Tasks.prompted_values().host = SSH_Tasks.host;
           SSH_Tasks.offer_save_to_profile('remote-host', SSH_Tasks.host);
         }
 
-        await SSH_Tasks.get_ssh_user();
+        SSH_Tasks.ssh_user = await SSH_Tasks.get_ssh_user();
         const current_profile = Workspace.get_current_profile() || 'default';
-        const secret_key = `obi|${current_profile}|${SSH_Tasks.host}|${SSH_Tasks.ssh_user}`;
+        const secret_key = ssh_secret_key(current_profile, SSH_Tasks.host, SSH_Tasks.ssh_user);
 
         let pwd: string | undefined = await SSH_Tasks.context.secrets.get(secret_key);
         let password_prompted = false;
@@ -337,12 +359,9 @@ export class SSH_Tasks {
           SSH_Tasks.offer_save_secret(`${secret_key}|passphrase`, passphrase, 'passphrase', current_profile);
         vscode.window.showInformationMessage(vscode.l10n.t('Connected to {0}', SSH_Tasks.host));
         logger.info(`Connected to ${SSH_Tasks.host} (compression ${compression ? 'offered' : 'off'})`);
-
-        if (callback) {
-          const result = await callback();
-          return result;
-        }
       } catch (reason: unknown) {
+        // A wrong host or user that was typed in must be asked for again, not kept for the session
+        SSH_Tasks.prompted = { profile: SSH_Tasks.prompted.profile };
         // A changed host key was already shown as a modal warning. Shown once: callers that show the same error skip it.
         if (!(reason instanceof HostKeyError))
           SSH_Tasks.show_connect_error(reason);
@@ -354,10 +373,6 @@ export class SSH_Tasks {
     })();
 
     await this.connectionPromise;
-
-    if (callback) {
-      return await callback();
-    }
   }
 
 
@@ -377,7 +392,7 @@ export class SSH_Tasks {
 
   /** After a login with a prompted password or passphrase: offer to keep it in the OS keychain (doesn't wait) */
   private static offer_save_secret(secret_key: string, value: string, kind: 'password' | 'passphrase', profile: string): void {
-    const never_key = `obi.ssh.never-save-${kind}|${profile}`;
+    const never_key = never_save_key(profile, kind);
     if (SSH_Tasks.context.workspaceState.get<boolean>(never_key))
       return;
 
@@ -395,6 +410,21 @@ export class SSH_Tasks {
     });
   }
 
+
+
+  /** Runs a command in bash on the IBM i and returns its result; a non-zero exit code doesn't throw */
+  public static async run_command(cmd: string): Promise<{ code: number | null; stdout: string; stderr: string }> {
+    await this.connect();
+    const result = await SSH_Tasks.ssh.execCommand(this.get_finalized_command(cmd));
+    return { code: result.code, stdout: result.stdout, stderr: result.stderr };
+  }
+
+
+  /** user@host:port of the open connection */
+  public static connection_label(): string | undefined {
+    const connected = SSH_Tasks.connected;
+    return connected ? `${connected.username}@${connected.host}:${connected.port}` : undefined;
+  }
 
 
   public static async executeCommand(cmd: string, again?: boolean) {

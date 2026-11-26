@@ -6,7 +6,6 @@
   "obi.add-source-to-build-summary": "OBI: Add source to build summary",
   "obi.source-filter.update": "OBI: Update source filter",
   "obi.source-filter.add": "OBI: Add new source filter",
-  "obi.get-remote-compiled-object-list": "OBI: Get remote compiled object list",
   "obi.reset-compiled-object-list": "OBI: Reset compiled object list",
   "obi.controller.config": "OBI: Configuration",
   "obi.controller.dependency-list": "OBI: Dependency list",
@@ -48,9 +47,7 @@
   "deployment": "Deployment",
   "Source filters": "Source filters",
   "Invalid config": "Invalid config",
-  "Quick settings": "Quick settings",
   "obi.clearDiagnostics": "OBI: Clear Diagnostics",
-  "obi.showErrors": "OBI: Show Errors",
   "obi.build-history.update": "Update Build History",
   "obi.build-history.search": "Filter Build History by Source",
   "obi.build-history.switch-to-source-view": "Switch to Source-based View",
@@ -63,7 +60,6 @@
   "obi.timeline.delete-build": "Delete Build",
   "obi.open.file": "OBI: Open file by name",
   "obi.source-quick-search": "OBI: Source quick search",
-  "obi.show.tools": "OBI: Show tools",
   "view.obi.controller": "OBI Build",
   "view.obi.build-history": "Build history",
   "view.obi-bar": "Object Builder for i",
@@ -122,5 +118,6 @@
   "obi.build-history.filter-package": "Filter build history by build package",
   "obi.buildPackages.baseBranch": "Branch that *Add sources changed on this branch to build package* compares the current branch with, e.g. `main` or `origin/develop`. Empty: the default branch of `origin`, otherwise `main` or `master`.",
   "obi.build-package.open-last-build": "Open last build summary of build package",
-  "obi.build-package.add-build-sources": "Add sources of the build to build package…"
+  "obi.build-package.add-build-sources": "Add sources of the build to build package…",
+  "obi.test-connection": "OBI: Test connection"
 }

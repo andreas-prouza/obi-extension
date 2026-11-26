@@ -1,5 +1,7 @@
 # Improvement lists
 
+> **Open points at v2.2.3 (2026-11-26):** [v2.2.3/README.md](v2.2.3/README.md): bugs, design, features and process, checked against the code.
+
 Results of a full code review of the OBI extension at v1.3.3 (2026-10-22), covering `src/`, `asserts/templates/`, `package.json`, the build/test setup and the project template in `obi-media/`.
 
 | List | Topic | 🔴 | 🟠 | 🟡 |
@@ -128,7 +130,10 @@ Every entry has **Where** (clickable file/line links), **Current** (what the cod
 |---|---|
 | [#1](../bugs.md#1--secret-variables-are-stored-in-plain-text-in-the-build-history) secrets in history | [compile-list-size.md](../features/compile-list-size.md) |
 | [#3](../bugs.md#3--delete-source-filter-and-delete-build-history-date-have-no-confirmation) (history part), [#6](../bugs.md#6--build-history-delete-single-build-button-never-shows) | [build-history-retention.md](../features/build-history-retention.md) |
+| [#2](../bugs.md#2--delete-source-member-has-no-confirmation-and-leaves-stale-config) | [source-delete.md](../bugfix/source-delete.md) |
 | [#4](../bugs.md#4--transfer-all-deletes-the-remote-project-folder) | [remote-delete-guard.md](../bugfix/remote-delete-guard.md) |
+| [#5](../bugs.md#5--deleting-the-default-profile-deletes-user-app-configtoml) | [profile-delete.md](../bugfix/profile-delete.md) |
+| [#7](../bugs.md#7--extended-source-processing-rules-created-by-the-ui-never-match) | [esp-conditions.md](../bugfix/esp-conditions.md) |
 | [#9](../bugs.md#9--contributed-commands-that-are-not-registered) (test) | [disposables-and-deactivate.md](../bugfix/disposables-and-deactivate.md) |
 | [#12](../bugs.md#12--ssh-concurrency-is-ignored) | [ssh-transfer-optimization.md](../features/ssh-transfer-optimization.md) |
 | [#13](../bugs.md#13--missing-mandatory-config-only-warns) | [reload-free-config-changes.md](../features/reload-free-config-changes.md) |

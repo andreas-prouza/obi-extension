@@ -1,5 +1,3 @@
-// The page itself uses plain HTML elements; custom build summary templates may still use the toolkit components
-import "../../tools/javascript/toolkit";
 
 import { showAlert } from "../../tools/javascript/alertBox";
 import { typed_post } from "../../tools/javascript/post";
@@ -20,10 +18,6 @@ let loaded: boolean = false;
 window.addEventListener("load", main);
 
 function main() {
-  // To get improved type annotations/IntelliSense the associated class for
-  // a given toolkit component can be imported and used to type cast a reference
-  // to the element (i.e. the `as Button` syntax)
-
   if (loaded)
     return;
   loaded = true;
@@ -44,16 +38,31 @@ function main() {
   if (start_deployment_button)
     start_deployment_button.addEventListener('click', () => post({ command: 'start_deployment' }));
 
-  // Show log, continue or run a stage of the i-Releaser deployment: the page only names the stage
-  document.querySelectorAll<HTMLElement>('.ir-action').forEach(button => {
-    button.addEventListener('click', () => {
-      const action = button.dataset.action;
-      const stage_id = button.dataset.stageId;
-      if ((action === 'show_log' || action === 'continue' || action === 'run_all') && stage_id)
-        post({ command: 'deployment_action', action: action, stage_id: stage_id });
-    });
+  // Show log, continue or run a stage of the i-Releaser deployment: the page only names the stage.
+  // On the document: the card is replaced when the status changes (deployment_card)
+  document.addEventListener('click', event => {
+    const button = event.target instanceof Element ? event.target.closest<HTMLElement>('#i_releaser_status .ir-action') : null;
+    if (!button)
+      return;
+    const action = button.dataset.action;
+    const stage_id = button.dataset.stageId;
+    if ((action === 'show_log' || action === 'continue' || action === 'run_all') && stage_id)
+      post({ command: 'deployment_action', action: action, stage_id: stage_id });
   });
   mark_stage_rows();
+
+  // A new status of the deployment: only its card, rendered by the extension (autoescaped, no scripts)
+  window.addEventListener('message', event => {
+    const message: unknown = event.data;
+    if (typeof message !== 'object' || message === null || (message as { command?: unknown }).command !== 'deployment_card')
+      return;
+    const html = (message as { html?: unknown }).html;
+    const card = document.getElementById('i_releaser_status');
+    if (typeof html !== 'string' || !card)
+      return;
+    card.outerHTML = html;
+    mark_stage_rows();
+  });
 
   const joblogButton = document.getElementsByClassName("joblog");
   for (let i = 0; i < joblogButton.length; i++) {
@@ -168,8 +177,12 @@ function main() {
 
 
 
+let stage_rows_observer: ResizeObserver | undefined;
+
 /** The stages of a deployment wrap into rows: the first stage of a row gets no line from the stage before */
 function mark_stage_rows() {
+  // A replaced card has a new list: observe only that one
+  stage_rows_observer?.disconnect();
   const list = document.getElementById('i_releaser_stages');
   if (!list)
     return;
@@ -181,7 +194,8 @@ function mark_stage_rows() {
     });
   };
   mark();
-  new ResizeObserver(mark).observe(list);
+  stage_rows_observer = new ResizeObserver(mark);
+  stage_rows_observer.observe(list);
 }
 
 

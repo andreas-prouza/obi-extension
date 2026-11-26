@@ -68,7 +68,7 @@ With **Current source** (`*CURRENT`, or **Show single change** in the editor), o
 
 **Header**
 * The result as labels: how many sources failed, were built, are still to build
-* Creation time, user and host, IFS path, and the git branch and commit of the build
+* Creation time, user and host, the user profile (the active one; for a build from the history the one it was built with), IFS path, and the git branch and commit of the build
 * **Run build**: shown as long as not all commands succeeded
 * **Add source**: add further sources (multi-select, searchable by name and description). Their dependent objects are added too.
   An added source that is already in the list gets new build commands. Dependent objects that were already built successfully are reset so they are built again (their commands and output are kept). With `ALWAYS_TRANSFER_RELATED_COPYBOOKS`, the copybooks they use are added on level 0. The levels of the whole list are calculated again, so a source can move to a higher level. This is the same with and without a local OBI.

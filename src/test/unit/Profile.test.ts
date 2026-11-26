@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { NEW_PROFILE_PATTERN, is_safe_profile_alias, validate_new_profile_name } from '../../shared/Profile';
+import { NEW_PROFILE_PATTERN, is_safe_profile_alias, never_save_key, ssh_secret_key, validate_new_profile_name } from '../../shared/Profile';
 
 
 suite('Profile names', () => {
@@ -24,5 +24,14 @@ suite('Profile names', () => {
       assert.ok(is_safe_profile_alias(alias), alias);
     for (const alias of ['../x', 'a/b', 'a\\b', '..', 'a\0b'])
       assert.ok(!is_safe_profile_alias(alias), JSON.stringify(alias));
+  });
+
+
+  test('keys of the stored SSH secrets: the default profile is "default"', () => {
+    assert.strictEqual(ssh_secret_key('', 'ibmi', 'usr'), 'obi|default|ibmi|usr');
+    assert.strictEqual(ssh_secret_key('dev', 'ibmi', 'usr'), 'obi|dev|ibmi|usr');
+    assert.strictEqual(ssh_secret_key('dev', undefined, undefined), 'obi|dev||');
+    assert.strictEqual(never_save_key('', 'password'), 'obi.ssh.never-save-password|default');
+    assert.strictEqual(never_save_key('dev', 'passphrase'), 'obi.ssh.never-save-passphrase|dev');
   });
 });

@@ -9,6 +9,7 @@
   - [User profile setup](#user-profile-setup)
 - [SSH key authentication](#ssh-key-authentication)
 - [Using the key in OBI](#using-the-key-in-obi)
+- [Test connection](#test-connection)
 - [Troubleshooting](#troubleshooting)
 
 OBI communicates with your IBM i via SSH. Every remote command is executed with `bash`.
@@ -135,7 +136,7 @@ In the **User configuration**, set:
 * **Compress the SSH connection** (`ssh-compression`, on by default): compresses the transfers (zlib). Turn it off on a fast LAN to save CPU time.
 
 Without a key you can enter a **Password** instead. It is stored in VS Code's secret storage, not in the configuration file.
-If no password is stored, OBI asks for it and offers to save it (*Save*, *Not now*, *Never for this profile*). A host or user entered at the prompt can be saved to the user configuration of the active profile.
+If no password is stored, OBI asks for it and offers to save it (*Save*, *Not now*, *Never for this profile*). A host or user entered at the prompt can be saved to the user configuration of the active profile. If you don't save it, OBI keeps it until VS Code is closed or another profile is selected, so you are only asked once; after a failed connection you are asked again.
 
 OBI tries the methods in this order: agent, key, password.
 
@@ -156,6 +157,20 @@ OBI checks the host key of the IBM i on every connection, so nobody in between c
   The fingerprint is stored in VS Code (for all workspaces), and the next connections don't ask again.
 * **Known in `~/.ssh/known_hosts`:** if you have connected with `ssh` before, OBI trusts the key from there without asking. Hashed entries are supported, wildcard patterns are not.
 * **Changed host key:** OBI refuses to connect and shows the stored and the received fingerprint. Someone could be intercepting the connection, or the host key was replaced (e.g. after reinstalling OpenSSH). If the change is expected, run **OBI: Forget stored SSH host key** from the command palette (or `ssh-keygen -R <host>` for a `known_hosts` entry) and connect again.
+
+
+## Test connection
+
+**Test connection** in the connection settings of the configuration page (or the command *OBI: Test connection*) checks the setup without a build. It uses the saved configuration of the active profile and asks for a missing host, user or password and an unknown host key, as before a build. It only reads on the IBM i, nothing is changed.
+
+| Check | Result |
+|---|---|
+| Connection | login and host key; the error of a failed login |
+| Home directory | exists, has a `.bashrc`, and `/QOpenSys/pkgs/bin` is in the `PATH` ([Bash shell](#bash-shell)) |
+| Project folder | `remote-base-dir` exists (a note if not: the first transfer creates it) |
+| OBI backend | `<remote-obi-dir>/venv/bin/python` exists and is Python 3.12 or newer; the version of the backend (`OBI_BACKEND_VERSION`) is at least the one this extension needs |
+
+On the configuration page the results are shown below the button (✓ OK, ⚠ note, ✗ problem); the command shows them in a dialog.
 
 
 ## Troubleshooting

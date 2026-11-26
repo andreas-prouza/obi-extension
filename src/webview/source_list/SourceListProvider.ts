@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import { get_error_message } from '../../shared/Errors';
+import { show_error } from '../../extension/utilities/Notify';
 import * as path from 'path';
 import { DirTool } from '../../extension/utilities/DirTool';
 import { SourceList } from './SourceList';
@@ -438,25 +440,94 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
   }
 
 
-  // obi.source-filter.add-source-file
-  async delete_source_member(item: SourceListItem | vscode.Uri): Promise<void> {
+  /**
+   * obi.source-filter.delete-source-member: after a confirmation, the file goes to the trash (or, if that isn't
+   * possible and confirmed again, is deleted) and the source is removed from the project files. Returns whether it was deleted.
+   */
+  async delete_source_member(item: SourceListItem | vscode.Uri): Promise<boolean> {
 
-    let from_path: string;
-
+    let file: string;
+    let source: string | undefined;
     if (item instanceof SourceListItem) {
       if (!item.member_path || !item.src_member) {
         throw new Error(vscode.l10n.t('Source member information missing'));
       }
-      from_path = path.join(Workspace.get_workspace(), item.member_path, item.src_member);
+      file = path.join(Workspace.get_workspace(), item.member_path, item.src_member);
+      source = `${item.member_path_obi}/${item.src_member}`;
     }
     else {
-      from_path = item.fsPath;
+      file = item.fsPath;
+      source = DirTool.to_obi_source(file);
     }
-    
-    fs.unlinkSync(from_path);
+    source = source?.replace(/\\/g, '/').replace(/^\/+/, '');
+    const name = source ?? path.basename(file);
 
-    return;
+    const max_shown = 10;
+    const shown = (names: string[]) => names.slice(0, max_shown).join(', ') + (names.length > max_shown ? ' ' + vscode.l10n.t('… and {0} more', names.length - max_shown) : '');
+    const dependents = source ? await DependencyList.dependents_of(source) : [];
+    const packages = source ? new BuildPackageStore(Workspace.get_workspace()).names_with_source(source) : [];
+    const detail = [
+      vscode.l10n.t('The file is moved to the trash. Its settings, description, dependencies and build status are removed from the project files.'),
+      ...(packages.length > 0 ? [vscode.l10n.t('It is removed from these build packages: {0}', shown(packages))] : []),
+      ...(dependents.length > 0 ? [vscode.l10n.t('These sources use it: {0}', shown(dependents))] : []),
+    ].join('\n\n');
+
+    const delete_button = vscode.l10n.t('Delete');
+    if (await vscode.window.showWarningMessage(vscode.l10n.t('Delete source {0}?', name), { modal: true, detail }, delete_button) !== delete_button)
+      return false;
+
+    const uri = vscode.Uri.file(file);
+    try {
+      await SourceListProvider.delete_file(uri, { useTrash: true });
+    }
+    catch (e: unknown) {
+      const permanently = vscode.l10n.t('Delete permanently');
+      const choice = await vscode.window.showWarningMessage(vscode.l10n.t("{0} can't be moved to the trash ({1}). Delete it permanently?", name, get_error_message(e)), { modal: true }, permanently);
+      if (choice !== permanently)
+        return false;
+      await SourceListProvider.delete_file(uri, { useTrash: false });
+    }
+    logger.info(`Deleted source ${name}`);
+
+    if (source) {
+      try {
+        await SourceListProvider.remove_deleted_source(source);
+      }
+      catch (e: unknown) {
+        show_error(vscode.l10n.t('{0} was deleted, but the project files could not be updated completely', name), e);
+      }
+    }
+    return true;
   }
+
+
+  /** A deleted source: removed from source-config.toml, dependency.json, object-builds.json, build packages and source-infos.json */
+  public static async remove_deleted_source(source: string): Promise<void> {
+
+    const cached: SourceConfigList | undefined = AppConfig.get_source_configs();
+    if (cached && cached[source]) {
+      const source_configs: SourceConfigList = { ...cached };
+      delete source_configs[source];
+      DirTool.update_toml(path.join(Workspace.get_workspace(), Constants.OBI_SOURCE_CONFIG_FILE), source_configs);
+    }
+
+    await DependencyList.remove_source(source);
+    OBITools.set_source_hash(source, undefined);
+
+    const packages = new BuildPackageStore(Workspace.get_workspace()).remove_source_everywhere(source);
+    if (packages.changed.length > 0)
+      logger.info(`Removed ${source} from build packages: ${packages.changed.join(', ')}`);
+    if (packages.errors.length > 0) {
+      logger.warn(`Build packages not updated: ${packages.errors.join('; ')}`);
+      vscode.window.showWarningMessage(vscode.l10n.t('{0} build package(s) could not be updated: {1}', packages.errors.length, packages.errors[0]));
+    }
+
+    LocalSourceList.remove_source_info(source);
+  }
+
+
+  /** Deletes a file (replaced in tests: a real trash would be the one of the desktop) */
+  public static delete_file = (uri: vscode.Uri, options: { useTrash: boolean }): Thenable<void> => vscode.workspace.fs.delete(uri, options);
 
 
 
@@ -573,7 +644,13 @@ export class SourceListProvider implements vscode.TreeDataProvider<SourceListIte
     });
     
     register_command(context, 'obi.source-filter.delete-source-member', async (item: SourceListItem) => {
-      await this.delete_source_member(item);
+      try {
+        if (!await this.delete_source_member(item))
+          return;
+      }
+      catch (e) {
+        DirTool.show_save_error(e);
+      }
       this.refresh();
     });
     
