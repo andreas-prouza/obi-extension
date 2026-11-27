@@ -62,6 +62,14 @@ suite('Build history index', () => {
     assert.strictEqual(build.sources.get('lib/qclsrc/d.clle')?.status, 'ignored');
   });
 
+  test('read_build: the branch build of the list (spec C6)', () => {
+    const dir = '2026-11-07T10.00.00.000Z';
+    assert.deepStrictEqual(read_build(dir, { compiles: [], build_context: { mode: 'branch', branch: 'PROJ-337-x', ticket: '337', libs: ['#aa_337'] } })?.branch_build, { mode: 'branch', ticket: '337', libs: ['#aa_337'] });
+    assert.deepStrictEqual(read_build(dir, { compiles: [], build_context: { mode: 'main', branch: 'main', ticket: null, libs: [] } })?.branch_build, { mode: 'main', ticket: undefined, libs: [] });
+    assert.strictEqual(read_build(dir, { compiles: [] })?.branch_build, undefined, 'feature off');
+  });
+
+
   test('read_build: broken lists and folder names', () => {
     assert.strictEqual(read_build('not-a-timestamp', compile_list([{ source: 'a' }])), undefined);
     assert.strictEqual(read_build('2026-11-07T10.00.00.000Z', {}), undefined);

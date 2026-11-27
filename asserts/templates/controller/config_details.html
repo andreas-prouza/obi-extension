@@ -69,6 +69,22 @@
         {{ field('general|local-obi-dir', global_stuff['get_text']('Local OBI path (if exist)'), value=(app_general['local-obi-dir'] | replace('"$HOME"', '$HOME')), placeholder='/home/prouza/project/obi', desc=global_stuff['get_text']('Tip: Local OBI path'), mono=true) }}
         {{ field('general|remote-obi-dir', global_stuff['get_text']('Remote OBI path'), value=(app_general['remote-obi-dir'] | replace('"$HOME"', '$HOME')), placeholder='/home/prouza/project/obi', desc=global_stuff['get_text']('Tip: Remote OBI path'), required=is_project, mono=true) }}
       </div>
+
+      {% if is_project %}
+      {# [branch-build] of app-config.toml (OBIConfiguration.branch_build_fields / merge_branch_build) #}
+      {% set bb = branch_build %}
+      <h2 id="branch_build_section">{{ global_stuff['get_text']('Branch build') | safe }} <a class="cfg-h-link" href="https://github.com/andreas-prouza/obi/blob/main/docs/branch-build.md" title="docs/branch-build.md"><span class="codicon codicon-link-external"></span></a></h2>
+      <p class="setting-desc">{{ global_stuff['get_text']('Builds on a branch with a ticket number in its name go into libraries of the ticket. While all fields are empty, no section is written and nothing changes.') | safe }}</p>
+      <div class="setting-checks">
+        {{ field('branch-build|enabled', global_stuff['get_text']('Branch build on'), kind='check', checked=bb.enabled) }}
+      </div>
+      <div class="setting-grid">
+        {{ field('branch-build|ticket-pattern', global_stuff['get_text']('Ticket pattern'), value=bb.ticket_pattern, placeholder='(?i)\\bproj[-_](\\d+)', desc=global_stuff['get_text']('Python regular expression for the branch name. Its first group is the ticket number.'), mono=true) }}
+        {{ field('branch-build|lib-name', global_stuff['get_text']('Library name'), value=bb.lib_name, placeholder='#$(ENV)_$(TICKET)', desc=global_stuff['get_text']('Must contain $(TICKET); $(ENV) is optional. At most 10 characters after the replacement.'), mono=true) }}
+        {{ field('branch-build|env', global_stuff['get_text']('ENV of the production libraries'), kind='textarea', cls='type_dict', value=bb.env, placeholder='mylib = BE', desc=global_stuff['get_text']('One per line: production library = ENV. Libraries with the same ENV share one branch library.'), mono=true, rows=6) }}
+        {{ field('branch-build|no-lib-steps', global_stuff['get_text']('Steps without a branch library'), kind='textarea', cls='type_array', value=bb.no_lib_steps, placeholder='global.cmds.skip', desc=global_stuff['get_text']('One step per line, e.g. a message: they build nothing into the target library.'), mono=true) }}
+      </div>
+      {% endif %}
     </div>
 
 

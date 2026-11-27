@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { OBITools } from './utilities/OBITools';
+import { BranchBuildConfig } from './config/BranchBuildConfig';
 import { AppConfig, ConfigGeneral } from './config/AppConfig';
 import { Constants } from '../shared/Constants';
 import { logger } from './utilities/Logger';
@@ -108,7 +109,11 @@ export class ProjectState {
     const projects = Workspace.get_obi_folders();
     if (projects.length > 1 && !ProjectState.several_projects_shown) {
       ProjectState.several_projects_shown = true;
-      vscode.window.showInformationMessage(vscode.l10n.t('Several OBI projects found. OBI works with \'{0}\'. Working with several projects at the same time is not supported yet.', projects[0].name));
+      const current = Workspace.find_workspace_uri()?.toString();
+      const name = projects.find(folder => folder.uri.toString() === current)?.name ?? projects[0].name;
+      const change = vscode.l10n.t('Switch project folder');
+      vscode.window.showInformationMessage(vscode.l10n.t('Several OBI projects found. OBI works with \'{0}\'.', name), change)
+        .then(answer => { if (answer === change) vscode.commands.executeCommand('obi.switch-project-folder'); });
     }
 
     let error: unknown;
@@ -121,6 +126,8 @@ export class ProjectState {
 
     await vscode.commands.executeCommand('setContext', 'obi.valid-config', error === undefined);
     await vscode.commands.executeCommand('setContext', 'obi.run_native', OBITools.without_local_obi());
+    // [branch-build] active: the command "Branch libraries" (spec 4.6)
+    await vscode.commands.executeCommand('setContext', 'obi.branch-build', BranchBuildConfig.is_active());
 
     if (error !== undefined) {
       // Once per problem, not for every save of the file

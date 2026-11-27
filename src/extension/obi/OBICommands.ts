@@ -13,6 +13,11 @@ import { logger } from '../utilities/Logger';
 import { SystemCmdExecution } from '../utilities/SystemCmdExecution';
 import { Uri } from 'vscode';
 import { BuildViews } from './BuildViews';
+import { BuildPackageStore } from './BuildPackageStore';
+import { BranchBuild, BranchBuildRefusal } from './BranchBuild';
+import { build_context_of, is_unknown_branch_argument } from '../../shared/BranchBuild';
+import { suggest_package_name } from '../../shared/BuildPackage';
+import { GitInfo } from '../utilities/GitInfo';
 import { history_dir_name } from '../../shared/HistoryTimestamp';
 import { sh_quote, assert_valid_source_path } from '../../shared/ShellQuote';
 import { UserCancelledError, get_error_message } from '../../shared/Errors';
@@ -143,6 +148,11 @@ export class OBICommands {
           });
 
           const history = await phases.run('download results', () => OBICommands.get_remote_build_output());
+          // Branch build: no source was built if a branch library couldn't be created (spec C5)
+          if (OBICommands.report_branch_lib_error()) {
+            BuildOutput.finished('failed', vscode.l10n.t('Branch library not created'));
+            return history;
+          }
           const duration = format_elapsed(phases.total_ms());
           BuildOutput.finished('succeeded', vscode.l10n.t('in {0} min', duration));
           vscode.window.showInformationMessage(vscode.l10n.t('Build finished in {0} min', duration));
@@ -231,16 +241,30 @@ export class OBICommands {
 
     const config = AppConfig.get_app_config();
 
+    // Branch build: only with a local OBI of version 6 or newer. Not on IBM i: .git isn't transferred (spec B3, B4)
+    BranchBuild.check_local_backend();
+
     if (!OBITools.without_local_obi() && config.general['local-obi-dir']) {
 
       progress.report({
         message: vscode.l10n.t('Generate build script with the local OBI')
       });
 
-      const args = OBICommands.local_obi_args(config, 'create', source_list.length == 1 ? source_list[0] : undefined);
+      const args = [...OBICommands.local_obi_args(config, 'create', source_list.length == 1 ? source_list[0] : undefined), ...BranchBuild.args()];
 
       // A cancel (UserCancelledError) ends the build without an error message
-      await SystemCmdExecution.run_system_cmd(Workspace.get_workspace(), OBICommands.local_obi_python(), args, 'generate_build_script', { token, on_line: line => BuildOutput.line(line) });
+      let unknown_branch_argument = false;
+      try {
+        await SystemCmdExecution.run_system_cmd(Workspace.get_workspace(), OBICommands.local_obi_python(), args, 'generate_build_script', { token, on_line: line => {
+          BuildOutput.line(line);
+          if (is_unknown_branch_argument(line))
+            unknown_branch_argument = true;
+        } });
+      }
+      catch (e: unknown) {
+        throw unknown_branch_argument ? new BranchBuildRefusal(BranchBuild.local_too_old_text()) : e;
+      }
+      OBICommands.record_created_list();
 
       await OBICommands.transfer_build_list(progress);
     }
@@ -488,9 +512,13 @@ export class OBICommands {
 
   private static async do_rerun_build(ignore_sources: string[], ignore_sources_cmd: Record<string, string[]>) {
 
+    const shown_list = OBICommands.views?.shown_compile_list() ?? AppConfig.get_app_config().general['compile-list'];
     try {
 
-      OBITools.update_compile_list(ignore_sources, ignore_sources_cmd, OBICommands.views?.shown_compile_list() ?? AppConfig.get_app_config().general['compile-list']);
+      // Branch build: the list must belong to the current branch, and the OBI on IBM i must create the libraries (spec B7, B5)
+      await BranchBuild.check_run(OBITools.get_compile_list(Workspace.get_workspace_uri(), shown_list));
+
+      OBITools.update_compile_list(ignore_sources, ignore_sources_cmd, shown_list);
 
       const sources: string[] = OBITools.get_sources_2_build_from_compile_list(true);
       let history_dir_name: string | undefined;
@@ -508,8 +536,39 @@ export class OBICommands {
       OBICommands.views?.last_build_changed();
     }
     catch (e: unknown) {
-      show_error(vscode.l10n.t('Build failed'), e);
+      show_error(vscode.l10n.t('Build failed'), e, OBICommands.new_build_list_actions(e, shown_list));
     }
+  }
+
+
+
+  /** build_context.error of the downloaded build list: shown with the stderr and a button for the details. True if there is one */
+  private static report_branch_lib_error(): boolean {
+    const error = build_context_of(OBITools.get_compile_list(Workspace.get_workspace_uri()))?.error;
+    if (!error)
+      return false;
+    const lib = String(error.lib ?? '').toUpperCase();
+    logger.error(`Branch library ${lib} could not be created: ${JSON.stringify(error)}`);
+    const details = vscode.l10n.t('Show details');
+    vscode.window.showErrorMessage(vscode.l10n.t('Branch library {0} could not be created, so no source was built: {1}', lib, String(error.stderr ?? '')), details)
+      .then(async answer => {
+        if (answer !== details)
+          return;
+        const text = ['cmd', 'exit-code', 'stdout', 'stderr', 'joblog'].map(key => `${key}:\n${String(error[key] ?? '')}`).join('\n\n');
+        await vscode.window.showTextDocument(await vscode.workspace.openTextDocument({ content: text, language: 'log' }));
+      });
+    return true;
+  }
+
+
+
+  /** "Create a new build list" for a refused branch build: of the same build package, or of the changed sources */
+  public static new_build_list_actions(e: unknown, compile_list_name: string): { title: string; run: () => unknown }[] {
+    if (!(e instanceof BranchBuildRefusal) || !e.new_build_list)
+      return [];
+    const compile_list = OBITools.get_compile_list(Workspace.get_workspace_uri(), compile_list_name);
+    const command = compile_list?.['package'] ? 'obi.build-package.show-build-list' : 'obi.show_changes';
+    return [{ title: vscode.l10n.t('Create a new build list'), run: () => vscode.commands.executeCommand(command) }];
   }
 
 
@@ -538,6 +597,52 @@ export class OBICommands {
     return is_success ?? false;
   }
 
+
+
+
+  /**
+   * The local OBI has just created the build list: its `git` is the branch and commit of now, kept by later writes
+   * (deployment guard D1). With branch build also `dirty`: uncommitted changes in the source folder (D4).
+   */
+  private static record_created_list(): void {
+    const file = path.join(Workspace.get_workspace(), AppConfig.get_app_config().general['compile-list']);
+    const created = OBITools.get_compile_list(Workspace.get_workspace_uri());
+    if (!created)
+      return;
+    GitInfo.attach_git_info(created, Workspace.get_workspace());
+    if (BranchBuild.is_active() && created['git']) {
+      const dirty = BranchBuild.source_dir_dirty();
+      if (dirty !== undefined)
+        created['git']['dirty'] = dirty;
+    }
+    OBITools.write_compile_list(file, created);
+
+    // Branch build on, but a main build: e.g. no git repository or a detached HEAD (spec C3)
+    const context = build_context_of(created);
+    if (context?.warning)
+      vscode.window.showWarningMessage(vscode.l10n.t('Branch build: {0}', context.warning));
+    if (context?.mode === 'branch' && !created['package'])
+      OBICommands.offer_branch_package(context.branch ?? undefined);
+  }
+
+
+  /**
+   * Spec P3: a branch build of changed or single sources, and no build package named after the branch yet: offer
+   * once per branch to create one. Only package builds can be deployed.
+   */
+  private static offer_branch_package(branch: string | undefined): void {
+    const name = suggest_package_name(branch);
+    const state = OBITools.ext_context?.workspaceState;
+    const key = `obi.branch-build.package-offered|${branch}`;
+    if (!name || !state || state.get<boolean>(key))
+      return;
+    if (new BuildPackageStore(Workspace.get_workspace()).names().some(existing => existing.toLowerCase() === name.toLowerCase()))
+      return;
+    state.update(key, true);
+    const create = vscode.l10n.t('Create build package');
+    vscode.window.showInformationMessage(vscode.l10n.t('Branch {0} has no build package yet. Only package builds can be deployed: create one with the name of the branch?', branch ?? ''), create)
+      .then(answer => { if (answer === create) vscode.commands.executeCommand('obi.build-package.create'); });
+  }
 
 
 
@@ -571,25 +676,32 @@ export class OBICommands {
     }
 
     try {
+      // Branch build: only with a local OBI of version 6 or newer (spec B3, B4)
+      BranchBuild.check_local_backend();
       if (OBITools.without_local_obi() || !config.general['local-obi-dir'])
         await OBITools.generate_source_change_lists(scope);
       else {
         logger.info(`WS: ${Workspace.get_workspace()}`);
-        const args = OBICommands.local_obi_create_args(config, scope);
+        const args = [...OBICommands.local_obi_create_args(config, scope), ...BranchBuild.args()];
         BuildOutput.start(scope.kind === 'sources' && scope.package ? `Build package ${scope.package.name} (local OBI)` : 'Preview build (local OBI)');
         let unknown_package_argument = false;
+        let unknown_branch_argument = false;
         try {
           await SystemCmdExecution.run_system_cmd(Workspace.get_workspace(), OBICommands.local_obi_python(), args, 'show_changes', {
             token: OperationLock.token,
             on_line: line => {
               BuildOutput.line(line);
-              // argparse of a local OBI older than build packages
+              // argparse of a local OBI older than build packages, or than branch builds
               if (/unrecognized arguments:.*--package/.test(line))
                 unknown_package_argument = true;
+              if (is_unknown_branch_argument(line))
+                unknown_branch_argument = true;
             }
           });
         }
         catch (e: unknown) {
+          if (unknown_branch_argument)
+            throw new BranchBuildRefusal(BranchBuild.local_too_old_text());
           if (!unknown_package_argument)
             throw e;
           // The old backend stopped before it wrote status.json, so check_obi_response can't offer the update
@@ -612,11 +724,8 @@ export class OBICommands {
           return false;
         }
 
-        // Python OBI doesn't know about git info; refresh the compile-list it just wrote.
-        const created_compile_list = OBITools.get_compile_list(Workspace.get_workspace_uri());
-        if (created_compile_list) {
-          OBITools.write_compile_list(path.join(Workspace.get_workspace(), config.general['compile-list']), created_compile_list);
-        }
+        // Python OBI doesn't know about git info: add it to the compile-list it just wrote
+        OBICommands.record_created_list();
       }
 
       OBICommands.views?.show_build_summary();

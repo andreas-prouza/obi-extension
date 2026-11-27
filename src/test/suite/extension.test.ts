@@ -16,7 +16,14 @@ suite('Extension registration', () => {
 		assert.ok(extension, 'extension found');
 		await extension.activate();
 
-		const registered = new Set(await vscode.commands.getCommands(true));
+		// The commands of the project are registered by ProjectState.update, which activate doesn't wait for
+		let registered = new Set<string>();
+		for (let i = 0; i < 100; i++) {
+			registered = new Set(await vscode.commands.getCommands(true));
+			if (registered.has('obi.controller.config') && registered.has('obi.status-bar.menu'))
+				break;
+			await new Promise(resolve => setTimeout(resolve, 100));
+		}
 		const contributed: string[] = extension.packageJSON.contributes.commands.map((c: { command: string }) => c.command);
 
 		assert.deepStrictEqual(contributed.filter(id => !registered.has(id)), [], 'contributed, but not registered (bugs.md #9)');

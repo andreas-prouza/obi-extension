@@ -35,6 +35,8 @@ import { add_log_files, register_output_channel, set_secret_values } from './ext
 import { secret_values } from './shared/Redact';
 import { show_error } from './extension/utilities/Notify';
 import { show_connection_test } from './extension/utilities/ConnectionTest';
+import { restore_project_folder, switch_project_folder } from './extension/utilities/ProjectFolderSwitch';
+import { manage_branch_libraries } from './extension/obi/BranchLibraries';
 import { remove_secrets_from_history } from './extension/obi/HistorySecrets';
 import { ProjectState } from './extension/ProjectState';
 import { BackendUpdate } from './extension/obi/BackendUpdate';
@@ -49,6 +51,8 @@ const LEGACY_UI_SECRETS_REMOVED = 'obi.legacy-ui-secrets-removed';
 
 export function activate(context: vscode.ExtensionContext) {
 
+	// With several OBI projects in the workspace: the one chosen before (before anything asks for the folder)
+	restore_project_folder(context);
 	register_output_channel(context);
 
 	logger.info('Congratulations, your extension "obi" is now active!');
@@ -128,6 +132,8 @@ function register_project_features(context: vscode.ExtensionContext): void {
 	})
 	// Also with an incomplete configuration: it says what is missing on the IBM i
 	register_command(context, 'obi.test-connection', () => show_connection_test());
+	register_command(context, 'obi.switch-project-folder', () => switch_project_folder(context));
+	register_command(context, 'obi.branch-libraries', () => manage_branch_libraries(DeploymentConfig.get_deployment_config()['i-releaser']['main-branch'] ?? ''));
 	context.subscriptions.push(Workspace.on_did_change_profile(() => OBIConfiguration.update()));
 
 	try {

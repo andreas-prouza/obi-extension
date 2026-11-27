@@ -3,7 +3,7 @@
   "displayName": "Object Builder for IBM i (OBI)",
   "description": "Automated build tool for IBM i",
   "publisher": "andreas-prouza",
-  "version": "2.2.4",
+  "version": "2.3.0",
   "icon": "asserts/img/ext/logo.png",
   "keywords": [
     "ibm i",
@@ -116,6 +116,16 @@
         "command": "obi.test-connection",
         "title": "%obi.test-connection%",
         "icon": "$(plug)"
+      },
+      {
+        "command": "obi.switch-project-folder",
+        "title": "%obi.switch-project-folder%",
+        "icon": "$(root-folder)"
+      },
+      {
+        "command": "obi.branch-libraries",
+        "title": "%obi.branch-libraries%",
+        "icon": "$(library)"
       },
       {
         "command": "obi.controller.dependency-list",
@@ -618,6 +628,11 @@
           "command": "obi.build-history.filter-package",
           "when": "view == obi.build-history",
           "group": "navigation@0"
+        },
+        {
+          "command": "obi.branch-libraries",
+          "when": "view == obi.controller && obi.contains_obi_project && obi.valid-config && obi.branch-build",
+          "group": "navigation@68"
         }
       ],
       "obi.source": [
@@ -1161,6 +1176,14 @@
         {
           "command": "obi.test-connection",
           "when": "obi.contains_obi_project"
+        },
+        {
+          "command": "obi.switch-project-folder",
+          "when": "obi.contains_obi_project && workspaceFolderCount > 1"
+        },
+        {
+          "command": "obi.branch-libraries",
+          "when": "obi.contains_obi_project && obi.valid-config && obi.branch-build"
         }
       ],
       "timeline/item/context": [

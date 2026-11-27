@@ -1799,3 +1799,51 @@ textarea.obi-input {
 .connection-test-results .ok .codicon { color: var(--obi-passed); }
 .connection-test-results .warning .codicon { color: var(--vscode-editorWarning-foreground, #cca700); }
 .connection-test-results .error .codicon { color: var(--obi-failed); }
+
+
+/* Branch build of the shown build list (build summary) */
+.branch-build {
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  border: 1px solid var(--obi-border);
+  border-left: 3px solid var(--obi-running);
+  border-radius: 4px;
+}
+
+.branch-build[data-mode="main"] {
+  border-left-color: var(--obi-muted);
+}
+
+.branch-build-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.branch-build-libs {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+}
+
+.branch-build-libs li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.branch-build-libs code {
+  font-family: var(--obi-mono);
+}
+
+.branch-build-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.branch-build-note.warning .codicon { color: var(--vscode-editorWarning-foreground, #cca700); }
+.branch-build-note.error .codicon { color: var(--obi-failed); }
+

@@ -4,6 +4,7 @@
 import { SourceStatus, is_failed, source_status } from '../../shared/BuildStatus';
 import { deployment_of } from '../../shared/IReleaser';
 import { parse_history_dir } from '../../shared/HistoryTimestamp';
+import { build_context_of } from '../../shared/BranchBuild';
 
 
 export interface CmdResult {
@@ -32,6 +33,8 @@ export interface BuildEntry {
   deployment?: string;
   /** Name of the build package the build list was created for */
   package?: string;
+  /** Branch build (build_context of the backend): ticket libraries or the main libraries */
+  branch_build?: { mode: 'branch' | 'main'; ticket?: string; libs: string[] };
 }
 
 export interface FolderBuild {
@@ -80,6 +83,9 @@ export function read_build(dir: string, compile_list: unknown): BuildEntry | und
   const build_package = compile_list.package;
   if (is_object(build_package) && typeof build_package.name === 'string' && build_package.name !== '')
     entry.package = build_package.name;
+  const context = build_context_of(compile_list);
+  if (context)
+    entry.branch_build = { mode: context.mode, ticket: context.ticket ?? undefined, libs: context.libs };
   return entry;
 }
 

@@ -123,40 +123,66 @@ export class BackendUpdate {
   }
 
 
+  /**
+   * Branch builds (spec B5): updates the backend on the IBM i now, also if it was already updated in this session.
+   * Throws if the update fails (no connection to the git remote, own commits, not a git repository, …).
+   */
+  public static async update_remote_strict(token?: vscode.CancellationToken): Promise<void> {
+    const pulled = await BackendUpdate.pull_remote(token, true);
+    if (!pulled)
+      return;
+    if (pulled.result.outcome === 'not-a-repository')
+      throw new Error(vscode.l10n.t('The OBI backend in {0} was not updated: it is not a git repository.', pulled.where));
+    BackendUpdate.report(pulled.result, pulled.where, false);
+  }
+
+
   /** `interactive`: also if it was already updated in this session, and a message if it is up to date */
   private static async update_remote(token: vscode.CancellationToken | undefined, interactive: boolean): Promise<void> {
-    const config = AppConfig.get_app_config();
-    let where = config.connection['remote-host'] ?? 'IBM i';
-
     try {
-      const dir = await SSH_Tasks.get_remote_obi_dir();
-      const key = `${await SSH_Tasks.get_ssh_user()}@${where}:${config.connection['ssh-port'] ?? ''}:${dir}`;
-      where = `${where}:${dir}`;
-      if (!interactive && BackendUpdate.remote_done.has(key))
-        return;
-      BackendUpdate.remote_done.add(key);
-
-      BuildOutput.line(`Updating the OBI backend in ${where}`);
-      const stdout: string[] = [];
-      await SSH_Tasks.execute_streaming(remote_pull_script(dir), {
-        token,
-        on_line: (line, stream) => {
-          BuildOutput.line(line);
-          if (stream === 'stdout')
-            stdout.push(line);
-        }
-      });
-
-      const result = parse_pull_output(stdout);
-      if (!result)
-        throw new Error(`Unexpected output: ${stdout.join(' ').slice(0, 300)}`);
-      BackendUpdate.report(result, where, interactive);
+      const pulled = await BackendUpdate.pull_remote(token, interactive);
+      if (pulled)
+        BackendUpdate.report(pulled.result, pulled.where, interactive);
     }
     catch (e: unknown) {
       if (e instanceof UserCancelledError)
         throw e;
-      show_error(vscode.l10n.t('Updating the OBI backend in {0} failed', where), e);
+      show_error(vscode.l10n.t('Updating the OBI backend in {0} failed', BackendUpdate.remote_where()), e);
     }
+  }
+
+
+  private static remote_where(): string {
+    return AppConfig.get_app_config().connection['remote-host'] ?? 'IBM i';
+  }
+
+
+  /** git pull on the IBM i; undefined if it was already done in this session and `again` is false. Throws on errors. */
+  private static async pull_remote(token: vscode.CancellationToken | undefined, again: boolean): Promise<{ result: PullResult; where: string } | undefined> {
+    const config = AppConfig.get_app_config();
+    const host = BackendUpdate.remote_where();
+    const dir = await SSH_Tasks.get_remote_obi_dir();
+    const key = `${await SSH_Tasks.get_ssh_user()}@${host}:${config.connection['ssh-port'] ?? ''}:${dir}`;
+    const where = `${host}:${dir}`;
+    if (!again && BackendUpdate.remote_done.has(key))
+      return undefined;
+    BackendUpdate.remote_done.add(key);
+
+    BuildOutput.line(`Updating the OBI backend in ${where}`);
+    const stdout: string[] = [];
+    await SSH_Tasks.execute_streaming(remote_pull_script(dir), {
+      token,
+      on_line: (line, stream) => {
+        BuildOutput.line(line);
+        if (stream === 'stdout')
+          stdout.push(line);
+      }
+    });
+
+    const result = parse_pull_output(stdout);
+    if (!result)
+      throw new Error(`Unexpected output: ${stdout.join(' ').slice(0, 300)}`);
+    return { result, where };
   }
 
 

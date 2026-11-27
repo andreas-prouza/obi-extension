@@ -119,5 +119,7 @@
   "obi.buildPackages.baseBranch": "Branch, mit dem *Auf diesem Branch geänderte Sourcen zum Build-Paket hinzufügen* den aktuellen Branch vergleicht, z. B. `main` oder `origin/develop`. Leer: der Standard-Branch von `origin`, sonst `main` oder `master`.",
   "obi.build-package.open-last-build": "Build-Zusammenfassung des letzten Builds des Build-Pakets öffnen",
   "obi.build-package.add-build-sources": "Sourcen des Builds zum Build-Paket hinzufügen…",
-  "obi.test-connection": "OBI: Verbindung testen"
+  "obi.test-connection": "OBI: Verbindung testen",
+  "obi.switch-project-folder": "OBI: Projektordner wechseln",
+  "obi.branch-libraries": "OBI: Branch-Bibliotheken"
 }

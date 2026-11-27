@@ -31,6 +31,8 @@ import { history_dir_name } from '../../shared/HistoryTimestamp';
 import { UserCancelledError } from '../../shared/Errors';
 import { require_trust } from '../../extension/utilities/Trust';
 import { show_error } from '../../extension/utilities/Notify';
+import { BranchBuild, BranchBuildRefusal } from '../../extension/obi/BranchBuild';
+import { branch_mismatch, build_context_of, is_unknown_branch_argument } from '../../shared/BranchBuild';
 
 
 
@@ -272,6 +274,13 @@ export class BuildSummary {
       return;
     }
 
+    // Deployment guard (spec 4.4): before anything is sent to i-releaser
+    const refusal = BranchBuild.deployment_refusal(compile_list, DeploymentConfig.get_deployment_config()['i-releaser']['main-branch'] ?? '');
+    if (refusal) {
+      report('error', refusal);
+      return;
+    }
+
     try {
       const workflows = await BuildSummary.with_progress(vscode.l10n.t('Loading the workflows of i-Releaser…'), lock_token,
         signal => get_workflows(base, auth_token, signal));
@@ -383,8 +392,13 @@ export class BuildSummary {
    * (together with their computed dependents) into it, preserving already existing entries.
    */
   public static async add_sources(extensionUri?: vscode.Uri, workspaceUri?: vscode.Uri): Promise<void> {
-    // The compile-list must not change while a build runs
-    await OperationLock.run('Edit build summary', () => BuildSummary.do_add_sources(extensionUri, workspaceUri));
+    try {
+      // The compile-list must not change while a build runs
+      await OperationLock.run('Edit build summary', () => BuildSummary.do_add_sources(extensionUri, workspaceUri));
+    }
+    catch (e: unknown) {
+      show_error(vscode.l10n.t('Adding sources failed'), e, OBICommands.new_build_list_actions(e, BuildSummary.get_current_compile_list_name()));
+    }
   }
 
 
@@ -399,6 +413,9 @@ export class BuildSummary {
       vscode.window.showErrorMessage(vscode.l10n.t('No build summary found. Run "Preview build" first.'));
       return;
     }
+
+    // Branch build: only with a local OBI of version 6 or newer; the fallback below would build into the main libraries (spec B4)
+    BranchBuild.check_local_backend();
 
     const existing_sources = new Set<string>();
     for (const level_item of compile_list['compiles']) {
@@ -464,8 +481,22 @@ export class BuildSummary {
     }, async (progress) => {
       for (const source of selected_sources) {
         progress.report({ message: source });
-        const args = OBICommands.local_obi_args(app_config, 'add_source', source, [`--compile-list-dir=${compile_list_dir}`]);
-        await SystemCmdExecution.run_system_cmd(Workspace.get_workspace(), OBICommands.local_obi_python(), args, 'add_sources');
+        const args = OBICommands.local_obi_args(app_config, 'add_source', source, [`--compile-list-dir=${compile_list_dir}`, ...BranchBuild.args()]);
+        let unknown_branch_argument = false;
+        try {
+          await SystemCmdExecution.run_system_cmd(Workspace.get_workspace(), OBICommands.local_obi_python(), args, 'add_sources', {
+            on_line: line => { if (is_unknown_branch_argument(line)) unknown_branch_argument = true; }
+          });
+        }
+        catch (e: unknown) {
+          throw unknown_branch_argument ? new BranchBuildRefusal(BranchBuild.local_too_old_text()) : e;
+        }
+        // The backend ends with exit code 0 also after an error, e.g. a list of another ticket (spec B6)
+        const status = DirTool.get_json(path.join(Workspace.get_workspace(), Constants.OBI_STATUS_FILE), false);
+        if (status?.['status'] === 'error') {
+          const message = String(status['message'] ?? '');
+          throw /Create a new build list/i.test(message) ? new BranchBuildRefusal(message, true) : new Error(message);
+        }
       }
     });
 
@@ -785,6 +816,30 @@ export class BuildSummary {
   }
 
 
+  /**
+   * Branch build of the shown list (spec C4, C5): mode, ticket, libraries with an ADDLIBLE to copy for testing,
+   * warning and error of the backend. Only for lists the backend created with branch build (build_context).
+   */
+  private static branch_build_model(compile_list: unknown) {
+    const context = build_context_of(compile_list);
+    if (!context)
+      return undefined;
+    // Only the current list is run; a list of the history was simply built on its branch
+    const other_branch = !BuildSummary._current_compile_output_folder && BranchBuild.is_active() ? branch_mismatch(context, BranchBuild.current_branch()) : undefined;
+    return {
+      mode: context.mode,
+      title: context.mode === 'branch'
+        ? vscode.l10n.t('Branch build of ticket {0} (branch {1})', context.ticket ?? '?', context.branch ?? '?')
+        : vscode.l10n.t('Builds into the main libraries (branch {0})', context.branch ?? '?'),
+      libs: context.libs.map(lib => ({ name: lib.toUpperCase(), addlible: `ADDLIBLE LIB(${lib.toUpperCase()}) POSITION(*FIRST)` })),
+      warning: context.warning,
+      error: context.error ? vscode.l10n.t('Branch library {0} could not be created: {1}', String(context.error.lib ?? '').toUpperCase(), String(context.error.stderr ?? '')) : undefined,
+      other_branch: other_branch !== undefined ? vscode.l10n.t('The build list was created on branch {0}. Running it would build into the libraries of that branch. Create a new build list.', other_branch) : undefined,
+    };
+  }
+
+
+
   /** Codicon (and colour) of the status of a build command */
   private static readonly CMD_ICON: Record<string, string> = {
     'success': 'pass obi-passed', 'failed': 'error obi-failed', 'error': 'error obi-failed',
@@ -852,6 +907,8 @@ export class BuildSummary {
     if (compile_list && compile_list['timestamp']) {
       created_timestamp = new Date(compile_list['timestamp']).toLocaleString();
     }
+    const branch_build = BuildSummary.branch_build_model(compile_list);
+
     // Status of every source and the counts per level, for the header and the build list
     const build_counts = annotate_build_list(compile_list);
 
@@ -875,7 +932,8 @@ export class BuildSummary {
       profile: BuildSummary.build_profile(compile_list),
       app_config: config,
       custom_build_list_template: custom_dir ? path.basename(Constants.VSCODE_CUSTOM_BUILD_LIST_TEMPLATE) : undefined,
-      i_releaser: i_releaser
+      i_releaser: i_releaser,
+      branch_build: branch_build
       },
       custom_dir
     );

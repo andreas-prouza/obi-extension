@@ -11,7 +11,7 @@ import { OBISourceConfiguration } from './OBISourceConfiguration';
 import { LocalSourceList } from '../../extension/utilities/LocalSourceList';
 import { ExtendedSourceProcessing, ExtendedSourceProcessingList, Step } from '../../extension/config/EspConfig';
 import { CONFIGURATION_REQUESTS, ConfigurationRequest } from '../../shared/messages/ConfigurationMessages';
-import { parse_message } from '../../shared/messages/MessageGuard';
+import { is_plain_object, parse_message } from '../../shared/messages/MessageGuard';
 import { logger } from '../../extension/utilities/Logger';
 import { ProjectState } from '../../extension/ProjectState';
 import { show_error } from '../../extension/utilities/Notify';
@@ -116,6 +116,8 @@ export class OBIConfiguration {
         // Values set in the user config: these fields override the project config (config_field.html)
         user_overrides: set_paths(user_config),
         project_config: project_config,
+        // [branch-build] of app-config.toml, as the fields of the project tab show it (spec U1)
+        branch_build: OBIConfiguration.branch_build_fields(AppConfig.get_project_app_config(workspaceUri) as unknown as Record<string, unknown> | undefined),
         // Never pass the secret itself into the page: only whether one is stored
         ssh_password_stored: pwd !== undefined && pwd.length > 0,
         project_config_file: DirTool.get_encoded_file_URI(Constants.OBI_APP_CONFIG_FILE),
@@ -469,8 +471,14 @@ export class OBIConfiguration {
     if (data['global'] && data['global']['compile-cmds'])
       new_config.global['compile-cmds'] = data['global']['compile-cmds'];
 
-    if (isUser)
+    if (!isUser && is_plain_object(data['branch-build']))
+      OBIConfiguration.merge_branch_build(new_config as unknown as Record<string, unknown>, data['branch-build']);
+
+    if (isUser) {
       delete_paths(new_config, unset.filter(key => APP_CONFIG_TABLES.includes(key.split('|')[0])));
+      // get_user_app_config keeps only connection, general and global: the file's other sections (e.g. [branch-build]) stay
+      OBIConfiguration.keep_other_sections(new_config as unknown as Record<string, unknown>, DirTool.get_toml(toml_file));
+    }
 
     DirTool.update_toml(toml_file, new_config);
     AppConfig.reset();
@@ -482,6 +490,67 @@ export class OBIConfiguration {
     OBITools.check_local_obi();
 }
   
+
+  /** The keys of [branch-build] the page edits; others (settings, ...) stay as they are */
+  private static readonly BRANCH_BUILD_FIELDS = ['ticket-pattern', 'lib-name', 'env', 'no-lib-steps'];
+
+
+  /** Values of the Branch build fields: lists and tables one entry per line, as config.ts reads them back */
+  public static branch_build_fields(project_config: Record<string, unknown> | undefined) {
+    const section = is_plain_object(project_config?.['branch-build']) ? project_config['branch-build'] as Record<string, unknown> : undefined;
+    const env = is_plain_object(section?.['env']) ? section['env'] as Record<string, unknown> : {};
+    const steps = Array.isArray(section?.['no-lib-steps']) ? section['no-lib-steps'] as unknown[] : [];
+    return {
+      configured: section !== undefined,
+      enabled: section === undefined || section['enabled'] !== false,
+      ticket_pattern: typeof section?.['ticket-pattern'] === 'string' ? section['ticket-pattern'] : '',
+      lib_name: typeof section?.['lib-name'] === 'string' ? section['lib-name'] : '',
+      env: Object.entries(env).map(([lib, name]) => `${lib} = ${String(name)}`).join('\n'),
+      no_lib_steps: steps.map(String).join('\n'),
+    };
+  }
+
+
+  /**
+   * The Branch build fields into the project config. Without a section and without values nothing is written (the
+   * checkbox alone doesn't create one). The edited keys are replaced (a cleared field removes its key), the others
+   * stay. `enabled` is only written as false (true is the default). Spec U1, U2.
+   */
+  public static merge_branch_build(config: Record<string, unknown>, form: Record<string, unknown>): void {
+    const existing = is_plain_object(config['branch-build']) ? config['branch-build'] as Record<string, unknown> : undefined;
+    const has_values = OBIConfiguration.BRANCH_BUILD_FIELDS.some(key => form[key] !== undefined);
+    if (!existing && !has_values)
+      return;
+
+    const section: Record<string, unknown> = { ...(existing ?? {}) };
+    for (const key of OBIConfiguration.BRANCH_BUILD_FIELDS) {
+      if (form[key] !== undefined)
+        section[key] = form[key];
+      else
+        delete section[key];
+    }
+    if (form['enabled'] === false)
+      section['enabled'] = false;
+    else
+      delete section['enabled'];
+    config['branch-build'] = section;
+
+    // Only a first check: the backend validates the section (Python regular expression)
+    const pattern = typeof section['ticket-pattern'] === 'string' ? section['ticket-pattern'] : '';
+    const lib_name = typeof section['lib-name'] === 'string' ? section['lib-name'] : '';
+    if (pattern === '' || !pattern.includes('(') || !lib_name.includes('$(TICKET)'))
+      vscode.window.showWarningMessage(vscode.l10n.t('Branch build: the ticket pattern needs a group (…) for the ticket number, and the library name must contain $(TICKET). Builds stop with an error until then.'));
+  }
+
+
+  /** Top-level sections of `file_content` that the page doesn't edit, copied into `config` (not over its own) */
+  public static keep_other_sections(config: Record<string, unknown>, file_content: Record<string, unknown> | undefined): void {
+    for (const [key, value] of Object.entries(file_content ?? {})) {
+      if (!['connection', 'general', 'global'].includes(key) && !(key in config && config[key] !== undefined))
+        config[key] = value;
+    }
+  }
+
 
   private static createNewPanel(extensionUri : Uri) {
     return window.createWebviewPanel(
