@@ -66,6 +66,9 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
     item.build_time = date;
     const entry = BuildIndex.read(dirPath);
     const parts: string[] = [];
+    // Branch build: the ticket, so it can be told apart from a build into the main libraries (spec C6)
+    if (entry?.branch_build?.mode === 'branch')
+      parts.push(`#${entry.branch_build.ticket ?? '?'}`);
     if (entry?.package)
       parts.push(entry.package);
     if (entry?.deployment)
@@ -74,6 +77,10 @@ export class BuildHistoryProvider implements vscode.TreeDataProvider<BuildHistor
       item.description = parts.join(' · ');
     if (entry?.package)
       item.tooltip = `${item.tooltip ?? ''}\n${vscode.l10n.t('Build package')}: ${entry.package}`;
+    if (entry?.branch_build)
+      item.tooltip = `${item.tooltip ?? ''}\n${entry.branch_build.mode === 'branch'
+        ? vscode.l10n.t('Branch build of ticket {0}: {1}', entry.branch_build.ticket ?? '?', entry.branch_build.libs.map(lib => lib.toUpperCase()).join(', '))
+        : vscode.l10n.t('Main libraries')}`;
     return item;
   }
 

@@ -8,7 +8,8 @@ import { ExtensionSettings } from '../../extension/utilities/ExtensionSettings';
 import { detect_base_branch, files_changed_since, is_valid_base_branch } from '../../extension/utilities/GitChanges';
 import { BUILD_PACKAGE_DIR, BuildPackage, PackageNameProblem, invalid_source_names, is_valid_package_name, package_file_name, sources_of_build_list, suggest_package_name, validate_package_name } from '../../shared/BuildPackage';
 import { relative_inside } from '../../extension/utilities/SourcePath';
-import { ConfigFileError } from '../../shared/Errors';
+import { ConfigFileError, get_error_message } from '../../shared/Errors';
+import { BranchBuild } from '../../extension/obi/BranchBuild';
 import { package_scope, unbuildable_sources } from '../../extension/obi/compile_list/BuildScope';
 import { has_extension } from '../../extension/obi/compile_list/modules/source_hashes';
 import { OBICommands } from '../../extension/obi/OBICommands';
@@ -408,12 +409,7 @@ export class BuildPackageCommands {
     if (!is_valid_base_branch(base))
       throw new Error(vscode.l10n.t('Not a valid branch name: {0} (setting obi.buildPackages.baseBranch)', base));
 
-    const changes = files_changed_since(DirTool.get_local_source_dir(), base);
-    const types = AppConfig.get_app_config().general['supported-object-types'] || [];
-    const in_package = new Set(pkg.sources);
-    const invalid = new Set(invalid_source_names(changes.files));
-    const candidates = changes.files.filter(source => has_extension(source, types) && !invalid.has(source) && !in_package.has(source));
-    logger.info(`Sources changed since ${base} (${changes.merge_base}): ${changes.files.length} files, ${candidates.length} new for ${pkg.name}`);
+    const candidates = this.changed_not_in_package(pkg, base);
     if (candidates.length === 0) {
       vscode.window.showInformationMessage(vscode.l10n.t('There are no sources changed on this branch (since {0}) that are not in {1} yet.', base, pkg.name));
       return;
@@ -425,6 +421,57 @@ export class BuildPackageCommands {
       only_preselected: candidates
     });
     this.add(pkg.name, sources);
+  }
+
+
+  /** Sources changed on the current branch since `base` (supported type, valid name) that aren't in the package */
+  private changed_not_in_package(pkg: BuildPackage, base: string): string[] {
+    const changes = files_changed_since(DirTool.get_local_source_dir(), base);
+    const types = AppConfig.get_app_config().general['supported-object-types'] || [];
+    const in_package = new Set(pkg.sources);
+    const invalid = new Set(invalid_source_names(changes.files));
+    const candidates = changes.files.filter(source => has_extension(source, types) && !invalid.has(source) && !in_package.has(source));
+    logger.info(`Sources changed since ${base} (${changes.merge_base}): ${changes.files.length} files, ${candidates.length} new for ${pkg.name}`);
+    return candidates;
+  }
+
+
+  /**
+   * Branch build (spec P1, P4): before a package build, the sources changed on the branch that are missing from the
+   * package. Without build hashes nothing else would build them. Returns the package to build (with the added
+   * sources), or undefined to cancel. Skipped silently without a base branch, without git and on the base branch.
+   */
+  private async check_branch_changes(pkg: BuildPackage): Promise<BuildPackage | undefined> {
+    if (!BranchBuild.is_active())
+      return pkg;
+    const base = ExtensionSettings.build_packages_base_branch() || detect_base_branch(Workspace.get_workspace());
+    const branch = BranchBuild.current_branch();
+    if (!base || !is_valid_base_branch(base) || !branch || base === branch || base === `origin/${branch}`)
+      return pkg;
+    let missing: string[];
+    try {
+      missing = this.changed_not_in_package(pkg, base);
+    }
+    catch (e: unknown) {
+      logger.warn(`Package check skipped: ${get_error_message(e)}`);
+      return pkg;
+    }
+    if (missing.length === 0)
+      return pkg;
+
+    const max_shown = 15;
+    const detail = missing.slice(0, max_shown).join('\n') + (missing.length > max_shown ? '\n' + vscode.l10n.t('… and {0} more', missing.length - max_shown) : '');
+    const add = vscode.l10n.t('Add and build');
+    const anyway = vscode.l10n.t('Build anyway');
+    const answer = await vscode.window.showWarningMessage(
+      vscode.l10n.t('{0} source(s) changed on this branch (since {1}) are not in build package {2}. They would be neither built nor deployed.', missing.length, base, pkg.name),
+      { modal: true, detail }, add, anyway);
+    if (answer === anyway)
+      return pkg;
+    if (answer !== add)
+      return undefined;
+    this.add(pkg.name, missing);
+    return this.store().get(pkg.name);
   }
 
 
@@ -508,11 +555,15 @@ export class BuildPackageCommands {
       return;
     }
 
-    this.remember(pkg.name);
+    const checked = await this.check_branch_changes(pkg);
+    if (!checked)
+      return;
+
+    this.remember(checked.name);
     if (run)
-      await OBICommands.run_build(this.context, package_scope(pkg));
+      await OBICommands.run_build(this.context, package_scope(checked));
     else
-      await OBICommands.show_changes(this.context, package_scope(pkg));
+      await OBICommands.show_changes(this.context, package_scope(checked));
   }
 }
 

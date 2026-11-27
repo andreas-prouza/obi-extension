@@ -7,6 +7,9 @@ import { register_command } from './utilities/Registration';
 import { show_log } from './utilities/Logger';
 import { LastBuild, StatusState, render_status, summarize_build } from './utilities/StatusText';
 import { ExtensionSettings } from './utilities/ExtensionSettings';
+import { BranchBuild } from './obi/BranchBuild';
+import { OBITools } from './utilities/OBITools';
+import { branch_mismatch, build_context_of } from '../shared/BranchBuild';
 
 
 interface MenuItem extends vscode.QuickPickItem {
@@ -31,6 +34,14 @@ export class StatusBar {
   private static cancel_running: () => void = () => undefined;
 
 
+  private static watch_git_head(): vscode.Disposable {
+    const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(Workspace.get_workspace_uri(), '.git/HEAD'));
+    watcher.onDidChange(() => StatusBar.update());
+    watcher.onDidCreate(() => StatusBar.update());
+    return watcher;
+  }
+
+
   public static init(context: vscode.ExtensionContext, cancel_running: () => void): void {
     StatusBar.context = context;
     StatusBar.cancel_running = cancel_running;
@@ -44,6 +55,8 @@ export class StatusBar {
       OperationLock.on_did_change(() => StatusBar.on_operation()),
       Workspace.on_did_change_profile(() => StatusBar.update()),
       ExtensionSettings.on_did_change(() => StatusBar.update()),
+      // git checkout: the build list may belong to another branch now (branch build)
+      StatusBar.watch_git_head(),
       { dispose: () => { StatusBar.stop_timer(); StatusBar.item = undefined; } }
     );
     register_command(context, 'obi.status-bar.menu', () => StatusBar.menu());
@@ -104,12 +117,26 @@ export class StatusBar {
       running: OperationLock.running ? { label: OperationLock.running, elapsed_ms: Date.now() - (StatusBar.running_since ?? Date.now()) } : undefined,
       cancelled: Date.now() < StatusBar.cancelled_until,
       last_build: StatusBar.context?.workspaceState.get<LastBuild>(StatusBar.LAST_BUILD_KEY),
+      branch_build: StatusBar.branch_build_state(),
     };
 
     const { text, tooltip } = render_status(state);
+    // A build list of another branch: running it would build into that branch's libraries (spec C2)
+    item.backgroundColor = state.branch_build?.created_on_other_branch !== undefined ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined;
     item.text = text;
     item.tooltip = new vscode.MarkdownString(tooltip, true);
     item.show();
+  }
+
+
+  /** Branch build on: mode, ticket and libraries of the current build list; undefined while the feature is off */
+  private static branch_build_state(): StatusState['branch_build'] {
+    if (!BranchBuild.is_active())
+      return undefined;
+    const context = build_context_of(OBITools.get_compile_list(Workspace.get_workspace_uri()));
+    if (!context)
+      return { mode: 'none', libs: [] };
+    return { mode: context.mode, ticket: context.ticket ?? undefined, libs: context.libs, created_on_other_branch: branch_mismatch(context, BranchBuild.current_branch()) };
   }
 
 
@@ -131,6 +158,8 @@ export class StatusBar {
       { label: `$(output) ${vscode.l10n.t('Open build summary')}`, run: command('obi.open_build_summary') },
       { label: `$(person) ${vscode.l10n.t('Switch profile…')}`, run: () => StatusBar.switch_profile() },
     );
+    if (Workspace.get_obi_folders().length > 1)
+      items.push({ label: `$(root-folder) ${vscode.l10n.t('Switch project folder…')}`, run: command('obi.switch-project-folder') });
     if (OperationLock.running)
       items.push({ label: `$(debug-stop) ${vscode.l10n.t('Cancel running operation')}`, description: OperationLock.running, run: () => StatusBar.cancel_running() });
     items.push(

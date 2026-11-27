@@ -14,6 +14,7 @@
 - [Profiles](#profiles)
 - [Per-source build settings](#per-source-build-settings)
 - [Extended source processing](#extended-source-processing)
+- [Branch build](#branch-build)
 - [Custom build summary template](#custom-build-summary-template)
 - [Language](#language)
 - [VS Code settings and log](#vs-code-settings-and-log)
@@ -42,7 +43,7 @@ The list on the left has the sections **Configuration** (connection, paths, OBI 
 * **Required** values are marked. While one is missing, a banner names it (click a name to go to the field), and its section and scope get a red dot.
 * *Unsaved changes* shows until you click **Save** (top right). The file icon next to it opens the TOML file of the scope.
 
-In a multi-root workspace, OBI works with the first folder that contains an OBI project (`.obi/etc/app-config.toml`). If there are several, it says so once; working with several projects at the same time is not supported yet.
+In a multi-root workspace, OBI works with the first folder that contains an OBI project (`.obi/etc/app-config.toml`). If there are several, it says so once. **OBI: Switch project folder** (Command Palette, status bar menu, or the button of that message) picks another one: OBI remembers it for this workspace and reloads the window, so all OBI views start with that project. It isn't possible while a build or another operation runs. Working with several projects at the same time is not supported.
 
 You can also edit the TOML files directly (the file icon next to **Save**). Changes are picked up without reloading the window; an invalid configuration shows the *Invalid configuration* view until it is fixed.
 
@@ -312,6 +313,24 @@ The rules of the user file (of the active profile) replace those of the project 
 **Conditions** (JSON, e.g. `{"SOURCE": ["mylib/*.pgm"], "OBJ_NAME": "ord*"}`): the name is a [variable](#variables) of the source. A text is compared with the value of the variable, a **list with the source name** (e.g. `mylib/qrpglesrc/order.rpgle.pgm`, without the source folder), whatever the name is. Patterns have to match completely (`*` also matches `/`, `?`, `[abc]`, `[!abc]`; case matters); with *Use Regex* a regular expression only has to be found. All conditions have to match; an unknown name never matches. *Preview build* and the OBI backend use the same rules.
 
 Each step of a rule has *either* a **Step** (e.g. `global.cmds.chg-src-ccsid`) *or* a **Command** (e.g. `cl -v "CALL $(TARGET_LIB)/AFTER"`); a command wins and runs once. *Add default steps* adds the steps of the source type after it, with the same properties: on by default for a step, off for a command. Details: [Extended source processing](https://github.com/andreas-prouza/obi/blob/main/docs/extended-source-processing.md) of the OBI backend.
+
+
+## Branch build
+
+Optional: with this section, builds on a branch with a ticket number go into libraries of the ticket ([Branch builds](building.md#branch-builds)). Without it, nothing changes.
+
+```toml
+[branch-build]
+# enabled = false                          # off, e.g. during a rollout
+ticket-pattern = '(?i)\bproj[-_](\d+)'    # Python regular expression, group 1 is the ticket; a literal string ('...')
+lib-name = "#$(ENV)_$(TICKET)"
+
+[branch-build.env]                         # production library -> ENV
+mylib = "AA"
+mydta = "AA"
+```
+
+The section can be in `app-config.toml` or in the user configuration; the user values win, as for the other settings. On the configuration page, the **project** tab has the fields *Branch build on*, *Ticket pattern*, *Library name*, *ENV of the production libraries* (one `library = ENV` per line) and *Steps without a branch library* (one per line). While they are all empty, no section is written. Keys the page doesn't show (e.g. `[branch-build.settings]`) are kept, and saving the user tab keeps a section of the user configuration. All keys, the library list and the variables are described in the backend's documentation: [Branch build](https://github.com/andreas-prouza/obi/blob/main/docs/branch-build.md).
 
 
 ## Custom build summary template

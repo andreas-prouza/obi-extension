@@ -47,6 +47,19 @@
       {% if compile_list['git'] and (compile_list['git']['branch'] or compile_list['git']['commit']) %}<span title="git"><span class="codicon codicon-git-branch"></span>{{ compile_list['git']['branch'] or '' }}{% if compile_list['git']['branch'] and compile_list['git']['commit'] %} · {% endif %}{{ (compile_list['git']['commit'] or '') | truncate(7, true, '') }}</span>{% endif %}
       {% if compile_list['package'] and compile_list['package']['name'] %}<span title="{{ global_stuff['get_text']('Build package') | safe }}{% if compile_list['package']['description'] %}: {{ compile_list['package']['description'] }}{% endif %}"><span class="codicon codicon-package"></span>{{ compile_list['package']['name'] }}</span>{% endif %}
     </div>
+    {% if branch_build %}
+    <div class="branch-build" id="branch_build" data-mode="{{ branch_build.mode }}">
+      <div class="branch-build-head"><span class="codicon codicon-git-branch"></span>{{ branch_build.title }}</div>
+      {% if branch_build.libs.length %}
+      <ul class="branch-build-libs">
+        {% for lib in branch_build.libs %}<li><code>{{ lib.addlible }}</code><button type="button" class="icon-btn cmd-copy" data-cmd="{{ lib.addlible }}" title="{{ global_stuff['get_text']('Copy') | safe }}" aria-label="{{ global_stuff['get_text']('Copy') | safe }}"><span class="codicon codicon-copy"></span></button></li>{% endfor %}
+      </ul>
+      {% endif %}
+      {% if branch_build.other_branch %}<div class="branch-build-note warning"><span class="codicon codicon-warning"></span>{{ branch_build.other_branch }}</div>{% endif %}
+      {% if branch_build.warning %}<div class="branch-build-note warning"><span class="codicon codicon-warning"></span>{{ branch_build.warning }}</div>{% endif %}
+      {% if branch_build.error %}<div class="branch-build-note error"><span class="codicon codicon-error"></span>{{ branch_build.error }}</div>{% endif %}
+    </div>
+    {% endif %}
     {% if custom_build_list_template %}<div class="custom-content">{% include custom_build_list_template ignore missing %}</div>{% endif %}
     {% include "show_changes/deployment_card.html" %}
     {% else %}

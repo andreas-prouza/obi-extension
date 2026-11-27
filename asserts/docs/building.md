@@ -7,6 +7,7 @@
 - [Build summary](#build-summary)
 - [Run build](#run-build)
 - [Build packages](#build-packages)
+- [Branch builds](#branch-builds)
 - [Compile errors](#compile-errors)
 - [Build history](#build-history)
 - [Other actions](#other-actions)
@@ -112,6 +113,13 @@ With **Current source** (`*CURRENT`, or **Show single change** in the editor), o
 
    The token is stored in VS Code's secret storage, separately for each i-Releaser URL. If a project uses another URL, the token is not sent there.
 2. When all commands succeeded, click **Start i-Releaser workflow** and pick the workflow. The `default-workflow` comes first. Without `workflows`, the list shows all workflows the token may read. With `workflows`, it shows those in their order. On the config page, enter them one per line. A listed name that i-Releaser doesn't know is reported in a warning; check the spelling and the token's permissions.
+
+**Deployment rules:** before anything is sent to i-Releaser, OBI checks the build list. Each rule applies only when its configuration exists:
+
+* `main-branch` in `deployment.toml` (e.g. `main-branch = "main"`): the build list was created on that branch, and its commit is already on `origin/<main-branch>` (OBI fetches first). A build list without git information is refused.
+* With [branch builds](#branch-builds) also: it builds into the main libraries, it is a build package build, and the source folder had no uncommitted changes when the build list was created.
+
+Without `main-branch` and without branch builds, every build list can be deployed, as before. The git information of a build list is the one of its creation; editing the build list later (checkboxes, commands) doesn't change it.
 
 The build list goes to i-Releaser as the deployment's custom data, without joblogs, spool files and errors. i-Releaser accepts at most 64 KB. The deployment (id, workflow, project, version) is stored in the build list and in its copy in the build history as `custom_data.i-releaser`, and **i-Releaser deployment** opens it in the browser.
 
@@ -264,6 +272,23 @@ The package file, e.g. `.obi/build-packages/ABC-123.json`:
 The sources are written sorted, one per line, so changes from different branches merge easily. Other keys in the file are kept. An archived package has `"archived": true`.
 
 > Rename, delete and archive change the file in your working copy. Commit the change, so your team gets it too.
+
+
+## Branch builds
+
+With a `[branch-build]` section in the configuration ([configuration](configuration.md#branch-build)), a build on a branch with a ticket number in its name goes into libraries of that ticket, e.g. `#aa_337` instead of `#aaobj`. The OBI backend decides the ticket and the libraries; without the section nothing changes.
+
+* **The local OBI is needed**, in backend version 6 or newer. Without it, OBI refuses *Preview build*, *Run build* and *Add source*: the fallback can't evaluate the ticket pattern and would build into the main libraries. An older local OBI is refused with a hint to update it (`git pull` in `local-obi-dir`). The OBI on the IBM i needs version 6 too, because it creates the branch libraries before the first source. If it is older, OBI updates it first (`git pull` in `remote-obi-dir`, also without the setting `obi.backend.autoUpdateRemote`). If the update fails (e.g. the IBM i can't reach the git server) or doesn't bring version 6, the build is refused with the reason.
+* OBI passes the current git branch to the backend (`--branch`). On a detached HEAD or without git, the backend builds into the main libraries and says so in a warning.
+* **A build list belongs to its branch.** After switching the branch, *Run build* of the old list is refused ("The build list was created on branch …"), with a button to create a new one. The status bar shows a warning then.
+* **Status bar:** the ticket and its libraries (`#337 → #aa_337, #bb_337`) or `main libraries`.
+* **Build summary:** a box with ticket, branch and libraries, and an `ADDLIBLE … POSITION(*FIRST)` per library to copy for testing. Warnings of the backend and a library that couldn't be created are shown there too.
+* **Build packages:** before a package build on a branch, OBI compares the package with the sources changed on the branch (base: setting `obi.buildPackages.baseBranch`, or `main`/`master`). Missing sources can be added with **Add and build**. After a branch build of changed or single sources, OBI offers once to create a build package named after the branch: only package builds can be deployed.
+* **Deployment:** only from package builds on the main branch, see [i-Releaser deployment](#i-releaser-deployment).
+* **Build history:** a branch build shows its ticket (`#337`), the tooltip its libraries.
+* **OBI: Branch libraries** (Command Palette, and the library button of the OBI Build view): lists the branch libraries on the IBM i, one line per ticket with the state of its branch: *merged* (in the main branch, or deleted on origin after the merge), *no branch*, *active* (also a branch that was never pushed) or *branch unknown*. OBI fetches with `--prune` first. Merged tickets and tickets without a branch are preselected. After a confirmation the picked libraries are deleted; this can't be undone, but the next build of the ticket creates them again (empty). Then OBI offers to archive the build packages of these tickets. The main branch is `main-branch` of `deployment.toml`, otherwise the default branch of the repository. When an i-Releaser deployment that OBI watches has finished, OBI asks whether to open *Branch libraries*.
+
+Details of the backend (configuration, library list, variables): [Branch build](https://github.com/andreas-prouza/obi/blob/main/docs/branch-build.md).
 
 
 ## Compile errors

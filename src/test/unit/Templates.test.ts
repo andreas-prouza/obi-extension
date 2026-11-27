@@ -95,12 +95,17 @@ suite('Templates', () => {
 
 
     test('every value of the project tab has the override button in the user tab', () => {
-      const project_keys = [...saved_fields(render('project', {}), 'project').keys()].sort();
+      const all_project_keys = [...saved_fields(render('project', {}), 'project').keys()].sort();
+      // [branch-build] is only edited in app-config.toml (spec U1)
+      const branch_build_keys = all_project_keys.filter(key => key.startsWith('branch-build|'));
+      const project_keys = all_project_keys.filter(key => !key.startsWith('branch-build|'));
       const user_html = render('user', {});
       const override_keys = [...user_html.matchAll(/data-override-key="([^"]+)"/g)].map(match => match[1]).sort();
 
       assert.ok(project_keys.length > 30, project_keys.join(', '));
       assert.deepStrictEqual(override_keys, project_keys);
+      assert.deepStrictEqual(branch_build_keys, ['branch-build|enabled', 'branch-build|env', 'branch-build|lib-name', 'branch-build|no-lib-steps', 'branch-build|ticket-pattern']);
+      assert.ok(![...saved_fields(user_html, 'user').keys()].some(key => key.startsWith('branch-build|')), 'project tab only');
       assert.ok(saved_fields(user_html, 'user').has('connection|ssh-user'), 'user only, without button');
     });
 

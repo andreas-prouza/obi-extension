@@ -1,3 +1,17 @@
+## [Unreleased]
+
+### Changes
+* **Branch builds** (with a `[branch-build]` section, OBI backend 6): builds on a branch with a ticket number go into libraries of the ticket. The extension passes the branch to the backend, refuses branch builds without a local OBI or with an older local backend, updates an older OBI on IBM i before a branch build (`git pull`, also without `obi.backend.autoUpdateRemote`; if that fails, the build is refused), refuses to run a build list of another branch, shows ticket and libraries in the status bar and the build summary (with `ADDLIBLE` to copy), checks build packages against the sources changed on the branch and offers a package named after the branch. The build history shows the ticket of a branch build. **OBI: Branch libraries** lists the branch libraries on the IBM i by ticket with the state of the branch (merged, active, no branch) and deletes the picked ones; OBI offers it when a watched deployment has finished. The configuration page has fields for `[branch-build]` (project tab). Without the section nothing changes ([docs](asserts/docs/building.md#branch-builds))
+* **Deployment rules: `main-branch` of `deployment.toml` is now enforced.** If it is set, a workflow is only started for a build list created on that branch whose commit is on `origin/<main-branch>`. With branch builds also: main libraries, build package build, no uncommitted changes. Projects that already set `main-branch` get the first rule with this version ([docs](asserts/docs/building.md#i-releaser-deployment))
+* **OBI: Switch project folder**: in a multi-root workspace with several OBI projects, pick the one OBI works with (Command Palette, status bar menu, or the message about several projects). The choice is kept for the workspace; the window is reloaded ([docs](asserts/docs/configuration.md))
+
+
+### Bugfixes
+* **Saving the user configuration on the configuration page kept only connection, general and global settings**: other sections of the file (e.g. `[branch-build]`) were deleted. They are kept now
+* **Configuration page: list and table fields** (e.g. `LIBL`, `TARGET_LIB_MAPPING`) no longer fail to save when they start with an empty line or have a line without `=`. Such lines are skipped; a value may contain `=`
+* **The git branch and commit of a build list are the ones of its creation.** Before, every later change of the build list (checkboxes, edited command, custom data) replaced them with the current ones
+
+
 ## [2.2.4]
 
 ### Changes

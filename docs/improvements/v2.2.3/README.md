@@ -4,7 +4,7 @@ Open points from a review at v2.2.3 (2026-11-26), checked against the code and t
 
 Severity: 🔴 high (data loss, broken core feature) · 🟠 medium (wrong behaviour, high-value gap) · 🟡 low (cleanup, polish). See [../README.md#workflow](../README.md#workflow) for how items become specs.
 
-Suggested order: the features and process items; D1 after a release with the deprecation note. Done: R1 (deleting a profile, [bugfix/profile-delete.md](../../bugfix/profile-delete.md)), R2 (ESP conditions, [bugfix/esp-conditions.md](../../bugfix/esp-conditions.md)), R3 (SSH host and user, [bugfix/ssh-session-user.md](../../bugfix/ssh-session-user.md)), R4 (delete source, [bugfix/source-delete.md](../../bugfix/source-delete.md)), R5 (command output, [bugfix/system-cmd-close.md](../../bugfix/system-cmd-close.md)), R6 (self_check, [bugfix/self-check-files.md](../../bugfix/self-check-files.md)), R7 (folder watchdog, [bugfix/watchdog-recreate-folders.md](../../bugfix/watchdog-recreate-folders.md)), R8 (source variables, [bugfix/source-variables-port.md](../../bugfix/source-variables-port.md)), D2 (deployment card updates, [features/build-summary-card-updates.md](../../features/build-summary-card-updates.md)), D3 (layers, [features/layer-imports.md](../../features/layer-imports.md)), D4 (manifest and dead code, [features/manifest-cleanup.md](../../features/manifest-cleanup.md)), F1 test connection ([features/test-connection.md](../../features/test-connection.md)).
+Suggested order: the features and process items; D1 after a release with the deprecation note. Done: R1 (deleting a profile, [bugfix/profile-delete.md](../../bugfix/profile-delete.md)), R2 (ESP conditions, [bugfix/esp-conditions.md](../../bugfix/esp-conditions.md)), R3 (SSH host and user, [bugfix/ssh-session-user.md](../../bugfix/ssh-session-user.md)), R4 (delete source, [bugfix/source-delete.md](../../bugfix/source-delete.md)), R5 (command output, [bugfix/system-cmd-close.md](../../bugfix/system-cmd-close.md)), R6 (self_check, [bugfix/self-check-files.md](../../bugfix/self-check-files.md)), R7 (folder watchdog, [bugfix/watchdog-recreate-folders.md](../../bugfix/watchdog-recreate-folders.md)), R8 (source variables, [bugfix/source-variables-port.md](../../bugfix/source-variables-port.md)), D2 (deployment card updates, [features/build-summary-card-updates.md](../../features/build-summary-card-updates.md)), D3 (layers, [features/layer-imports.md](../../features/layer-imports.md)), D4 (manifest and dead code, [features/manifest-cleanup.md](../../features/manifest-cleanup.md)), F1 test connection ([features/test-connection.md](../../features/test-connection.md)), F2 (switch project folder, [features/switch-project-folder.md](../../features/switch-project-folder.md)).
 
 
 ## Bugs
@@ -25,11 +25,6 @@ All bug items (R1–R8) are done; see the list above.
 * **Where:** [SSH_Tasks.ts](../../../src/extension/utilities/SSH_Tasks.ts), [SshAuth.ts](../../../src/extension/utilities/SshAuth.ts)
 * **Current:** *Test connection* is done ([features/test-connection.md](../../features/test-connection.md)). Host aliases, `IdentityFile` and `ProxyJump` of `~/.ssh/config` are not used: everything has to be in the user configuration.
 * **Proposal:** Evaluate resolving `~/.ssh/config` (alias, port, user, key) and tunnelling through a `ProxyJump` host, for an IBM i that is only reachable through a jump host.
-
-### F2. 🟡 Several OBI projects in a multi-root workspace
-* **Where:** [ProjectState.ts](../../../src/extension/ProjectState.ts), [Workspace.ts](../../../src/extension/utilities/Workspace.ts)
-* **Current:** With more than one OBI project, the first is used and a message says that more aren't supported.
-* **Proposal:** *OBI: Switch project folder* (and in the status bar menu), stored in `workspaceState`, resetting the caches and views without a reload.
 
 ### F3. 🟡 Build summary: filter and compare builds
 * **Where:** [show_changes.ts](../../../src/webview/show_changes/javascript/show_changes.ts), [BuildHistoryProvider.ts](../../../src/webview/build_history/BuildHistoryProvider.ts)

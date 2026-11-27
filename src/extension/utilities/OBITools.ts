@@ -412,9 +412,14 @@ export class OBITools {
 
 
 
-  /** Writes a compile-list object to disk, refreshing its `git` branch/commit info first. */
+  /**
+   * Writes a compile-list object to disk. Its `git` (branch and commit) is the one of the moment the list was
+   * created (createBuildList, OBICommands.record_created_list) and is kept: an edit after switching the branch must
+   * not make the list claim the new branch (deployment guard D1). A list without `git` gets the current one.
+   */
   public static write_compile_list(file_path: string, compile_list: Record<string, unknown>): void {
-    GitInfo.attach_git_info(compile_list, Workspace.get_workspace());
+    if (!('git' in compile_list))
+      GitInfo.attach_git_info(compile_list, Workspace.get_workspace());
     DirTool.write_json(file_path, compile_list);
   }
 

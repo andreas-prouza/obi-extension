@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { DeploymentState, StateChange, get_deployment, is_final, show_details_url, state_changes, watch_state } from '../../shared/IReleaser';
 import { get_error_message } from '../../shared/Errors';
 import { logger } from '../../extension/utilities/Logger';
+import { BranchBuildConfig } from '../../extension/config/BranchBuildConfig';
+import { status_kind } from '../../shared/IReleaserDeployments';
 
 
 /** The i-Releaser tokens of the secret storage (DeploymentConfig; not imported, which would be an import cycle) */
@@ -233,8 +235,26 @@ export class DeploymentWatcher {
     watch.info = { state: state, checked: new Date() };
     if (before)
       DeploymentWatcher.notify(watch, state, state_changes(before, state));
+    if (before && status_kind(before.status) !== 'finished' && status_kind(state.status) === 'finished')
+      DeploymentWatcher.deployment_finished(state);
     DeploymentWatcher.changed(watch);
     return !is_final(state);
+  }
+
+
+  /**
+   * Branch build (spec 4.6, step 8): a deployment has just finished, so the branch libraries of its tickets may not
+   * be needed any more. "Branch libraries" preselects the merged tickets; the developer decides.
+   */
+  private static deployment_finished(state: DeploymentState): void {
+    if (!BranchBuildConfig.is_active())
+      return;
+    const libraries = vscode.l10n.t('Branch libraries');
+    vscode.window.showInformationMessage(vscode.l10n.t('i-Releaser deployment {0} has finished. Delete the branch libraries of merged tickets?', String(state.id)), libraries)
+      .then(choice => {
+        if (choice === libraries)
+          vscode.commands.executeCommand('obi.branch-libraries');
+      });
   }
 
 

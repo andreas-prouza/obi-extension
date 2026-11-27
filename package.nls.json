@@ -119,5 +119,7 @@
   "obi.buildPackages.baseBranch": "Branch that *Add sources changed on this branch to build package* compares the current branch with, e.g. `main` or `origin/develop`. Empty: the default branch of `origin`, otherwise `main` or `master`.",
   "obi.build-package.open-last-build": "Open last build summary of build package",
   "obi.build-package.add-build-sources": "Add sources of the build to build package…",
-  "obi.test-connection": "OBI: Test connection"
+  "obi.test-connection": "OBI: Test connection",
+  "obi.switch-project-folder": "OBI: Switch project folder",
+  "obi.branch-libraries": "OBI: Branch libraries"
 }

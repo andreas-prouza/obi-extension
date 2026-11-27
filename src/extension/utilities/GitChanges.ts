@@ -71,3 +71,81 @@ export function files_changed_since(cwd: string, base: string, env?: NodeJS.Proc
 
   return { base, merge_base, files: [...new Set([...changed, ...untracked])].sort() };
 }
+
+
+/**
+ * Deployment guard D4: uncommitted changes (also untracked files) below `cwd`. undefined if `cwd` is not in a
+ * git repository.
+ */
+export function has_uncommitted_changes(cwd: string, env?: NodeJS.ProcessEnv): boolean | undefined {
+  const status = git_ok(cwd, ['status', '--porcelain', '--', '.'], env);
+  return status === undefined ? undefined : status.length > 0;
+}
+
+
+/**
+ * Deployment guard D1: `commit` is on origin/<branch>. Fetches the branch first (without it, the answer is the one
+ * of the last fetch). A commit or branch that isn't valid is never on it.
+ */
+export function commit_on_remote_branch(cwd: string, commit: string, branch: string, env?: NodeJS.ProcessEnv): boolean {
+  if (!/^[0-9a-f]{7,64}$/i.test(commit) || !is_valid_base_branch(branch))
+    return false;
+  try {
+    // No prompt for credentials, and not longer than 30 seconds: the answer of the last fetch is used then
+    execFileSync('git', ['fetch', '--quiet', 'origin', branch], { cwd, env: { ...(env ?? process.env), GIT_TERMINAL_PROMPT: '0' }, stdio: 'ignore', timeout: 30_000 });
+  }
+  catch {
+    // offline: the last fetch decides
+  }
+  try {
+    git(cwd, ['merge-base', '--is-ancestor', commit, `origin/${branch}`], env);
+    return true;
+  }
+  catch {
+    return false;
+  }
+}
+
+
+export interface BranchList {
+  local: string[];
+  /** Branches of origin, as "origin/<name>" */
+  remote: string[];
+  /** Local branches whose upstream was deleted on origin ([gone]) */
+  gone: string[];
+}
+
+
+/** Fetches origin with --prune (no prompt, at most 30 s) and lists the branches; undefined without a repository */
+export function list_branches(cwd: string, env?: NodeJS.ProcessEnv): BranchList | undefined {
+  try {
+    execFileSync('git', ['fetch', '--quiet', '--prune', 'origin'], { cwd, env: { ...(env ?? process.env), GIT_TERMINAL_PROMPT: '0' }, stdio: 'ignore', timeout: 30_000 });
+  }
+  catch {
+    // offline: the state of the last fetch
+  }
+  const local = git_ok(cwd, ['for-each-ref', '--format=%(refname:short)\t%(upstream:track)', 'refs/heads'], env);
+  if (local === undefined)
+    return undefined;
+  const remote = git_ok(cwd, ['for-each-ref', '--format=%(refname:short)', 'refs/remotes/origin'], env) ?? '';
+  const rows = local.split(/\r?\n/).filter(line => line.length > 0).map(line => line.split('\t'));
+  return {
+    local: rows.map(([name]) => name),
+    gone: rows.filter(([, track]) => (track ?? '').includes('gone')).map(([name]) => name),
+    remote: remote.split(/\r?\n/).filter(name => name.length > 0 && name !== 'origin/HEAD' && name !== 'origin'),
+  };
+}
+
+
+/** True if the branch (local, else origin/<branch>) is contained in origin/<main> */
+export function is_merged_into(cwd: string, branch: string, main: string, local: boolean, env?: NodeJS.ProcessEnv): boolean {
+  if (!is_valid_base_branch(branch) || !is_valid_base_branch(main))
+    return false;
+  try {
+    git(cwd, ['merge-base', '--is-ancestor', local ? `refs/heads/${branch}` : `refs/remotes/origin/${branch}`, `refs/remotes/origin/${main}`], env);
+    return true;
+  }
+  catch {
+    return false;
+  }
+}

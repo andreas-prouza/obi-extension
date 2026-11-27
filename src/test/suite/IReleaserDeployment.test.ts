@@ -431,6 +431,32 @@ suite('i-Releaser deployment from the build summary', () => {
   });
 
 
+  test('branch build: a deployment that has just finished offers to delete the branch libraries (spec 4.6, step 8)', async () => {
+    const ir = await i_releaser_status([[11, 'START', 'finished'], [12, 'PROD', 'in process']]);
+    try {
+      await deployment_toml(`[i-releaser]\nurl = "${ir.url}"\n`);
+      await DeploymentConfig.store_auth_token(ir.url, 'TOKEN-1');
+      await fse.appendFile(path.join(Workspace.get_workspace(), Constants.OBI_APP_CONFIG_FILE), `\n[branch-build]\nticket-pattern = '(\\d+)'\nlib-name = "#X_$(TICKET)"\n`);
+      AppConfig.reset();
+      const info = sinon.stub(vscode.window, 'showInformationMessage').callsFake(async (message: string) => (/has finished/.test(message) ? 'Branch libraries' : undefined) as unknown as vscode.MessageItem);
+      const command = sinon.stub(vscode.commands, 'executeCommand').resolves(undefined);
+
+      DeploymentWatcher.show({ base: ir.url, id: 123 });
+      await until(() => DeploymentWatcher.info(ir.url, 123)?.state?.stages[1].status === 'in process', 'first read');
+      assert.ok(!info.getCalls().some(call => /has finished/.test(String(call.args[0]))), 'not while it runs');
+
+      ir.stages = [[11, 'START', 'finished'], [12, 'PROD', 'finished']];
+      ir.status = 'finished';
+      ir.push();
+      await until(() => command.calledWith('obi.branch-libraries'), 'Branch libraries opened');
+      assert.ok(info.getCalls().some(call => String(call.args[0]) === 'i-Releaser deployment 123 has finished. Delete the branch libraries of merged tickets?'));
+    }
+    finally {
+      await ir.close();
+    }
+  });
+
+
   test('status: a failed stage shows its step and the buttons; run-stages and a ready stage', async () => {
     const steps = [{ id: 31, sequence: 1, cmd: 'CALL PGM(LIST)', status: 'failed', processing_step: 'list objects', run_history: [{ id: 99 }] }];
     const ir = await i_releaser_status([[11, 'START', 'finished'], [12, 'Create object list', 'failed', steps], [13, 'DEPLOY', 'new']]);

@@ -1,6 +1,7 @@
 import { page_text, showAlert } from "../../tools/javascript/alertBox";
 import { init_source_select } from "../../tools/javascript/sourceSelect";
 import { typed_post } from "../../tools/javascript/post";
+import { parse_dict_field, parse_list_field } from "../../../shared/FormFields";
 import type { ConfigurationRequest } from "../../../shared/messages/ConfigurationMessages";
 import { keep_ui_state } from "../../tools/javascript/ui_state";
 
@@ -991,38 +992,11 @@ function save_config(class_prefix:string) {
         json_value = 'true';
     }
 
-    // Array
-    if (app_elements[i].classList.contains('type_array')) {
-      json_value = '[';
-      const list_values = elem_value.split('\n');
-
-      for (let i=0; i < list_values.length; i++) {
-        
-        if (list_values[i].length == 0)
-          continue;
-
-        if (i > 0)
-          json_value = `${json_value}, `;
-        json_value = `${json_value} "${list_values[i]}"`;
-      }
-      json_value = `${json_value} ]`;
-    }
-
-    // Dictionary
-    if (app_elements[i].classList.contains('type_dict')) {
-      json_value = '{';
-      const list_values = elem_value.split('\n');
-
-      for (let i=0; i < list_values.length; i++) {
-        if (list_values[i].length == 0)
-          continue;
-
-        if (i > 0)
-          json_value = `${json_value}, `;
-        json_value = `${json_value} "${list_values[i].split('=')[0].trim()}": "${list_values[i].split('=')[1].trim()}"`;
-      }
-      json_value = `${json_value} }`;
-    }
+    // Array and dictionary: built as values and stringified, so no line can break the JSON
+    if (app_elements[i].classList.contains('type_array'))
+      json_value = JSON.stringify(parse_list_field((app_elements[i] as HTMLInputElement).value));
+    if (app_elements[i].classList.contains('type_dict'))
+      json_value = JSON.stringify(parse_dict_field((app_elements[i] as HTMLInputElement).value));
 
     json_string = `${json_string} : ${json_value}`;
 
