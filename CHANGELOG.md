@@ -1,4 +1,4 @@
-## [Unreleased]
+## [2.3.0]
 
 ### Changes
 * **Branch builds** (with a `[branch-build]` section, OBI backend 6): builds on a branch with a ticket number go into libraries of the ticket. The extension passes the branch to the backend, refuses branch builds without a local OBI or with an older local backend, updates an older OBI on IBM i before a branch build (`git pull`, also without `obi.backend.autoUpdateRemote`; if that fails, the build is refused), refuses to run a build list of another branch, shows ticket and libraries in the status bar and the build summary (with `ADDLIBLE` to copy), checks build packages against the sources changed on the branch and offers a package named after the branch. The build history shows the ticket of a branch build. **OBI: Branch libraries** lists the branch libraries on the IBM i by ticket with the state of the branch (merged, active, no branch) and deletes the picked ones; OBI offers it when a watched deployment has finished. The configuration page has fields for `[branch-build]` (project tab). Without the section nothing changes ([docs](asserts/docs/building.md#branch-builds))
